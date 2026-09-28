@@ -1,5 +1,5 @@
 {
-  "appid": "touristappid",
+  "appid": "wxd68a1ef6432527b3",
   "projectname": "kingoftheoccupiers",
   "compileType": "game",
   "setting": {
@@ -73,5 +73,5 @@
     "tabSize": 2
   },
   "simulatorPluginLibVersion": {},
-  "_comment": "appid 暂为 touristappid 占位（游客模式可编译预览，不能上传/真机）。《占地之王》正式小游戏 appid 注册后替换此字段，并同步更新 project.private.config.json。"
+  "_comment": "appid 为《占地之王》正式小游戏账号。如后续注册新 appid，需同时替换本文件的 appid 字段与 project.private.config.json（后者采用相同字段覆盖机制）。"
 }

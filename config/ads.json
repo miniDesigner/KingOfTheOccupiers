@@ -1,6 +1,6 @@
 {
-  "enabled": true,
-  "_comment": "广告位配置。adUnitId 在微信公众平台后台申请（https://mp.weixin.qq.com → 推广 → 广告位管理）。开发阶段先用占位 ID，会触发 wx 广告 API 错误，AdManager 静默兜底。激励视频是必填项，插屏与 Banner 可选。",
+  "enabled": false,
+  "_comment": "广告位配置。adUnitId 在微信公众平台后台申请（https://mp.weixin.qq.com → 推广 → 广告位管理）。当前所有 ID 均为占位示例（adunit-xxx），换成真实 AppID 后必然调用失败：AdManager 已做静默兜底不会崩溃，但玩家点「看广告」会无反应。因此原型阶段先关闭（enabled=false），拿到真实广告位后改回 true 并替换全部 ID。注意修改本文件后必须跑 node tools/build-config-js.mjs，否则微信端读到的仍是旧值。",
 
   "rewarded": {
     "_comment": "激励视频广告位：每个 key 对应一个业务场景（看一次视频 = 发一次奖励）。key 命名建议与业务模块同名，便于检索。",

@@ -44,18 +44,27 @@ let _initialized = false;
  *
  * 真微信：wx.__tkBrowser 不存在
  * 浏览器预览：wx-shim.js 注入了 wx.__tkBrowser = true（且 window 全局存在）
+ *
+ * 注：不能用「某个 wx API 是否存在」做硬性判定。
+ * getSystemInfoSync 已被官方标记废弃，一旦未来基础库将其移除，
+ * 「typeof wx.getSystemInfoSync !== 'function'」会让这里误判成浏览器，
+ * 进而走 fetch 分支 → 真机 fetch is not defined → 配置全挂 → 白屏，
+ * 且故障表象与真实原因隔着好几层，极难排查。
+ * 因此改用「任一微信专有 API 存在」的 OR 判定：单个 API 废弃不会打翻整条链路。
  */
+const _WX_PROBES = ['createCanvas', 'getWindowInfo', 'getSystemInfoSync', 'getFileSystemManager'];
+
 function isWxEnv() {
   // 真微信运行时原生支持 require()，浏览器原生没有。
   // 用 require 是否为函数做兜底识别，是最可靠的运行时差异。
   if (typeof require !== 'function') return false;
-  if (typeof wx === 'undefined' || typeof wx.getSystemInfoSync !== 'function') return false;
+  if (typeof wx === 'undefined') return false;
   // 浏览器预览：wx-shim.js 注入 wx.__tkBrowser = true。
   // 注意：微信开发者工具「模拟器」底层是 Chromium(nw.js)，存在 window 全局，
   // 因此【不能】用 typeof window !== 'undefined' 来区分浏览器预览与真微信——
   // 否则模拟器会被误判为浏览器，走 fetch 分支（fetch is not defined 报错）。
   if (wx.__tkBrowser === true) return false;
-  return true;
+  return _WX_PROBES.some((key) => typeof wx[key] === 'function');
 }
 
 /**
