@@ -11,7 +11,19 @@
       "disablePlugins": [],
       "outputPath": ""
     },
-    "condition": false
+    "condition": false,
+    "postcss": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false
   },
   "packOptions": {
     "ignore": [
@@ -73,5 +85,6 @@
     "tabSize": 2
   },
   "simulatorPluginLibVersion": {},
-  "_comment": "appid 为《占地之王》正式小游戏账号。如后续注册新 appid，需同时替换本文件的 appid 字段与 project.private.config.json（后者采用相同字段覆盖机制）。"
+  "_comment": "appid 为《占地之王》正式小游戏账号（wxd68a1ef6432527b3）。setting 内的 postcss/compileWorklet/uploadWithSourceMap/minifyWXML 等字段以及末尾的 isGameTourist，均由微信开发者工具自动补齐，请勿删除：这些字段缺失时工具会在打开项目时重新写入，从而反复产生本地改动并与远端冲突。",
+  "isGameTourist": false
 }
