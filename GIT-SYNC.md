@@ -3,7 +3,8 @@
 > 《占地之王》King of the Occupiers
 > 仓库：https://github.com/miniDesigner/KingOfTheOccupiers.git
 > 你的本地目录：`E:\GitRep\KingOfTheOccupiers`
-> 沙箱通道状态：**✅ 已打通（2026-09-28）**，剩余一步 = 你在 GitHub 添加我的 SSH 公钥
+> 沙箱通道状态：**✅ 已打通并授权（2026-09-28）** —— 我可以直接 push / pull
+> 验收：全新克隆副本 `ALL IMPORTS VALID ✅ (47 files)` + 回归测试 `46 pass / 0 fail`
 
 ---
 
@@ -52,23 +53,22 @@ hosts 修好后 HTTPS 仍有约 **40% 概率**握手失败（连续操作更明�
 
 ---
 
-## 二、还剩一步：给我授权
+## 二、授权已完成 ✅
 
-我这边连 GitHub 已经稳了，只差 credentials。已生成专用密钥对，**请把这行公钥加到你的 GitHub**：
+已生成专用密钥对并添加到 GitHub，（权限面比 PAT 令牌窄得多，随时可在 GitHub 上一键 Revoke）：
 
 ```
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDBbreBdz7zwjj2jQYORWw8WLCyZH/x6KFyGBGNCTD2S workbuddy-sandbox-kingoftheoccupiers
 ```
 
-操作路径：**GitHub → Settings → SSH and GPG keys → New SSH key**
-Title 填 `workbuddy-sandbox`，Key type 保持 `Authentication Key`，粘贴上面整行。
-（只勾了这一台/at，没有 PAT 那种宽权限风险；随时可删除。）
+已于 2026-09-28 添加完成，验证输出：
 
-加完后我这边验证：
-
-```bash
-ssh -T git@github.com      # 期望输出：Hi miniDesigner! You've successfully authenticated...
 ```
+Hi miniDesigner! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+> **注意**：这条 key 只授权了我这台沙箱。若哪天你不再需要自主推送，
+> 在 GitHub → Settings → SSH keys 里删掉 `workbuddy-sandbox` 即可立即失效。
 
 ---
 
@@ -104,22 +104,37 @@ git push -f origin main
 
 ## 五、日常同步
 
-授权完成后，我可以自己 push/pull，中间的搬运环节全部取消：
+现在这条链路是通的，中间搬运环节全部取消：
 
 ```
 [我的沙箱]  ──push/pull──>  [GitHub]  ──pull──>  [你的本机 E:\GitRep]
 ```
 
-我会做的事：每次改完 commit 到本地，攒到可运行的节点推一次。
-你在本机只需 `git pull`。
+分工：
 
-授权之前先暂时用回网盘搬运 / `git bundle`（见下）。
+- **我**：每次改完先 commit 到本地，攒到可运行的节点推一次并告诉你
+- **你**：在本机 `git pull` 即可拿到；你手改的内容 push 后我会 `git pull` 拉进来
 
-### 临时兜底：bundle 搬运
+### 你本机的收尾操作
+
+你的 `E:\GitRep\KingOfTheOccupiers` 还停在 `d226984`（之前是 HTTPS 搬运过去的），执行一次：
+
+```powershell
+cd E:\GitRep\KingOfTheOccupiers
+git remote set-url origin git@github.com:miniDesigner/KingOfTheOccupiers.git
+git pull
+```
+
+> 建议一并换成 SSH —— 你的本机访问 GitHub 走的是正常网络，但换过来后权限模型统一，
+> 也省掉 Windows 凭据管理器里那份 HTTPS token 过期带来的麻烦。
+
+### 兜底：bundle 搬运
+
+万一遇到 hosts 失效、IP 轮换又没及时刷新的情况，退回到离线 bundle：
 
 ```bash
 # 我这边：打包增量
-git bundle create /workspace/sync-<日期>.bundle d226984..main
+git bundle create /workspace/sync-<日期>.bundle <你的commit>..main
 
 # 你那边：拉取
 git pull "E:\路径\sync-<日期>.bundle" main
@@ -146,16 +161,28 @@ git pull "E:\路径\sync-<日期>.bundle" main
 
 ## 七、当前 Git 状态
 
-```
-本地 main：  4c0d1bd test: 添加同步链路测试标记 SYNC-TEST-001
-             774bbbc docs: 记录 Git 通道打通状态与首次推送踩坑
-             d226984 docs: 补充 Git 同步说明
-             cc9cd89 feat: 初始化《占地之王》工程底座
+**本地 = 远端 = `b3b9452`，领先 0 / 落后 0，工作区干净。**
 
-远端 main：  d226984  （落后 2 个提交）
+```
+b3b9452  chore: 打通 GitHub SSH 通道，实现自主提交
+4c0d1bd  test: 添加同步链路测试标记 SYNC-TEST-001
+774bbbc  docs: 记录 Git 通道打通状态与首次推送踩坑
+d226984  docs: 补充 Git 同步说明
+cc9cd89  feat: 初始化《占地之王》工程底座
 ```
 
-授权后我会把 `774bbbc` 和 `4c0d1bd` 推上去，`SYNC-TEST.md` 里的测试标记再清理掉。
+### 同步链路验收结果（2026-09-28）
+
+| 环节 | 结果 |
+|---|---|
+| `ssh -T git@github.com` 认证 | ✅ `Hi miniDesigner!` |
+| `git push` 到远端 | ✅ `d226984..b3b9452` |
+| 从 GitHub **全新克隆** | ✅ 拉取完整（47 源码 / 19830 行 / 16 配置 / 56 测试）|
+| 克隆副本跑依赖检查 | ✅ `ALL IMPORTS VALID (47 files)` |
+| 克隆副本跑回归测试 | ✅ `46 pass / 0 fail` |
+
+> 全新克隆后能直接跑通全套测试，说明仓库内容自洽、没有漏提交的依赖，
+> 你在本机 `git pull` 之后可以直接用。
 
 ---
 
