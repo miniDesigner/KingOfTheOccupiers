@@ -1,0 +1,53 @@
+
+# ============================================
+# 占地之王 King of the Occupiers
+# ============================================
+
+# ---- 环境变量 / 密钥 ----
+.env.local
+.env
+.env.*
+!.env.example
+
+# ---- 依赖 ----
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# ---- 本地预览服务器 ----
+preview-server.err
+preview-server.out
+
+# ---- 本地数据库（含真实数据，不入库）----
+server/tk.db
+server/tk.db-*
+*.sqlite
+*.sqlite3
+
+# ---- 历史遗留 / 临时 ----
+.attic/
+tmp-devtools/
+scripts/p3*_*.py
+scripts/p3*_*.py.bak
+
+# ---- 日志 ----
+*.log
+logs/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 微信开发者工具 ----
+project.private.config.json

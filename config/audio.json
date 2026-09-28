@@ -1,0 +1,132 @@
+{
+  "_doc": "音效配置表 - 定义所有游戏音效和BGM",
+  "_doc_usage": "策划可将音频文件放入 assets/audio/ 目录，修改 url 路径即可",
+  "_doc_fields": {
+    "url": "音频文件相对路径(相对于游戏根目录)",
+    "volume": "单独音量 0~1，最终音量=volume*sfxVolume*masterVolume",
+    "throttle": "最小播放间隔(秒)，0=不限制，防止快速重复播放",
+    "enabled": "是否启用此音效，false=禁用"
+  },
+
+  "masterVolume": 1.0,
+  "_doc_masterVolume": "总音量 0~1，影响所有音效和BGM",
+
+  "sfxVolume": 0.8,
+  "_doc_sfxVolume": "音效音量 0~1，只影响音效(不影响BGM)",
+
+  "bgmVolume": 0.4,
+  "_doc_bgmVolume": "BGM音量 0~1，只影响背景音乐",
+
+  "muted": false,
+  "_doc_muted": "是否默认静音",
+
+  "bgm": {
+    "url": "assets/audio/bgm/battle.mp3",
+    "_doc": "战斗BGM，循环播放"
+  },
+
+  "sfx": {
+    "flip": {
+      "url": "assets/audio/sfx/flip.mp3",
+      "volume": 0.6,
+      "throttle": 0.1,
+      "_doc": "翻格音效 - 翻转格子时播放"
+    },
+    "random_reveal": {
+      "url": "assets/audio/sfx/random_reveal.mp3",
+      "volume": 0.7,
+      "throttle": 0,
+      "_doc": "随机格揭晓 - 随机格翻转结果展示时播放"
+    },
+    "build": {
+      "url": "assets/audio/sfx/build.mp3",
+      "volume": 0.5,
+      "throttle": 0.1,
+      "_doc": "建筑创建 - 翻转完成建筑出现时播放"
+    },
+    "destroy": {
+      "url": "assets/audio/sfx/destroy.mp3",
+      "volume": 0.8,
+      "throttle": 0.05,
+      "_doc": "建筑摧毁 - 建筑被摧毁时播放"
+    },
+    "march": {
+      "url": "assets/audio/sfx/march.mp3",
+      "volume": 0.4,
+      "throttle": 0.3,
+      "_doc": "编组出发 - 兵营战士编组出发时播放"
+    },
+    "combat_building": {
+      "url": "assets/audio/sfx/combat_building.mp3",
+      "volume": 0.7,
+      "throttle": 0.1,
+      "_doc": "vs建筑战斗 - 行军队伍攻击建筑时播放"
+    },
+    "combat_warrior": {
+      "url": "assets/audio/sfx/combat_warrior.mp3",
+      "volume": 0.7,
+      "throttle": 0.1,
+      "_doc": "vs战士战斗 - 两支行军队伍遭遇时播放"
+    },
+    "tower_shoot": {
+      "url": "assets/audio/sfx/tower_shoot.mp3",
+      "volume": 0.5,
+      "throttle": 0.2,
+      "_doc": "箭塔射击 - 箭塔发射箭矢时播放"
+    },
+    "crit": {
+      "url": "assets/audio/sfx/crit.mp3",
+      "volume": 0.9,
+      "throttle": 0.1,
+      "_doc": "暴击 - 暴击伤害时播放"
+    },
+    "heal": {
+      "url": "assets/audio/sfx/heal.mp3",
+      "volume": 0.6,
+      "throttle": 0.2,
+      "_doc": "回血 - 亡灵羁绊战后回血时播放"
+    },
+    "revive": {
+      "url": "assets/audio/sfx/revive.mp3",
+      "volume": 0.8,
+      "throttle": 0.2,
+      "_doc": "复活 - 亡灵3阶羁绊复活时播放"
+    },
+    "synergy": {
+      "url": "assets/audio/sfx/synergy.mp3",
+      "volume": 0.7,
+      "throttle": 0.5,
+      "_doc": "羁绊激活 - 种族羁绊达到新阶时播放"
+    },
+    "victory": {
+      "url": "assets/audio/sfx/victory.mp3",
+      "volume": 1.0,
+      "throttle": 0,
+      "_doc": "胜利 - 敌方大本营被摧毁时播放"
+    },
+    "defeat": {
+      "url": "assets/audio/sfx/defeat.mp3",
+      "volume": 1.0,
+      "throttle": 0,
+      "_doc": "失败 - 己方大本营被摧毁时播放"
+    },
+    "button_click": {
+      "url": "assets/audio/sfx/button_click.mp3",
+      "volume": 0.4,
+      "throttle": 0.05,
+      "_doc": "按钮点击 - UI按钮点击时播放"
+    },
+    "level_select": {
+      "url": "assets/audio/sfx/level_select.mp3",
+      "volume": 0.5,
+      "throttle": 0.1,
+      "_doc": "关卡选择 - 选择关卡时播放"
+    },
+    "coin": {
+      "url": "assets/audio/sfx/coin.mp3",
+      "volume": 0.4,
+      "throttle": 0.15,
+      "_doc": "金币获取 - 金矿产出金币时播放(可选，可能过于频繁)"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "tk-init-collections",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "One-shot init: create 6 collections if missing. Call once after deploy.",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

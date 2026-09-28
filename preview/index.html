@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>占地之王 - Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a202c;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #gameCanvas {
+      display: block;
+      touch-action: none;
+      background: #1a202c;
+    }
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #a0aec0;
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="loading">加载中...</div>
+
+  <script src="wx-shim.js"></script>
+  <script>
+    // 云同步开关（Phase A 联调）：URL 加 ?cloud=1 或 ?cloud=http://host:port 启用
+    //   默认不启用（纯本地存档）；启用后游戏启动会拉云端档覆盖本地。
+    (function () {
+      var cp = new URLSearchParams(window.location.search).get('cloud');
+      if (cp) {
+        window.TK_CLOUD_ENABLED = true;
+        window.TK_CLOUD_BASE = cp === '1' ? 'http://127.0.0.1:8891' : cp;
+      }
+    })();
+  </script>
+  <script type="module">
+    import { Game } from '../src/game/Game.js?v=2';
+
+    // 设置Canvas尺寸
+    const canvas = document.getElementById('gameCanvas');
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const pixelRatio = window.devicePixelRatio || 1;
+
+    canvas.width = screenWidth * pixelRatio;
+    canvas.height = screenHeight * pixelRatio;
+    canvas.style.width = screenWidth + 'px';
+    canvas.style.height = screenHeight + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(pixelRatio, pixelRatio);
+
+    // 启动游戏(异步: 先加载JSON配置)
+    const game = new Game(canvas, ctx, screenWidth, screenHeight);
+    // 调试钩子：暴露 Game 实例便于 CDP/控制台自动化验证
+    window.__game = game;
+
+    game.start().then(() => {
+      document.getElementById('loading').style.display = 'none';
+    }).catch(err => {
+      document.getElementById('loading').textContent = '加载失败: ' + err.message;
+      console.error(err);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,662 @@
+{
+  "_doc": "种族配置表 - 6大种族，每个种族包含4个兵种(对应兵营Lv1~4)、颜色、羁绊信息、建筑变体",
+  "_doc_units": "units按level 1~4对应兵营Lv1~4产出的兵种",
+  "_doc_fields": {
+    "id": "种族标识(英文)",
+    "name": "种族名称(中文)",
+    "color": "种族颜色(领地和建筑变色用)",
+    "style": "种族风格类型",
+    "unlockCondition": "解锁条件描述",
+    "units.level.name": "兵种名称",
+    "units.level.attackCoeff": "攻击系数(乘以全局UNIT_ATTACK_COEFFICIENT)",
+    "units.level.hpCoeff": "生命系数(影响队伍战力/承伤)",
+    "units.level.speedCoeff": "速度系数(乘以行军速度MARCH_SPEED)",
+    "units.level.combatStyles": "战斗方式标签数组(melee/ranged/defense/magic)",
+    "units.level.special": "兵种特殊效果 {type, value, desc} 或 null",
+    "synergyName": "种族羁绊名称",
+    "synergyEffects": "羁绊效果描述文本(仅展示用)",
+    "raceSynergy": "各族独立羁绊加成配置(1/2/3阶)",
+    "buildingVariants": "种族建筑变体属性调整(gold_mine/tower)"
+  },
+  "_doc_special_types": {
+    "damage_reduction": "被攻击时减免伤害(比例)",
+    "damage_reflect": "反弹受到的伤害(比例)",
+    "crit_bonus": "暴击率加成(比例)",
+    "crit_damage_multiplier": "暴击伤害倍率",
+    "lifesteal": "造成伤害的百分比转为自身战力",
+    "post_battle_heal": "遭遇战胜利后恢复战力(比例)",
+    "execute_bonus": "战力低于阈值时攻击力加成",
+    "kill_bonus": "击杀后攻击力加成(战斗内)",
+    "armor_pierce": "无视建筑防御(比例)",
+    "spell_damage_bonus": "额外法术伤害(比例)",
+    "burn": "攻击附带灼烧(持续伤害)",
+    "splash": "遭遇战造成范围溅射伤害(比例)"
+  },
+  "human": {
+    "id": "human",
+    "name": "人族",
+    "color": "#3b82f6",
+    "style": "平衡型",
+    "unlockCondition": "默认解锁",
+    "units": {
+      "1": {
+        "name": "步兵",
+        "icon": "🪖",
+        "attackCoeff": 1,
+        "hpCoeff": 1,
+        "speedCoeff": 1,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": null
+      },
+      "2": {
+        "name": "剑士",
+        "icon": "⚔",
+        "attackCoeff": 1.2,
+        "hpCoeff": 1.1,
+        "speedCoeff": 1,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": null
+      },
+      "3": {
+        "name": "骑士",
+        "icon": "🐎",
+        "attackCoeff": 1.5,
+        "hpCoeff": 1.3,
+        "speedCoeff": 1.2,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": null
+      },
+      "4": {
+        "name": "圣骑士",
+        "icon": "🛡",
+        "attackCoeff": 2,
+        "hpCoeff": 1.8,
+        "speedCoeff": 1.1,
+        "combatStyles": [
+          "melee",
+          "defense"
+        ],
+        "special": {
+          "type": "damage_reduction",
+          "value": 0.1,
+          "desc": "被攻击时减免10%伤害"
+        }
+      }
+    },
+    "synergyName": "人类意志",
+    "synergyEffects": [
+      "1阶(2件): 全属性+10%",
+      "2阶(4件): 全属性+20%",
+      "3阶(6件): 全属性+20% + 所有建筑生命值+15%"
+    ],
+    "raceSynergy": {
+      "1": {
+        "attackBonus": 0.1,
+        "defenseBonus": 0.1,
+        "_doc": "全属性+10%"
+      },
+      "2": {
+        "attackBonus": 0.2,
+        "defenseBonus": 0.2,
+        "_doc": "全属性+20%"
+      },
+      "3": {
+        "attackBonus": 0.2,
+        "defenseBonus": 0.2,
+        "buildingHpBonus": 0.15,
+        "_doc": "全属性+20% + 建筑生命值+15%"
+      }
+    },
+    "buildingVariants": {
+      "gold_mine": {
+        "goldRateModifier": 0,
+        "hpModifier": 0,
+        "_doc": "皇家金库: 标准产出"
+      },
+      "arrow_tower": {
+        "defenseModifier": 0,
+        "_doc": "守卫箭塔: 标准防御"
+      }
+    }
+  },
+  "beast": {
+    "id": "beast",
+    "name": "兽族",
+    "color": "#ef4444",
+    "style": "狂暴型",
+    "unlockCondition": "通关第3关",
+    "units": {
+      "1": {
+        "name": "兽人战士",
+        "icon": "👹",
+        "attackCoeff": 1.3,
+        "hpCoeff": 0.8,
+        "speedCoeff": 1,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": null
+      },
+      "2": {
+        "name": "狂战士",
+        "icon": "🪓",
+        "attackCoeff": 1.6,
+        "hpCoeff": 0.9,
+        "speedCoeff": 1.1,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": {
+          "type": "execute_bonus",
+          "value": 0.2,
+          "threshold": 0.5,
+          "desc": "战力低于50%时攻击力+20%"
+        }
+      },
+      "3": {
+        "name": "兽王",
+        "icon": "🐗",
+        "attackCoeff": 2,
+        "hpCoeff": 1,
+        "speedCoeff": 1.2,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": null
+      },
+      "4": {
+        "name": "战争领主",
+        "icon": "🦍",
+        "attackCoeff": 2.8,
+        "hpCoeff": 1.2,
+        "speedCoeff": 1.2,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": {
+          "type": "kill_bonus",
+          "value": 0.1,
+          "desc": "击杀后攻击力+10%(战斗内)"
+        }
+      }
+    },
+    "synergyName": "野性狂暴",
+    "synergyEffects": [
+      "1阶(2件): 攻击力+15%",
+      "2阶(4件): 攻击力+30%",
+      "3阶(6件): 攻击力+30% + 战士编组阈值-2"
+    ],
+    "raceSynergy": {
+      "1": {
+        "attackBonus": 0.15,
+        "defenseBonus": 0,
+        "_doc": "攻击力+15%"
+      },
+      "2": {
+        "attackBonus": 0.3,
+        "defenseBonus": 0,
+        "_doc": "攻击力+30%"
+      },
+      "3": {
+        "attackBonus": 0.3,
+        "defenseBonus": 0,
+        "groupThresholdReduction": 2,
+        "_doc": "攻击力+30% + 编组阈值-2"
+      }
+    },
+    "buildingVariants": {
+      "gold_mine": {
+        "goldRateModifier": 0.1,
+        "hpModifier": -5,
+        "_doc": "兽族矿坑: +10%金币, -5HP"
+      },
+      "arrow_tower": {
+        "defenseModifier": -2,
+        "attackBonusModifier": 0.05,
+        "_doc": "兽骨尖塔: -2防御, +5%攻击"
+      }
+    }
+  },
+  "undead": {
+    "id": "undead",
+    "name": "亡灵",
+    "color": "#8b5cf6",
+    "style": "吸血型",
+    "unlockCondition": "通关第8关",
+    "units": {
+      "1": {
+        "name": "骷髅兵",
+        "icon": "💀",
+        "attackCoeff": 0.9,
+        "hpCoeff": 0.9,
+        "speedCoeff": 1,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": null
+      },
+      "2": {
+        "name": "僵尸",
+        "icon": "🧟",
+        "attackCoeff": 1,
+        "hpCoeff": 1.4,
+        "speedCoeff": 0.8,
+        "combatStyles": [
+          "melee",
+          "defense"
+        ],
+        "special": {
+          "type": "damage_reduction",
+          "value": 0.05,
+          "desc": "被攻击时回复5%战力"
+        }
+      },
+      "3": {
+        "name": "死灵法师",
+        "icon": "🔮",
+        "attackCoeff": 1.6,
+        "hpCoeff": 1,
+        "speedCoeff": 1,
+        "combatStyles": [
+          "magic"
+        ],
+        "special": {
+          "type": "lifesteal",
+          "value": 0.15,
+          "desc": "造成伤害的15%转为自身战力"
+        },
+        "attackRange": 2
+      },
+      "4": {
+        "name": "巫妖",
+        "icon": "☠",
+        "attackCoeff": 2.2,
+        "hpCoeff": 1.3,
+        "speedCoeff": 1,
+        "combatStyles": [
+          "magic"
+        ],
+        "special": {
+          "type": "post_battle_heal",
+          "value": 0.3,
+          "desc": "遭遇战胜利后恢复30%战力"
+        },
+        "attackRange": 2
+      }
+    },
+    "synergyName": "不死军团",
+    "synergyEffects": [
+      "1阶(2件): 战后恢复20%战力",
+      "2阶(4件): 战后恢复35%战力",
+      "3阶(6件): 战后恢复35% + 队伍全灭后有30%概率复活1~2个战士"
+    ],
+    "raceSynergy": {
+      "1": {
+        "attackBonus": 0,
+        "defenseBonus": 0,
+        "postBattleHeal": 0.2,
+        "_doc": "战后恢复20%战力"
+      },
+      "2": {
+        "attackBonus": 0,
+        "defenseBonus": 0,
+        "postBattleHeal": 0.35,
+        "_doc": "战后恢复35%战力"
+      },
+      "3": {
+        "attackBonus": 0,
+        "defenseBonus": 0,
+        "postBattleHeal": 0.35,
+        "reviveChance": 0.3,
+        "reviveCount": 2,
+        "_doc": "战后恢复35% + 30%概率复活2个战士"
+      }
+    },
+    "buildingVariants": {
+      "gold_mine": {
+        "goldRateModifier": -0.1,
+        "hpModifier": 10,
+        "_doc": "亡灵墓穴: -10%金币, +10HP"
+      },
+      "arrow_tower": {
+        "defenseModifier": -1,
+        "slowOnHit": 0.1,
+        "_doc": "诅咒尖塔: -1防御, 被攻击减速10%"
+      }
+    }
+  },
+  "elf": {
+    "id": "elf",
+    "name": "精灵",
+    "color": "#10b981",
+    "style": "敏捷型",
+    "unlockCondition": "通关第12关",
+    "units": {
+      "1": {
+        "name": "弓箭手",
+        "icon": "🏹",
+        "attackCoeff": 1.1,
+        "hpCoeff": 0.7,
+        "speedCoeff": 1.3,
+        "combatStyles": [
+          "ranged"
+        ],
+        "special": null,
+        "attackRange": 2
+      },
+      "2": {
+        "name": "游侠",
+        "icon": "🎯",
+        "attackCoeff": 1.4,
+        "hpCoeff": 0.8,
+        "speedCoeff": 1.4,
+        "combatStyles": [
+          "ranged"
+        ],
+        "special": {
+          "type": "crit_bonus",
+          "value": 0.15,
+          "desc": "暴击率+15%"
+        },
+        "attackRange": 2
+      },
+      "3": {
+        "name": "精灵骑士",
+        "icon": "🦌",
+        "attackCoeff": 1.7,
+        "hpCoeff": 1,
+        "speedCoeff": 1.5,
+        "combatStyles": [
+          "melee",
+          "ranged"
+        ],
+        "special": null,
+        "attackRange": 2
+      },
+      "4": {
+        "name": "月之骑士",
+        "icon": "🌙",
+        "attackCoeff": 2.3,
+        "hpCoeff": 1.1,
+        "speedCoeff": 1.6,
+        "combatStyles": [
+          "melee",
+          "ranged"
+        ],
+        "special": {
+          "type": "crit_bonus",
+          "value": 0.25,
+          "desc": "暴击率+25%"
+        },
+        "attackRange": 2
+      }
+    },
+    "synergyName": "风之加护",
+    "synergyEffects": [
+      "1阶(2件): 速度+15%, 暴击+10%",
+      "2阶(4件): 速度+30%, 暴击+20%",
+      "3阶(6件): 速度+30%, 暴击+20% + 暴击伤害翻倍"
+    ],
+    "raceSynergy": {
+      "1": {
+        "attackBonus": 0,
+        "defenseBonus": 0,
+        "speedBonus": 0.15,
+        "critBonus": 0.1,
+        "_doc": "速度+15%, 暴击+10%"
+      },
+      "2": {
+        "attackBonus": 0,
+        "defenseBonus": 0,
+        "speedBonus": 0.3,
+        "critBonus": 0.2,
+        "_doc": "速度+30%, 暴击+20%"
+      },
+      "3": {
+        "attackBonus": 0,
+        "defenseBonus": 0,
+        "speedBonus": 0.3,
+        "critBonus": 0.2,
+        "critDamageMultiplier": 2,
+        "_doc": "速度+30%, 暴击+20% + 暴击伤害翻倍"
+      }
+    },
+    "buildingVariants": {
+      "gold_mine": {
+        "goldRateModifier": -0.1,
+        "hpModifier": 0,
+        "_doc": "精灵泉眼: -10%金币"
+      },
+      "arrow_tower": {
+        "defenseModifier": -1,
+        "speedBonusModifier": 0.1,
+        "_doc": "精灵箭塔: -1防御, +10%速度"
+      }
+    }
+  },
+  "dwarf": {
+    "id": "dwarf",
+    "name": "矮人",
+    "color": "#f59e0b",
+    "style": "防御型",
+    "unlockCondition": "通关第16关",
+    "units": {
+      "1": {
+        "name": "矮人战士",
+        "icon": "⛏",
+        "attackCoeff": 0.9,
+        "hpCoeff": 1.3,
+        "speedCoeff": 0.9,
+        "combatStyles": [
+          "melee",
+          "defense"
+        ],
+        "special": {
+          "type": "damage_reduction",
+          "value": 0.1,
+          "desc": "被攻击减免10%伤害"
+        }
+      },
+      "2": {
+        "name": "矮人守卫",
+        "icon": "🛡",
+        "attackCoeff": 0.8,
+        "hpCoeff": 1.6,
+        "speedCoeff": 0.8,
+        "combatStyles": [
+          "defense"
+        ],
+        "special": {
+          "type": "damage_reflect",
+          "value": 0.15,
+          "desc": "反弹15%受到的伤害"
+        }
+      },
+      "3": {
+        "name": "矮人火枪手",
+        "icon": "🔫",
+        "attackCoeff": 1.5,
+        "hpCoeff": 1.1,
+        "speedCoeff": 1,
+        "combatStyles": [
+          "ranged"
+        ],
+        "special": {
+          "type": "armor_pierce",
+          "value": 0.3,
+          "desc": "穿透: 无视建筑30%防御"
+        },
+        "attackRange": 2
+      },
+      "4": {
+        "name": "矮人王",
+        "icon": "👑",
+        "attackCoeff": 2,
+        "hpCoeff": 2.2,
+        "speedCoeff": 0.9,
+        "combatStyles": [
+          "melee",
+          "defense"
+        ],
+        "special": {
+          "type": "damage_reflect",
+          "value": 0.25,
+          "desc": "反弹25%伤害+减免20%伤害"
+        }
+      }
+    },
+    "synergyName": "山脉之盾",
+    "synergyEffects": [
+      "1阶(2件): 防御+20%, 反伤+10%",
+      "2阶(4件): 防御+40%, 反伤+20%",
+      "3阶(6件): 防御+40%, 反伤+20% + 被攻击减免25%伤害"
+    ],
+    "raceSynergy": {
+      "1": {
+        "attackBonus": 0,
+        "defenseBonus": 0.2,
+        "damageReflect": 0.1,
+        "_doc": "防御+20%, 反伤+10%"
+      },
+      "2": {
+        "attackBonus": 0,
+        "defenseBonus": 0.4,
+        "damageReflect": 0.2,
+        "_doc": "防御+40%, 反伤+20%"
+      },
+      "3": {
+        "attackBonus": 0,
+        "defenseBonus": 0.4,
+        "damageReflect": 0.2,
+        "damageReduction": 0.25,
+        "_doc": "防御+40%, 反伤+20% + 减免25%伤害"
+      }
+    },
+    "buildingVariants": {
+      "gold_mine": {
+        "goldRateModifier": 0.25,
+        "hpModifier": -5,
+        "_doc": "矮人矿洞: +25%金币, -5HP"
+      },
+      "arrow_tower": {
+        "defenseModifier": 2,
+        "hpModifier": -5,
+        "_doc": "矮人炮塔: +2防御, -5HP"
+      }
+    }
+  },
+  "dragon": {
+    "id": "dragon",
+    "name": "龙族",
+    "color": "#a855f7",
+    "style": "终极型",
+    "unlockCondition": "通行证赛季限定(高级通行证30级)",
+    "units": {
+      "1": {
+        "name": "龙裔",
+        "icon": "🔥",
+        "attackCoeff": 1.2,
+        "hpCoeff": 1.1,
+        "speedCoeff": 1.1,
+        "combatStyles": [
+          "melee"
+        ],
+        "special": null
+      },
+      "2": {
+        "name": "幼龙",
+        "icon": "🦎",
+        "attackCoeff": 1.5,
+        "hpCoeff": 1.2,
+        "speedCoeff": 1.1,
+        "combatStyles": [
+          "melee",
+          "magic"
+        ],
+        "special": {
+          "type": "spell_damage_bonus",
+          "value": 0.1,
+          "desc": "造成额外10%法术伤害"
+        },
+        "attackRange": 2
+      },
+      "3": {
+        "name": "龙骑士",
+        "icon": "🐉",
+        "attackCoeff": 1.9,
+        "hpCoeff": 1.4,
+        "speedCoeff": 1.2,
+        "combatStyles": [
+          "melee",
+          "magic"
+        ],
+        "special": {
+          "type": "burn",
+          "value": 0.05,
+          "duration": 3,
+          "desc": "攻击附带灼烧(持续伤害)"
+        },
+        "attackRange": 2
+      },
+      "4": {
+        "name": "古龙",
+        "icon": "🌋",
+        "attackCoeff": 2.5,
+        "hpCoeff": 1.6,
+        "speedCoeff": 1.3,
+        "combatStyles": [
+          "magic"
+        ],
+        "special": {
+          "type": "splash",
+          "value": 0.2,
+          "desc": "6件羁绊触发龙息: 遭遇战造成20%范围溅射"
+        },
+        "attackRange": 2
+      }
+    },
+    "synergyName": "龙之威压",
+    "synergyEffects": [
+      "1阶(2件): 全属性+10%",
+      "2阶(4件): 全属性+25%",
+      "3阶(6件): 全属性+25% + 触发龙息(遭遇战20%范围溅射伤害)"
+    ],
+    "raceSynergy": {
+      "1": {
+        "attackBonus": 0.1,
+        "defenseBonus": 0.1,
+        "_doc": "全属性+10%"
+      },
+      "2": {
+        "attackBonus": 0.25,
+        "defenseBonus": 0.25,
+        "_doc": "全属性+25%"
+      },
+      "3": {
+        "attackBonus": 0.25,
+        "defenseBonus": 0.25,
+        "splash": 0.2,
+        "_doc": "全属性+25% + 龙息溅射20%"
+      }
+    },
+    "buildingVariants": {
+      "gold_mine": {
+        "goldRateModifier": 0,
+        "hpModifier": 0,
+        "allStatBonus": 0.05,
+        "_doc": "龙穴金库: 标准产出, +5%全属性"
+      },
+      "arrow_tower": {
+        "defenseModifier": -1,
+        "allStatBonus": 0.05,
+        "_doc": "龙息塔: -1防御, +5%全属性"
+      }
+    }
+  }
+}

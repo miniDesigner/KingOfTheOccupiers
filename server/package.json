@@ -1,0 +1,15 @@
+{
+  "name": "territory-king-server",
+  "version": "0.1.0",
+  "description": "占城先锋 · 服务器数据库 + 运营后台（零 npm 依赖，Node 内置 http/sqlite/crypto）",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "init-admin": "node scripts/init-admin.js",
+    "test": "node tests/test-e2e.mjs"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="xczHeCJUq8B4JXUB8zARsj">
+<head data-page-node-id="6BdADjBXTl6Fhhz6j9Z74c">
+  <meta charset="UTF-8" data-page-node-id="EuJvSfIEyDtlfDGh6lZUpb" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="SiaVdeHj6C0WmN2Str03Cf" />
+  <title>占城先锋 · 运营后台</title>
+  <base href="/admin/" />
+  <link rel="stylesheet" href="style.css" data-page-node-id="g47Zp41Z4DNqWuGQiGKnMX" />
+</head>
+<body data-page-node-id="gFOeTdcoCpnT44rOaAyjqc">
+
+  <!-- 登录 -->
+  <div id="loginView" data-page-node-id="LNP891grEG4PeIklC9FKLS">
+    <div class="login-card" data-page-node-id="E02r3j3xaC32aMR5WoXjV7">
+      <h1 data-page-node-id="CSNTzKLNTzapHFxmkz2ueu">占城先锋 · 运营后台</h1>
+      <p data-page-node-id="gARzMPyR3BNoxORy7F60sX">请使用管理员账号登录</p>
+      <label data-page-node-id="A6DyeHhQFO2ZEgZioLBQCo">用户名</label>
+      <input id="loginUser" type="text" placeholder="admin" autocomplete="username" data-page-node-id="HMQPptOAmnHzANApghX6d2" />
+      <label data-page-node-id="OoDNuH9uC44DWnoIaTlEKo">密码</label>
+      <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" data-page-node-id="miODi32dmVBp9lzoRccMKV" />
+      <button class="btn btn-primary btn-block" id="loginBtn" data-page-node-id="RRM5TJoAdIoteJ2dyr04vR">登录</button>
+      <p class="hint" id="loginError" style="color:var(--danger)" data-page-node-id="4ZnPs8gQXZsr9YNiYJO7zE"></p>
+    </div>
+  </div>
+
+  <!-- 主应用 -->
+  <div id="appView" data-page-node-id="ieddxPbA8Ss2oHujZpGuI8">
+    <aside class="sidebar" data-page-node-id="6pZISdm6PmtZf21A8Ybs3c">
+      <div class="brand" data-page-node-id="8F8m29aw7QCZ1IDRGxIyuO">占城先锋<small data-page-node-id="o1cgot0zcF5fpiwhDWsGPc">运营后台</small></div>
+      <nav class="nav" data-page-node-id="UaLjmhwuDTHn9Xx97wEzxE">
+        <div class="nav-item active" data-view="overview" data-page-node-id="9TIjMG7rGlLo0qfTv6FZh6">📊 总览</div>
+        <div class="nav-item" data-view="players" data-page-node-id="Tc6fC56HqYh0g1IdjH4Uak">👥 玩家管理</div>
+        <div class="nav-item" data-view="announcements" data-page-node-id="0aPfkv9NWU0a8Q2c9mGADF">📢 公告</div>
+        <div class="nav-item" data-view="logs" data-page-node-id="BgLi4L2u6mAG6gGCcnEJTp">📝 操作日志</div>
+        <div class="nav-item" data-view="admins" id="navAdmins" data-page-node-id="qMo01hC5yts3m4DnaCEG9Q">🔐 管理员</div>
+      </nav>
+      <div class="user" data-page-node-id="IPgwKDCm8Qws77y112MlK0">
+        <span id="adminName" data-page-node-id="nkEQ0f1UEStuOdolGH1klT">-</span>
+        <span class="logout" id="logoutBtn" data-page-node-id="07OAgu2rkZEV2HRuIuS8Xp">退出</span>
+      </div>
+    </aside>
+
+    <main class="main" data-page-node-id="EEt9Ps401qLz5Jx30PvGmD">
+      <!-- 总览 -->
+      <section class="view active" id="view-overview" data-page-node-id="EmXnBbi9DETxLEfvDZ5Uq6">
+        <h2 data-page-node-id="XK2FXCAmG7HEcsimWVDXM5">数据总览</h2>
+        <div class="stats-grid" id="overviewStats" data-page-node-id="3NcaMHcnNSm2psg1U9D9rc"></div>
+        <div class="card" data-page-node-id="4CXAJkiBa2lRNRIKnuQaCR">
+          <h3 data-page-node-id="lTcOSUr731xNOVwkQFQf7Q">段位分布</h3>
+          <div id="tierDist" data-page-node-id="mUbfM1m6TPpAeYvCyt04LT"></div>
+        </div>
+      </section>
+
+      <!-- 玩家管理 -->
+      <section class="view" id="view-players" data-page-node-id="PlqcJhHy8ZS0Y9xodvoaBv">
+        <h2 data-page-node-id="16FO67wJRbfabaTmG2hpeT">玩家管理</h2>
+        <div class="toolbar" data-page-node-id="CUaJDdMfBhZPdo5nrIV9wq">
+          <input id="pKeyword" type="text" placeholder="昵称 / uid / openid" data-page-node-id="KwB0Uk73RPHxXRqmEBINej" />
+          <select id="pTier" data-page-node-id="pwOfacAjrG950MO4YXBjX5">
+            <option value="" data-page-node-id="GjZsGgs0tqu60614OgPJJ7">全部段位</option>
+          </select>
+          <select id="pStatus" data-page-node-id="Fhv1iotstCrmna4sfHCmov">
+            <option value="" data-page-node-id="NDG2UnP7ZZuQLZu5OB7iLN">全部状态</option>
+            <option value="active" data-page-node-id="TYPL3XWL0jwENiosSiW80P">正常</option>
+            <option value="banned" data-page-node-id="FSGsAxjE5H8TqpJavkCYbR">已封禁</option>
+          </select>
+          <input id="pMinTrophies" type="number" placeholder="奖杯≥" style="width:90px" data-page-node-id="asVtJpNa6rJ6KyLwNBZBbb" />
+          <input id="pMaxTrophies" type="number" placeholder="奖杯≤" style="width:90px" data-page-node-id="ZcNBQ3k1jfASKDDQwSrJ9E" />
+          <button class="btn btn-primary btn-sm" id="pSearch" data-page-node-id="wDPKuEMj4qj91fwFsMi1fo">查询</button>
+        </div>
+        <div class="card" data-page-node-id="3Ol2pXYo0YwkQKOIGiME8T">
+          <table data-page-node-id="PzqGS5D6BXSCD4vJ4U8rhe">
+            <thead data-page-node-id="JKXz5UBGAT4jRoPYjKqyYU">
+              <tr data-page-node-id="PFs93X9NMpsQTs0EOt2v6E">
+                <th data-page-node-id="6M7BExQesNsZtc4LXxKsCl">昵称</th><th data-page-node-id="n64conGFog0uPF2wyOTyr0">uid</th><th data-page-node-id="YMeLcjU0lY75FcNIB1VuFq">段位</th><th class="num" data-page-node-id="fVArAsDpaV9IVKPtDrFsRW">奖杯</th>
+                <th class="num" data-page-node-id="n1tOM5rLFSwd4w3RPN04HH">战力</th><th class="num" data-page-node-id="9kGz1DLtLcppLOimMeHUb9">金币</th><th class="num" data-page-node-id="cdeefe5KD97ifAufMMsU95">钻石</th>
+                <th class="num" data-page-node-id="Anxp3jCMSoFa2XheB1V8YO">星尘</th><th data-page-node-id="Ul3vlQME33eJYrB29Gv8W9">状态</th><th data-page-node-id="laIpGj4c721IaipCqXilRi">操作</th>
+              </tr>
+            </thead>
+            <tbody id="playersTbody" data-page-node-id="oAH8J6lynUi2Iic8bcAbuY"></tbody>
+          </table>
+          <div class="pagination" data-page-node-id="PD8K5eV9DAzPjQj6dfW43l">
+            <span id="playersTotal" data-page-node-id="WcDyiCRy6rnFJWDpn2sMnP"></span>
+            <button class="btn btn-ghost btn-sm" id="pPrev" data-page-node-id="bVBUpAzAQ9iVvRdofNAPkn">上一页</button>
+            <span id="pPage" data-page-node-id="ZBafBCRpEae7LqGcrXGJcO"></span>
+            <button class="btn btn-ghost btn-sm" id="pNext" data-page-node-id="5iezZqD7HcOrgIkyCQ4Chn">下一页</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 公告 -->
+      <section class="view" id="view-announcements" data-page-node-id="53tI2IHy4rA4JQ3UGumq8M">
+        <h2 data-page-node-id="DnzyMvlrq97rb4JafYlVhU">公告管理</h2>
+        <div class="toolbar" data-page-node-id="pkkZ2LNDMMhjplp72GOi4g">
+          <button class="btn btn-primary btn-sm" id="annNew" data-page-node-id="jZfK7s9UN57twdrzHMe7Iu">+ 新建公告</button>
+        </div>
+        <div class="card" data-page-node-id="S3ACeCOXgsXQZDgmbAeoWj">
+          <table data-page-node-id="C2dTpz65l10FNPwGFtkVgn">
+            <thead data-page-node-id="17EdexTNR2OjBGti7S9cu1"><tr data-page-node-id="HtbKOHDWicKR3AMJyEtFbb"><th data-page-node-id="Ui6c5N60CAb80Bk0gT7YXo">标题</th><th data-page-node-id="Q90riEuOrEnjCzgnZA5LKY">类型</th><th data-page-node-id="DBSZjgimfxmriIEiGLIUI3">状态</th><th data-page-node-id="1mTSVrONclTCIYqvFXgqhO">操作</th></tr></thead>
+            <tbody id="annTbody" data-page-node-id="G3p7jGMWYFrlkDT2xiI1tE"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 操作日志 -->
+      <section class="view" id="view-logs" data-page-node-id="WGT3hGjjQYGNBH1OwYygkk">
+        <h2 data-page-node-id="tCsufY9Vm76eKoIQPqXEg0">操作日志</h2>
+        <div class="toolbar" data-page-node-id="ESsMUgp4gpkPuW4hjQg1xY">
+          <input id="lAdmin" type="text" placeholder="操作人" data-page-node-id="moO0LB0G6aowMzOXq8md3S" />
+          <input id="lAction" type="text" placeholder="动作 (player.update / player.ban)" data-page-node-id="Tj4N6xKGLd0qA0XHGZiHGe" />
+          <button class="btn btn-primary btn-sm" id="lSearch" data-page-node-id="5uJo7ZlRGwdaaD1UhQtqg1">查询</button>
+        </div>
+        <div class="card" data-page-node-id="63G4DV8NgHqYSOCBGY8dFL">
+          <table data-page-node-id="U1d5L58dQ9wdjqqRzdG3Sc">
+            <thead data-page-node-id="P9zTgOiXgZjkrWhBkdzH2e"><tr data-page-node-id="L5QlausQz6VEFQIxAOtzJf"><th data-page-node-id="J83r4IkWDapd9IMZm6tXJ7">时间</th><th data-page-node-id="3HFzrHV1NYdgnX9BlJZJQC">操作人</th><th data-page-node-id="DsOFw0iqcN46WcSGjyGHdj">动作</th><th data-page-node-id="8bzA9x40P93IKj0HNE8MSF">目标</th><th data-page-node-id="zkU0kFLUQMKgbOJk23OJxF">详情</th></tr></thead>
+            <tbody id="logsTbody" data-page-node-id="asUz5iZc7fNezycAZYrzic"></tbody>
+          </table>
+          <div class="pagination" data-page-node-id="9BT5fIrtRVEDCdyvF2iYkK"><span id="logsTotal" data-page-node-id="EigSNMuMMZ9ig64KTPnumr"></span></div>
+        </div>
+      </section>
+
+      <!-- 管理员 -->
+      <section class="view" id="view-admins" data-page-node-id="8mDwPXWmjvt8XKEzLCOKfP">
+        <h2 data-page-node-id="durIMW3ayjxe8Z9LoXUpKv">管理员</h2>
+        <div class="toolbar" data-page-node-id="ahnDSHT7xOzpdAqptvmPE6">
+          <button class="btn btn-primary btn-sm" id="admNew" data-page-node-id="eekTzg7nFWC6lFiaBQGryC">+ 新建管理员</button>
+        </div>
+        <div class="card" data-page-node-id="lnnFAkYzCSD4dJduqmLash">
+          <table data-page-node-id="Veycx2n5J5sCmDpJgR75bt">
+            <thead data-page-node-id="xqGsm0bG13lCqwAj6DH66e"><tr data-page-node-id="Fgt5CzyAxR8BljxW8OfHff"><th data-page-node-id="zbcF4AHNzjiQNLvpMh8C7N">用户名</th><th data-page-node-id="SaIYGUOTeh7CGWms7GFutF">角色</th><th data-page-node-id="8X3XuMNFFfljATXatwiYNT">创建时间</th><th data-page-node-id="V8CXiRwFx10B2V9EEyD8d0">操作</th></tr></thead>
+            <tbody id="admTbody" data-page-node-id="bRW1ufOMgQQmYqzP5BwQfp"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 玩家详情弹窗 -->
+  <div class="modal-mask" id="detailModal" data-page-node-id="nhb5ROGGjoCtZaHWzJ3oqj">
+    <div class="modal" data-page-node-id="weWsapRKTWDg829TvGM56R">
+      <h3 data-page-node-id="VPFIpxuLJSgA8qlHgQylGD">玩家详情</h3>
+      <div id="detailBody" data-page-node-id="zhfjUZ14lyQ0N1BHXWq2P9"></div>
+      <div class="modal-actions" data-page-node-id="MMEUAsN6S3htvRbmC2E8Ed">
+        <button class="btn btn-ghost" onclick="closeModal('detailModal')" data-page-node-id="8AZ7vWeZZV23hickxwWqUM">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 改档弹窗 -->
+  <div class="modal-mask" id="editModal" data-page-node-id="CIkxkCVuwjEts6i5YRo1Zw">
+    <div class="modal" data-page-node-id="Wvbc2KMGnDo2tPO4Rf1QRw">
+      <h3 data-page-node-id="60lPVJ8kzqAT4Mp7E0rQ3k">修改玩家数据</h3>
+      <p class="hint" id="editUid" data-page-node-id="u1L61mt7I8Gm97jDAByZad"></p>
+      <div id="editBody" data-page-node-id="6sxflhyiom2IKR3rnMGwCg"></div>
+      <div class="modal-actions" data-page-node-id="XwwHY8G28OfxKRlTchGT3k">
+        <button class="btn btn-ghost" onclick="closeModal('editModal')" data-page-node-id="7PD3TZkTHxSJIC5e5ga6aH">取消</button>
+        <button class="btn btn-primary" id="editSave" data-page-node-id="t0AoFOeV4cB6IRCCKBKF3s">确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 封禁弹窗 -->
+  <div class="modal-mask" id="banModal" data-page-node-id="OewdmP8rF962YCBB29bMEI">
+    <div class="modal" data-page-node-id="C4U52HJNbQBq53ssRY716T">
+      <h3 data-page-node-id="m1FuLKKjP8pVR3T67scFiJ">封禁 / 解封</h3>
+      <p class="hint" id="banUid" data-page-node-id="pJCknJpRNEk81nBVGKl3va"></p>
+      <div class="field" data-page-node-id="c6ivpVCXwdiakFbeEkmamK">
+        <label data-page-node-id="rejl31eP2dylY7uSHBf7bC">操作</label>
+        <select id="banStatus" data-page-node-id="vE6cdzDwv1CL9N0St6frwo">
+          <option value="banned" data-page-node-id="jRsNKKGR80CMs2wgEpCVEc">封禁</option>
+          <option value="active" data-page-node-id="kiZDS5NQuprIwvKF6mlDsQ">解封</option>
+        </select>
+      </div>
+      <div class="field" data-page-node-id="XTK9mGHXUv73Ioa9TS3UVK">
+        <label data-page-node-id="dYDirBHRzjZHUn0raZeduq">原因</label>
+        <input id="banReason" type="text" placeholder="封禁原因" data-page-node-id="IsFNt0v4CComjNVod0TgE9" />
+      </div>
+      <div class="field" data-page-node-id="fGvi79VhVEDkgPgGkKz0AE">
+        <label data-page-node-id="YPBJJNyRJtJ8NYYm4sUfQe">封禁截止（留空 = 永久）</label>
+        <input id="banUntil" type="datetime-local" data-page-node-id="VEbyapCIGSSdf3txHI3ZoK" />
+      </div>
+      <div class="modal-actions" data-page-node-id="ICfLA62cpgyn8jrjd2qJyM">
+        <button class="btn btn-ghost" onclick="closeModal('banModal')" data-page-node-id="WhCfAc2Mcvqtlmv4fB72Hh">取消</button>
+        <button class="btn btn-danger" id="banSave" data-page-node-id="knZRHAnQhGwrAO71EKuJXC">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 公告弹窗 -->
+  <div class="modal-mask" id="annModal" data-page-node-id="LhEVt8bGDJibRxJciKAC9M">
+    <div class="modal" data-page-node-id="TD9Al7omwyCmIvkQi2RuUz">
+      <h3 id="annModalTitle" data-page-node-id="v4HexSD7UyfiAoK4apxZR9">公告</h3>
+      <div class="field" data-page-node-id="32KMkjFNJY7UAcaGqoXvsZ">
+        <label data-page-node-id="EljOF5z9P5V4CREcZEn3L7">类型</label>
+        <select id="annType" data-page-node-id="QH1nkM7ndHTpNxyaLy0UnE">
+          <option value="notice" data-page-node-id="7xvoPah76KxZtAcvQN8GuE">通知</option>
+          <option value="event" data-page-node-id="AQV8e9cv4fw5CdE4CF2Ezp">活动</option>
+          <option value="maintenance" data-page-node-id="hh6ypm8gI2Obneo7x4rIwV">维护</option>
+        </select>
+      </div>
+      <div class="field" data-page-node-id="j8KVXc3L0GJYFWMIxn4GPE"><label data-page-node-id="BXw2Ry6ZNED0fsA3G1m4kH">标题</label><input id="annTitle" type="text" data-page-node-id="pUZXzYBhi08Qg3aoTqmPNA" /></div>
+      <div class="field" data-page-node-id="w0gQQBXgYP3Q5uiQLJDUIk"><label data-page-node-id="cIJBY0cC7O9ijsR3Pp1HW3">内容</label><textarea id="annContent" rows="4"></textarea></div>
+      <div class="field" data-page-node-id="uxWqKPfkzOS5NVCnMZVLJk"><label data-page-node-id="yBgnojpvlnVwE2u0XDvTmN">启用</label>
+        <select id="annEnabled" data-page-node-id="XkWEnCzCtU8yLrttZdC1Gk"><option value="1" data-page-node-id="AEKrCZIENZfNCFqNo2OJ1O">启用</option><option value="0" data-page-node-id="hqhSHEELRERjfV8T5G9vaW">停用</option></select>
+      </div>
+      <div class="modal-actions" data-page-node-id="f5CntJX5iE89NMZsvmGZsp">
+        <button class="btn btn-ghost" onclick="closeModal('annModal')" data-page-node-id="RGOXarGxVH2CUD6WeErWUt">取消</button>
+        <button class="btn btn-primary" id="annSave" data-page-node-id="IyFzhPImFomfDx4SY8MEK2">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建管理员弹窗 -->
+  <div class="modal-mask" id="admModal" data-page-node-id="RNa4d73zEtTTRYrGd0kor5">
+    <div class="modal" data-page-node-id="w3LjE7HbfZEXBWZKzs7SrP">
+      <h3 data-page-node-id="DwMkKtPDt5efxmqaNAORuv">新建管理员</h3>
+      <div class="field" data-page-node-id="HgQBLsiST5hax5aAhnBJmd"><label data-page-node-id="8YLLTkrjnOG5PW1H7TteKy">用户名</label><input id="admUsername" type="text" data-page-node-id="VVIuMcrLfCfPRFzCS54kmb" /></div>
+      <div class="field" data-page-node-id="QELV1SOvcTHXkZ1Ee8lTdI"><label data-page-node-id="xqkMoE0nd9iFqG9ie7eWBb">密码</label><input id="admPassword" type="password" data-page-node-id="IOjSeMC4AlVWWIBgkiYN23" /></div>
+      <div class="field" data-page-node-id="vTp1UO5wRzvaQ0BWXTBnKq"><label data-page-node-id="vL3Nq6CRsKa3PBA7dNAikd">角色</label>
+        <select id="admRole" data-page-node-id="AvGVbJET76ZA5EPzY8wshi">
+          <option value="operator" data-page-node-id="AsYZkSDFivnkjPDpEu2EaT">operator（可改数据）</option>
+          <option value="readonly" data-page-node-id="cOgDbHBbdvvl1zkrhGRLH6">readonly（只读）</option>
+          <option value="superadmin" data-page-node-id="AlYvjZd7FIA01ocgRph6vH">superadmin（超管）</option>
+        </select>
+      </div>
+      <div class="modal-actions" data-page-node-id="1cJ36pogKcZ0dMkddRMOeG">
+        <button class="btn btn-ghost" onclick="closeModal('admModal')" data-page-node-id="dIzZcmYhfeIsBrQXqZRoCx">取消</button>
+        <button class="btn btn-primary" id="admSave" data-page-node-id="6dPq7MxgJm705gJxLm0CY2">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

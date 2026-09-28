@@ -1,0 +1,4163 @@
+/**
+ * Auto-generated from skills.json
+ * Do not edit. Regenerate via: npm run build:config
+ *
+ * 微信小游戏专用: require('../../config/skills.js') 即可加载
+ */
+module.exports = {
+  "_doc": "兵种技能配置表（由 tools/gen-skills.mjs 确定性生成，勿手改——改生成脚本后重跑）\n结构：每个兵种 6 技能 = 蓝色被动×3(默认解锁) + 紫色被动×2(Lv6/Lv12解锁) + 橙色主动×1(Lv18解锁)\n品质对应：3=稀有(蓝) 4=史诗(紫) 5=传说(橙)；主动技能战斗中冷却到了自动定时释放\n玩家兵种解锁：蓝默认 / 紫 Lv.6、Lv.12 / 橙 Lv.18（兵种品质≥5 默认解锁橙色主动）\n敌方种族单位解锁（按AI难度档位）：easy=仅蓝色 / normal=+紫1 / hard=+紫2 / nightmare=全解锁\nunits: 玩家兵种（key=deployables.json unitId）；raceUnits: 敌方种族单位（key=种族_兵营等级）",
+  "unlockRules": {
+    "maxUnitLevel": 20,
+    "orangeQualityAutoUnlock": 5,
+    "unlockLevels": {
+      "purple1": 6,
+      "purple2": 12,
+      "orange": 18
+    }
+  },
+  "enemyDifficultyTiers": {
+    "easy": 0,
+    "normal": 1,
+    "hard": 2,
+    "nightmare": 3
+  },
+  "units": {
+    "swordsman": [
+      {
+        "id": "swordsman_b1",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "swordsman_b2",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "swordsman_b3",
+        "name": "致命一击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "swordsman_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "swordsman_p2",
+        "name": "绝对力量",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "swordsman_o1",
+        "name": "猎杀时刻",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "archer": [
+      {
+        "id": "archer_b1",
+        "name": "会心强化",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "archer_b2",
+        "name": "破绽捕捉",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "archer_b3",
+        "name": "装甲克星",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "archer_p1",
+        "name": "猎杀本能",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "archer_p2",
+        "name": "洞穿一切",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 12,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "archer_o1",
+        "name": "锐不可当",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "spearman": [
+      {
+        "id": "spearman_b1",
+        "name": "猛攻战术",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "spearman_b2",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "spearman_b3",
+        "name": "不屈战魂",
+        "quality": 3,
+        "kind": "passive",
+        "type": "execute_bonus",
+        "value": 0.2,
+        "unlockLevel": 1,
+        "desc": "全体被动：残血(≤50%)时攻击 +20%"
+      },
+      {
+        "id": "spearman_p1",
+        "name": "王者之师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "spearman_p2",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "spearman_o1",
+        "name": "锐不可当",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "scout": [
+      {
+        "id": "scout_b1",
+        "name": "致命瞄准",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "scout_b2",
+        "name": "破甲专精",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "scout_b3",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "scout_p1",
+        "name": "破城重锤",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 6,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "scout_p2",
+        "name": "猎杀本能",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "scout_o1",
+        "name": "裂空之光",
+        "quality": 5,
+        "kind": "active",
+        "type": "ray",
+        "cooldown": 22,
+        "power": 0.28,
+        "cap": 0.2,
+        "range": 6,
+        "width": 0.8,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地发射 6 格射线的毁灭光束，命中直线上所有敌方队伍（每22秒自动释放）"
+      }
+    ],
+    "militia": [
+      {
+        "id": "militia_b1",
+        "name": "尖刺护体",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "militia_b2",
+        "name": "铁壁格挡",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "militia_b3",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "militia_p1",
+        "name": "战术大师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "militia_p2",
+        "name": "战魂觉醒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "militia_o1",
+        "name": "致命突刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "slinger": [
+      {
+        "id": "slinger_b1",
+        "name": "弱点洞察",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "slinger_b2",
+        "name": "狂暴连击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "slinger_b3",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "slinger_p1",
+        "name": "洞穿一切",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 6,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "slinger_p2",
+        "name": "暴虐本能",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.3,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击伤害 +30%"
+      },
+      {
+        "id": "slinger_o1",
+        "name": "狂飙冲锋",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "apprentice": [
+      {
+        "id": "apprentice_b1",
+        "name": "会心强化",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "apprentice_b2",
+        "name": "范围压制",
+        "quality": 3,
+        "kind": "passive",
+        "type": "splash",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：溅射伤害 +15%"
+      },
+      {
+        "id": "apprentice_b3",
+        "name": "辉光加持",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "apprentice_p1",
+        "name": "大魔导",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "apprentice_p2",
+        "name": "死亡标记",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "apprentice_o1",
+        "name": "天降流星",
+        "quality": 5,
+        "kind": "active",
+        "type": "aoe",
+        "cooldown": 26,
+        "power": 0.35,
+        "radius": 2.5,
+        "cap": 0.18,
+        "unlockLevel": 18,
+        "desc": "主动技能：对 2.5 格内所有敌方队伍各造成 35% 自身战力的范围伤害（每26秒自动释放）"
+      }
+    ],
+    "shieldbearer": [
+      {
+        "id": "shieldbearer_b1",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "shieldbearer_b2",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "shieldbearer_b3",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "shieldbearer_p1",
+        "name": "毁灭打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "shieldbearer_p2",
+        "name": "镜面反噬",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "shieldbearer_o1",
+        "name": "锐不可当",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "knight": [
+      {
+        "id": "knight_b1",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "knight_b2",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "knight_b3",
+        "name": "反震力场",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "knight_p1",
+        "name": "战术大师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "knight_p2",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "knight_o1",
+        "name": "无双贯刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "berserker": [
+      {
+        "id": "berserker_b1",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "berserker_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "berserker_b3",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "berserker_p1",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "berserker_p2",
+        "name": "报复风暴",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "berserker_o1",
+        "name": "狂妄挑衅",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ],
+    "skeleton": [
+      {
+        "id": "skeleton_b1",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "skeleton_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "skeleton_b3",
+        "name": "反震力场",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "skeleton_p1",
+        "name": "报复风暴",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "skeleton_p2",
+        "name": "战术大师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "skeleton_o1",
+        "name": "致命突刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "warrior": [
+      {
+        "id": "warrior_b1",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "warrior_b2",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "warrior_b3",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "warrior_p1",
+        "name": "苦痛返还",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "warrior_p2",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "warrior_o1",
+        "name": "瞬影突袭",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "hunter": [
+      {
+        "id": "hunter_b1",
+        "name": "穿透打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "hunter_b2",
+        "name": "会心强化",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "hunter_b3",
+        "name": "精准打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "hunter_p1",
+        "name": "龙牙穿击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 6,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "hunter_p2",
+        "name": "精准专精",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "hunter_o1",
+        "name": "无双贯刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "priest": [
+      {
+        "id": "priest_b1",
+        "name": "精准打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "priest_b2",
+        "name": "奥术共鸣",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "priest_b3",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "priest_p1",
+        "name": "元素主宰",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "priest_p2",
+        "name": "暴虐本能",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.3,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击伤害 +30%"
+      },
+      {
+        "id": "priest_o1",
+        "name": "长驱直入",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "guardsman": [
+      {
+        "id": "guardsman_b1",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "guardsman_b2",
+        "name": "尖刺护体",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "guardsman_b3",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "guardsman_p1",
+        "name": "毁灭打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "guardsman_p2",
+        "name": "巍然不动",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "guardsman_o1",
+        "name": "精准狙杀",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "pirate": [
+      {
+        "id": "pirate_b1",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "pirate_b2",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "pirate_b3",
+        "name": "反震力场",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "pirate_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "pirate_p2",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "pirate_o1",
+        "name": "猎杀时刻",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "crossbowman": [
+      {
+        "id": "crossbowman_b1",
+        "name": "锋锐穿刺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "crossbowman_b2",
+        "name": "精准打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "crossbowman_b3",
+        "name": "怒意爆发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "crossbowman_p1",
+        "name": "猎杀本能",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "crossbowman_p2",
+        "name": "无视防御",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 12,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "crossbowman_o1",
+        "name": "狂飙冲锋",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "ranger": [
+      {
+        "id": "ranger_b1",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "ranger_b2",
+        "name": "弱点洞察",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "ranger_b3",
+        "name": "穿透打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "ranger_p1",
+        "name": "龙牙穿击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 6,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "ranger_p2",
+        "name": "影袭直觉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "ranger_o1",
+        "name": "锐不可当",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "pikeman": [
+      {
+        "id": "pikeman_b1",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "pikeman_b2",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "pikeman_b3",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "pikeman_p1",
+        "name": "绝对力量",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "pikeman_p2",
+        "name": "圣盾庇护",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "pikeman_o1",
+        "name": "呼唤同伴",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "marksman": [
+      {
+        "id": "marksman_b1",
+        "name": "致命一击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "marksman_b2",
+        "name": "绝境反击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "execute_bonus",
+        "value": 0.2,
+        "unlockLevel": 1,
+        "desc": "全体被动：残血(≤50%)时攻击 +20%"
+      },
+      {
+        "id": "marksman_b3",
+        "name": "致命瞄准",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "marksman_p1",
+        "name": "精准专精",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "marksman_p2",
+        "name": "无视防御",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 12,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "marksman_o1",
+        "name": "聚能炮击",
+        "quality": 5,
+        "kind": "active",
+        "type": "ray",
+        "cooldown": 22,
+        "power": 0.28,
+        "cap": 0.2,
+        "range": 6,
+        "width": 0.8,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地发射 6 格射线的毁灭光束，命中直线上所有敌方队伍（每22秒自动释放）"
+      }
+    ],
+    "ice_mage": [
+      {
+        "id": "ice_mage_b1",
+        "name": "辉光加持",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "ice_mage_b2",
+        "name": "会心强化",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "ice_mage_b3",
+        "name": "飞溅碎片",
+        "quality": 3,
+        "kind": "passive",
+        "type": "splash",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：溅射伤害 +15%"
+      },
+      {
+        "id": "ice_mage_p1",
+        "name": "禁咒精通",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "ice_mage_p2",
+        "name": "斩首打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.3,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击伤害 +30%"
+      },
+      {
+        "id": "ice_mage_o1",
+        "name": "无双贯刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "templar": [
+      {
+        "id": "templar_b1",
+        "name": "反震力场",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "templar_b2",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "templar_b3",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "templar_p1",
+        "name": "镜面反噬",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "templar_p2",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "templar_o1",
+        "name": "挑衅怒吼",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ],
+    "chariot": [
+      {
+        "id": "chariot_b1",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "chariot_b2",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "chariot_b3",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "chariot_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "chariot_p2",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "chariot_o1",
+        "name": "致命突刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "beast_tamer": [
+      {
+        "id": "beast_tamer_b1",
+        "name": "破绽捕捉",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "beast_tamer_b2",
+        "name": "装甲克星",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "beast_tamer_b3",
+        "name": "致命一击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "beast_tamer_p1",
+        "name": "破城重锤",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 6,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "beast_tamer_p2",
+        "name": "修罗战场",
+        "quality": 4,
+        "kind": "passive",
+        "type": "execute_bonus",
+        "value": 0.4,
+        "unlockLevel": 12,
+        "desc": "全体被动：残血(≤50%)时攻击 +40%"
+      },
+      {
+        "id": "beast_tamer_o1",
+        "name": "湮灭射线",
+        "quality": 5,
+        "kind": "active",
+        "type": "ray",
+        "cooldown": 22,
+        "power": 0.28,
+        "cap": 0.2,
+        "range": 6,
+        "width": 0.8,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地发射 6 格射线的毁灭光束，命中直线上所有敌方队伍（每22秒自动释放）"
+      }
+    ],
+    "mage": [
+      {
+        "id": "mage_b1",
+        "name": "元素亲和",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "mage_b2",
+        "name": "致命瞄准",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "mage_b3",
+        "name": "飞溅碎片",
+        "quality": 3,
+        "kind": "passive",
+        "type": "splash",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：溅射伤害 +15%"
+      },
+      {
+        "id": "mage_p1",
+        "name": "精准专精",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "mage_p2",
+        "name": "弹幕风暴",
+        "quality": 4,
+        "kind": "passive",
+        "type": "splash",
+        "value": 0.3,
+        "unlockLevel": 12,
+        "desc": "全体被动：溅射伤害 +30%"
+      },
+      {
+        "id": "mage_o1",
+        "name": "召唤援军",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "paladin": [
+      {
+        "id": "paladin_b1",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "paladin_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "paladin_b3",
+        "name": "铁壁格挡",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "paladin_p1",
+        "name": "战魂觉醒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "paladin_p2",
+        "name": "绝对力量",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "paladin_o1",
+        "name": "闪电冲刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "executioner": [
+      {
+        "id": "executioner_b1",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "executioner_b2",
+        "name": "猛攻战术",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "executioner_b3",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "executioner_p1",
+        "name": "毁灭打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "executioner_p2",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "executioner_o1",
+        "name": "弑神一击",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "battle_mage": [
+      {
+        "id": "battle_mage_b1",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "battle_mage_b2",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "battle_mage_b3",
+        "name": "荆棘反甲",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "battle_mage_p1",
+        "name": "镜面反噬",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "battle_mage_p2",
+        "name": "战魂觉醒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "battle_mage_o1",
+        "name": "精准狙杀",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "archmage": [
+      {
+        "id": "archmage_b1",
+        "name": "弱点洞察",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "archmage_b2",
+        "name": "元素亲和",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "archmage_b3",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "archmage_p1",
+        "name": "精准专精",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "archmage_p2",
+        "name": "大魔导",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "archmage_o1",
+        "name": "援军入场",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "crusader": [
+      {
+        "id": "crusader_b1",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "crusader_b2",
+        "name": "厚重护甲",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "crusader_b3",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "crusader_p1",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "crusader_p2",
+        "name": "王者之师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "crusader_o1",
+        "name": "无畏宣言",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ],
+    "necromancer": [
+      {
+        "id": "necromancer_b1",
+        "name": "会心强化",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "necromancer_b2",
+        "name": "破绽捕捉",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "necromancer_b3",
+        "name": "溅射武器",
+        "quality": 3,
+        "kind": "passive",
+        "type": "splash",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：溅射伤害 +15%"
+      },
+      {
+        "id": "necromancer_p1",
+        "name": "斩首打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.3,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击伤害 +30%"
+      },
+      {
+        "id": "necromancer_p2",
+        "name": "元素主宰",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "necromancer_o1",
+        "name": "弹幕洗礼",
+        "quality": 5,
+        "kind": "active",
+        "type": "aoe",
+        "cooldown": 26,
+        "power": 0.35,
+        "radius": 2.5,
+        "cap": 0.18,
+        "unlockLevel": 18,
+        "desc": "主动技能：对 2.5 格内所有敌方队伍各造成 35% 自身战力的范围伤害（每26秒自动释放）"
+      }
+    ],
+    "vampire": [
+      {
+        "id": "vampire_b1",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "vampire_b2",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "vampire_b3",
+        "name": "铁壁格挡",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "vampire_p1",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "vampire_p2",
+        "name": "荆棘壁垒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "vampire_o1",
+        "name": "极速冲锋",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "steam_tank": [
+      {
+        "id": "steam_tank_b1",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "steam_tank_b2",
+        "name": "厚重护甲",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "steam_tank_b3",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "steam_tank_p1",
+        "name": "王者之师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "steam_tank_p2",
+        "name": "镜面反噬",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "steam_tank_o1",
+        "name": "精准狙杀",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "death_knight": [
+      {
+        "id": "death_knight_b1",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "death_knight_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "death_knight_b3",
+        "name": "厚重护甲",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "death_knight_p1",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "death_knight_p2",
+        "name": "究极武装",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "death_knight_o1",
+        "name": "狂妄挑衅",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ],
+    "storm_mage": [
+      {
+        "id": "storm_mage_b1",
+        "name": "怒意爆发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "storm_mage_b2",
+        "name": "奥术共鸣",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "storm_mage_b3",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "storm_mage_p1",
+        "name": "魔力洪流",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "storm_mage_p2",
+        "name": "影袭直觉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "storm_mage_o1",
+        "name": "毁灭光束",
+        "quality": 5,
+        "kind": "active",
+        "type": "ray",
+        "cooldown": 22,
+        "power": 0.28,
+        "cap": 0.2,
+        "range": 6,
+        "width": 0.8,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地发射 6 格射线的毁灭光束，命中直线上所有敌方队伍（每22秒自动释放）"
+      }
+    ],
+    "war_elephant": [
+      {
+        "id": "war_elephant_b1",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "war_elephant_b2",
+        "name": "坚守姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "war_elephant_b3",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "war_elephant_p1",
+        "name": "战魂觉醒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "war_elephant_p2",
+        "name": "镜面反噬",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "war_elephant_o1",
+        "name": "瞬影突袭",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "phoenix": [
+      {
+        "id": "phoenix_b1",
+        "name": "秘法增幅",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "phoenix_b2",
+        "name": "怒意爆发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "phoenix_b3",
+        "name": "精准打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "phoenix_p1",
+        "name": "灭杀一击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.3,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击伤害 +30%"
+      },
+      {
+        "id": "phoenix_p2",
+        "name": "大魔导",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "phoenix_o1",
+        "name": "猎杀时刻",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "dragonling": [
+      {
+        "id": "dragonling_b1",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dragonling_b2",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "dragonling_b3",
+        "name": "荆棘反甲",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "dragonling_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "dragonling_p2",
+        "name": "战术大师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "dragonling_o1",
+        "name": "援军入场",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "war_titan": [
+      {
+        "id": "war_titan_b1",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "war_titan_b2",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "war_titan_b3",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "war_titan_p1",
+        "name": "战魂觉醒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "war_titan_p2",
+        "name": "巍然不动",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "war_titan_o1",
+        "name": "长驱直入",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "archdragon": [
+      {
+        "id": "archdragon_b1",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "archdragon_b2",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "archdragon_b3",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "archdragon_p1",
+        "name": "荆棘壁垒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "archdragon_p2",
+        "name": "究极武装",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "archdragon_o1",
+        "name": "嘲讽战吼",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ]
+  },
+  "raceUnits": {
+    "human_1": [
+      {
+        "id": "human_1_b1",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "human_1_b2",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "human_1_b3",
+        "name": "浴血奋战",
+        "quality": 3,
+        "kind": "passive",
+        "type": "execute_bonus",
+        "value": 0.2,
+        "unlockLevel": 1,
+        "desc": "全体被动：残血(≤50%)时攻击 +20%"
+      },
+      {
+        "id": "human_1_p1",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "human_1_p2",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "human_1_o1",
+        "name": "狂妄挑衅",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ],
+    "human_2": [
+      {
+        "id": "human_2_b1",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "human_2_b2",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "human_2_b3",
+        "name": "致命一击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "human_2_p1",
+        "name": "无双乱舞",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "human_2_p2",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "human_2_o1",
+        "name": "疾风突进",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "human_3": [
+      {
+        "id": "human_3_b1",
+        "name": "反震力场",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "human_3_b2",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "human_3_b3",
+        "name": "怒意爆发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "human_3_p1",
+        "name": "荆棘壁垒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "human_3_p2",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "human_3_o1",
+        "name": "援军入场",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "human_4": [
+      {
+        "id": "human_4_b1",
+        "name": "猛攻战术",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "human_4_b2",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "human_4_b3",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "human_4_p1",
+        "name": "绝对力量",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "human_4_p2",
+        "name": "荆棘壁垒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "human_4_o1",
+        "name": "极速冲锋",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "beast_1": [
+      {
+        "id": "beast_1_b1",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "beast_1_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "beast_1_b3",
+        "name": "猛攻战术",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "beast_1_p1",
+        "name": "王者之师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "beast_1_p2",
+        "name": "巍然不动",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "beast_1_o1",
+        "name": "闪电冲刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "dash",
+        "cooldown": 18,
+        "speedMult": 3,
+        "duration": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：行军速度提升至 3 倍持续 3 秒，快速突进战场（每18秒自动释放）"
+      }
+    ],
+    "beast_2": [
+      {
+        "id": "beast_2_b1",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "beast_2_b2",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "beast_2_b3",
+        "name": "弱点洞察",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "beast_2_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "beast_2_p2",
+        "name": "处决艺术",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.3,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击伤害 +30%"
+      },
+      {
+        "id": "beast_2_o1",
+        "name": "长驱直入",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "beast_3": [
+      {
+        "id": "beast_3_b1",
+        "name": "稳固阵型",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "beast_3_b2",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "beast_3_b3",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "beast_3_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "beast_3_p2",
+        "name": "绝对防御",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "beast_3_o1",
+        "name": "呼唤同伴",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "beast_4": [
+      {
+        "id": "beast_4_b1",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "beast_4_b2",
+        "name": "猛攻战术",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "beast_4_b3",
+        "name": "反震力场",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "beast_4_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "beast_4_p2",
+        "name": "绝对防御",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "beast_4_o1",
+        "name": "呼唤同伴",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "undead_1": [
+      {
+        "id": "undead_1_b1",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "undead_1_b2",
+        "name": "尖刺护体",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "undead_1_b3",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "undead_1_p1",
+        "name": "王者之师",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "undead_1_p2",
+        "name": "苦痛返还",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "undead_1_o1",
+        "name": "呼唤同伴",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "undead_2": [
+      {
+        "id": "undead_2_b1",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "undead_2_b2",
+        "name": "撕裂打击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "undead_2_b3",
+        "name": "会心强化",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "undead_2_p1",
+        "name": "苦痛返还",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "undead_2_p2",
+        "name": "巍然不动",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "undead_2_o1",
+        "name": "破军穿刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "undead_3": [
+      {
+        "id": "undead_3_b1",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "undead_3_b2",
+        "name": "辉光加持",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "undead_3_b3",
+        "name": "致命一击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "undead_3_p1",
+        "name": "猎杀本能",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "undead_3_p2",
+        "name": "禁咒精通",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "undead_3_o1",
+        "name": "战场增援",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "undead_4": [
+      {
+        "id": "undead_4_b1",
+        "name": "元素亲和",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "undead_4_b2",
+        "name": "狂暴连击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "undead_4_b3",
+        "name": "横扫攻击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "splash",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：溅射伤害 +15%"
+      },
+      {
+        "id": "undead_4_p1",
+        "name": "大魔导",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "undead_4_p2",
+        "name": "影袭直觉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "undead_4_o1",
+        "name": "天降流星",
+        "quality": 5,
+        "kind": "active",
+        "type": "aoe",
+        "cooldown": 26,
+        "power": 0.35,
+        "radius": 2.5,
+        "cap": 0.18,
+        "unlockLevel": 18,
+        "desc": "主动技能：对 2.5 格内所有敌方队伍各造成 35% 自身战力的范围伤害（每26秒自动释放）"
+      }
+    ],
+    "elf_1": [
+      {
+        "id": "elf_1_b1",
+        "name": "弱点洞察",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "elf_1_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "elf_1_b3",
+        "name": "破甲专精",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "elf_1_p1",
+        "name": "究极武装",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "elf_1_p2",
+        "name": "死亡标记",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "elf_1_o1",
+        "name": "绝命斩",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "elf_2": [
+      {
+        "id": "elf_2_b1",
+        "name": "破绽捕捉",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击率 +5%"
+      },
+      {
+        "id": "elf_2_b2",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "elf_2_b3",
+        "name": "锋锐穿刺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "elf_2_p1",
+        "name": "龙牙穿击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 6,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "elf_2_p2",
+        "name": "影袭直觉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "elf_2_o1",
+        "name": "破军穿刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "elf_3": [
+      {
+        "id": "elf_3_b1",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "elf_3_b2",
+        "name": "猛攻战术",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "elf_3_b3",
+        "name": "尖刺护体",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "elf_3_p1",
+        "name": "苦痛返还",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "elf_3_p2",
+        "name": "圣盾庇护",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "elf_3_o1",
+        "name": "弑神一击",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "elf_4": [
+      {
+        "id": "elf_4_b1",
+        "name": "尖刺护体",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "elf_4_b2",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "elf_4_b3",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "elf_4_p1",
+        "name": "镜面反噬",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 6,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "elf_4_p2",
+        "name": "毁灭打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "elf_4_o1",
+        "name": "嘲讽战吼",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ],
+    "dwarf_1": [
+      {
+        "id": "dwarf_1_b1",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "dwarf_1_b2",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dwarf_1_b3",
+        "name": "以牙还牙",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "dwarf_1_p1",
+        "name": "狂战血脉",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "dwarf_1_p2",
+        "name": "毁灭打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "dwarf_1_o1",
+        "name": "狂妄挑衅",
+        "quality": 5,
+        "kind": "active",
+        "type": "taunt",
+        "cooldown": 25,
+        "duration": 4,
+        "radius": 3,
+        "unlockLevel": 18,
+        "desc": "主动技能：嘲讽 3 格内敌方队伍 4 秒，强制其攻击本队（每25秒自动释放）"
+      }
+    ],
+    "dwarf_2": [
+      {
+        "id": "dwarf_2_b1",
+        "name": "坚守姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "dwarf_2_b2",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dwarf_2_b3",
+        "name": "顽强体魄",
+        "quality": 3,
+        "kind": "passive",
+        "type": "post_battle_heal",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：战斗后回复 5% 初始兵力"
+      },
+      {
+        "id": "dwarf_2_p1",
+        "name": "圣盾庇护",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "dwarf_2_p2",
+        "name": "再生之力",
+        "quality": 4,
+        "kind": "passive",
+        "type": "post_battle_heal",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：战斗后回复 10% 初始兵力"
+      },
+      {
+        "id": "dwarf_2_o1",
+        "name": "破军穿刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "dwarf_3": [
+      {
+        "id": "dwarf_3_b1",
+        "name": "狂暴连击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "dwarf_3_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dwarf_3_b3",
+        "name": "锋锐穿刺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.3,
+        "unlockLevel": 1,
+        "desc": "全体被动：无视目标 30% 护甲"
+      },
+      {
+        "id": "dwarf_3_p1",
+        "name": "猎杀本能",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_bonus",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击率 +10%"
+      },
+      {
+        "id": "dwarf_3_p2",
+        "name": "龙牙穿击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "armor_pierce",
+        "value": 0.5,
+        "unlockLevel": 12,
+        "desc": "全体被动：无视目标 50% 护甲"
+      },
+      {
+        "id": "dwarf_3_o1",
+        "name": "贯穿长枪",
+        "quality": 5,
+        "kind": "active",
+        "type": "pierce",
+        "cooldown": 24,
+        "power": 0.3,
+        "cap": 0.2,
+        "length": 4,
+        "width": 1.2,
+        "unlockLevel": 18,
+        "desc": "主动技能：向敌方阵地方向贯穿 4 格直线上所有敌方队伍，各造成 30% 战力伤害（每24秒自动释放）"
+      }
+    ],
+    "dwarf_4": [
+      {
+        "id": "dwarf_4_b1",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "dwarf_4_b2",
+        "name": "锋刃磨砺",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dwarf_4_b3",
+        "name": "铁壁格挡",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "dwarf_4_p1",
+        "name": "战魂觉醒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "dwarf_4_p2",
+        "name": "镜面反噬",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：反弹 20% 受到的伤害"
+      },
+      {
+        "id": "dwarf_4_o1",
+        "name": "集结号令",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "dragon_1": [
+      {
+        "id": "dragon_1_b1",
+        "name": "强袭姿态",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dragon_1_b2",
+        "name": "反震力场",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "dragon_1_b3",
+        "name": "重击训练",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "dragon_1_p1",
+        "name": "绝对防御",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 6,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "dragon_1_p2",
+        "name": "毁灭打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "dragon_1_o1",
+        "name": "致命突刺",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "dragon_2": [
+      {
+        "id": "dragon_2_b1",
+        "name": "破甲强击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "dragon_2_b2",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dragon_2_b3",
+        "name": "厚重护甲",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.05,
+        "unlockLevel": 1,
+        "desc": "全体被动：受到伤害减少 5%"
+      },
+      {
+        "id": "dragon_2_p1",
+        "name": "毁灭打击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：伤害加成 +12%"
+      },
+      {
+        "id": "dragon_2_p2",
+        "name": "战魂觉醒",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 12,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "dragon_2_o1",
+        "name": "召唤援军",
+        "quality": 5,
+        "kind": "active",
+        "type": "summon",
+        "cooldown": 30,
+        "ratio": 0.25,
+        "maxWarriors": 30,
+        "unlockLevel": 18,
+        "desc": "主动技能：召唤一支相当于本队 25% 兵力的援军（上限30人，每30秒自动释放）"
+      }
+    ],
+    "dragon_3": [
+      {
+        "id": "dragon_3_b1",
+        "name": "威吓怒吼",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dragon_3_b2",
+        "name": "猛攻战术",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：伤害加成 +6%"
+      },
+      {
+        "id": "dragon_3_b3",
+        "name": "尖刺护体",
+        "quality": 3,
+        "kind": "passive",
+        "type": "damage_reflect",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：反弹 10% 受到的伤害"
+      },
+      {
+        "id": "dragon_3_p1",
+        "name": "究极武装",
+        "quality": 4,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.12,
+        "unlockLevel": 6,
+        "desc": "全体被动：攻击力加成 +12%"
+      },
+      {
+        "id": "dragon_3_p2",
+        "name": "绝对防御",
+        "quality": 4,
+        "kind": "passive",
+        "type": "damage_reduction",
+        "value": 0.1,
+        "unlockLevel": 12,
+        "desc": "全体被动：受到伤害减少 10%"
+      },
+      {
+        "id": "dragon_3_o1",
+        "name": "弑神一击",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ],
+    "dragon_4": [
+      {
+        "id": "dragon_4_b1",
+        "name": "狂暴连击",
+        "quality": 3,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.15,
+        "unlockLevel": 1,
+        "desc": "全体被动：暴击伤害 +15%"
+      },
+      {
+        "id": "dragon_4_b2",
+        "name": "奥术共鸣",
+        "quality": 3,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.1,
+        "unlockLevel": 1,
+        "desc": "全体被动：法术伤害加成 +10%"
+      },
+      {
+        "id": "dragon_4_b3",
+        "name": "战意激发",
+        "quality": 3,
+        "kind": "passive",
+        "type": "attack_bonus",
+        "value": 0.06,
+        "unlockLevel": 1,
+        "desc": "全体被动：攻击力加成 +6%"
+      },
+      {
+        "id": "dragon_4_p1",
+        "name": "灭杀一击",
+        "quality": 4,
+        "kind": "passive",
+        "type": "crit_damage",
+        "value": 0.3,
+        "unlockLevel": 6,
+        "desc": "全体被动：暴击伤害 +30%"
+      },
+      {
+        "id": "dragon_4_p2",
+        "name": "元素主宰",
+        "quality": 4,
+        "kind": "passive",
+        "type": "spell_damage",
+        "value": 0.2,
+        "unlockLevel": 12,
+        "desc": "全体被动：法术伤害加成 +20%"
+      },
+      {
+        "id": "dragon_4_o1",
+        "name": "猎杀时刻",
+        "quality": 5,
+        "kind": "active",
+        "type": "single",
+        "cooldown": 20,
+        "power": 0.55,
+        "cap": 0.35,
+        "unlockLevel": 18,
+        "desc": "主动技能：对最近的敌方队伍造成 55% 自身战力的爆发伤害（每20秒自动释放，最多消灭35%兵力）"
+      }
+    ]
+  }
+};

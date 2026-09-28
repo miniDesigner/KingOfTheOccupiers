@@ -1,0 +1,411 @@
+{
+  "_doc": "关卡配置表 - 每个关卡定义地图大小、双方阵营、胜利条件、星级标准",
+  "_doc_fields": {
+    "id": "关卡ID(唯一)",
+    "name": "关卡名称",
+    "description": "关卡描述(选关卡界面展示)",
+    "mapRadius": "地图半径(环数)，覆盖game.json默认值",
+    "playerBase": "玩家大本营坐标 {q, r}",
+    "enemyBase": "敌方大本营坐标 {q, r}",
+    "enemies": "敌方阵营数组(支持多敌人)",
+    "enemies[].id": "敌方玩家ID(2=红 3=橙 4=紫)",
+    "enemies[].name": "敌方名称",
+    "enemies[].ai": "AI难度(easy/normal/hard/nightmare)",
+    "enemies[].color": "敌方颜色",
+    "enemies[].race": "敌方种族ID(对应races.json)",
+    "enemies[].initialGold": "敌方初始金币",
+    "player.race": "玩家种族ID(关卡默认种族，可被阵容选择覆盖)",
+    "player.initialGold": "玩家初始金币(覆盖默认值)",
+    "winCondition": "胜利条件(destroy_base=摧毁大本营)",
+    "starCriteria.time3": "3星通关时间上限(秒)",
+    "starCriteria.time2": "2星通关时间上限(秒)",
+    "presetBuildings": "预设建筑布局(可选，不填则随机生成)",
+    "recommendedRaces": "推荐种族数组",
+    "unlockRaceOnComplete": "通关后解锁的种族ID",
+    "chapter": "章节(1=教学 2=进阶 3=中级 4=高级 5=挑战)"
+  },
+  "_doc_presetBuildings": "presetBuildings格式: [{q,r,type,level}]，指定格子预设建筑。未列出的格子按tiles.json概率随机分配",
+  "levels": [
+    {
+      "id": 1,
+      "name": "初露锋芒",
+      "description": "消灭兽族部落的大本营",
+      "chapter": 1,
+      "mapRadius": 4,
+      "playerBase": { "q": -4, "r": 0 },
+      "enemyBase": { "q": 4, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族部落", "ai": "easy", "color": "#ef4444", "race": "beast", "initialGold": 50 }
+      ],
+      "player": { "race": "human", "initialGold": 160 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 120, "time2": 180 },
+      "recommendedRaces": ["human"]
+    },
+    {
+      "id": 2,
+      "name": "边关告急",
+      "description": "击退兽族入侵者，守住边疆",
+      "chapter": 1,
+      "mapRadius": 5,
+      "playerBase": { "q": -5, "r": 0 },
+      "enemyBase": { "q": 5, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族先锋", "ai": "easy", "color": "#ef4444", "race": "beast", "initialGold": 70 }
+      ],
+      "player": { "race": "human", "initialGold": 140 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 150, "time2": 210 },
+      "recommendedRaces": ["human"]
+    },
+    {
+      "id": 3,
+      "name": "决战荒原",
+      "description": "在广阔荒原上彻底击败兽族大军",
+      "chapter": 1,
+      "mapRadius": 5,
+      "playerBase": { "q": -5, "r": 0 },
+      "enemyBase": { "q": 5, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族大军", "ai": "easy", "color": "#ef4444", "race": "beast", "initialGold": 90 }
+      ],
+      "player": { "race": "human", "initialGold": 120 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 180, "time2": 240 },
+      "recommendedRaces": ["human"],
+      "unlockRaceOnComplete": "beast"
+    },
+    {
+      "id": 4,
+      "name": "双族交锋",
+      "description": "尝试使用兽族力量，与人族交战",
+      "chapter": 1,
+      "mapRadius": 5,
+      "playerBase": { "q": -5, "r": 0 },
+      "enemyBase": { "q": 5, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "人族守卫", "ai": "easy", "color": "#3b82f6", "race": "human", "initialGold": 100 }
+      ],
+      "player": { "race": "beast", "initialGold": 140 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 150, "time2": 210 },
+      "recommendedRaces": ["beast", "human"]
+    },
+    {
+      "id": 5,
+      "name": "草原围攻",
+      "description": "同时面对两个方向的兽族进攻",
+      "chapter": 1,
+      "mapRadius": 5,
+      "playerBase": { "q": 0, "r": 0 },
+      "enemyBase": { "q": -5, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族左翼", "ai": "easy", "color": "#ef4444", "race": "beast", "initialGold": 60 },
+        { "id": 3, "name": "兽族右翼", "ai": "easy", "color": "#f97316", "race": "beast", "initialGold": 60 }
+      ],
+      "player": { "race": "human", "initialGold": 160 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 180, "time2": 240 },
+      "recommendedRaces": ["human", "beast"]
+    },
+    {
+      "id": 6,
+      "name": "箭塔防线",
+      "description": "利用箭塔远程防御，抵御兽族猛攻",
+      "chapter": 2,
+      "mapRadius": 5,
+      "playerBase": { "q": -5, "r": 0 },
+      "enemyBase": { "q": 5, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族精锐", "ai": "normal", "color": "#ef4444", "race": "beast", "initialGold": 100 }
+      ],
+      "player": { "race": "human", "initialGold": 130 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 180, "time2": 240 },
+      "recommendedRaces": ["human", "beast"],
+      "presetBuildings": [
+        { "q": -3, "r": 0, "type": "arrow_tower", "level": 1 },
+        { "q": -2, "r": -1, "type": "barracks", "level": 2 },
+        { "q": -2, "r": 1, "type": "gold_mine", "level": 2 },
+        { "q": 0, "r": 0, "type": "barracks", "level": 2 },
+        { "q": 2, "r": -1, "type": "barracks", "level": 2 },
+        { "q": 2, "r": 1, "type": "arrow_tower", "level": 1 }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "金山争夺",
+      "description": "控制地图中央的金矿区获取经济优势",
+      "chapter": 2,
+      "mapRadius": 5,
+      "playerBase": { "q": -5, "r": 0 },
+      "enemyBase": { "q": 5, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族财阀", "ai": "normal", "color": "#ef4444", "race": "beast", "initialGold": 120 }
+      ],
+      "player": { "race": "human", "initialGold": 100 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 180, "time2": 240 },
+      "recommendedRaces": ["human", "beast"],
+      "presetBuildings": [
+        { "q": -1, "r": 0, "type": "gold_mine", "level": 2 },
+        { "q": 0, "r": 0, "type": "gold_mine", "level": 2 },
+        { "q": 1, "r": 0, "type": "gold_mine", "level": 2 },
+        { "q": 0, "r": -1, "type": "barracks", "level": 2 },
+        { "q": 0, "r": 1, "type": "barracks", "level": 2 }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "亡灵苏醒",
+      "description": "面对从墓地中苏醒的亡灵军团",
+      "chapter": 2,
+      "mapRadius": 5,
+      "playerBase": { "q": -5, "r": 0 },
+      "enemyBase": { "q": 5, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "亡灵军团", "ai": "normal", "color": "#8b5cf6", "race": "undead", "initialGold": 110 }
+      ],
+      "player": { "race": "human", "initialGold": 130 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 180, "time2": 240 },
+      "recommendedRaces": ["human", "beast"],
+      "unlockRaceOnComplete": "undead"
+    },
+    {
+      "id": 9,
+      "name": "双族搭配",
+      "description": "运用人族与兽族的双族羁绊协同作战",
+      "chapter": 2,
+      "mapRadius": 6,
+      "playerBase": { "q": -6, "r": 0 },
+      "enemyBase": { "q": 6, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "亡灵领主", "ai": "normal", "color": "#8b5cf6", "race": "undead", "initialGold": 130 }
+      ],
+      "player": { "race": "human", "initialGold": 140 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 210, "time2": 270 },
+      "recommendedRaces": ["human", "beast"]
+    },
+    {
+      "id": 10,
+      "name": "亡灵vs亡灵",
+      "description": "用亡灵的力量对抗亡灵本族",
+      "chapter": 2,
+      "mapRadius": 6,
+      "playerBase": { "q": -6, "r": 0 },
+      "enemyBase": { "q": 6, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "巫妖王", "ai": "normal", "color": "#8b5cf6", "race": "undead", "initialGold": 140 },
+        { "id": 3, "name": "死灵法师", "ai": "easy", "color": "#f97316", "race": "undead", "initialGold": 80 }
+      ],
+      "player": { "race": "undead", "initialGold": 150 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 210, "time2": 270 },
+      "recommendedRaces": ["undead", "human", "beast"]
+    },
+    {
+      "id": 11,
+      "name": "精灵森林",
+      "description": "深入精灵森林，面对敏捷的精灵射手",
+      "chapter": 3,
+      "mapRadius": 6,
+      "playerBase": { "q": -6, "r": 0 },
+      "enemyBase": { "q": 6, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "精灵议会", "ai": "hard", "color": "#10b981", "race": "elf", "initialGold": 140 }
+      ],
+      "player": { "race": "human", "initialGold": 140 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 210, "time2": 300 },
+      "recommendedRaces": ["human", "undead", "beast"]
+    },
+    {
+      "id": 12,
+      "name": "三族联军",
+      "description": "同时对抗精灵和亡灵的联合进攻",
+      "chapter": 3,
+      "mapRadius": 6,
+      "playerBase": { "q": 0, "r": 0 },
+      "enemyBase": { "q": 6, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "精灵射手团", "ai": "hard", "color": "#10b981", "race": "elf", "initialGold": 110 },
+        { "id": 3, "name": "亡灵散兵", "ai": "normal", "color": "#8b5cf6", "race": "undead", "initialGold": 90 }
+      ],
+      "player": { "race": "human", "initialGold": 160 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 240, "time2": 300 },
+      "recommendedRaces": ["human", "beast", "undead"],
+      "unlockRaceOnComplete": "elf"
+    },
+    {
+      "id": 13,
+      "name": "精灵之怒",
+      "description": "用精灵族的高暴击快速击溃敌方防线",
+      "chapter": 3,
+      "mapRadius": 6,
+      "playerBase": { "q": -6, "r": 0 },
+      "enemyBase": { "q": 6, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族狂战团", "ai": "hard", "color": "#ef4444", "race": "beast", "initialGold": 150 }
+      ],
+      "player": { "race": "elf", "initialGold": 140 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 210, "time2": 270 },
+      "recommendedRaces": ["elf", "human"]
+    },
+    {
+      "id": 14,
+      "name": "要塞攻防",
+      "description": "攻克重重箭塔防御的敌方要塞",
+      "chapter": 3,
+      "mapRadius": 6,
+      "playerBase": { "q": -6, "r": 0 },
+      "enemyBase": { "q": 6, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "要塞守军", "ai": "hard", "color": "#ef4444", "race": "beast", "initialGold": 160 }
+      ],
+      "player": { "race": "human", "initialGold": 150 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 240, "time2": 300 },
+      "recommendedRaces": ["elf", "human", "undead"],
+      "presetBuildings": [
+        { "q": 3, "r": -1, "type": "arrow_tower", "level": 1 },
+        { "q": 3, "r": 0, "type": "arrow_tower", "level": 1 },
+        { "q": 3, "r": 1, "type": "arrow_tower", "level": 1 },
+        { "q": 4, "r": -1, "type": "barracks", "level": 3 },
+        { "q": 4, "r": 1, "type": "barracks", "level": 3 },
+        { "q": 5, "r": -1, "type": "gold_mine", "level": 2 },
+        { "q": 5, "r": 1, "type": "gold_mine", "level": 2 }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "三方混战",
+      "description": "在精灵、亡灵和兽族的三方混战中生存",
+      "chapter": 3,
+      "mapRadius": 6,
+      "playerBase": { "q": 0, "r": -6 },
+      "enemyBase": { "q": 6, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "精灵王", "ai": "hard", "color": "#10b981", "race": "elf", "initialGold": 130 },
+        { "id": 3, "name": "亡灵君王", "ai": "hard", "color": "#8b5cf6", "race": "undead", "initialGold": 130 }
+      ],
+      "player": { "race": "human", "initialGold": 170 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 270, "time2": 330 },
+      "recommendedRaces": ["elf", "human", "undead", "beast"]
+    },
+    {
+      "id": 16,
+      "name": "矮人要塞",
+      "description": "面对坚不可摧的矮人防御工事",
+      "chapter": 4,
+      "mapRadius": 7,
+      "playerBase": { "q": -7, "r": 0 },
+      "enemyBase": { "q": 7, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "矮人堡垒", "ai": "hard", "color": "#f59e0b", "race": "dwarf", "initialGold": 160 }
+      ],
+      "player": { "race": "human", "initialGold": 150 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 270, "time2": 330 },
+      "recommendedRaces": ["elf", "human", "undead", "beast"],
+      "presetBuildings": [
+        { "q": 4, "r": 0, "type": "arrow_tower", "level": 1 },
+        { "q": 4, "r": -1, "type": "arrow_tower", "level": 1 },
+        { "q": 4, "r": 1, "type": "arrow_tower", "level": 1 },
+        { "q": 5, "r": 0, "type": "barracks", "level": 3 },
+        { "q": 5, "r": -1, "type": "barracks", "level": 3 },
+        { "q": 5, "r": 1, "type": "barracks", "level": 3 },
+        { "q": 6, "r": 0, "type": "gold_mine", "level": 2 }
+      ],
+      "unlockRaceOnComplete": "dwarf"
+    },
+    {
+      "id": 17,
+      "name": "矮人之力",
+      "description": "运用矮人的坚固防御和反伤能力",
+      "chapter": 4,
+      "mapRadius": 7,
+      "playerBase": { "q": -7, "r": 0 },
+      "enemyBase": { "q": 7, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族狂潮", "ai": "hard", "color": "#ef4444", "race": "beast", "initialGold": 170 }
+      ],
+      "player": { "race": "dwarf", "initialGold": 150 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 240, "time2": 300 },
+      "recommendedRaces": ["dwarf", "human", "elf"]
+    },
+    {
+      "id": 18,
+      "name": "四方大战",
+      "description": "面对三个不同种族的敌方势力围攻",
+      "chapter": 4,
+      "mapRadius": 7,
+      "playerBase": { "q": 0, "r": 0 },
+      "enemyBase": { "q": 7, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族王", "ai": "hard", "color": "#ef4444", "race": "beast", "initialGold": 120 },
+        { "id": 3, "name": "亡灵王", "ai": "hard", "color": "#8b5cf6", "race": "undead", "initialGold": 120 },
+        { "id": 4, "name": "精灵王", "ai": "hard", "color": "#10b981", "race": "elf", "initialGold": 120 }
+      ],
+      "player": { "race": "dwarf", "initialGold": 180 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 300, "time2": 360 },
+      "recommendedRaces": ["dwarf", "human", "beast"]
+    },
+    {
+      "id": 19,
+      "name": "龙之试炼",
+      "description": "面对传说中的龙族势力，一切防御都显得脆弱",
+      "chapter": 4,
+      "mapRadius": 7,
+      "playerBase": { "q": -7, "r": 0 },
+      "enemyBase": { "q": 7, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "古龙", "ai": "nightmare", "color": "#dc2626", "race": "dragon", "initialGold": 180 }
+      ],
+      "player": { "race": "human", "initialGold": 160 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 270, "time2": 330 },
+      "recommendedRaces": ["dwarf", "elf", "human", "undead"],
+      "presetBuildings": [
+        { "q": 4, "r": 0, "type": "barracks", "level": 4 },
+        { "q": 5, "r": -1, "type": "barracks", "level": 3 },
+        { "q": 5, "r": 1, "type": "barracks", "level": 3 },
+        { "q": 6, "r": 0, "type": "arrow_tower", "level": 1 }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "终极决战",
+      "description": "面对三族首领的终极围攻，证明你才是真正的占地之王",
+      "chapter": 5,
+      "mapRadius": 7,
+      "playerBase": { "q": 0, "r": 0 },
+      "enemyBase": { "q": 7, "r": 0 },
+      "enemies": [
+        { "id": 2, "name": "兽族大帝", "ai": "nightmare", "color": "#ef4444", "race": "beast", "initialGold": 150 },
+        { "id": 3, "name": "亡灵君王", "ai": "nightmare", "color": "#8b5cf6", "race": "undead", "initialGold": 150 },
+        { "id": 4, "name": "龙族始祖", "ai": "nightmare", "color": "#dc2626", "race": "dragon", "initialGold": 150 }
+      ],
+      "player": { "race": "human", "initialGold": 200 },
+      "winCondition": "destroy_base",
+      "starCriteria": { "time3": 360, "time2": 420 },
+      "recommendedRaces": ["dwarf", "elf", "human", "undead", "beast"],
+      "presetBuildings": [
+        { "q": 2, "r": 0, "type": "barracks", "level": 4 },
+        { "q": -2, "r": 0, "type": "barracks", "level": 4 },
+        { "q": 0, "r": -2, "type": "gold_mine", "level": 2 },
+        { "q": 0, "r": 2, "type": "gold_mine", "level": 2 },
+        { "q": 4, "r": 0, "type": "barracks", "level": 3 },
+        { "q": -4, "r": 0, "type": "barracks", "level": 3 },
+        { "q": 3, "r": -1, "type": "arrow_tower", "level": 1 },
+        { "q": 3, "r": 1, "type": "arrow_tower", "level": 1 }
+      ]
+    }
+  ]
+}

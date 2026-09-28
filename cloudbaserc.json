@@ -1,0 +1,50 @@
+{
+  "version": "2.0",
+  "envId": "minigame-prod-d5g02fq8e40658692",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    {
+      "name": "login",
+      "timeout": 5,
+      "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "getProfile",
+      "timeout": 5,
+      "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "putProfile",
+      "timeout": 5,
+      "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "settle",
+      "timeout": 5,
+      "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "adminLogin",
+      "timeout": 5,
+      "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "adminRouter",
+      "timeout": 10,
+      "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "initCollections",
+      "timeout": 10,
+      "runtime": "Nodejs16.13"
+    }
+  ],
+  "ai": {
+    "defaultAgent": "{{env.AI_DEFAULT_AGENT}}",
+    "agents": {
+      "codebuddy": {
+        "type": "none"
+      }
+    }
+  }
+}

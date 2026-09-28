@@ -1,0 +1,239 @@
+/**
+ * Auto-generated from shop.json
+ * Do not edit. Regenerate via: npm run build:config
+ *
+ * 微信小游戏专用: require('../../config/shop.js') 即可加载
+ */
+module.exports = {
+  "refreshInterval": 0,
+  "categories": [
+    {
+      "id": "free",
+      "name": "免费",
+      "_doc": "每日免费领取分页（商店默认分页）。dailyLimit=每日可领次数；adKey=非首次领取时需播放的激励视频广告位；首次点击直接领取，之后需看完广告。",
+      "items": [
+        {
+          "id": "free_diamond",
+          "name": "免费钻石",
+          "desc": "每日可领 5 次 · 首次直接领取",
+          "cost": {},
+          "reward": {
+            "diamond": 10
+          },
+          "dailyLimit": 5,
+          "adKey": "shopFreeDiamond",
+          "icon": "diamond"
+        },
+        {
+          "id": "free_gold",
+          "name": "免费金币",
+          "desc": "每日可领 5 次 · 首次直接领取",
+          "cost": {},
+          "reward": {
+            "gold": 500
+          },
+          "dailyLimit": 5,
+          "adKey": "shopFreeGold",
+          "icon": "gold"
+        }
+      ]
+    },
+    {
+      "id": "currency",
+      "name": "星尘兑换",
+      "items": [
+        {
+          "id": "buy_stardust_s",
+          "name": "星尘×20",
+          "cost": {
+            "diamond": 50
+          },
+          "reward": {
+            "stardust": 20
+          },
+          "limit": 10,
+          "icon": "stardust"
+        },
+        {
+          "id": "buy_stardust_m",
+          "name": "星尘×100",
+          "cost": {
+            "diamond": 200
+          },
+          "reward": {
+            "stardust": 100
+          },
+          "limit": 5,
+          "icon": "stardust"
+        },
+        {
+          "id": "buy_gold_s",
+          "name": "金币×1000",
+          "cost": {
+            "diamond": 30
+          },
+          "reward": {
+            "gold": 1000
+          },
+          "limit": 20,
+          "icon": "gold"
+        },
+        {
+          "id": "buy_gold_m",
+          "name": "金币×5000",
+          "cost": {
+            "diamond": 120
+          },
+          "reward": {
+            "gold": 5000
+          },
+          "limit": 10,
+          "icon": "gold"
+        },
+        {
+          "id": "exchange_stardust",
+          "name": "星尘×50(金币兑换)",
+          "desc": "用富余金币兑换星尘",
+          "cost": {
+            "gold": 3000
+          },
+          "reward": {
+            "stardust": 50
+          },
+          "limit": 10,
+          "icon": "stardust"
+        }
+      ]
+    },
+    {
+      "id": "packs",
+      "name": "训练物资",
+      "items": [
+        {
+          "id": "train_pack_s",
+          "name": "训练物资(小)",
+          "desc": "金币×2500 + 星尘×30",
+          "cost": {
+            "diamond": 100
+          },
+          "reward": {
+            "gold": 2500,
+            "stardust": 30
+          },
+          "limit": 10
+        },
+        {
+          "id": "train_pack_m",
+          "name": "训练物资(中)",
+          "desc": "金币×8000 + 星尘×100",
+          "cost": {
+            "diamond": 280
+          },
+          "reward": {
+            "gold": 8000,
+            "stardust": 100
+          },
+          "limit": 5
+        },
+        {
+          "id": "train_pack_l",
+          "name": "训练物资(大)",
+          "desc": "金币×20000 + 星尘×280",
+          "cost": {
+            "diamond": 600
+          },
+          "reward": {
+            "gold": 20000,
+            "stardust": 280
+          },
+          "limit": 3
+        }
+      ]
+    },
+    {
+      "id": "diamond",
+      "name": "钻石充值",
+      "items": [
+        {
+          "id": "diamond_60",
+          "name": "60钻石",
+          "cost": {
+            "realMoney": 6
+          },
+          "reward": {
+            "diamond": 60
+          },
+          "limit": 0,
+          "firstBonus": 0
+        },
+        {
+          "id": "diamond_300",
+          "name": "300钻石",
+          "cost": {
+            "realMoney": 30
+          },
+          "reward": {
+            "diamond": 300
+          },
+          "limit": 0,
+          "firstBonus": 30
+        },
+        {
+          "id": "diamond_980",
+          "name": "980钻石",
+          "cost": {
+            "realMoney": 98
+          },
+          "reward": {
+            "diamond": 980
+          },
+          "limit": 0,
+          "firstBonus": 98
+        },
+        {
+          "id": "diamond_1980",
+          "name": "1980钻石",
+          "cost": {
+            "realMoney": 198
+          },
+          "reward": {
+            "diamond": 1980
+          },
+          "limit": 0,
+          "firstBonus": 396
+        }
+      ]
+    },
+    {
+      "id": "special",
+      "name": "特惠",
+      "items": [
+        {
+          "id": "weekly_pack",
+          "name": "周特惠包",
+          "desc": "星尘×80 + 金币×3000",
+          "cost": {
+            "diamond": 200
+          },
+          "reward": {
+            "stardust": 80,
+            "gold": 3000
+          },
+          "limit": 1
+        },
+        {
+          "id": "battle_pass_premium",
+          "name": "通行证(高级)",
+          "desc": "解锁高级通行证奖励轨道",
+          "cost": {
+            "diamond": 500
+          },
+          "reward": {
+            "type": "battlePassPremium"
+          },
+          "limit": 1
+        }
+      ]
+    }
+  ]
+};
