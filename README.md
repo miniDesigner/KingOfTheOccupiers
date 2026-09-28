@@ -135,6 +135,27 @@ kingoftheoccupiers/
    小游戏与小程序的 `compileType` 不同。配成 `miniprogram` 会导致开发者工具按错误类型编译。
    （占城先锋主工程就配错了，`test-wechat-entry.mjs` 会卡这一项。）
 
+6. **根目录 `game.json` 不能留空值字段**
+
+   微信基础库新版（≥ 2.02.x）收紧了对项目配置项的校验，`workers: ""` 会直接报
+   `game.json: ["workers"] 不能为 ''` 并终止编译。语义上这些字段「不写 = 不使用」，
+   留空反而撞校验。当前根目录 `game.json` 只保留三项必需值：
+
+   ```json
+   { "deviceOrientation": "portrait", "showStatusBar": false, "networkTimeout": {...} }
+   ```
+
+   > 若将来要用多线程 Worker 或分包，写成真实路径/内容，不要再放空字符串或空数组。
+   > 注意区分：根目录 `game.json` 是**微信项目配置**；`config/game.json` 是本游戏的
+   > 自定义数值配置，两者同名不同物，互不干扰。
+
+7. **不要依赖单一 wx API 做环境探测**
+
+   `src/data/ConfigLoader.js` 的 `isWxEnv()` 曾要求 `getSystemInfoSync` 必须存在才算微信环境，
+   而该 API 已被官方标记废弃。一旦被移除会把真机误判成浏览器 → 走 fetch 分支 →
+   `fetch is not defined` → 配置全挂 → 白屏。现已改为对 4 个微信专有 API 做 OR 判定。
+   新增环境判断时遵循同一原则：**用 OR 冗余，不用 AND 强依赖**。
+
 ## 技术栈
 
 | 维度 | 选型 |
