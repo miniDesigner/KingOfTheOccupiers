@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《占地之王》商业计划书</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f4f6f9; color: #1f2937; line-height: 1.75; font-size: 15px;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; background: #fff; box-shadow: 0 2px 24px rgba(0,0,0,.07); }
+  .cover {
+    background: linear-gradient(135deg, #12263f 0%, #1e3a5f 55%, #2c5282 100%);
+    color: #fff; padding: 56px 52px 44px;
+  }
+  .cover .eyebrow { font-size: 13px; letter-spacing: 3px; opacity: .72; text-transform: uppercase; }
+  .cover h1 { font-size: 40px; margin: 14px 0 8px; font-weight: 700; letter-spacing: 1px; }
+  .cover .sub { font-size: 17px; opacity: .88; font-weight: 300; }
+  .cover .meta { margin-top: 28px; font-size: 13px; opacity: .65; border-top: 1px solid rgba(255,255,255,.2); padding-top: 16px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; padding: 26px 52px; background: #eef2f7; border-bottom: 1px solid #dde3ea; }
+  .kpi { flex: 1; min-width: 190px; background: #fff; border: 1px solid #dfe5ec; border-radius: 8px; padding: 15px 18px; }
+  .kpi .n { font-size: 25px; font-weight: 700; color: #c0392b; line-height: 1.25; }
+  .kpi .l { font-size: 12.5px; color: #64748b; margin-top: 4px; }
+  .body { padding: 0 52px 52px; }
+  h2 {
+    font-size: 22px; margin: 46px 0 16px; padding-bottom: 10px;
+    border-bottom: 2px solid #1e3a5f; color: #12263f; font-weight: 700;
+  }
+  h2 .no { color: #c0392b; margin-right: 10px; font-weight: 700; }
+  h3 { font-size: 17px; margin: 28px 0 10px; color: #1e3a5f; font-weight: 600; }
+  h4 { font-size: 15px; margin: 20px 0 8px; color: #334155; font-weight: 600; }
+  p { margin: 10px 0; }
+  ul, ol { margin: 10px 0; padding-left: 24px; }
+  li { margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th {
+    background: #1e3a5f; color: #fff; text-align: left; padding: 10px 12px; font-weight: 600; font-size: 13.5px;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid #e5e9ef; vertical-align: top; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  .up { color: #c0392b; font-weight: 600; }
+  .down { color: #15803d; font-weight: 600; }
+  .callout {
+    border-left: 4px solid #d97706; background: #fffbeb; padding: 14px 18px;
+    margin: 18px 0; border-radius: 0 6px 6px 0; font-size: 14.5px;
+  }
+  .risk-box {
+    border-left: 4px solid #c0392b; background: #fef2f2; padding: 14px 18px;
+    margin: 18px 0; border-radius: 0 6px 6px 0; font-size: 14.5px;
+  }
+  .good-box {
+    border-left: 4px solid #15803d; background: #f0fdf4; padding: 14px 18px;
+    margin: 18px 0; border-radius: 0 6px 6px 0; font-size: 14.5px;
+  }
+  .kv { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+  .kv > div { flex: 1; min-width: 200px; border: 1px solid #e2e8f0; border-radius: 7px; padding: 12px 15px; background: #fbfcfe; }
+  .kv .t { font-size: 12.5px; color: #64748b; }
+  .kv .v { font-size: 18px; font-weight: 700; color: #1e3a5f; margin-top: 3px; }
+  .tag { display: inline-block; font-size: 11.5px; padding: 2px 9px; border-radius: 11px; margin-right: 6px; font-weight: 600; }
+  .t-green { background: #dcfce7; color: #15803d; }
+  .t-amber { background: #fef3c7; color: #b45309; }
+  .t-red { background: #fee2e2; color: #b91c1c; }
+  .t-blue { background: #dbeafe; color: #1d4ed8; }
+  .footnote { font-size: 12.5px; color: #64748b; border-top: 1px solid #e5e9ef; margin-top: 8px; padding-top: 8px; }
+  .formula { background: #0f172a; color: #e2e8f0; padding: 14px 18px; border-radius: 7px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; margin: 14px 0; line-height: 1.9; }
+  .formula .hl { color: #fbbf24; }
+  .toc { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 24px; margin: 24px 0; }
+  .toc ol { columns: 2; column-gap: 32px; font-size: 14px; margin: 0; }
+  .toc li { margin: 5px 0; }
+  @media print {
+    body { background: #fff; }
+    .wrap { box-shadow: none; max-width: 100%; }
+    .body { padding: 0 24px 24px; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+  @media (max-width: 720px) {
+    .cover, .body, .kpis { padding-left: 22px; padding-right: 22px; }
+    .cover h1 { font-size: 30px; }
+    .toc ol { columns: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="eyebrow">Business Plan · Confidential</div>
+    <h1>《占地之王》商业计划书</h1>
+    <div class="sub">基于成熟技术资产的微信小游戏商业化方案</div>
+    <div class="meta">
+      产品定位：六边形占地 SLG × 自走棋养成内核　|　平台：微信小游戏　|　版本：v1.0　|　编制日期：2026 年 10 月
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="n">316.6 亿</div>
+      <div class="l">2026 上半年小程序游戏收入<br>同比增长 36%</div>
+    </div>
+    <div class="kpi">
+      <div class="n">5 亿+</div>
+      <div class="l">微信小游戏 MAU<br>DAU 破 1 亿</div>
+    </div>
+    <div class="kpi">
+      <div class="n">5000 万</div>
+      <div class="l">IAP 首发流水免分成额度<br>约合额外留存 1500 万</div>
+    </div>
+    <div class="kpi">
+      <div class="n">19830 行</div>
+      <div class="l">已完成源码规模<br>研发风险已前置消化</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="toc">
+      <strong style="font-size:15px;">目录</strong>
+      <ol>
+        <li>执行摘要</li>
+        <li>产品概况</li>
+        <li>市场分析</li>
+        <li>竞争与定位</li>
+        <li>产品力与留存设计</li>
+        <li>商业化模型</li>
+        <li>技术与成本优势</li>
+        <li>关键短板与对策</li>
+        <li>运营与获客</li>
+        <li>路线图与里程碑</li>
+        <li>财务测算</li>
+        <li>风险矩阵</li>
+        <li>资源需求</li>
+      </ol>
+    </div>
+
+    <!-- ==================== 1 ==================== -->
+    <h2><span class="no">01</span>执行摘要</h2>
+
+    <h3>核心主张</h3>
+    <p>以一套<b>已完成、已测试、可运行的成熟代码库</b>为底座，在微信小游戏这个年收入即将突破 700 亿元、月活 5 亿以上的赛道上，落地一款「六边形占地 SLG 外壳 + 自走棋养成内核」的中重度产品。</p>
+    <p>这不是一次新玩法豪赌，而是一次<b>研发效率的变现</b>：把通常要 8～10 个月、耗费百万级的底层工程建设前置消化掉，把有限的资金与时间集中投向真正决定成败的地方——<b>内容差异化和用户获取</b>。</p>
+
+    <div class="kv">
+      <div><div class="t">工程就绪度</div><div class="v">93%</div></div>
+      <div><div class="t">商业化模块就绪度</div><div class="v">80%</div></div>
+      <div><div class="t">内容 / 差异化就绪度</div><div class="v" style="color:#c0392b;">35%</div></div>
+      <div><div class="t">留存数据验证</div><div class="v" style="color:#c0392b;">0%</div></div>
+    </div>
+    <div class="footnote">
+      就绪度为本计划书基于代码盘点的主观评估。工程与商业化模块已完成闭环；内容与差异化尚未启动，留存数据完全没有——这两项是全部资金的投向。
+    </div>
+
+    <h3>三个决定成败的判断</h3>
+    <ol>
+      <li><b>时间窗比钱重要。</b> 微信 2026 年给出 IAP 首发新游「前 5000 万流水不分成」的史无前例力度。按常规 30% 分成计，这等于直接增加 <b>1500 万元</b>留存。政策按自然年滚动，越早首发越有利。</li>
+      <li><b>赛道 Validator。</b> 平台官方在 2026 开发者大会上点名的四大高确定性方向中，第三条明确写着「将自走棋、桌游等硬核套路在小游戏上做轻量化重新设计，近期多款此类新品月流水迅速跑到千万元级别」——这与本项目内核高度吻合。</li>
+      <li><b>最大杀手不是技术，是无差异化。</b> 玩法体系继承自既有项目且已确定冻结，意味着没有 IP、没有题材创新、没有社交壁垒。产品不缺运行能力，缺的是<b>被记住的理由</b>。这是全部经营风险的总源头。</li>
+    </ol>
+
+    <div class="risk-box">
+      <b>必须先行承认的事实：</b>本项目当前<b>没有任何留存率、付费率、ARPU 的真实数据</b>。第 11 章所有财务数字均为基于行业基准的<b>假设推演</b>，在第 10 章 M3 阶段小规模买量实测之前，它们不构成任何业绩承诺。
+    </div>
+
+    <!-- ==================== 2 ==================== -->
+    <h2><span class="no">02</span>产品概况</h2>
+
+    <h3>它是什么</h3>
+    <p>一块 radius=4 的六边形网格（<b>仅 61 格</b>）上的实时占地 SLG。玩家派兵出征、接管地块、产出资源，再用资源做抽卡、装备、科技升级，形成更强兵力继续扩张。</p>
+
+    <div class="formula">
+      核心循环：<span class="hl">派兵出征</span> → 占地接管 → 资源产出 → <span class="hl">抽卡 / 养成</span> → 战力提升 → 更强出征<br>
+      外围循环：<span class="hl">异步 PvP 天梯</span> + <span class="hl">战令 / 任务</span> + 装备科技树 → 长线留存与付费
+    </div>
+
+    <p><b>它不是一个传统 SLG。</b>战斗结算采用「总力对决」——双方交战时按战力比值判定完胜／大胜／小胜／惨胜／同归于尽五档结果，过程<b>完全不可微操</b>。胜负在派兵那一刻就由数值、技能、羁绊算完了。加上只有 61 格的小盘面，策略深度不在「大军团调度」，而在<b>每一次行军的质量</b>——这正是自走棋的骨架，SLG 只是包装。</p>
+
+    <h3>技术资产盘点</h3>
+    <table>
+      <thead><tr><th>层级</th><th>资产</th><th>体量</th><th>就绪</th></tr></thead>
+      <tbody>
+        <tr><td>地图引擎</td><td>HexMap / HexMath / HexTile / PathfindingSystem</td><td>轴向坐标 + A* 寻路 + 像素连续移动</td><td><span class="tag t-green">完成</span></td></tr>
+        <tr><td>战斗内核</td><td>CombatSystem / MarchGroup / DeploymentSystem</td><td>2278 行</td><td><span class="tag t-green">完成</span></td></tr>
+        <tr><td>数值深度</td><td>SkillSystem / SynergySystem / TechTreeSystem</td><td>skills.json 111 KB</td><td><span class="tag t-green">完成</span></td></tr>
+        <tr><td>局外养成</td><td>BattlePass / Quest / Shop / Equipment / Power</td><td>5 个 System</td><td><span class="tag t-green">完成</span></td></tr>
+        <tr><td>对战</td><td>AsyncMatch / Ladder / AIPlayer / SnapshotPlayer</td><td>异步 PvP + Elo 结算</td><td><span class="tag t-amber">需云端</span></td></tr>
+        <tr><td>商业化</td><td>AdManager / ShopSystem / BonusCalculator</td><td>广告 ×8 + 内购闭环</td><td><span class="tag t-amber">待接真值</span></td></tr>
+        <tr><td>渲染</td><td>RenderSystem / AnimationManager / AudioManager</td><td>5480 行</td><td><span class="tag t-green">完成</span></td></tr>
+        <tr><td>适配</td><td>SafeArea / Layout / InputSystem</td><td>639 行</td><td><span class="tag t-amber">真机未验</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>当前状态</h3>
+    <div class="kv">
+      <div><div class="t">源码</div><div class="v">47 模块 / 19830 行</div></div>
+      <div><div class="t">配置</div><div class="v">16 个 JSON / 233 KB</div></div>
+      <div><div class="t">回归测试</div><div class="v">46 通过 / 0 失败</div></div>
+      <div><div class="t">包体</div><div class="v">1.22 MB / 4 MB</div></div>
+    </div>
+    <p>工程底座、Git 协同链路、正式 AppID 均已到位，微信开发者工具<b>已编译通过</b>。这意味着产品已越过「能不能跑」这一关，进入「值不值得玩」的阶段。</p>
+
+    <div class="callout">
+      <b>与「占城先锋」的关系 —— 需要向任何出资方明确说明：</b>玩法体系继承自既有项目，且已确定<b>冻结不再改动</b>。<br><br>
+      <b>战略含义：</b><br>
+      · 利好 —— 研发风险前置消化，技术品控基线是已知的，不会卡在工程能力上；<br>
+      · 风险 —— 没有 IP、没有题材创新，获客只能依赖买量与渠道，拿不到自然话题红利；<br>
+      · 对策 —— 见第 5 章「差异化补足」，核心是<b>换皮的深度要足够</b>，而非表层替换。
+    </div>
+
+    <!-- ==================== 3 ==================== -->
+    <h2><span class="no">03</span>市场分析</h2>
+
+    <h3>3.1 大盘仍在扩容</h3>
+    <table>
+      <thead><tr><th>口径</th><th>2024</th><th>2025</th><th>2026</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>国内小程序游戏实际销售收入</td><td>398.36 亿</td><td>535.35 亿</td><td>预计突破 700 亿</td><td>2025 同比 <span class="up">+34.39%</span></td></tr>
+        <tr><td>2026 上半年收入</td><td>—</td><td>—</td><td>316.6 亿</td><td>同比 <span class="up">+36%</span></td></tr>
+        <tr><td>占游戏市场整体比重</td><td>—</td><td>15%</td><td>持续提升</td><td>已越过主流赛道门槛</td></tr>
+        <tr><td>DataEye 测算</td><td>—</td><td>约 610 亿</td><td>预测 700 亿+</td><td>第三方口径，略高于官方</td></tr>
+      </tbody>
+    </table>
+    <p>值得注意的是，小游戏增速显著高于整体游戏市场。这不是一个存量博弈市场，而是<b>仍在抬升的电梯</b>。</p>
+
+    <h3>3.2 用户结构：与传统手游不同的增量人群</h3>
+    <div class="kv">
+      <div><div class="t">月活跃用户 MAU</div><div class="v">5 亿+</div></div>
+      <div><div class="t">日活跃 DAU</div><div class="v">1 亿+</div></div>
+      <div><div class="t">人均日时长</div><div class="v">&gt; 60 分钟</div></div>
+      <div><div class="t">累计注册</div><div class="v">10 亿+</div></div>
+    </div>
+
+    <table>
+      <thead><tr><th>维度</th><th>分布</th><th>对本项目的意义</th></tr></thead>
+      <tbody>
+        <tr><td>年龄</td><td>24–40 岁占 50%，40 岁以上占 40%</td><td>中年用户支付能力强但时间碎片化，正好匹配「单局短、随时停」的 61 格设计</td></tr>
+        <tr><td>地域</td><td>三线及以下占 55%</td><td>下沉市场付费心智成熟，是 SLG 类目的传统票仓</td></tr>
+        <tr><td>性别</td><td>男 53% / 女 47%</td><td>接近均衡，不排斥女性向题材做增量</td></tr>
+        <tr><td>与腾讯系 APP 游戏重合度</td><td>低于 50%</td><td><b>这是真增量</b>，触达了大量传统 APP 游戏够不到的人</td></tr>
+        <tr><td>主动访问习惯</td><td>超 50% MAU 主动访问</td><td>用户已养成主动回流习惯，降低二次触达成本</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 变现结构：IAP 已成主流</h3>
+    <table>
+      <thead><tr><th>模式</th><th>2022 收入占比</th><th>2025 收入占比</th><th>趋势</th></tr></thead>
+      <tbody>
+        <tr><td>IAP（内购）</td><td>38.81%</td><td>68.11%</td><td class="up">↑ 成为主力</td></tr>
+        <tr><td>IAA（广告）</td><td>61.19%</td><td>31.89%</td><td class="down">↓ 退居次要</td></tr>
+      </tbody>
+    </table>
+    <p>小游戏生态完成了从「广告驱动的轻量娱乐」到「内购驱动的精品内容」的迁移。本项目拥有装备、科技树、羁绊、技能等完整数值体系，天然适配 IAP 主导模式，<b>赛道结构对它是顺风的</b>。</p>
+
+    <h3>3.4 2026 平台政策红利（重要时间窗）</h3>
+    <table>
+      <thead><tr><th>政策</th><th>内容</th><th>对本项目价值</th></tr></thead>
+      <tbody>
+        <tr><td><b>IAP 首发免分成</b></td><td>首发新游前 5000 万流水平台不分成，另享最高 2000 万现金激励</td><td><b>最高价值项</b>。按常规抽 30% 计，等于增加 1500 万留存</td></tr>
+        <tr><td>非首发兜底</td><td>首 100 万流水同样免分成</td><td>即使错过首发仍有基础保障</td></tr>
+        <tr><td>安卓额外激励</td><td>70% 基础分成外，首发游戏达成首个 1000 万后可获额外 40% 广告性激励</td><td>放大再投入预算</td></tr>
+        <tr><td>iOS 优惠</td><td>70% 分成基础上额外 +15%</td><td>改善 iOS 端毛利率</td></tr>
+        <tr><td>IAA 双分成</td><td>可选快回收 90% 分成 或 长线留存 85% 激励</td><td>可按产品阶段灵活切换</td></tr>
+        <tr><td>PC 专属</td><td>额外 10% 专属广告金</td><td>见第 3.5 节第二曲线</td></tr>
+      </tbody>
+    </table>
+
+    <div class="good-box">
+      <b>红利折算：</b>若首发期实现 5000 万流水，本应支付平台约 1500 万元分成获得豁免，叠加最高 2000 万激励金（单款上限 400 万，需以后台实际政策为准），<b>合计可影响现金流 1500 万量级</b>。这是本项目最大的一笔外部杠杆，也是本计划书强调「抢时间」的原因。
+    </div>
+
+    <h3>3.5 被低估的第二曲线：PC 小游戏</h3>
+    <p>过去一年 PC 端数据极为亮眼：<b>40% 为 PC 平台独占用户</b>，人均在线时长增长 100%，<b>付费增长 130%</b>，ARPU 高出移动端 120% 以上。用户筏完全错位于移动端，属于纯增量而非分流。</p>
+    <p>本项目基于 Canvas 2D + 键鼠无关的触摸输入，移植 PC 端的边际成本极低，应当作为<b>首年内的低优先级高回报项</b>纳入规划（见第 10 章 M5）。</p>
+
+    <!-- ==================== 4 ==================== -->
+    <h2><span class="no">04</span>竞争与定位</h2>
+
+    <h3>4.1 必须对标的标杆</h3>
+    <p><b>《无尽冬日》</b>（点点互动）是这个赛道绕不开的参照：冰雪末日题材外壳 + 轻量化 4X SLG，国内小游戏版 MAU 曾破 3600 万，连续百日霸榜微信畅销榜，累计流水超 300 亿元。</p>
+
+    <div class="callout">
+      <b>它做对了什么 —— 也是本项目最该学的：</b>把传统 SLG 陡峭的早期曲线<b>削平</b>。<br>
+      前期用「放置经营 + 模拟建造 + 抽卡」做低门槛引流，把休闲玩家拉进来；中后期才切到 4X 核心（探索、扩张、占领、服战），靠社交绑定与军备竞赛吃长线留存与付费。<br><br>
+      <b>这是把休闲流量转化成 SLG 付费用户的关键设计。</b>
+    </div>
+
+    <h3>4.2 本项目的位置</h3>
+    <table>
+      <thead><tr><th>对比项</th><th>传统 / 头部 SLG</th><th>《占地之王》</th></tr></thead>
+      <tbody>
+        <tr><td>地图尺度</td><td>大世界，成百上千格</td><td><b>仅 61 格</b>，单局极短</td></tr>
+        <tr><td>上手曲线</td><td>前期陡峭，需攻略带</td><td>盘面一览无余，几乎零学习成本</td></tr>
+        <tr><td>战斗微操</td><td>行军路径、时机把控</td><td><b>不可微操</b>，纯数值对决</td></tr>
+        <tr><td>策略深度来源</td><td>战略调度 + 数值</td><td><b>搭配 + 时机</b>（自走棋式）</td></tr>
+        <tr><td>单次投入时长</td><td>长，需持续在线</td><td>碎片化友好</td></tr>
+        <tr><td>IP / 题材</td><td>强（冰雪末日 / 三国）</td><td><b>无</b><span class="tag t-red">风险</span></td></tr>
+        <tr><td>联盟社交</td><td>核心留存手段</td><td><b>缺失</b><span class="tag t-red">风险</span></td></tr>
+      </tbody>
+    </table>
+
+    <p><b>结论：不与《无尽冬日》正面争夺 SLG 大盘用户。</b>本项目应当切入「自走棋养成 × 轻占地」的交叉地带——用自走棋的收集搭配乐趣承接泛用户，用占地 SLG 的扩张反馈提供长线目标。目标人群是<b>玩得懂自走棋、但对传统 SLG 太重的节奏不耐烦</b>的那批人。</p>
+
+    <h3>4.3 平台官方的赛道背书</h3>
+    <p>2026 开发者大会上，平台方结合数据给出四个高确定性立项方向：</p>
+    <table>
+      <thead><tr><th>方向</th><th>平台依据</th><th>本项目契合度</th></tr></thead>
+      <tbody>
+        <tr><td>成熟玩法框架 + 经典 IP</td><td>月收入可破 5000 万；50% 新玩家来自 IP 圈外</td><td><span class="tag t-amber">半契合</span>有框架，无 IP</td></tr>
+        <tr><td>释放高粘性「她力量」</td><td>女性付费用户 +20%，ARPPU +10%；头部重度 SLG 女性付费占比已达 20%</td><td><span class="tag t-blue">可作为题材方向</span></td></tr>
+        <tr><td><b>可玩性玩法「微创新」</b></td><td><b>自走棋、桌游等硬核套路轻量重设计，多款新品月流水迅速跑到千万级</b></td><td><span class="tag t-green">高度契合</span></td></tr>
+        <tr><td>经典成熟品类阶段性蓝海</td><td>放置、卡牌、塔防历史底盘大，付费心智成熟</td><td><span class="tag t-green">契合</span></td></tr>
+      </tbody>
+    </table>
+
+    <!-- ==================== 5 ==================== -->
+    <h2><span class="no">05</span>产品力与留存设计</h2>
+
+    <h3>5.1 已具备的长线钩子</h3>
+    <table>
+      <thead><tr><th>机制</th><th>作用</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>异步 PvP + Elo 天梯</td><td>提供长线对抗目标与段位追求</td><td><span class="tag t-green">已实现</span>需云服务</td></tr>
+        <tr><td>战令 BattlePass</td><td>周期性回归 + 付费钩子</td><td><span class="tag t-green">已实现</span></td></tr>
+        <tr><td>任务 Quest</td><td>每日目标，稳定日活</td><td><span class="tag t-green">已实现</span></td></tr>
+        <tr><td>技能 / 羁绊 / 科技树 / 装备</td><td>数值深度与 Build 多样性</td><td><span class="tag t-green">已实现</span>深度充足</td></tr>
+        <tr><td>抽卡 gacha</td><td>核心付费驱动</td><td><span class="tag t-green">已实现</span></td></tr>
+        <tr><td>分享 ShareSystem</td><td>社交裂变入口</td><td><span class="tag t-green">已实现</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.2 三大差异化缺口 —— 这是全部工作重心</h3>
+
+    <div class="risk-box">
+      <b>缺口一：社交能力目前为零。</b><br>
+      这是本计划书识别出的<b>最高杠杆缺口</b>。平台数据显示：社交玩法表现较好的游戏中，<b>来自社交场景的新用户占比可达 87%，具备社交玩法的游戏活跃留存可达 88%，社交相关用户贡献收入约 80%</b>。<br><br>
+      而当前代码中，开放数据域相关接口（<code>wx.setUserCloudStorage</code> / <code>wx.getFriendCloudStorage</code>）<b>仅存在于注释里，从未真正调用</b>——好友榜、战绩分享、围观对战全部缺失。<br><br>
+      <b>对策：</b>接入开放数据域子包，实现好友排行榜；结合已有 Elo 系统做段位炫耀与好友 PK。<b>这是性价比最高的一项投入。</b>
+    </div>
+
+    <div class="risk-box">
+      <b>缺口二：PvE 内容严重薄弱。</b><br>
+      关卡配置 levels.json 仅 <b>17 KB</b>，对比 skills.json 的 111 KB，内容量与系统深度完全不成比例。这导致新手期缺少引导性的内容消耗路径，七日流失风险高。<br><br>
+      <b>对策：</b>这是玩法冻结框架内<b>唯一被允许且必须做</b>的内容增量——新增题材外壳、战役章节、关卡数量与剧情包装。不需要改核心机制，纯内容填充。
+    </div>
+
+    <div class="risk-box">
+      <b>缺口三：无 IP、无题材记忆点。</b><br>
+      平台明确认可「成熟玩法框架 + 经典 IP」是最赚钱的方向（月收入可破 5000 万），且其中 50% 新玩家来自 IP 圈外。<b>我们没有 IP。</b><br><br>
+      <b>对策：</b>两条路 —— ① 接入平台「权益库」（后台已有 400 余个 IP 可对接，门槛较低）；② 若无 IP 预算，则用强辨识度的美术风格 + 题材包装自建记忆点。前者见效快但要分成，后者慢但利润干净。
+    </div>
+
+    <!-- ==================== 6 ==================== -->
+    <h2><span class="no">06</span>商业化模型</h2>
+
+    <h3>6.1 骨架已完工</h3>
+    <p>变现所需的代码模块基本齐备，这是相对同类早期项目的显著优势：</p>
+    <table>
+      <thead><tr><th>模块</th><th>能力</th><th>待办</th></tr></thead>
+      <tbody>
+        <tr><td>ShopSystem</td><td>商品陈列、购买流程</td><td>配置真实商品与定价</td></tr>
+        <tr><td>BattlePassSystem</td><td>战令、赛季、奖励阶梯</td><td>定价与内容填充</td></tr>
+        <tr><td>EquipmentSystem / TechTreeSystem</td><td>数值付费深度</td><td>平衡性调优</td></tr>
+        <tr><td>AdManager</td><td>激励视频 ×6 / 插屏 / Banner，含完整容错</td><td><b>申请真实广告位 ID</b></td></tr>
+        <tr><td>PowerSystem / BonusCalculator</td><td>战力与加成结算</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b>风控提示：</b>当前 <code>config/ads.json</code> 中 8 个广告位 ID 全部为占位示例值，<code>enabled</code> 已主动置为 <code>false</code>。<b>在拿到真实广告位之前开启会 100% 调用失败</b>，让玩家点了「看广告」没有反应。此项已在工程侧做预防性关闭，商业化启动前必须先行申请。
+    </div>
+
+    <h3>6.2 建议的收入结构</h3>
+    <table>
+      <thead><tr><th>来源</th><th>目标占比</th><th>设计要点</th></tr></thead>
+      <tbody>
+        <tr><td>IAP — 抽卡</td><td>35%</td><td>核心付费驱动，配合保底与卡池轮换</td></tr>
+        <tr><td>IAP — 战令</td><td>20%</td><td>高性价比感知，拉月留存</td></tr>
+        <tr><td>IAP — 礼包 / 资源</td><td>20%</td><td>首充 6 元破冰，成长基金承接中 R</td></tr>
+        <tr><td>IAA — 激励视频</td><td>20%</td><td>关键<b>双轨制设计</b>：付费点同时提供广告替代（抽卡、复活、双倍收益）</td></tr>
+        <tr><td>IAA — 插屏 / Banner</td><td>5%</td><td>克制使用，避免破坏节奏</td></tr>
+      </tbody>
+    </table>
+
+    <div class="good-box">
+      <b>双轨制是关键。</b>行业经验表明：在同一点位同时提供「付费」与「看广告」两种路径，让愿意付费的人付费、不愿付费的人贡献广告收益。这既提升总收入，也降低非付费玩家的挫败感——对本项目这种无 IP 买量型产品尤其重要，因为<b>买量来的流量里非付费是绝大多数</b>。
+    </div>
+
+    <h3>6.3 定价带建议</h3>
+    <table>
+      <thead><tr><th>档位</th><th>价格</th><th>目的</th></tr></thead>
+      <tbody>
+        <tr><td>首充</td><td>6 元</td><td>极低价破冰，把首次付费门槛压到最低</td></tr>
+        <tr><td>月卡</td><td>30 元</td><td>稳定现金流，培养付费习惯</td></tr>
+        <tr><td>战令</td><td>68 元</td><td>主要收入来源之一，配合赛季节奏</td></tr>
+        <tr><td>成长基金</td><td>128 元</td><td>承接中 R，锁定长期留存</td></tr>
+        <tr><td>高阶礼包</td><td>328 / 648 元</td><td>服务大 R，含特殊卡池与外观</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ==================== 7 ==================== -->
+    <h2><span class="no">07</span>技术与成本优势</h2>
+
+    <h3>7.1 等价研发投入估算</h3>
+    <p>在一个八成团队不足 30 人的生态里，以下已完成资产的等价重建成本是本项目最硬的底牌：</p>
+    <table>
+      <thead><tr><th>构成</th><th>已完成量</th><th>等价工期估算</th></tr></thead>
+      <tbody>
+        <tr><td>核心战斗 + 行军 + 布阵</td><td>2278 行</td><td>1.5 人月</td></tr>
+        <tr><td>数值深度（技能 111 KB / 羁绊 / 科技树）</td><td>3 个 System + 配置</td><td>3 人月</td></tr>
+        <tr><td>局外养成闭环</td><td>5 个 System</td><td>2.5 人月</td></tr>
+        <tr><td>渲染与交互</td><td>5480 行</td><td>4 人月</td></tr>
+        <tr><td>商业化模块</td><td>Shop / BattlePass / AdManager</td><td>2 人月</td></tr>
+        <tr><td>异步对战 + 确定性同步</td><td>含 Mulberry32 双端一致</td><td>2 人月</td></tr>
+        <tr><td>测试体系</td><td>46 个回归 + 依赖自检</td><td>1.5 人月</td></tr>
+        <tr><td><b>合计</b></td><td><b>19830 行 / 47 模块</b></td><td><b>约 16.5 人月</b></td></tr>
+      </tbody>
+    </table>
+    <p>按独立开发者 Putnam 折算并计入项目管理与返工冗余，<b>等价工期约 3～4 人 × 8～10 个月</b>，对应重建成本区间<b>约 120～200 万元</b>（按 1.5～2 万元/人月计）。</p>
+    <div class="footnote">此为基于代码体量与行业通行产能基准的推算，非实际发生成本。用于说明「资产已经存在」这一事实的量级，不构成财务入账依据。</div>
+
+    <h3>7.2 这项优势的战略含义</h3>
+    <ol>
+      <li><b>研发风险已归零。</b>最常见的失败原因——做不出来、延期、工程质量失控——已不成立。残留下来的风险全部在市场侧。</li>
+      <li><b>资金投向可以高度集中。</b>不必为底层工程付费，预算可以压到<b>内容生产 + 买量验证</b>这两件真正决定成败的事上。</li>
+      <li><b>迭代速度快。</b>模块化 + 配置驱动 + 46 个回归测试保护，意味着调优周期以天计而非周计——这在买量迭代中直接换算为成本优势。</li>
+    </ol>
+
+    <div class="callout">
+      <b>但要清醒：</b>技术资产的价值是<b>降低失败概率</b>，不是<b>提高成功上限</b>。<br>
+      19830 行代码不能替产品开发出一个让玩家愿意第 7 天还回来的理由。所有授信评估应当把重心放在第 5 章的三个缺口上，而非这份代码清单。
+    </div>
+
+    <!-- ==================== 8 ==================== -->
+    <h2><span class="no">08</span>关键短板与对策</h2>
+
+    <table>
+      <thead><tr><th>短板</th><th>影响</th><th>对策</th><th>紧迫度</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>玩法沿用，无差异化</td>
+          <td>买量转化低、留存差，产品无记忆点</td>
+          <td>题材外壳重建 + 内容填充；玩法冻结框架内的最大自由度</td>
+          <td><span class="tag t-red">最高</span></td>
+        </tr>
+        <tr>
+          <td>社交能力为零</td>
+          <td>损失可达 80% 的收入来源与 88% 留存潜力</td>
+          <td>开放数据域 + 好友榜 + Elo 段位炫耀</td>
+          <td><span class="tag t-red">最高</span></td>
+        </tr>
+        <tr>
+          <td>PvE 内容薄弱（17 KB）</td>
+          <td>新手期无内容消耗路径，7 日流失高</td>
+          <td>战役章节 + 关卡批量生产</td>
+          <td><span class="tag t-red">高</span></td>
+        </tr>
+        <tr>
+          <td>云开发未接入</td>
+          <td>异步 PvP 无法真人对战，天梯形同虚设</td>
+          <td>新建独立云环境（<b>不可复用既有环境</b>，避免数据混淆）</td>
+          <td><span class="tag t-red">高</span></td>
+        </tr>
+        <tr>
+          <td>广告位未申请</td>
+          <td>IAA 通道未开，20% 目标收入落空</td>
+          <td>申请流量主并回填 8 个真实 ID</td>
+          <td><span class="tag t-amber">中</span></td>
+        </tr>
+        <tr>
+          <td>真机未验证</td>
+          <td>刘海屏适配、触摸手感、低端机性能全部未知</td>
+          <td>已通过开发者工具编译，需补齐真机实跑</td>
+          <td><span class="tag t-amber">中</span></td>
+        </tr>
+        <tr>
+          <td>零运营数据</td>
+          <td>所有留存 / 付费假设未经验证</td>
+          <td>M3 阶段小规模买量实测，见第 10 章</td>
+          <td><span class="tag t-red">最高</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ==================== 9 ==================== -->
+    <h2><span class="no">09</span>运营与获客</h2>
+
+    <h3>9.1 微信生态内的天然优势</h3>
+    <p>项目已集成 ShareSystem，支持转发好友与分享朋友圈，具备基础的社交裂变入口。配合平台「直玩 / 试玩」能力，可显著降低「广告曝光 → 实际体验」之间的转化损耗。</p>
+
+    <h3>9.2 PC 端：低成本增量</h3>
+    <p>PC 小游戏 <b>40% 为独占用户</b>、付费增长 130%、ARPU 高出移动端 120%+。本项目 Canvas 2D 架构移植成本低，建议纳入首年规划。</p>
+
+    <h3>9.3 买量：最需要克制的环节</h3>
+    <div class="risk-box">
+      <b>买量成本居高不下，是悬在每个内购 CP 头顶的达摩克利斯之剑。</b><br><br>
+      行业教训非常具体：某轻 SLG 产品放量阶段日消耗从 10 万提升到 50 万，随即遭遇三重打击——<b>付费模式投放成本高、玩法内容少导致留存低、付费变现天花板低</b>。<br><br>
+      <b>本项目的纪律：</b><br>
+      · 未完成第 5 章差异化缺口前，<b>不做规模化投放</b>；<br>
+      · 严格用「LTV &gt; CPI」判定是否放量，不追 DAU 虚荣指标；<br>
+      · 素材策略：<b>图片素材整体效果更优</b>，视频素材的前 5 秒是转化关键；<br>
+      · 用买量反馈反向驱动内容迭代——CPI 高的渠道通常意味着题材匹配度差，是产品信号而非投放技术问题。
+    </div>
+
+    <h3>9.4 平台冷启动扶持</h3>
+    <p>应主动争取 MP 后台闭环服务：测试期公域专区曝光与精准「流量补能」、调优期「分钟级流失」指标诊断、爆发期「新游」专属自然公域标签曝光。这些是免费且能显著降低冷启动成本的资源。</p>
+
+    <!-- ==================== 10 ==================== -->
+    <h2><span class="no">10</span>路线图与里程碑</h2>
+
+    <table>
+      <thead><tr><th>阶段</th><th>目标</th><th>交付物</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>M0</b><br>工程底座</td>
+          <td>可运行、可测试、可协同</td>
+          <td>19830 行源码 / 46 测试 / Git 链路 / AppID / 开发者工具编译通过</td>
+          <td><span class="tag t-green">已完成</span></td>
+        </tr>
+        <tr>
+          <td><b>M1</b><br>真机验证</td>
+          <td>确认渲染、触摸、适配在真机可用</td>
+          <td>真机实跑报告、刘海屏适配修正、低端机性能基线</td>
+          <td><span class="tag t-blue">进行中</span></td>
+        </tr>
+        <tr>
+          <td><b>M2</b><br>差异化内容</td>
+          <td>解决三个缺口</td>
+          <td>题材外壳 + 战役关卡包 + 好友榜 + 开放数据域</td>
+          <td><span class="tag t-amber">待启动</span></td>
+        </tr>
+        <tr>
+          <td><b>M3</b><br>数据与变现</td>
+          <td>拿到第一批真实数据</td>
+          <td>云环境 + 异步 PvP + 真实广告位 + IAP 上线 + 小规模买量实测</td>
+          <td><span class="tag t-amber">待启动</span></td>
+        </tr>
+        <tr>
+          <td><b>M4</b><br>首发上线</td>
+          <td>吃满平台红利窗口</td>
+          <td>首发申报 + 规模化放量 +赛季运营</td>
+          <td><span class="tag t-amber">待启动</span></td>
+        </tr>
+        <tr>
+          <td><b>M5</b><br>第二曲线</td>
+          <td>PC 端增量</td>
+          <td>PC 适配 + 10% 专属广告金</td>
+          <td><span class="tag t-blue">机会项</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b>M3 是全项目的生死线。</b>在此之前，所有财务数字都是假设。这一阶段的核心交付物不是收入，而是三类真实数据：<b>次日留存、7 日留存、付费率</b>。它们决定了后续是否值得投入，也决定了该用怎样的量级去投。
+    </div>
+
+    <!-- ==================== 11 ==================== -->
+    <h2><span class="no">11</span>财务测算</h2>
+
+    <div class="risk-box">
+      <b>前置声明：</b>本章全部数字为<b>基于行业基准的假设推演</b>，本项目当前<b>零运营数据</b>。任何未经 M3 实测验证的数字都不构成业绩承诺，仅用于说明规模弹性与资源投放逻辑。
+    </div>
+
+    <h3>11.1 核心假设</h3>
+    <table>
+      <thead><tr><th>参数</th><th>保守</th><th>中性</th><th>乐观</th><th>依据</th></tr></thead>
+      <tbody>
+        <tr><td>稳态 MAU</td><td>8 万</td><td>30 万</td><td>100 万</td><td>7 亿 IAP 大盘中 MAU&gt;100 万的产品超 700 款</td></tr>
+        <tr><td>月付费率</td><td>3.0%</td><td>4.0%</td><td>5.0%</td><td>中重度 IAP 区间，未验证</td></tr>
+        <tr><td>月 ARPPU（元）</td><td>60</td><td>80</td><td>100</td><td>参考《我叫 MT2》月 ARPU 80–120 元</td></tr>
+        <tr><td>IAA 占 IAP 比</td><td>20%</td><td>25%</td><td>25%</td><td>基于 6.2 节双轨制设计</td></tr>
+        <tr><td>平台分成后留存</td><td>70%</td><td>70%</td><td>70%</td><td>常规基准；首发期可达 100%</td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.2 三档年度测算</h3>
+    <div class="formula">
+      月 IAP 流水 = MAU × 月付费率 × 月 ARPPU<br>
+      月总收入 = 月 IAP 流水 × (1 + IAA 占比)<br>
+      月净收入 = 月总收入 × 平台分成留存比
+    </div>
+
+    <table>
+      <thead><tr><th>指标</th><th>保守</th><th>中性</th><th>乐观</th></tr></thead>
+      <tbody>
+        <tr><td>稳态 MAU</td><td>8 万</td><td>30 万</td><td>100 万</td></tr>
+        <tr><td>付费用户数/月</td><td>2400</td><td>12000</td><td>50000</td></tr>
+        <tr><td>月 IAP 流水</td><td>14.4 万</td><td>96 万</td><td>500 万</td></tr>
+        <tr><td>月总收入（含 IAA）</td><td>17.3 万</td><td>120 万</td><td>625 万</td></tr>
+        <tr><td><b>年化总收入</b></td><td><b>约 207 万</b></td><td><b>约 1440 万</b></td><td><b>约 7500 万</b></td></tr>
+        <tr><td>扣除 30% 分成后</td><td>约 145 万</td><td>约 1008 万</td><td>约 5250 万</td></tr>
+        <tr><td>首发免分成增益（按 5000 万额度）</td><td>—</td><td>最高 <b>+1500 万</b></td><td>最高 <b>+1500 万</b></td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.3 关键在于 LTV 与 CPI 的关系</h3>
+    <p>规模数字本身没有意义，<b>真正决定可持续性的只有一个不等式</b>：</p>
+    <div class="formula">
+      <span class="hl">LTV（用户生命周期价值） &gt; CPI（单用户获取成本）</span> → 可持续放量<br>
+      LTV &lt; CPI → 每花一笔钱都扩大亏损，规模越大死得越快
+    </div>
+    <p>因此 M3 阶段的核心任务是<b>测出这两个数</b>，而不是追求 DAU。行业经验表明，多数失败案例并非 DAU 做不起来，而是在 LTV 尚未验证时就大规模放量。</p>
+
+    <div class="callout">
+      <b>建议的投放纪律：</b><br>
+      ① M3 阶段测试预算建议控制在<b>总预算的 10% 以内</b>，先买数据不买规模；<br>
+      ② 只有当 <b>LTV/CPI &gt; 1.5</b> 时，才允许进入 M4 规模化；<br>
+      ③ 若 7 日留存低于 <b>15%</b>，暂停投放，回到第 5 章解决差异化缺口——此时投放只会加速烧钱。
+    </div>
+
+    <!-- ==================== 12 ==================== -->
+    <h2><span class="no">12</span>风险矩阵</h2>
+
+    <table>
+      <thead><tr><th>风险</th><th>概率</th><th>影响</th><th>应对</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>无差异化导致留存失败</b></td><td><span class="tag t-red">高</span></td><td><span class="tag t-red">致命</span></td>
+          <td>M2 题材重建 + 内容填充，这是唯一解，无替代路径</td>
+        </tr>
+        <tr>
+          <td><b>买量成本高于 LTV</b></td><td><span class="tag t-red">高</span></td><td><span class="tag t-red">致命</span></td>
+          <td>M3 小规模实测；严格 LTV/CPI &gt; 1.5 才放量</td>
+        </tr>
+        <tr>
+          <td>社交缺失使留存储量打折</td><td><span class="tag t-amber">中</span></td><td><span class="tag t-red">高</span></td>
+          <td>优先接开放数据域，这是性价比最高的投入</td>
+        </tr>
+        <tr>
+          <td>错过首发政策窗口</td><td><span class="tag t-amber">中</span></td><td><span class="tag t-amber">中</span></td>
+          <td>压缩 M1/M2 周期；即便错过也有首 100 万免分成兜底</td>
+        </tr>
+        <tr>
+          <td>云环境搭建延期</td><td><span class="tag t-amber">中</span></td><td><span class="tag t-amber">中</span></td>
+          <td>M3 前置启动；注意不可复用既有环境</td>
+        </tr>
+        <tr>
+          <td>真机兼容性重大问题</td><td><span class="tag t-amber">中</span></td><td><span class="tag t-amber">中</span></td>
+          <td>M1 已在进行，多点机型覆盖</td>
+        </tr>
+        <tr>
+          <td>版号与合规</td><td><span class="tag t-blue">低</span></td><td><span class="tag t-red">致命</span></td>
+          <td><b>上线前必须确认资质完备</b>，此项优先级高于所有技术指标</td>
+        </tr>
+        <tr>
+          <td>AppSecret 等凭据泄露</td><td><span class="tag t-blue">低</span></td><td><span class="tag t-red">高</span></td>
+          <td>只存 .env.local / 云环境变量，严禁进仓库</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="risk-box">
+      <b>合规红线（不列入「可选事项」）：</b>版号、著作权、隐私合规、支付资质。<br>
+      这几项任何一项缺失，前面所有的产品工作、资金投入、政策红利都归零。务必在<b>任何规模化投入之前</b>逐一确认。
+    </div>
+
+    <!-- ==================== 13 ==================== -->
+    <h2><span class="no">13</span>资源需求</h2>
+
+    <h3>13.1 两种推进节奏</h3>
+    <table>
+      <thead><tr><th>项目</th><th>精简节奏（验证为主）</th><th>推进节奏（规模为主）</th></tr></thead>
+      <tbody>
+        <tr><td>周期</td><td>4～5 个月进入 M3</td><td>3 个月进入 M3</td></tr>
+        <tr><td>人力</td><td>1 主程 + 1 策划（可身兼）+ 外包美术</td><td>2 程序 + 1 策划 + 1 美术 + 0.5 运营</td></tr>
+        <tr><td>内容投入</td><td>最小差异化套装</td><td>完整题材重建 + 多章节关卡</td></tr>
+        <tr><td>买量测试预算</td><td>10～20 万</td><td>50～100 万</td></tr>
+        <tr><td>服务器 / 云</td><td>低（用户量小）</td><td>中（含 PvP 状态同步）</td></tr>
+        <tr><td>核心目标</td><td>拿到真实数据，验证是否值得继续</td><td>冲击首发窗口，吃满政策红利</td></tr>
+      </tbody>
+    </table>
+
+    <h3>13.2 预算投向优先级</h3>
+    <ol>
+      <li><b>内容差异化</b>（题材、关卡、美术）— 直接作用于留存，是所有其他工作的前提</li>
+      <li><b>云服务</b> — 解锁异步 PvP 与好友榜，把已有的 Elo 系统变成真实的留存引擎</li>
+      <li><b>合规资质</b> — 一票否决项，必须前置</li>
+      <li><b>买量测试</b> — 放在最后，且必须在前三项完成后才启动</li>
+    </ol>
+
+    <div class="callout">
+      <b>不建议的投向：</b>重构底层框架、更换技术栈、重写渲染层。<br>
+      现有 19830 行代码虽然是继承而来的，但已通过 46 个回归测试验证可用。把它推翻重写等价于同时放弃「研发风险已归零」这一唯一的战略优势。
+    </div>
+
+    <h3>13.3 一句话总结</h3>
+    <p style="font-size:16px; padding:18px 20px; background:#12263f; color:#fff; border-radius:8px; line-height:1.9;">
+      研发风险已被前置消化，这不是优势的全部而是入场券。<br>
+      <b style="color:#fbbf24;">真正的胜负手在三件事：用差异化换留存、用社交换传播、用纪律克制买量。</b><br>
+      三者都成立，是年度千万级的生意；任一失守，19830 行代码只是昂贵的沉没成本。
+    </p>
+
+    <div class="footnote" style="margin-top:30px;">
+      <b>数据来源：</b>2026 微信小游戏开发者大会（5 月 27 日·杭州）官方披露数据；国信证券研究所；DataEye 研究院；QuestMobile；公开媒体报道。<br>
+      口径说明：官方口径 MAU「超 5 亿」，另有第三方机构给出 6.54 亿，本计划书采用保守的官方口径。<br>
+      <b>免责声明：</b>本文件所有预测性陈述均为基于公开数据与假设的分析意见，不构成投资建议或业绩承诺。第 11 章财务数字未经实测验证。
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
