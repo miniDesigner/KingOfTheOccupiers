@@ -126,7 +126,7 @@ console.log('=== 测试4: 段位电脑设定（AI 一致化） ===');
 
   // AI 一致化（2026-09-09）：只返回难度档，无初始金币/技能档位/战力比/产兵乘数作弊
   const s = PowerSystem.getTierAiSettings(500, () => 0.1);
-  assert(s.initialGold === undefined, '不再返回初始金币（AI 统一与玩家一致 150）');
+  assert(s.initialGold === undefined, '不再返回初始金币（AI 统一与玩家一致 200）');
   assert(s.skillTier === undefined, '不再返回技能档位');
   assert(s.powerRatio === undefined, '不再返回战力比');
   assert(s.warriorRateMult === undefined, '不再返回产兵乘数');
@@ -146,14 +146,14 @@ console.log('=== 测试5: buildBattleConfig AI 一致化输出 ===');
   assert(enemy.warriorRateMult === undefined, '无产兵乘数（已移除作弊）');
   assert(enemy.skillTier === undefined, '无技能档位（已移除作弊）');
   assert(enemy.powerRatio === undefined, '无战力比（已移除作弊）');
-  assert(enemy.initialGold === 150, `AI 初始金币与玩家一致(${enemy.initialGold})`);
-  assert(cfg.player.initialGold === 150, `玩家初始金币(${cfg.player.initialGold})`);
+  assert(enemy.initialGold === 200, `AI 初始金币与玩家一致(${enemy.initialGold})`);
+  assert(cfg.player.initialGold === 200, `玩家初始金币(${cfg.player.initialGold})`);
   assert(['easy', 'normal', 'hard', 'nightmare'].includes(enemy.ai), `难度合法(${enemy.ai})`);
 
   // 纯随机模式（无奖杯）仍可用
   const cfg3 = buildBattleConfig(layout);
   assert(cfg3.enemies.length === 1 && cfg3.enemies[0].race, '纯随机模式正常');
-  assert(cfg3.enemies[0].initialGold === 150, '纯随机 AI 初始金币也统一 150');
+  assert(cfg3.enemies[0].initialGold === 200, '纯随机 AI 初始金币也统一 200');
 }
 
 console.log('=== 测试6: 大厅战力渲染 ===');

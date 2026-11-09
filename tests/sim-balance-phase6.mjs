@@ -40,7 +40,7 @@ const OPT = {
   maps: (argOf('maps', 'all')).split(','),
   profile: argOf('profile', 'fresh'),              // 玩家进度档位
   tier: args.includes('--tier'),                   // 兵种强度排行模式
-  maxTime: parseInt(argOf('maxtime', '600'), 10),  // 单局超时(游戏秒)
+  maxTime: parseInt(argOf('maxtime', '900'), 10),  // 单局超时(游戏秒)。2026-11 玩法改造：600→900（小图快节奏下避免超时截断，留足完整时长分布）
   verbose: args.includes('--verbose'),
 };
 if (OPT.maps[0] === 'all') OPT.maps = null; // null = 全部
@@ -80,6 +80,10 @@ const { BOARD_LAYOUTS, buildBattleConfig } = await import('../src/data/levels.js
 const ProfileManager = await import('../src/meta/ProfileManager.js');
 const DeploymentSys = await import('../src/meta/DeploymentSystem.js');
 const { generateBundle, getUnitStats, UPGRADE_COST_GROWTH } = DeploymentSys;
+// 2026-11 玩法改造：模拟器必须对齐真实游戏 AI 路径（Game.js: ai.deploymentBundle = generateAiDeployment(diff)）。
+// 旧模拟器让 AI 走 _initFromRace（races.json 固定属性 + 兵营产速 1.0/2.0），与真实对局不一致，
+// 导致战力压缩/快节奏改造后的平衡结论全部失真。
+const { generateAiDeployment } = await import('../src/meta/PowerSystem.js');
 
 const DEPLOY_CFG = ConfigLoader.get('deployables');
 const DEFAULT_DEP = DEPLOY_CFG.defaultDeployment;
@@ -124,7 +128,7 @@ function setupProfile(presetName) {
 class ScriptedHuman {
   constructor(player, opts = {}) {
     this.player = player;
-    this.interval = opts.interval ?? 2.6;      // 普通玩家操作节奏
+    this.interval = opts.interval ?? 1.8;      // 普通玩家操作节奏（2026-11 快节奏改造：2.6→1.8，短对局小图下真人手速显著加快）
     this.mistakeRate = opts.mistakeRate ?? 0.12; // 12%随机点（人类随手翻格）
     this.noise = opts.noise ?? 0.35;           // 评分扰动幅度
     this.timer = Math.random() * this.interval;
@@ -184,9 +188,9 @@ function simulateGame({ layout, difficulty, seed, presetName, dt = 0.2 }) {
 
   // 构建战斗配置（复用 levels.js，强制难度）
   const cfg = buildBattleConfig(layout);
-  const baseGold = { easy: 50, normal: 70, hard: 90, nightmare: 180 }[difficulty];
   cfg.enemies[0].ai = difficulty;
-  cfg.enemies[0].initialGold = baseGold;
+  // 2026-11 玩法改造：AI 初始金币与真实游戏一致（buildBattleConfig 双方均 200）。
+  // 旧模拟器残留的按难度作弊金币 {easy:50,normal:70,hard:90,nightmare:180} 已去除，避免基线失真。
   // 技能系统: 敌方技能解锁档位跟随难度（与 Game.initBattle 行为一致）
   SkillSystem.reset();
   SkillSystem.setEnemyDifficulty(difficulty);
@@ -201,18 +205,19 @@ function simulateGame({ layout, difficulty, seed, presetName, dt = 0.2 }) {
   // 玩家（上阵系统 + 局外加成默认关闭，Profile preset 控制进度）
   const bundle = setupProfile(presetName);
   const human = new Player(1, '玩家', '#3b82f6', false, 'normal');
-  human.gold = 150;
+  human.gold = 200; // 2026-11 玩法改造：初始金币与 levels.js 口径同步
   human.deploymentBundle = bundle;
   human.deployedSynergies = bundle.synergies;
   human.race = 'custom';
   human.raceLineup = ['custom'];
 
-  // 敌方AI
+  // 敌方AI（对齐 Game.initLevel：注入 deploymentBundle，走与玩家同款的上阵属性链路）
   const ecfg = cfg.enemies[0];
   const ai = new AIPlayer(ecfg.id, ecfg.name, '#ef4444', difficulty);
   ai.gold = ecfg.initialGold;
   ai.race = ecfg.race;
   ai.raceLineup = [ecfg.race];
+  ai.deploymentBundle = generateAiDeployment(difficulty);
 
   const players = [human, ai];
 
@@ -224,7 +229,7 @@ function simulateGame({ layout, difficulty, seed, presetName, dt = 0.2 }) {
 
   const ebTile = map.getTile(cfg.enemyBase.q, cfg.enemyBase.r);
   ebTile.owner = ai.id; ebTile.isFlipped = true;
-  ebTile.building = new Building('headquarters', 1, ai.race, ai.id);
+  ebTile.building = new Building('headquarters', 1, ai.race, ai.id, ai.deploymentBundle);
   ai.setBase(ebTile);
 
   // 模拟环境（PathfindingSystem 的 findPath 为静态方法，直接传类）
@@ -409,7 +414,7 @@ function hashCombo(diff, mapId, i) {
 function runTierAnalysis() {
   const unitIds = Object.keys(DEPLOY_CFG.units);
   console.log(`\n=== 40兵种强度排行（真实战斗判定 round-robin）===`);
-  console.log(`等级1 与 等级10 两档；每对打1场（含远程无损规则、射程差修正、战力五档结算）\n`);
+  console.log(`等级1 与 等级10 两档；每对打1场（含远程先手削减、射程差修正、战力五档结算）\n`);
 
   for (const level of [1, 10]) {
     const pA = new Player(1, 'A', '#3b82f6', false, 'normal');

@@ -18,10 +18,21 @@ import { SkillSystem } from '../system/SkillSystem.js';
 
 // 升级成本成长系数：每级成本 = 基础成本 × 该系数^(level-1)
 // Phase6 平衡调整：1.5 → 1.35（原曲线6兵升满需18万金≈2700局，调后约6万金≈900局，2周休闲节奏）
-export const UPGRADE_COST_GROWTH = 1.35;
+// 2026-11 玩法改造（快节奏经营）：1.35 → 1.18（升满约2万金≈300局，配合8~12分钟短对局）
+export const UPGRADE_COST_GROWTH = 1.18;
 
 // 兵种等级上限：技能解锁轴（Lv.6/12 解锁紫色被动，Lv.18 解锁橙色主动）
 export const MAX_UNIT_LEVEL = 20;
+
+// ==================== 战力压缩（2026-11 玩法改造） ====================
+// 目标：顶级兵(Lv20 Q6) vs 一级兵(Lv1 Q1) 的战力比从 65~77 压到 2~2.5 倍，
+// 数值差距收敛后，策略权重迁移到 技能解锁(Lv6/12/18)/羁绊/射程克制/兵种搭配。
+//   BASE_FLATTEN —— 基础属性向 1.0 收敛：base' = 1 + (base-1)×BASE_FLATTEN
+//   GROWTH_SCALE —— 等级成长大幅放缓：perLvl' = perLvl×GROWTH_SCALE
+// 配套：config/game.json quality.tiers 品质倍率 1.0~2.3 → 1.0~1.18
+// 复算：古龙 Lv20 Q6 攻×防 = 2.20；泰坦 Lv20 Q6 = 2.49（压缩前 65.7 / 77.5）
+export const BASE_FLATTEN = 0.25;
+export const GROWTH_SCALE = 0.07;
 
 // ==================== 兵种管理 ====================
 
@@ -42,6 +53,14 @@ export function getUnitStats(unitId, level = 1) {
   const quality = unitCfg.quality || 1;
   const qualityMult = getQualityMultiplier(quality);
 
+  // 2026-11 战力压缩：基础属性向 1.0 收敛 + 等级成长放缓（见文件头 BASE_FLATTEN/GROWTH_SCALE 注释）
+  const flatten = (v) => 1 + (v - 1) * BASE_FLATTEN;
+  const scaleGrowth = (v) => v * GROWTH_SCALE;
+  const baseAtk = flatten(base.attackCoeff || 1.0);
+  const baseHp = flatten(base.hpCoeff || 1.0);
+  const perLvlAtk = scaleGrowth(statsPerLevel.attackCoeff || 0);
+  const perLvlHp = scaleGrowth(statsPerLevel.hpCoeff || 0);
+
   return {
     id: unitId,
     name: unitCfg.name,
@@ -51,8 +70,8 @@ export function getUnitStats(unitId, level = 1) {
     qualityColor: getQualityColor(quality),
     qualityMultiplier: qualityMult,
     combatStyles: [...(unitCfg.combatStyles || [])],
-    attackCoeff: ((base.attackCoeff || 1.0) + (statsPerLevel.attackCoeff || 0) * (lvl - 1)) * qualityMult,
-    hpCoeff: ((base.hpCoeff || 1.0) + (statsPerLevel.hpCoeff || 0) * (lvl - 1)) * qualityMult,
+    attackCoeff: (baseAtk + perLvlAtk * (lvl - 1)) * qualityMult,
+    hpCoeff: (baseHp + perLvlHp * (lvl - 1)) * qualityMult,
     speedCoeff: (base.speedCoeff || 1.0) + (statsPerLevel.speedCoeff || 0) * (lvl - 1),
     attackRange: unitCfg.attackRange ?? 1,
     productionSpeed: unitCfg.productionSpeed ?? 1.0,

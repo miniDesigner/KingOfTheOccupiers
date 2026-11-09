@@ -50,7 +50,7 @@ import * as LadderSystem from '../meta/LadderSystem.js';
 import PowerSystem from '../meta/PowerSystem.js';
 import ShareSystem from '../meta/ShareSystem.js';
 import LeaderboardSystem from '../meta/LeaderboardSystem.js';
-import { generateOpponent, searchDelay,
+import { generateOpponent, searchDelay, RULES_VERSION as ASYNC_RULES_VERSION,
   ASYNC_MATCH_TIMEOUT_MS } from '../meta/AsyncMatchSystem.js';
 
 export class Game {
@@ -216,7 +216,17 @@ export class Game {
     setBattleRng(this.rng);
 
     // 对局形态：ai（快速AI对战）/ snapshot（异步快照PvP）
-    const isSnapshot = !!(session && session.mode === 'snapshot');
+    // 2026-11 玩法改造：快照带 rulesVersion，跨规则版本的旧快照降级为 AI 对战，
+    // 避免战力压缩/小地图规则错配导致强度失真（快照阵容由难度档现算，版本不齐即不可信）
+    const RULES_VERSION = ASYNC_RULES_VERSION || 1;
+    let isSnapshot = !!(session && session.mode === 'snapshot');
+    if (isSnapshot && session.snapshot && session.snapshot.rulesVersion !== undefined
+        && session.snapshot.rulesVersion !== RULES_VERSION) {
+      console.warn('[Game] Snapshot rulesVersion mismatch (' + session.snapshot.rulesVersion
+        + ' != ' + RULES_VERSION + '), fallback to AI battle');
+      isSnapshot = false;
+      session = null;
+    }
     this.battleMode = isSnapshot ? 'snapshot' : 'ai';
     this.localPlayerId = 1;
 
@@ -378,7 +388,8 @@ export class Game {
       this.screenWidth / (bounds.width + 40),
       (this.screenHeight * 0.86) / (bounds.height + 40)
     );
-    this.inputSystem.scale = Math.max(0.35, fitScale);
+    // 2026-11 玩法改造：地图缩为 11×7 后棋盘像素变小，缩放下限 0.35→0.5（防止缩太小格子看不清）
+    this.inputSystem.scale = Math.max(0.5, fitScale);
     const centerX = (bounds.minX + bounds.width / 2) * this.inputSystem.scale;
     const centerY = (bounds.minY + bounds.height / 2) * this.inputSystem.scale;
     this.inputSystem.cameraX = this.screenWidth / 2 - centerX;

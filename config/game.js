@@ -16,8 +16,8 @@ module.exports = {
     "_doc_battlePass": "赛季通行证（大厅功能行'🎖 通行证'按钮 + 商店特惠分类里的'🎖 通行证(高级)'商品项）。true=大厅入口显示在功能行（与商店/招募/任务并列，4 按钮）+ 商店里可购买高级通行证；false=大厅入口完全折叠（功能行 4→3 个按钮）+ 商店里 battle_pass_premium 商品联动隐藏（即使绕过展示调用也拒绝，防御层）。上线场景默认 false（待版本审核通过后开启）"
   },
   "hex": {
-    "size": 32,
-    "_doc_size": "六边形半径(像素)，影响地图整体大小"
+    "size": 52,
+    "_doc_size": "六边形半径(像素)，影响地图整体大小。2026-11 玩法改造：32→52（地图缩为 11×7 后放大单格表现，棋盘总像素基本不变）"
   },
   "map": {
     "radius": 4,
@@ -42,22 +42,22 @@ module.exports = {
     "tileBackBorder": "#4a5568"
   },
   "economy": {
-    "initialGold": 100,
-    "_doc_initialGold": "默认初始金币，关卡可单独覆盖",
-    "baseGoldRate": 1,
+    "initialGold": 200,
+    "_doc_initialGold": "默认初始金币（死配置：生效值在 src/data/levels.js 的 baseGold=200，此处仅同步口径防漂移）",
+    "baseGoldRate": 2,
     "killGoldPerWarrior": 2,
     "_doc_killGoldPerWarrior": "击杀敌人兵种赏金：每击杀1名敌方战士获得的金币(基础值，随敌方兵种等级提升)",
     "killGoldLevelStep": 0.5,
     "_doc_killGoldLevelStep": "赏金等级加成：敌方兵种每高1级，单兵赏金额外增加的金币数",
-    "_doc_baseGoldRate": "基础金币产出(每秒)，金矿产出=baseGoldRate*goldRate"
+    "_doc_baseGoldRate": "基础金币产出(每秒)，金矿产出=baseGoldRate*goldRate。2026-11 玩法改造：1→2（快节奏经营）"
   },
   "march": {
-    "speed": 0.6,
-    "_doc_speed": "行军速度(格/秒)。2026-09-09 节奏调整：1→0.6（整体节奏放慢）",
-    "groupThreshold": 8,
-    "_doc_groupThreshold": "兵营战士累积到此数量自动编队出发",
-    "hqBufferMax": 15,
-    "_doc_hqBufferMax": "大本营战士缓冲上限，超过后不再从大本营产出"
+    "speed": 0.85,
+    "_doc_speed": "行军速度(格/秒)。2026-09-09：1→0.6；2026-11 玩法改造：0.6→0.85（地图缩为 11×7，行军距离-60%，提速补偿）",
+    "groupThreshold": 6,
+    "_doc_groupThreshold": "兵营战士累积到此数量自动编队出发。2026-11 玩法改造：8→6（更快成军）",
+    "hqBufferMax": 12,
+    "_doc_hqBufferMax": "大本营战士缓冲上限，超过后不再从大本营产出。2026-11 玩法改造：15→12"
   },
   "animation": {
     "flipDuration": 0.5,
@@ -104,13 +104,13 @@ module.exports = {
     }
   },
   "ai": {
-    "decisionInterval": 6,
-    "_doc_decisionInterval": "AI决策间隔(秒)，越小AI越积极。2026-09-09 节奏调整：4→6（整体节奏放慢）"
+    "decisionInterval": 3,
+    "_doc_decisionInterval": "AI决策间隔(秒)（死配置：生效值在 src/meta/AIPlayer.js 的难度表，此处仅同步口径防漂移）。2026-11 玩法改造：6→3"
   },
   "unitAttackCoefficient": 1,
   "_doc_unitAttackCoefficient": "全局兵种攻击力系数，影响所有战士的基础攻击力",
   "quality": {
-    "_doc": "兵种品质等级配置（1~6），品质影响攻防属性倍率",
+    "_doc": "兵种品质等级配置（1~6）。2026-11 玩法改造（战力压缩）：品质倍率大幅拉平，品质差异迁移到技能解锁/羁绊/射程；数值战力顶级/一级比压至 2~2.5 倍",
     "tiers": [
       {
         "name": "白",
@@ -121,32 +121,32 @@ module.exports = {
       {
         "name": "绿",
         "color": "#22c55e",
-        "multiplier": 1.15,
-        "_doc": "良好品质，攻防+15%"
+        "multiplier": 1.04,
+        "_doc": "良好品质，攻防+4%"
       },
       {
         "name": "蓝",
         "color": "#3b82f6",
-        "multiplier": 1.35,
-        "_doc": "优秀品质，攻防+35%"
+        "multiplier": 1.07,
+        "_doc": "优秀品质，攻防+7%"
       },
       {
         "name": "紫",
         "color": "#a855f7",
-        "multiplier": 1.6,
-        "_doc": "史诗品质，攻防+60%"
+        "multiplier": 1.1,
+        "_doc": "史诗品质，攻防+10%"
       },
       {
         "name": "橙",
         "color": "#f97316",
-        "multiplier": 1.9,
-        "_doc": "传说品质，攻防+90%"
+        "multiplier": 1.14,
+        "_doc": "传说品质，攻防+14%"
       },
       {
         "name": "红",
         "color": "#ef4444",
-        "multiplier": 2.3,
-        "_doc": "神话品质，攻防+130%"
+        "multiplier": 1.18,
+        "_doc": "神话品质，攻防+18%"
       }
     ]
   }

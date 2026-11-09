@@ -45,8 +45,8 @@ export const BOARD_LAYOUTS = [
   {
     id: 'plains',
     name: '开阔平原',
-    rows: 20,
-    cols: 11,
+    rows: 11,
+    cols: 7,
     lanes: 1,
     desc: '无遮无拦的正面战场',
     obstacles: [],
@@ -54,59 +54,53 @@ export const BOARD_LAYOUTS = [
   {
     id: 'twin_canyon',
     name: '双线峡谷',
-    rows: 20,
-    cols: 11,
+    rows: 11,
+    cols: 7,
     lanes: 2,
     desc: '中央山脉断龙脉，左右两条战线',
-    // 中央纵墙(第5列，第7~12行)，切出左右两条战线（墙端可绕行）
+    // 中央纵墙(第3列，第4~6行)，切出左右两条战线（墙端可绕行）
     obstacles: [
-      { row: 7, col: 5 }, { row: 8, col: 5 }, { row: 9, col: 5 },
-      { row: 10, col: 5 }, { row: 11, col: 5 }, { row: 12, col: 5 },
+      { row: 4, col: 3 }, { row: 5, col: 3 }, { row: 6, col: 3 },
     ],
   },
   {
     id: 'tri_lanes',
     name: '三线走廊',
-    rows: 20,
-    cols: 11,
+    rows: 11,
+    cols: 7,
     lanes: 3,
     desc: '两道山脊隔出左中右三条战线',
-    // 左右两道纵墙(第3列与第7列，第7~12行)，切出 左/中/右 三条战线（墙端可绕行）
+    // 左右两道纵墙(第1列与第5列，第4~6行)，切出 左/中/右 三条战线（墙端可绕行）
     obstacles: [
-      { row: 7, col: 3 }, { row: 8, col: 3 }, { row: 9, col: 3 }, { row: 10, col: 3 }, { row: 11, col: 3 }, { row: 12, col: 3 },
-      { row: 7, col: 7 }, { row: 8, col: 7 }, { row: 9, col: 7 }, { row: 10, col: 7 }, { row: 11, col: 7 }, { row: 12, col: 7 },
+      { row: 4, col: 1 }, { row: 5, col: 1 }, { row: 6, col: 1 },
+      { row: 4, col: 5 }, { row: 5, col: 5 }, { row: 6, col: 5 },
     ],
   },
   {
     id: 'river_ford',
     name: '河谷渡口',
-    rows: 20,
-    cols: 11,
-    lanes: 2,
-    desc: '两条河岸横贯战场，仅余渡口通行',
-    // 两条横向河岸(第9、10行)，各在 col=3/7 留渡口，两端 col=0/10 留空可绕行
+    rows: 11,
+    cols: 7,
+    lanes: 3,
+    desc: '一横河岸横贯战场，仅余渡口通行',
+    // 横向河岸(第5行)，col=3 留渡口，两端 col=0/6 留空可绕行
     obstacles: [
-      // 北岸 row 9（铺 col 1..9，渡口在 col 3/7，两端留空可绕行）
-      { row: 9, col: 1 }, { row: 9, col: 2 }, { row: 9, col: 4 }, { row: 9, col: 5 },
-      { row: 9, col: 6 }, { row: 9, col: 8 }, { row: 9, col: 9 },
-      // 南岸 row 10（铺 col 1..9，渡口在 col 3/7，两端留空可绕行）
-      { row: 10, col: 1 }, { row: 10, col: 2 }, { row: 10, col: 4 }, { row: 10, col: 5 },
-      { row: 10, col: 6 }, { row: 10, col: 8 }, { row: 10, col: 9 },
+      { row: 5, col: 1 }, { row: 5, col: 2 },
+      { row: 5, col: 4 }, { row: 5, col: 5 },
     ],
   },
   {
     id: 'citadel',
     name: '中央山垒',
-    rows: 20,
-    cols: 11,
+    rows: 11,
+    cols: 7,
     lanes: 3,
-    desc: '环形山峦坐镇中央，只能侧翼包抄',
-    // 中央山块(中心 row9/col5 + 五个邻格，西北侧留一线天缺口)
+    desc: '十字山峦坐镇中央，只能侧翼包抄',
+    // 中央十字山块(中心 row5/col3 + 上下左右四邻，四个斜角留缺口)
     obstacles: [
-      { row: 9, col: 5 },
-      { row: 9, col: 4 }, { row: 9, col: 6 },
-      { row: 8, col: 6 },
-      { row: 10, col: 5 }, { row: 10, col: 6 },
+      { row: 5, col: 3 },
+      { row: 4, col: 3 }, { row: 6, col: 3 },
+      { row: 5, col: 2 }, { row: 5, col: 4 },
     ],
   },
 ];
@@ -148,7 +142,8 @@ export function buildBattleConfig(layout, trophies) {
       : 'nightmare';
   }
   // 初始金币：玩家与 AI 一致（2026-09-09 去除 AI 初始金币作弊）
-  const baseGold = 150;
+  // 2026-11 玩法改造：150→200（快节奏经营：开局可即刻铺 2 座兵营 + 1 座金矿）
+  const baseGold = 200;
 
   // 随机对手种族（按难度分池：新手排除全远程族 / 噩梦仅远程压制族 / 高难排除纯近战族）
   const racePool = aiDifficulty === 'easy' ? RACES_EASY
@@ -177,7 +172,7 @@ export function buildBattleConfig(layout, trophies) {
     presetBuildings: [],
     playerBase,
     enemyBase,
-    player: { race: 'custom', initialGold: 150 },
+    player: { race: 'custom', initialGold: 200 },
     enemies: [{
       id: 2,
       name: enemyName,

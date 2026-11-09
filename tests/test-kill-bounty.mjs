@@ -151,8 +151,13 @@ console.log('=== 测试7: 远程vs近战 ===');
   const gA = makeGroup(1, 10, 1, { attackRange: 2 });  // 远程
   const gB = makeGroup(2, 10);                          // 近战
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
-  assert(gB.state === 'destroyed' && gA.warriors === 10, '远程无损击溃近战');
-  assert(pA.gold === goldA0 + 20 && pB.gold === goldB0, '仅击杀方得赏金');
+  // 2026-11 玩法改造：远程不再无损全歼——射程2先手削减40%（10→6兵）后落入五档结算；
+  // 远程另有攻击系数加成（getPower=12.4 vs 6），ratio≈2.07 > 1.35 完胜档，A 剩 5 兵。
+  // 双向赏金规则不变：A 全歼 B 得 20；B 按 A 实际损失 5 兵得 10。
+  assert(gB.state === 'destroyed', '远程先手压制后击溃近战');
+  assert(gA.warriors < 10 && gA.warriors > 0, `远程不再无损（剩${gA.warriors}兵）`);
+  assert(gA.warriors === 5, `先手40%+完胜余兵=5（实得${gA.warriors}）`);
+  assert(pA.gold === goldA0 + 20 && pB.gold === goldB0 + 10, `双向赏金：A得20/B得10（实得${pA.gold - goldA0}/${pB.gold - goldB0}）`);
 }
 
 // ============ 8. 守方击杀赏金（攻城失败全灭） ============

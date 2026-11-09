@@ -71,12 +71,26 @@ export class Building {
     const config = BUILDING_CONFIG[type];
     const levelConfig = config ? (config[this.level] || config[1]) : null;
 
+    // 2026-11 玩法改造：兵营产速必须同时体现「地图预设等级」与「局外强化」。
+    // 旧实现直接取 bldStats.warriorRate（Lv1 强化 = 1）而完全忽略 this.level，
+    // 但 AI 的 bundle.buildingUpgrades 为空会落回 levelConfig（Lv1~4 → 1/2/4/6），
+    // 于是 AI 翻到高级兵营便单方面获得 4~6 倍产速，小图快节奏下直接导致 PvE 碾压。
+    // 统一口径：产速 = 地图等级基础(levelConfig.warriorRate) × 局外强化倍率(bldStats / 基准 Lv1)，
+    // 双方对称，且局外养成的收益仍然保留。
+    const barracksLv1 = BUILDING_CONFIG.barracks ? BUILDING_CONFIG.barracks[1] : null;
+    const upgradeScale = (type === 'barracks' && barracksLv1 && barracksLv1.warriorRate > 0
+      && bldStats && typeof bldStats.warriorRate === 'number')
+      ? bldStats.warriorRate / barracksLv1.warriorRate
+      : 1;
+
     // 应用建筑强化数据
     this.maxHp = bldStats?.hp || (levelConfig ? levelConfig.hp : 10);
     this.currentHp = this.maxHp;
     this.defenseBonus = bldStats?.defense ?? (levelConfig ? (levelConfig.defense || 0) : 0);
     this.goldRate = bldStats?.goldRate ?? (levelConfig ? (levelConfig.goldRate || 0) : 0);
-    this.warriorRate = bldStats?.warriorRate ?? (levelConfig ? (levelConfig.warriorRate || 0) : 0);
+    this.warriorRate = type === 'barracks'
+      ? (levelConfig ? (levelConfig.warriorRate || 0) : 0) * upgradeScale
+      : (bldStats?.warriorRate ?? (levelConfig ? (levelConfig.warriorRate || 0) : 0));
     this.attackBonus = levelConfig ? (levelConfig.attackBonus || 0) : 0;
     this.color = levelConfig ? levelConfig.color : '#888888';
     this.name = levelConfig ? levelConfig.name : type;

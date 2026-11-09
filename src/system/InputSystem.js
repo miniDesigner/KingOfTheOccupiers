@@ -153,7 +153,8 @@ export class InputSystem {
       if (this.cameraEnabled) {
         const delta = e.deltaY > 0 ? 0.9 : 1.1;
         const prevScale = this.scale;
-        const nextScale = Math.max(0.35, Math.min(2.0, prevScale * delta));
+        // 2026-11 玩法改造：缩放下限 0.35→0.5（11×7 小棋盘防过小）
+        const nextScale = Math.max(0.5, Math.min(2.0, prevScale * delta));
         // P36：与双指一致，以指针位置为锚点缩放（桌面调试镜像真机手感）
         const s = this.touchScaleY || 1;
         const ax = e.clientX;
@@ -231,7 +232,7 @@ export class InputSystem {
       if (this.lastDistance > 0) {
         const prevScale = this.scale;
         let nextScale = prevScale * (dist / this.lastDistance);
-        nextScale = Math.max(0.35, Math.min(2.0, nextScale));
+        nextScale = Math.max(0.5, Math.min(2.0, nextScale));
 
         // ① 双指整体平移：相机跟随中心点位移（inner 坐标，与相机同坐标系）
         this.cameraX += c.x - this.lastCenterX;

@@ -11,6 +11,9 @@ export class PlayerProfile {
     // 昵称：新用户默认随机游客名「领主_XXXX」，可在设置/改名界面修改
     this.nickname = PlayerProfile.generateDefaultNickname();
 
+    // 存档结构版本（2026-11 玩法改造 v2：战力压缩+快节奏经营，见 fromJSON 迁移）
+    this.schemaVersion = 2;
+
     // === 货币 ===
     this.gold = 500;          // 金币（局内+局外通用）
     this.diamond = 2000;      // 钻石
@@ -121,6 +124,7 @@ export class PlayerProfile {
    */
   serialize() {
     return {
+      schemaVersion: this.schemaVersion || 1,
       nickname: this.nickname,
       gold: this.gold,
       diamond: this.diamond,
@@ -173,6 +177,22 @@ export class PlayerProfile {
   static fromJSON(data) {
     const profile = new PlayerProfile();
     Object.assign(profile, data);
+    // === 2026-11 玩法改造 v2：战力压缩 + 快节奏经营 存档迁移 ===
+    // 旧档已投入的兵种等级在战力压缩(每级收益≈0.6%)与新成本曲线(1.35→1.18)下购买力骤变，
+    // 按「已投入等级总数」一次性补偿金币/星尘，让老玩家能立即按新曲线重新铺强度：
+    //   补偿金币 = Σ(兵种等级-1) × 150    补偿星尘 = Σ(兵种等级-1) × 15
+    if ((profile.schemaVersion || 1) < 2) {
+      let investedLevels = 0;
+      for (const u of Object.values(profile.collectedUnits || {})) {
+        investedLevels += Math.max(0, (u && u.level || 1) - 1);
+      }
+      if (investedLevels > 0) {
+        profile.gold = (profile.gold || 0) + investedLevels * 150;
+        profile.stardust = (profile.stardust || 0) + investedLevels * 15;
+        console.log(`[PlayerProfile] v2 migration: +${investedLevels * 150} gold / +${investedLevels * 15} stardust for ${investedLevels} invested unit levels`);
+      }
+      profile.schemaVersion = 2;
+    }
     // 2026-09-09 迁移：剥离已废弃字段（collectedSynergies + deployment.synergies 不再被业务使用）
     delete profile.collectedSynergies;
     if (Array.isArray(profile.deployment) && profile.deployment.synergies) {

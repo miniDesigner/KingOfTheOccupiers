@@ -209,13 +209,13 @@ console.log('=== 测试6: 障碍格不可翻转 ===');
   const cfg = buildBattleConfig(l, 100);
   const map = new HexMap();
   map.generate(cfg.cols, cfg.rows, cfg.obstacles);
-  // 障碍(墙末端 row12,col5)的下方邻格(row13,col5)标记为已翻转，满足邻接条件
-  const below = colRowToAxial(5, 13);
+  // 障碍(墙末端 row6,col3)的下方邻格(row7,col3)标记为已翻转，满足邻接条件
+  const below = colRowToAxial(3, 7);
   const base = map.getTile(below.q, below.r);
   base.owner = 1; base.isFlipped = true;
-  const wallBottom = colRowToAxial(5, 12);
+  const wallBottom = colRowToAxial(3, 6);
   const obstacle = map.getTile(wallBottom.q, wallBottom.r);
-  assert(obstacle && obstacle.isObstacle, '(row12,col5)是紧邻已翻转格的障碍格');
+  assert(obstacle && obstacle.isObstacle, '(row6,col3)是紧邻已翻转格的障碍格');
   const player = { id: 1, gold: 999, spendGold() { this.gold -= 10; } };
   assert(BuildSystem.tryFlipTile(obstacle, player, map) === false, 'tryFlipTile 拒绝障碍格（即使金币充足相邻）');
   assert(player.gold === 999, '拒绝时不扣金币');
@@ -243,8 +243,8 @@ console.log('=== 测试7: 路线连通与寻路 ===');
   const cfgT = buildBattleConfig(BOARD_LAYOUTS[1], 0);
   const map = new HexMap();
   map.generate(cfgT.cols, cfgT.rows, cfgT.obstacles);
-  const wall = colRowToAxial(5, 7);
-  const plain = colRowToAxial(6, 7);
+  const wall = colRowToAxial(3, 5);
+  const plain = colRowToAxial(4, 5);
   assert(PathfindingSystem.isPassable(map.getTile(wall.q, wall.r), 1, null) === false, 'isPassable: 障碍格返回false');
   assert(PathfindingSystem.isPassable(map.getTile(plain.q, plain.r), 1, null) === true, 'isPassable: 障碍旁普通格可通行');
 }
@@ -277,9 +277,9 @@ console.log('=== 测试8: 障碍分线（2~3条战线） ===');
   {
     const { cfg, map } = setup('twin_canyon');
     const R = reachable(map, cfg.playerBase);
-    const wallMid = colRowToAxial(5, 7);
-    const left = colRowToAxial(2, 7), right = colRowToAxial(8, 7);
-    assert(!R.has(tileKey(wallMid.q, wallMid.r)), '双线峡谷：墙体中格(row7,col5)不可达');
+    const wallMid = colRowToAxial(3, 5);
+    const left = colRowToAxial(1, 5), right = colRowToAxial(5, 5);
+    assert(!R.has(tileKey(wallMid.q, wallMid.r)), '双线峡谷：墙体中格(row5,col3)不可达');
     assert(R.has(tileKey(left.q, left.r)) && R.has(tileKey(right.q, right.r)), '双线峡谷：左右两线均可达');
     assert(R.has(tileKey(cfg.enemyBase.q, cfg.enemyBase.r)), '双线峡谷：敌方基地可达');
   }
@@ -287,10 +287,10 @@ console.log('=== 测试8: 障碍分线（2~3条战线） ===');
   {
     const { cfg, map } = setup('tri_lanes');
     const R = reachable(map, cfg.playerBase);
-    const wallL = colRowToAxial(3, 8), wallR = colRowToAxial(7, 8);
-    const mid = colRowToAxial(5, 8), farL = colRowToAxial(1, 8), farR = colRowToAxial(9, 8);
+    const wallL = colRowToAxial(1, 5), wallR = colRowToAxial(5, 5);
+    const mid = colRowToAxial(3, 5), farL = colRowToAxial(0, 5), farR = colRowToAxial(6, 5);
     assert(!R.has(tileKey(wallL.q, wallL.r)) && !R.has(tileKey(wallR.q, wallR.r)), '三线走廊：两道墙格不可达');
-    assert(R.has(tileKey(mid.q, mid.r)), '三线走廊：中线(row8,col5)可达');
+    assert(R.has(tileKey(mid.q, mid.r)), '三线走廊：中线(row5,col3)可达');
     assert(R.has(tileKey(farL.q, farL.r)) && R.has(tileKey(farR.q, farR.r)), '三线走廊：左右两线可达');
     assert(R.has(tileKey(cfg.enemyBase.q, cfg.enemyBase.r)), '三线走廊：敌方基地可达');
   }
@@ -298,21 +298,21 @@ console.log('=== 测试8: 障碍分线（2~3条战线） ===');
   {
     const { cfg, map } = setup('river_ford');
     const R = reachable(map, cfg.playerBase);
-    const fordL = colRowToAxial(3, 9), fordR = colRowToAxial(7, 9);
-    const river = colRowToAxial(5, 9);
+    const fordL = colRowToAxial(3, 5), fordR = colRowToAxial(6, 5);
+    const river = colRowToAxial(2, 5);
     assert(R.has(tileKey(fordL.q, fordL.r)) && R.has(tileKey(fordR.q, fordR.r)), '河谷渡口：左右渡口连通');
-    assert(!R.has(tileKey(river.q, river.r)), '河谷渡口：河面(row9,col5)不可达');
+    assert(!R.has(tileKey(river.q, river.r)), '河谷渡口：河面(row5,col2)不可达');
     assert(R.has(tileKey(cfg.enemyBase.q, cfg.enemyBase.r)), '河谷渡口：敌方基地可达');
   }
   // 中央山垒：中心不可达，侧翼绕行连通
   {
     const { cfg, map } = setup('citadel');
     const R = reachable(map, cfg.playerBase);
-    const center = colRowToAxial(5, 9);
-    const gap = colRowToAxial(5, 8);
-    const left = colRowToAxial(2, 9), right = colRowToAxial(8, 9);
-    assert(!R.has(tileKey(center.q, center.r)), '中央山垒：中心(row9,col5)不可达');
-    assert(R.has(tileKey(gap.q, gap.r)), '中央山垒：西北缺口(row8,col5)连通');
+    const center = colRowToAxial(3, 5);
+    const gap = colRowToAxial(4, 4);
+    const left = colRowToAxial(1, 5), right = colRowToAxial(5, 5);
+    assert(!R.has(tileKey(center.q, center.r)), '中央山垒：中心(row5,col3)不可达');
+    assert(R.has(tileKey(gap.q, gap.r)), '中央山垒：斜角缺口(row4,col4)连通');
     assert(R.has(tileKey(left.q, left.r)) && R.has(tileKey(right.q, right.r)), '中央山垒：左右侧翼可达');
     assert(R.has(tileKey(cfg.enemyBase.q, cfg.enemyBase.r)), '中央山垒：敌方基地可达');
   }

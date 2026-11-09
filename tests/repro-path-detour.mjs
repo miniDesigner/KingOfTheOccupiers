@@ -26,7 +26,7 @@ syncConfigToStatics();
 const { HexMap } = await import('../src/world/HexMap.js');
 const { PathfindingSystem } = await import('../src/system/PathfindingSystem.js');
 const { MarchGroup } = await import('../src/entity/MarchGroup.js');
-const { axialToColRow } = await import('../src/world/HexMath.js');
+const { axialToColRow, colRowToAxial } = await import('../src/world/HexMath.js');
 
 // ---------- 工具 ----------
 function printPath(map, path, label) {
@@ -182,4 +182,22 @@ function printPath(map, path, label) {
     });
   }
   printPath(map, PathfindingSystem.findPath(map.getTile(5 - 8, 17), goal, map, 1), 'river_ford A*(中轴出生)');
+}
+
+// ---------- 场景6: 2026-11 新布局 11×7 全布局寻路冒烟（玩家基地→敌方基地） ----------
+{
+  const { BOARD_LAYOUTS, baseCoords } = await import('../src/data/levels.js');
+  console.log('\n===== 场景6: 新 11×7 布局寻路冒烟 =====');
+  let allOk = true;
+  for (const l of BOARD_LAYOUTS) {
+    const map = new HexMap();
+    map.generate(l.cols, l.rows, (l.obstacles || []).map(({ row, col }) => colRowToAxial(col, row)));
+    const from = baseCoords(l.rows, l.cols, 1);
+    const to = baseCoords(l.rows, l.cols, -1);
+    const path = PathfindingSystem.findPath(map.getTile(from.q, from.r), map.getTile(to.q, to.r), map, 1);
+    const crosses = path ? path.some(t => t.isObstacle) : false;
+    console.log(`  ${l.id}(${l.name}) ${l.rows}×${l.cols}: A* len=${path ? path.length : 'null'} 穿障碍=${crosses}`);
+    if (!path || crosses) allOk = false;
+  }
+  console.log(allOk ? '  ✅ 全部 5 布局：双方大本营间可寻路且不穿障碍' : '  ❌ 存在寻路死局！');
 }

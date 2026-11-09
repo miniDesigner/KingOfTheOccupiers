@@ -13,11 +13,16 @@ import { battleRandom } from '../utils/rng.js';
 // AI难度配置
 // warriorRateMult: 产兵速度乘数 —— 一致化后恒为 1.0（出兵速度由兵种 productionSpeed 决定，
 // 与玩家同规则，不再按难度叠加产速特权；Game.js 会用 PowerSystem 的 enemyConfig.warriorRateMult 覆盖此值）
+// 2026-11 玩法改造（快节奏 + 压缩差距）：决策间隔 6/3/2/1 → 3.5/2.4/2.0/1.8
+// 11×7 小图上「决策间隔」是最强的强度杠杆（翻格速度直接决定抢占高级兵营的数量）。
+// 初版 4/2.2/1.5/1.0 与旧值 6/3/2/1 的 easy↔nightmare 手速差达 4~6 倍，
+// 在纵深消失的小图里被极度放大，导致 easy 全胜(100%)、nightmare 近乎全负(9%)。
+// 收窄到 3.5~1.8（约 2 倍差），难度梯度改由「品质上限 + 等级基准 + 评估策略」承担。
 const AI_DIFFICULTY = {
-  easy:      { interval: 6.0,  synergyPursuit: 0,  evaluatePreset: false, blockEnemy: false, randomFactor: 0.6,  warriorRateMult: 1.0 },
-  normal:    { interval: 3.0,  synergyPursuit: 1,  evaluatePreset: true,  blockEnemy: false, randomFactor: 0.3,  warriorRateMult: 1.0 },
+  easy:      { interval: 3.5,  synergyPursuit: 0,  evaluatePreset: false, blockEnemy: false, randomFactor: 0.6,  warriorRateMult: 1.0 },
+  normal:    { interval: 2.4,  synergyPursuit: 1,  evaluatePreset: true,  blockEnemy: false, randomFactor: 0.3,  warriorRateMult: 1.0 },
   hard:      { interval: 2.0,  synergyPursuit: 2,  evaluatePreset: true,  blockEnemy: true,  randomFactor: 0.15, warriorRateMult: 1.0 },
-  nightmare: { interval: 1.0,  synergyPursuit: 3,  evaluatePreset: true,  blockEnemy: true,  randomFactor: 0.05, warriorRateMult: 1.0 },
+  nightmare: { interval: 1.8,  synergyPursuit: 3,  evaluatePreset: true,  blockEnemy: true,  randomFactor: 0.05, warriorRateMult: 1.0 },
 };
 
 export class AIPlayer extends Player {

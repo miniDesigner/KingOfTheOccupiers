@@ -436,49 +436,64 @@ export class CombatSystem {
     const isRangedA = rangeA > 1;
     const isRangedB = rangeB > 1;
 
-    // === 远程 vs 近战：远程兵种不受近战伤害 ===
-    // 远程兵种可以在远距离攻击，近战兵种无法反击
+    // === 远程 vs 近战：远程先手压制（2026-11 玩法改造） ===
+    // 旧规则：远程无损全歼近战（绝对碾压，战力压缩后会成为唯一最优解）。
+    // 新规则：远程按射程差先手削减对方兵力 30%~60%，已算好的战力等比折算，
+    //         随后落入正常五档战力结算——保留克制关系，取消无损碾压，
+    //         近战堆兵/多队合击可以反制远程。
+    const applyRangedFirstStrike = (ranged, melee) => {
+      const edge = Math.min(3, (ranged.getAttackRange ? ranged.getAttackRange() : 1) - 1);
+      const cutRatio = Math.min(0.6, 0.3 + 0.1 * edge);
+      const before = melee.warriors;
+      const cut = Math.floor(before * cutRatio);
+      if (cut > 0) {
+        melee.warriors = before - cut;
+        this.addArrowEffect(ranged.pixelX, ranged.pixelY, melee.pixelX, melee.pixelY);
+        this.addDamageText(melee.pixelX, melee.pixelY - 10, cut, '#60a5fa');
+        if (this.audioManager) {
+          this.audioManager.playCombatWarrior();
+          this.audioManager.vibrateLight();
+        }
+        return cut / before; // 实际削减比例
+      }
+      return 0;
+    };
+    let meleeCutRatio = 0;
     if (isRangedA && !isRangedB) {
-      // A远程 vs B近战：A无损击溃B
-      this.addArrowEffect(groupA.pixelX, groupA.pixelY, groupB.pixelX, groupB.pixelY);
-      this.addExplosion(groupB.pixelX, groupB.pixelY, '#60a5fa');
-      this.addDamageText(groupB.pixelX, groupB.pixelY - 10, groupB.warriors, '#60a5fa');
-      if (this.audioManager) {
-        this.audioManager.playCombatWarrior();
-        this.audioManager.vibrateLight();
-      }
-
-      groupB.warriors = 0;
-      groupB.state = 'destroyed';
-      groupA.state = 'marching';
-
-      if (groupA.recordKill) groupA.recordKill();
-      this._applyPostBattleHeal(groupA, groupA.pixelX, groupA.pixelY);
-      this._tryRevive(groupB, groupB.pixelX, groupB.pixelY);
-      return;
+      meleeCutRatio = applyRangedFirstStrike(groupA, groupB);
+    } else if (isRangedB && !isRangedA) {
+      meleeCutRatio = applyRangedFirstStrike(groupB, groupA);
     }
-    if (isRangedB && !isRangedA) {
-      // B远程 vs A近战：B无损击溃A
-      this.addArrowEffect(groupB.pixelX, groupB.pixelY, groupA.pixelX, groupA.pixelY);
-      this.addExplosion(groupA.pixelX, groupA.pixelY, '#60a5fa');
-      this.addDamageText(groupA.pixelX, groupA.pixelY - 10, groupA.warriors, '#60a5fa');
-      if (this.audioManager) {
-        this.audioManager.playCombatWarrior();
-        this.audioManager.vibrateLight();
-      }
-
-      groupA.warriors = 0;
+    if (meleeCutRatio > 0) {
+      // 战力与战士数线性（getPower ∝ warriors），先手削减后等比折算
+      if (isRangedA) powerB *= (1 - meleeCutRatio);
+      else powerA *= (1 - meleeCutRatio);
+    }
+    // 先手削减后若近战方已空，直接判负（保留旧击杀记账路径）
+    if (groupA.warriors <= 0 && groupB.warriors > 0) {
       groupA.state = 'destroyed';
       groupB.state = 'marching';
-
       if (groupB.recordKill) groupB.recordKill();
       this._applyPostBattleHeal(groupB, groupB.pixelX, groupB.pixelY);
       this._tryRevive(groupA, groupA.pixelX, groupA.pixelY);
       return;
     }
+    if (groupB.warriors <= 0 && groupA.warriors > 0) {
+      groupB.state = 'destroyed';
+      groupA.state = 'marching';
+      if (groupA.recordKill) groupA.recordKill();
+      this._applyPostBattleHeal(groupA, groupA.pixelX, groupA.pixelY);
+      this._tryRevive(groupB, groupB.pixelX, groupB.pixelY);
+      return;
+    }
 
-    // === 双方同为远程或同为近战：正常战力对比 ===
-    const rangeDiff = rangeA - rangeB;
+    // === 战力对比五档结算 ===
+    // 2026-11 玩法改造（战力压缩）：阈值收窄 1.5/1.1/0.9~1.1/0.67 → 1.35/1.06/0.94~1.06/0.74，
+    // 压缩战力差后避免平局带过宽导致拉锯拖局。
+    // 射程差 ±25%/级 加成仅适用于双方同类型对局——远程对近战的克制已由先手削减表达，
+    // 不再叠加，防止双重增益。
+    const rangedVsMelee = (isRangedA !== isRangedB);
+    const rangeDiff = rangedVsMelee ? 0 : rangeA - rangeB;
     if (rangeDiff > 0) {
       // A射程更远：A +25%/级，B -15%/级
       powerA *= (1 + 0.25 * rangeDiff);
@@ -529,7 +544,7 @@ export class CombatSystem {
     // 战力差判定
     const ratio = effectivePowerA / effectivePowerB;
 
-    if (ratio > 1.5) {
+    if (ratio > 1.35) {
       // A完胜
       const remainingPower = effectivePowerA - effectivePowerB;
       groupA.warriors = Math.max(1, Math.ceil(remainingPower / (effectivePowerA / groupA.warriors)));
@@ -547,7 +562,7 @@ export class CombatSystem {
       // A受到B的反伤
       this._applyDamageReflect(groupB, groupA, effectivePowerA);
 
-    } else if (ratio > 1.1) {
+    } else if (ratio > 1.06) {
       // A惨胜
       const losses = groupA.warriors - Math.max(1, Math.floor(groupA.warriors * 0.3));
       groupA.warriors = Math.max(1, Math.floor(groupA.warriors * 0.3));
@@ -561,7 +576,7 @@ export class CombatSystem {
       this._tryRevive(groupB, groupB.pixelX, groupB.pixelY);
       this._applyDamageReflect(groupB, groupA, effectivePowerA);
 
-    } else if (ratio >= 0.9 && ratio <= 1.1) {
+    } else if (ratio >= 0.94 && ratio <= 1.06) {
       // 两败俱伤
       this.addDamageText(midX, midY - 10, effectivePowerA + effectivePowerB, '#ff4444');
       this.addExplosion(midX, midY, '#ff6644');
@@ -573,7 +588,7 @@ export class CombatSystem {
       this._tryRevive(groupA, groupA.pixelX, groupA.pixelY);
       this._tryRevive(groupB, groupB.pixelX, groupB.pixelY);
 
-    } else if (ratio > 0.67) {
+    } else if (ratio > 0.74) {
       // B惨胜
       const losses = groupB.warriors - Math.max(1, Math.floor(groupB.warriors * 0.3));
       groupB.warriors = Math.max(1, Math.floor(groupB.warriors * 0.3));

@@ -548,16 +548,17 @@ export class RenderSystem {
       } else {
         ctx.fillStyle = building.variantColor || building.color;
       }
-      ctx.font = 'bold 15px sans-serif';
+      // 2026-11 玩法改造：格子放大后建筑图标同步放大 15→24
+      ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(icon, x, y - 4);
+      ctx.fillText(icon, x, y - 5);
 
       // 兵营/金矿显示等级
       if (building.type === 'barracks' || building.type === 'gold_mine') {
         ctx.fillStyle = '#fff';
-        ctx.font = '9px sans-serif';
-        ctx.fillText('Lv' + building.level, x, y + 8);
+        ctx.font = '13px sans-serif';
+        ctx.fillText('Lv' + building.level, x, y + 12);
       }
 
       // HP条
@@ -674,7 +675,8 @@ export class RenderSystem {
       const isDefense = combatStyles.includes('defense');
 
       // 基础半径：战士数 + 品质加成（高品质兵种略大）
-      const baseRadius = 7 + Math.min(5, group.warriors / 4) + (quality - 1) * 0.8;
+      // 2026-11 玩法改造：格子 32→52，兵种圆盘同步放大（直径≤42px < 格心距 78px，多队堆叠不重叠）
+      const baseRadius = 10 + Math.min(8, group.warriors / 4) + (quality - 1) * 0.6;
 
       // === 远程兵种：外圈虚线环 ===
       if (isRanged) {
@@ -682,19 +684,19 @@ export class RenderSystem {
         ctx.lineWidth = 1.5;
         ctx.setLineDash([3, 2]);
         ctx.beginPath();
-        ctx.arc(x, y, baseRadius + 5, 0, Math.PI * 2);
+        ctx.arc(x, y, baseRadius + 7, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
       }
 
       // === 法术兵种：紫色光晕 ===
       if (isMagic) {
-        const gradient = ctx.createRadialGradient(x, y, baseRadius, x, y, baseRadius + 8);
+        const gradient = ctx.createRadialGradient(x, y, baseRadius, x, y, baseRadius + 10);
         gradient.addColorStop(0, 'rgba(168, 85, 247, 0.25)');
         gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(x, y, baseRadius + 8, 0, Math.PI * 2);
+        ctx.arc(x, y, baseRadius + 10, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -711,16 +713,16 @@ export class RenderSystem {
 
       // === 兵种图标（显示在圆点上方） ===
       if (icon) {
-        ctx.font = `${Math.floor(baseRadius * 1.3)}px sans-serif`;
+        ctx.font = `${Math.floor(baseRadius * 1.5)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(icon, x, y - baseRadius - 8);
+        ctx.fillText(icon, x, y - baseRadius - 10);
       }
 
       // === 有效生命值（战士数 × 生命系数，反映兵种耐久差异） ===
       const effectiveHP = Math.round(group.warriors * (group.hpCoeff || 1.0));
       ctx.fillStyle = '#fff';
-      ctx.font = 'bold 10px sans-serif';
+      ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(effectiveHP, x, y);

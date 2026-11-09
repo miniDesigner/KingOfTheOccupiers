@@ -145,7 +145,7 @@ console.log('=== 测试5: 接线（levels → Game，AI 一致化无作弊字段
   assert(enemy.skillTier === undefined, 'enemyConfig 不再输出 skillTier');
   assert(enemy.powerRatio === undefined, 'enemyConfig 不再输出 powerRatio');
   assert(enemy.warriorRateMult === undefined, 'enemyConfig 不再输出 warriorRateMult');
-  assert(enemy.initialGold === 150, `enemyConfig.initialGold = ${enemy.initialGold}（与玩家一致）`);
+  assert(enemy.initialGold === 200, `enemyConfig.initialGold = ${enemy.initialGold}（与玩家一致）`);
   assert(['easy', 'normal', 'hard', 'nightmare'].includes(enemy.ai), `enemyConfig.ai = ${enemy.ai} 合法`);
 
   // 模拟 Game.initBattle 的接线逻辑：按 enemyConfig 生成 AI bundle 并断言可用

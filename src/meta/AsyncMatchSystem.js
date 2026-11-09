@@ -19,6 +19,10 @@ import PowerSystem from './PowerSystem.js';
 // 匹配节奏参数
 export const ASYNC_MATCH_TIMEOUT_MS = 10000; // 10s 匹配超时 → 降级 AI
 const SEARCH_DELAY_MIN_MS = 2000;            // 模拟检索延迟下限
+
+// 战斗规则版本（2026-11 玩法改造 = 2：小地图11×7 + 战力压缩 + 快节奏经营）
+// 快照带此版本号；消费侧发现版本不一致时降级为 AI 对战，避免跨规则强度错配
+export const RULES_VERSION = 2;
 const SEARCH_DELAY_MAX_MS = 4000;            // 模拟检索延迟上限
 
 // 对手名池：前缀 × 随机十六进制后缀（领主风，与本地默认昵称「领主_XXXX」同体系）
@@ -55,6 +59,7 @@ export function generateOpponent(profile) {
     name,
     trophies,
     difficulty: settings.difficulty,
+    rulesVersion: RULES_VERSION,
   };
 }
 

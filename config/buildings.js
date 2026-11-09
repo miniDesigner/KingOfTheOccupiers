@@ -5,7 +5,7 @@
  * 微信小游戏专用: require('../../config/buildings.js') 即可加载
  */
 module.exports = {
-  "_doc": "建筑配置表 - 所有建筑类型的数值参数，按建筑类型->等级组织",
+  "_doc": "建筑配置表 - 所有建筑类型的数值参数，按建筑类型->等级组织。2026-11 玩法改造（快节奏经营）：兵营/金矿/箭塔成本下调约30%。兵营产速保留 1/2/4/6 养成梯度，必须与 deployables.json 的 buildingUpgrades.barracks 同源同值——玩家兵营走 deployables 强化数据，而 AI（generateAiDeployment 返回空 buildingUpgrades）落回本表；若单方面上调本表，只会给 AI 白嫖产速优势并造成 PvE 失衡。快节奏改由初始金币/金产率/编组阈值/行军速度/翻转成本承担。",
   "_doc_types": "barracks=兵营(4级) arrow_tower=箭塔 gold_mine=金矿(2级) headquarters=大本营 empty=空地",
   "_doc_fields": {
     "cost": "翻转消耗(金币)",
@@ -23,7 +23,7 @@ module.exports = {
   },
   "barracks": {
     "1": {
-      "cost": 30,
+      "cost": 20,
       "hp": 20,
       "warriorRate": 1,
       "attackBonus": 0,
@@ -33,7 +33,7 @@ module.exports = {
       "name": "兵营Lv1"
     },
     "2": {
-      "cost": 50,
+      "cost": 35,
       "hp": 35,
       "warriorRate": 2,
       "attackBonus": 0.1,
@@ -43,7 +43,7 @@ module.exports = {
       "name": "兵营Lv2"
     },
     "3": {
-      "cost": 80,
+      "cost": 55,
       "hp": 55,
       "warriorRate": 4,
       "attackBonus": 0.25,
@@ -53,7 +53,7 @@ module.exports = {
       "name": "兵营Lv3"
     },
     "4": {
-      "cost": 120,
+      "cost": 85,
       "hp": 80,
       "warriorRate": 6,
       "attackBonus": 0.5,
@@ -65,7 +65,7 @@ module.exports = {
   },
   "arrow_tower": {
     "1": {
-      "cost": 25,
+      "cost": 18,
       "hp": 30,
       "warriorRate": 0,
       "attackBonus": 0,
@@ -79,7 +79,7 @@ module.exports = {
   },
   "gold_mine": {
     "1": {
-      "cost": 15,
+      "cost": 10,
       "hp": 15,
       "warriorRate": 0,
       "attackBonus": 0,
@@ -89,7 +89,7 @@ module.exports = {
       "name": "金矿Lv1"
     },
     "2": {
-      "cost": 20,
+      "cost": 14,
       "hp": 15,
       "warriorRate": 0,
       "attackBonus": 0,
@@ -102,11 +102,11 @@ module.exports = {
   "headquarters": {
     "1": {
       "cost": 0,
-      "hp": 100,
+      "hp": 200,
       "warriorRate": 0,
       "goldRate": 1,
       "attackBonus": 0,
-      "defense": 5,
+      "defense": 20,
       "range": 2,
       "attackDamage": 5,
       "attackCooldown": 2,
