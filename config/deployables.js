@@ -33,7 +33,7 @@ module.exports = {
         "hpCoeff": 0.08
       },
       "_doc": "基础近战兵种，属性均衡，开局免费解锁",
-      "productionSpeed": 0.84,
+      "productionSpeed": 0.67,
       "attackRange": 1,
       "recruitRequired": 3
     },
@@ -63,7 +63,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "基础远程兵种，速度快，开局免费解锁",
-      "productionSpeed": 0.92,
+      "productionSpeed": 0.74,
       "attackRange": 2,
       "recruitRequired": 3
     },
@@ -93,7 +93,7 @@ module.exports = {
         "hpCoeff": 0.07
       },
       "_doc": "基础近战，略偏防御，造价低廉",
-      "productionSpeed": 0.84,
+      "productionSpeed": 0.67,
       "attackRange": 1,
       "recruitRequired": 3
     },
@@ -123,7 +123,7 @@ module.exports = {
         "hpCoeff": 0.05
       },
       "_doc": "极速远程侦察兵，低攻低血但速度极快",
-      "productionSpeed": 0.92,
+      "productionSpeed": 0.74,
       "attackRange": 2,
       "recruitRequired": 3
     },
@@ -153,7 +153,7 @@ module.exports = {
         "hpCoeff": 0.08
       },
       "_doc": "廉价炮灰近战，高血量低攻击",
-      "productionSpeed": 0.84,
+      "productionSpeed": 0.67,
       "attackRange": 1,
       "recruitRequired": 3
     },
@@ -187,7 +187,7 @@ module.exports = {
         "hpCoeff": 0.05
       },
       "_doc": "基础远程带溅射，克制密集阵型",
-      "productionSpeed": 0.92,
+      "productionSpeed": 0.74,
       "attackRange": 2,
       "recruitRequired": 3
     },
@@ -217,7 +217,7 @@ module.exports = {
         "hpCoeff": 0.04
       },
       "_doc": "基础法术兵种，低属性但提供魔法风格",
-      "productionSpeed": 0.84,
+      "productionSpeed": 0.67,
       "attackRange": 2,
       "recruitRequired": 3
     },
@@ -252,7 +252,7 @@ module.exports = {
         "hpCoeff": 0.12
       },
       "_doc": "低级防御坦克，极慢但血厚带减伤",
-      "productionSpeed": 0.71,
+      "productionSpeed": 0.57,
       "attackRange": 1,
       "recruitRequired": 3
     },
@@ -287,7 +287,7 @@ module.exports = {
         "hpCoeff": 0.1
       },
       "_doc": "坦克型近战，高血量带减伤",
-      "productionSpeed": 0.6,
+      "productionSpeed": 0.48,
       "attackRange": 1,
       "recruitRequired": 5
     },
@@ -321,7 +321,7 @@ module.exports = {
         "hpCoeff": 0.05
       },
       "_doc": "高攻低血近战，暴击伤害翻倍",
-      "productionSpeed": 0.7,
+      "productionSpeed": 0.56,
       "attackRange": 1,
       "recruitRequired": 5
     },
@@ -355,7 +355,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "廉价炮灰兵种，战后回血弥补战损",
-      "productionSpeed": 0.77,
+      "productionSpeed": 0.62,
       "attackRange": 1,
       "recruitRequired": 5
     },
@@ -385,7 +385,7 @@ module.exports = {
         "hpCoeff": 0.08
       },
       "_doc": "均衡近战，攻防一体无短板",
-      "productionSpeed": 0.7,
+      "productionSpeed": 0.56,
       "attackRange": 1,
       "recruitRequired": 5
     },
@@ -420,7 +420,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "远程猎手，残血目标增伤",
-      "productionSpeed": 0.77,
+      "productionSpeed": 0.62,
       "attackRange": 2,
       "recruitRequired": 5
     },
@@ -454,7 +454,7 @@ module.exports = {
         "hpCoeff": 0.08
       },
       "_doc": "辅助法术兵种，低攻但战后回复力强",
-      "productionSpeed": 0.7,
+      "productionSpeed": 0.56,
       "attackRange": 2,
       "recruitRequired": 5
     },
@@ -489,7 +489,7 @@ module.exports = {
         "hpCoeff": 0.12
       },
       "_doc": "重甲防御兵种，高血量带减伤",
-      "productionSpeed": 0.6,
+      "productionSpeed": 0.48,
       "attackRange": 1,
       "recruitRequired": 5
     },
@@ -523,7 +523,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "凶猛近战，高攻带吸血续航",
-      "productionSpeed": 0.7,
+      "productionSpeed": 0.56,
       "attackRange": 1,
       "recruitRequired": 5
     },
@@ -557,7 +557,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "穿甲远程，克制高防建筑",
-      "productionSpeed": 0.69,
+      "productionSpeed": 0.55,
       "attackRange": 2,
       "recruitRequired": 8
     },
@@ -592,7 +592,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "高速远程，残血反杀型",
-      "productionSpeed": 0.69,
+      "productionSpeed": 0.55,
       "attackRange": 2,
       "recruitRequired": 8
     },
@@ -627,7 +627,7 @@ module.exports = {
         "hpCoeff": 0.1
       },
       "_doc": "攻守兼备的长柄兵种，减伤+高血量",
-      "productionSpeed": 0.54,
+      "productionSpeed": 0.43,
       "attackRange": 1,
       "recruitRequired": 8
     },
@@ -661,7 +661,7 @@ module.exports = {
         "hpCoeff": 0.05
       },
       "_doc": "精准远程射手，高攻高暴击",
-      "productionSpeed": 0.69,
+      "productionSpeed": 0.55,
       "attackRange": 2,
       "recruitRequired": 8
     },
@@ -695,7 +695,7 @@ module.exports = {
         "hpCoeff": 0.05
       },
       "_doc": "冰系法术兵种，穿甲+法术输出",
-      "productionSpeed": 0.63,
+      "productionSpeed": 0.5,
       "attackRange": 2,
       "recruitRequired": 8
     },
@@ -730,7 +730,7 @@ module.exports = {
         "hpCoeff": 0.1
       },
       "_doc": "攻守双风格，战后回复兵力",
-      "productionSpeed": 0.54,
+      "productionSpeed": 0.43,
       "attackRange": 1,
       "recruitRequired": 8
     },
@@ -765,7 +765,7 @@ module.exports = {
         "hpCoeff": 0.12
       },
       "_doc": "高速重甲战车，攻防一体高机动",
-      "productionSpeed": 0.54,
+      "productionSpeed": 0.43,
       "attackRange": 1,
       "recruitRequired": 8
     },
@@ -800,7 +800,7 @@ module.exports = {
         "hpCoeff": 0.07
       },
       "_doc": "双风格全能兵种，近战远程皆可",
-      "productionSpeed": 0.63,
+      "productionSpeed": 0.5,
       "attackRange": 2,
       "recruitRequired": 8
     },
@@ -834,7 +834,7 @@ module.exports = {
         "hpCoeff": 0.05
       },
       "_doc": "法术兵种，高攻高暴击但脆弱",
-      "productionSpeed": 0.56,
+      "productionSpeed": 0.45,
       "attackRange": 2,
       "recruitRequired": 12
     },
@@ -869,7 +869,7 @@ module.exports = {
         "hpCoeff": 0.1
       },
       "_doc": "攻守兼备，战后回复兵力",
-      "productionSpeed": 0.48,
+      "productionSpeed": 0.38,
       "attackRange": 1,
       "recruitRequired": 12
     },
@@ -904,7 +904,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "处刑专家，残血目标伤害爆发",
-      "productionSpeed": 0.56,
+      "productionSpeed": 0.45,
       "attackRange": 1,
       "recruitRequired": 12
     },
@@ -939,7 +939,7 @@ module.exports = {
         "hpCoeff": 0.07
       },
       "_doc": "近战法术双修，全能战士",
-      "productionSpeed": 0.56,
+      "productionSpeed": 0.45,
       "attackRange": 2,
       "recruitRequired": 12
     },
@@ -973,7 +973,7 @@ module.exports = {
         "hpCoeff": 0.04
       },
       "_doc": "顶级法术输出，高攻溅射",
-      "productionSpeed": 0.56,
+      "productionSpeed": 0.45,
       "attackRange": 2,
       "recruitRequired": 12
     },
@@ -1008,7 +1008,7 @@ module.exports = {
         "hpCoeff": 0.11
       },
       "_doc": "圣战骑士，高血量减伤坦克",
-      "productionSpeed": 0.48,
+      "productionSpeed": 0.38,
       "attackRange": 1,
       "recruitRequired": 12
     },
@@ -1042,7 +1042,7 @@ module.exports = {
         "hpCoeff": 0.06
       },
       "_doc": "亡灵法术兵种，吸血续航",
-      "productionSpeed": 0.56,
+      "productionSpeed": 0.45,
       "attackRange": 2,
       "recruitRequired": 12
     },
@@ -1076,7 +1076,7 @@ module.exports = {
         "hpCoeff": 0.08
       },
       "_doc": "近战吸血，续航能力强",
-      "productionSpeed": 0.42,
+      "productionSpeed": 0.34,
       "attackRange": 1,
       "recruitRequired": 18
     },
@@ -1111,7 +1111,7 @@ module.exports = {
         "hpCoeff": 0.15
       },
       "_doc": "重甲单位，极慢但几乎不可摧毁",
-      "productionSpeed": 0.36,
+      "productionSpeed": 0.29,
       "attackRange": 1,
       "recruitRequired": 18
     },
@@ -1146,7 +1146,7 @@ module.exports = {
         "hpCoeff": 0.14
       },
       "_doc": "亡灵重甲骑兵，高血量吸血坦克",
-      "productionSpeed": 0.36,
+      "productionSpeed": 0.29,
       "attackRange": 1,
       "recruitRequired": 18
     },
@@ -1180,7 +1180,7 @@ module.exports = {
         "hpCoeff": 0.05
       },
       "_doc": "风暴法术大师，大范围溅射",
-      "productionSpeed": 0.42,
+      "productionSpeed": 0.34,
       "attackRange": 2,
       "recruitRequired": 18
     },
@@ -1215,7 +1215,7 @@ module.exports = {
         "hpCoeff": 0.18
       },
       "_doc": "巨型战争巨兽，极慢极肉极减伤",
-      "productionSpeed": 0.36,
+      "productionSpeed": 0.29,
       "attackRange": 1,
       "recruitRequired": 18
     },
@@ -1250,7 +1250,7 @@ module.exports = {
         "hpCoeff": 0.07
       },
       "_doc": "不死神鸟，高速飞行+战后满血恢复",
-      "productionSpeed": 0.46,
+      "productionSpeed": 0.37,
       "attackRange": 3,
       "recruitRequired": 18
     },
@@ -1285,7 +1285,7 @@ module.exports = {
         "hpCoeff": 0.08
       },
       "_doc": "终极兵种，双风格高属性溅射",
-      "productionSpeed": 0.35,
+      "productionSpeed": 0.28,
       "attackRange": 2,
       "recruitRequired": 25
     },
@@ -1320,7 +1320,7 @@ module.exports = {
         "hpCoeff": 0.15
       },
       "_doc": "远古战争巨像，攻防双全的终极坦克",
-      "productionSpeed": 0.3,
+      "productionSpeed": 0.24,
       "attackRange": 1,
       "recruitRequired": 25
     },
@@ -1355,7 +1355,7 @@ module.exports = {
         "hpCoeff": 0.1
       },
       "_doc": "传说古龙，全属性顶尖+大范围溅射",
-      "productionSpeed": 0.35,
+      "productionSpeed": 0.28,
       "attackRange": 2,
       "recruitRequired": 25
     }

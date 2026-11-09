@@ -5,7 +5,7 @@
  * 微信小游戏专用: require('../../config/buildings.js') 即可加载
  */
 module.exports = {
-  "_doc": "建筑配置表 - 所有建筑类型的数值参数，按建筑类型->等级组织。2026-11 玩法改造（快节奏经营）：兵营/金矿/箭塔成本下调约30%。兵营产速保留 1/2/4/6 养成梯度，必须与 deployables.json 的 buildingUpgrades.barracks 同源同值——玩家兵营走 deployables 强化数据，而 AI（generateAiDeployment 返回空 buildingUpgrades）落回本表；若单方面上调本表，只会给 AI 白嫖产速优势并造成 PvE 失衡。快节奏改由初始金币/金产率/编组阈值/行军速度/翻转成本承担。",
+  "_doc": "建筑配置表 - 所有建筑类型的数值参数，按建筑类型->等级组织。2026-11 玩法改造（快节奏经营）：兵营/金矿/箭塔成本下调约30%；2026-11 节奏回收：翻格成本维持原值（实测 +15% 会非对称削弱脚本人胜率 5pp，已回退）；产出压缩改由 baseGoldRate 2→1 与 deployables.units[].productionSpeed ×0.8 承担，交战密度由 groupThreshold 6→9 承担。兵营产速保留 1/2/4/6 养成梯度，必须与 deployables.json 的 buildingUpgrades.barracks 同源同值——玩家兵营走 deployables 强化数据，而 AI（generateAiDeployment 返回空 buildingUpgrades）落回本表；若单方面上调本表，只会给 AI 白嫖产速优势并造成 PvE 失衡。本轮压产兵只走 deployables.units[].productionSpeed（双方对称），绝不单改本表产速。大本营 hp/defense 200/20→100/10：攻城是「每 0.8 秒磨一次血」而非一击摧毁，产出压缩后总攻城输出下降会把单局拉长 20~50%，下调 HQ 血量把取胜门槛同比拉回，实现「交战变少但单局不拉长」。",
   "_doc_types": "barracks=兵营(4级) arrow_tower=箭塔 gold_mine=金矿(2级) headquarters=大本营 empty=空地",
   "_doc_fields": {
     "cost": "翻转消耗(金币)",
@@ -102,11 +102,11 @@ module.exports = {
   "headquarters": {
     "1": {
       "cost": 0,
-      "hp": 200,
+      "hp": 100,
       "warriorRate": 0,
       "goldRate": 1,
       "attackBonus": 0,
-      "defense": 20,
+      "defense": 10,
       "range": 2,
       "attackDamage": 5,
       "attackCooldown": 2,

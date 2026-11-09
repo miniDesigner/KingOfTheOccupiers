@@ -44,18 +44,18 @@ module.exports = {
   "economy": {
     "initialGold": 200,
     "_doc_initialGold": "默认初始金币（死配置：生效值在 src/data/levels.js 的 baseGold=200，此处仅同步口径防漂移）",
-    "baseGoldRate": 2,
+    "baseGoldRate": 1,
     "killGoldPerWarrior": 2,
     "_doc_killGoldPerWarrior": "击杀敌人兵种赏金：每击杀1名敌方战士获得的金币(基础值，随敌方兵种等级提升)",
     "killGoldLevelStep": 0.5,
     "_doc_killGoldLevelStep": "赏金等级加成：敌方兵种每高1级，单兵赏金额外增加的金币数",
-    "_doc_baseGoldRate": "基础金币产出(每秒)，金矿产出=baseGoldRate*goldRate。2026-11 玩法改造：1→2（快节奏经营）"
+    "_doc_baseGoldRate": "基础金币产出(每秒)。实现为 BASE_GOLD_RATE + Σ(各产金建筑 goldRate) 相加，再乘局外养成倍率，并非相乘。2026-11 玩法改造：1→2（快节奏）；2026-11 节奏回收：2→1（小图产出过密，回到改造前）"
   },
   "march": {
     "speed": 0.85,
-    "_doc_speed": "行军速度(格/秒)。2026-09-09：1→0.6；2026-11 玩法改造：0.6→0.85（地图缩为 11×7，行军距离-60%，提速补偿）",
-    "groupThreshold": 6,
-    "_doc_groupThreshold": "兵营战士累积到此数量自动编队出发。2026-11 玩法改造：8→6（更快成军）",
+    "_doc_speed": "行军速度(格/秒)。2026-09-09：1→0.6；2026-11 玩法改造：0.6→0.85（地图缩为 11×7，行军距离-60%，提速补偿）。2026-11 节奏回收：故意保持 0.85 不动——调慢会拉长单局，与「交战变少但单局不拉长」的目标冲突；本轮压缩改由 baseGoldRate / productionSpeed / groupThreshold / 翻格成本承担，请勿按「放慢节奏」直觉下调此值",
+    "groupThreshold": 9,
+    "_doc_groupThreshold": "兵营战士累积到此数量自动编队出发。2026-11 玩法改造：8→6（更快成军）；2026-11 节奏回收：6→9（队伍更少更大、交战次数下降；每队战力更高使攻城更快分胜负，单局不拉长）",
     "hqBufferMax": 12,
     "_doc_hqBufferMax": "大本营战士缓冲上限，超过后不再从大本营产出。2026-11 玩法改造：15→12"
   },

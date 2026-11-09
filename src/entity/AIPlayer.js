@@ -18,11 +18,15 @@ import { battleRandom } from '../utils/rng.js';
 // 初版 4/2.2/1.5/1.0 与旧值 6/3/2/1 的 easy↔nightmare 手速差达 4~6 倍，
 // 在纵深消失的小图里被极度放大，导致 easy 全胜(100%)、nightmare 近乎全负(9%)。
 // 收窄到 3.5~1.8（约 2 倍差），难度梯度改由「品质上限 + 等级基准 + 评估策略」承担。
+// 2026-11 节奏回收：等比 ×1.08 → 3.8/2.6/2.2/1.95（倍差 1.95 不变）。
+// 该轮压缩了产出与交战密度（baseGoldRate 2→1 / productionSpeed ×0.8 / groupThreshold 6→9），
+// 玩家侧脚本人翻格频率高于 AI，压缩后胜率整体下移约 9pp；用「AI 决策变慢」这一唯一
+// 非对称旋钮把四档胜率拉回基线（95/49/39/30 附近），同时进一步降低 AI 侧交战密度。
 const AI_DIFFICULTY = {
-  easy:      { interval: 3.5,  synergyPursuit: 0,  evaluatePreset: false, blockEnemy: false, randomFactor: 0.6,  warriorRateMult: 1.0 },
-  normal:    { interval: 2.4,  synergyPursuit: 1,  evaluatePreset: true,  blockEnemy: false, randomFactor: 0.3,  warriorRateMult: 1.0 },
-  hard:      { interval: 2.0,  synergyPursuit: 2,  evaluatePreset: true,  blockEnemy: true,  randomFactor: 0.15, warriorRateMult: 1.0 },
-  nightmare: { interval: 1.8,  synergyPursuit: 3,  evaluatePreset: true,  blockEnemy: true,  randomFactor: 0.05, warriorRateMult: 1.0 },
+  easy:      { interval: 3.8,   synergyPursuit: 0,  evaluatePreset: false, blockEnemy: false, randomFactor: 0.6,  warriorRateMult: 1.0 },
+  normal:    { interval: 2.6,   synergyPursuit: 1,  evaluatePreset: true,  blockEnemy: false, randomFactor: 0.3,  warriorRateMult: 1.0 },
+  hard:      { interval: 2.2,   synergyPursuit: 2,  evaluatePreset: true,  blockEnemy: true,  randomFactor: 0.15, warriorRateMult: 1.0 },
+  nightmare: { interval: 1.95,  synergyPursuit: 3,  evaluatePreset: true,  blockEnemy: true,  randomFactor: 0.05, warriorRateMult: 1.0 },
 };
 
 export class AIPlayer extends Player {
