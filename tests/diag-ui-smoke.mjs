@@ -91,6 +91,7 @@ function click(game, x, y) {
 const W = 390, H = 844;
 const GameRef = await import('../src/game/Game.js');
 const { Game } = GameRef;
+const { RenderSystem } = await import('../src/system/RenderSystem.js');
 const { hexToPixel } = await import('../src/world/HexMath.js');
 
 // 预置老玩家存档（totalGames>0 → tutorialStep=-1，跳过引导）
@@ -198,8 +199,12 @@ game.gameStatus = 'won';
 await renderFrame(game, '胜利结算');
 game.gameStatus = 'lost';
 await renderFrame(game, '失败结算');
+// 2026-11 交互改造：点空白不关闭，只有「返回大厅」按钮才关闭（几何同源 P36）
+const goL = RenderSystem.gameOverLayout(W, H);
 click(game, W / 2, H / 2);
-check('结算点击 → 返回大厅', game.screenState === 'lobby', `实际=${game.screenState}`);
+check('结算点击空白 → 不关闭', game.screenState === 'playing', `实际=${game.screenState}`);
+click(game, goL.back.x + goL.back.w / 2, goL.back.y + goL.back.h / 2);
+check('结算点「返回大厅」按钮 → 返回大厅', game.screenState === 'lobby', `实际=${game.screenState}`);
 
 // ========== T9 新玩家引导链路（快速验证不干扰老玩家 + 分步推进） ==========
 console.log('\n[9] 新玩家引导链路');

@@ -23,6 +23,7 @@
 平衡模拟      200 局 × 4 难度 × 5 地图，零超时；胜率 95.9/47.6/40.7/24.5%
               编组数较上一版基线下降 54.8%/54.6%，单局时长偏差 ≤6.8%
 图间差异      已结案：13.5pp 跨度为抽样噪声，5 套障碍坐标保持原样（见第八节）
+结算交互      按钮关闭：空白不关闭 / 按钮命中 / 1px 边界 / 分享语义，24 断言全通过（见第九节）
 浏览器预览    HTTP 200，大厅/布阵/商店渲染正常，中文无乱码，零 pageerror
 配置加载      16 个 JSON 全部加载成功
 ```
@@ -147,3 +148,44 @@ node tests/sim-balance-phase6.mjs --games 200   # 平衡基线（写入 sim-resu
 **未改动文件**：`src/data/levels.js`、`tests/test-battle-layouts.mjs`、
 `tests/sim-results-phase6.json`、`config/*`、`src/entity/AIPlayer.js` 全部保持
 `be4def2` 原样。本轮仅新增文档结论（README 坑 12 / 状态表 / 待办、本第八节）。
+
+## 九、2026-11 结算界面交互改造（按钮关闭）
+
+**需求**：战斗结束界面改为按钮关闭，不再点击屏幕空白位置关闭。
+
+**方案**（用户确认的两项取舍）：
+1. 单个醒目的「🏠 返回大厅」主按钮；胜利时保留「📤 炫耀战绩」分享按钮置于主按钮
+   上方，失败态不显示。删掉原来的「▼ 点击返回大厅 ▼」文字提示。
+2. Android 系统返回键 / 浏览器后退**保留**为关闭通道（`Game.tryBack` 结算分支不改），
+   避免玩家退不出去；它与画布点击是两条独立通道。
+
+**实现**：
+- `src/system/RenderSystem.js` 新增 `static gameOverLayout(w, h)`，返回 `back`/`share`
+  两个按钮矩形，作为渲染与点击命中的**单一真相源**（延续 P36 铁律，收口了原先
+  分享按钮在两侧各自硬编码的坐标）；`drawGameOver` 改画实体按钮并用 `_drawPressed`
+  加按压缩放反馈。
+- `src/game/Game.js` 的 `handlePlayingClick` 结算分支改为：命中 `share`（仅胜利）→
+  分享、命中 `back` → 返回大厅、**其余空白一律吞掉不响应**；`tryBack` 注释同步说明
+  两条通道的取舍。坐标系为 inner，输入侧已反推安全区，无需额外换算。
+
+**验证**：
+```
+test-defeat-click.mjs     24 断言 / 0 失败（空白不关闭×16 点、按钮命中、1px 边界、
+                          分享语义、失败态无炫耀入口、系统返回键、战斗中暂停已移除）
+node --test tests/test-*.mjs   48 通过 / 0 失败
+test-battle-layouts.mjs  59 通过 / 0 失败
+test-determinism.mjs     22 通过 / 0 失败
+check-imports.mjs        ALL IMPORTS VALID (47 files)
+test-wechat-entry.mjs    26 通过 / 0 失败
+repro-path-detour.mjs    场景6：5 套布局 A* 全通（手动跑）
+repro-defeat-click.mjs   8 通过 / 0 失败（手动跑）
+diag-ui-smoke.mjs        T8 新增「点空白不关闭 / 点按钮返回大厅」两断言全通过；
+                          该脚本 54 通过 5 失败，5 项失败在 HEAD 基线同样存在
+                          （导航折叠/翻格时序/引导），与本改动无关，且不进全量回归
+浏览器 :8890 目检       胜利/失败两态按钮渲染正确、无重叠、旧文字提示已消失；
+                          CDP 真实点击链路 verified：空白→playing、按钮→lobby
+```
+
+**未改动**：`config/*` 双轨、`src/data/levels.js`、`tests/sim-results-phase6.json`、
+`sim-balance-phase6.mjs` 等平衡相关文件全部零改动，节奏回收成果不受影响。
+详见 README 坑 13。

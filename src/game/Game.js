@@ -619,7 +619,9 @@ export class Game {
         return 'none';
       case 'playing': {
         if (this.gameStatus !== 'playing') {
-          // 战斗结算界面 → 返回大厅（与结算点击行为一致）
+          // 战斗结算界面 → 返回大厅。
+          // 2026-11 交互改造：画布侧改为只认「返回大厅」按钮（见 handlePlayingClick），
+          // 但系统返回键 / 浏览器后退仍保留为关闭通道（避免玩家退不出去）。
           this.audioManager.playButtonClick();
           this.screenState = 'lobby';
           return 'consumed';
@@ -1608,28 +1610,33 @@ export class Game {
    * 游戏中点击
    */
   handlePlayingClick(screenX, screenY) {
-    // 对战结束后点击 → 返回大厅或再来一局
-    // （放在最前：结算界面不应响应右上角暂停/设置按钮，避免失败后误触暂停再点"返回大厅"）
+    // 对战结束后 → 结算界面。
+    // 2026-11 交互改造：只能通过「返回大厅」按钮关闭，点击屏幕空白一律吞掉，
+    // 避免看完奖励/战绩时误触退出。按钮几何与 RenderSystem.drawGameOver 共用
+    // RenderSystem.gameOverLayout(w, h)（P36 铁律，禁止两边各自硬编码）。
+    // （仍放在最前：结算界面不应响应右上角暂停/设置按钮，避免失败后误触暂停）
     if (this.gameStatus !== 'playing') {
-      // 战绩分享按钮（结算界面中部，仅胜利时响应；失败不显示炫耀入口）
-      if (this.gameStatus === 'won') {
-        const cx = this.screenWidth / 2;
-        const cy = this.screenHeight / 2;
-        const sbW = 150, sbH = 34;
-        const sbX = cx - sbW / 2, sbY = cy + 78;
-        if (screenX >= sbX && screenX <= sbX + sbW &&
-            screenY >= sbY && screenY <= sbY + sbH) {
-          this.audioManager.playButtonClick();
-          const enemy = this.players.find(p => p.id !== this.localPlayerId);
-          const result = ShareSystem.shareAndReward({ scene: 'victory', enemyName: enemy ? enemy.name : '' });
-          this.showToast(result.message, 2.5);
-          return;
-        }
+      const L = RenderSystem.gameOverLayout(this.screenWidth, this.screenHeight);
+      const hit = (r) => screenX >= r.x && screenX <= r.x + r.w &&
+        screenY >= r.y && screenY <= r.y + r.h;
+
+      // 战绩分享按钮（仅胜利时显示；失败不显示炫耀入口）
+      if (this.gameStatus === 'won' && hit(L.share)) {
+        this.audioManager.playButtonClick();
+        const enemy = this.players.find(p => p.id !== this.localPlayerId);
+        const result = ShareSystem.shareAndReward({ scene: 'victory', enemyName: enemy ? enemy.name : '' });
+        this.showToast(result.message, 2.5);
+        return;
       }
 
-      this.audioManager.playButtonClick();
-      // 无论胜利/失败 → 统一返回大厅
-      this.screenState = 'lobby';
+      // 「返回大厅」主按钮：关闭结算界面的唯一画布入口
+      if (hit(L.back)) {
+        this.audioManager.playButtonClick();
+        this.screenState = 'lobby';
+        return;
+      }
+
+      // 其余空白区域（含右上角、中部、遮罩）：一律不响应
       return;
     }
 

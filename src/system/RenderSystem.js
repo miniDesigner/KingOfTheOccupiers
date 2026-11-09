@@ -2035,6 +2035,30 @@ export class RenderSystem {
   }
 
   /**
+   * 战斗结算界面按钮几何（P36：渲染与 Game.handlePlayingClick 命中共用的单一真相源）
+   *
+   * 2026-11 交互改造：结算界面不再支持「点击屏幕空白关闭」，改为必须通过
+   * 「返回大厅」按钮关闭；胜利时另有「炫耀战绩」分享按钮置于主按钮上方。
+   * 胜负两态共用同一份 back 几何：玩家肌肉记忆位置稳定，命中判定也无需区分胜负。
+   *
+   * 坐标系为 inner（renderScreen 的 ctx.translate/scale 包裹内），输入侧 Game 已按
+   * (screenY - safeAreaTop) / safeAreaScaleY 反推到同一坐标系，两边天然对齐。
+   *
+   * @param {number} w inner 屏宽
+   * @param {number} h inner 屏高
+   */
+  static gameOverLayout(w, h) {
+    const cx = w / 2;
+    const cy = h / 2;
+    const backW = 200, backH = 48, backY = cy + 104;
+    const shareW = 150, shareH = 34, shareY = cy + 60;
+    return {
+      back: { x: cx - backW / 2, y: backY, w: backW, h: backH },
+      share: { x: cx - shareW / 2, y: shareY, w: shareW, h: shareH },
+    };
+  }
+
+  /**
    * 绘制游戏结束画面
    */
   drawGameOver(gameState) {
@@ -2105,33 +2129,43 @@ export class RenderSystem {
       }
     }
 
-    if (isWin) {
-      // 提示
-      ctx.fillStyle = '#4ade80';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('▼ 点击返回大厅 ▼', cx, cy + 64);
-    } else {
+    const L = RenderSystem.gameOverLayout(this.screenWidth, this.screenHeight);
+
+    if (!isWin) {
       ctx.fillStyle = '#fff';
       ctx.font = '15px sans-serif';
-      ctx.fillText('你的大本营被摧毁了', cx, cy + 48);
-
-      ctx.fillStyle = '#f87171';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('▼ 点击返回大厅 ▼', cx, cy + 68);
+      ctx.fillText('你的大本营被摧毁了', cx, cy + 70);
     }
 
-    // 战绩分享按钮（Phase 5，仅胜利时显示；失败不再显示炫耀入口）
+    // 战绩分享按钮（Phase 5，仅胜利时显示；置于主按钮上方）
     if (isWin) {
-      const sbW = 150, sbH = 34;
-      const sbX = cx - sbW / 2, sbY = cy + 78;
-      ctx.fillStyle = '#0891b2';
-      ctx.fillRect(sbX, sbY, sbW, sbH);
-      ctx.strokeStyle = '#22d3ee';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(sbX, sbY, sbW, sbH);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillText('📤 炫耀战绩', sbX + sbW / 2, sbY + sbH / 2);
+      const s = L.share;
+      this._drawPressed(s, gameState.press, () => {
+        ctx.fillStyle = '#0891b2';
+        ctx.fillRect(s.x, s.y, s.w, s.h);
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(s.x, s.y, s.w, s.h);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('📤 炫耀战绩', s.x + s.w / 2, s.y + s.h / 2);
+      });
+    }
+
+    // 「返回大厅」主按钮（胜负共用，几何由 gameOverLayout 统一给出）
+    // 2026-11 交互改造：结算界面只能通过此按钮关闭，点击空白不再退出。
+    {
+      const b = L.back;
+      this._drawPressed(b, gameState.press, () => {
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('🏠 返回大厅', b.x + b.w / 2, b.y + b.h / 2);
+      });
     }
   }
 

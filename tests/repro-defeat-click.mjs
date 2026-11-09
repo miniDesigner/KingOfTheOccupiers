@@ -1,4 +1,5 @@
-// 复现: 战斗失败后点击 → 期望再来一局(initBattle)，怀疑实际返回大厅
+// 诊断: 战斗结算界面的关闭交互（2026-11 改造后）
+// 点空白 → 保持结算界面；只有「返回大厅」按钮才关闭。几何同源 RenderSystem.gameOverLayout。
 const noop = () => {};
 const ctxProxy = new Proxy({}, {
   get: (t, p) => {
@@ -77,8 +78,10 @@ console.log('=== 场景1: 正常开一局 ===');
   assert(bundle && Object.keys(bundle.units || {}).length === 4, `AI bundle 4 槽位 (实际 ${bundle ? Object.keys(bundle.units || {}).length : 'null'})`);
 }
 
-console.log('=== 场景2: 战斗失败后点击 → 再来一局 ===');
+console.log('=== 场景2: 战斗失败后点空白 → 保持结算界面，点按钮 → 返回大厅 ===');
 {
+  const { RenderSystem } = await import('../src/system/RenderSystem.js');
+  const L = RenderSystem.gameOverLayout(game.screenWidth, game.screenHeight);
   // 模拟失败（与 checkWinCondition 相同路径）
   game.gameStatus = 'lost';
   game.screenState = 'playing';
@@ -90,7 +93,7 @@ console.log('=== 场景2: 战斗失败后点击 → 再来一局 ===');
 
   let err = null;
   try {
-    // 点击结算画面任意处（避开分享按钮区域: cx±75, cy+78±17）
+    // 点击结算画面中部空白（奖励文字区，非按钮）
     game.handlePlayingClick(game.screenWidth / 2, game.screenHeight / 2 - 20);
   } catch (e) { err = e; }
 
@@ -98,10 +101,14 @@ console.log('=== 场景2: 战斗失败后点击 → 再来一局 ===');
     failed++;
     console.log(`  ❌ 点击抛异常: ${err.message}\n    ${err.stack.split('\n').slice(0, 4).join('\n    ')}`);
   } else {
-    assert(game.screenState === 'playing', `点击后 screenState=playing (实际 ${game.screenState})`);
-    assert(game.gameStatus === 'playing', `点击后 gameStatus=playing (实际 ${game.gameStatus})`);
-    assert(game.map !== null, '新地图已生成 (initBattle 被调用)');
+    assert(game.screenState === 'playing', `点空白 → screenState 保持 playing (实际 ${game.screenState})`);
+    assert(game.gameStatus === 'lost', `点空白 → gameStatus 保持 lost (实际 ${game.gameStatus})`);
+    assert(game.map !== null, '地图仍在（未误开新局）');
   }
+
+  // 再点「返回大厅」按钮中心 → 关闭结算界面
+  game.handlePlayingClick(L.back.x + L.back.w / 2, L.back.y + L.back.h / 2);
+  assert(game.screenState === 'lobby', `点按钮 → 返回大厅 (实际 ${game.screenState})`);
 }
 
 console.log('=== 场景3: 失败结算界面渲染冒烟 ===');
