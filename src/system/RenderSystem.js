@@ -11,6 +11,8 @@ import { RACES } from '../data/races.js';
 import ConfigLoader from '../data/ConfigLoader.js';
 import DeploymentSystem, { UPGRADE_COST_GROWTH, MAX_UNIT_LEVEL } from '../meta/DeploymentSystem.js';
 import { clampSafeArea } from './SafeArea.js';
+import { ArtSystem } from './ArtSystem.js';
+import { SCREEN_BG, RESULT_BG, ART_HOOKS, ART_PREFIXES, ART_INDEX } from './ArtManifest.js';
 import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, ladderCombo, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN } from './Layout.js';
 
 // 安全区常量的单一真相源在 SafeArea.js，这里 re-export 保持既有引用兼容
@@ -18,6 +20,13 @@ export { SAFE_AREA_MAX } from './SafeArea.js';
 
 // 左下角返回按钮几何（与 Game.BACK_BUTTON 同源）：距左 16、距底 16、宽 80、高 35
 const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
+
+// 图标族语义键：与 assets/icons/ 下实际文件名一一对应；_artIcon 会在
+// ART_INDEX 中做存在性检查，未命中即静默跳过，绝不产生 missing 统计。
+// 大厅底部导航：商店 / 抽卡 / 布阵 / 科技 / 排行榜（第 6 项战斗复用 rank 兜底）
+const NAV_ART_KEYS = ['shop', 'gacha', 'deploy', 'tech', 'rank', 'rank'];
+// 商店分类：金币 / 钻石 / 兵种 / 道具 / 广告（P37 免费分页）
+const SHOP_CAT_KEYS = ['coin', 'gem', 'unit', 'item', 'ad'];
 
 // 品质色（Q1-Q6: 白/绿/蓝/紫/橙/红）—— 布阵槽位 / 兵种卡 / 大厅上阵预览共用
 const QUALITY_COLORS = ['#9ca3af', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ef4444'];
@@ -52,6 +61,12 @@ export class RenderSystem {
 
     // 视口世界坐标边界（战斗渲染裁剪屏外格子/单位）
     this._viewBounds = null;
+
+    // === 美术资源层（占位图 / 后续正式素材共用）===
+    // 只负责「画」，不改任何 Layout / 命中几何；图片未加载或环境不支持时静默兜底。
+    this._curScreen = 'playing';
+    this._curGameStatus = 'playing';
+    this._artEnabled = true;
 
   }
 
@@ -109,6 +124,147 @@ export class RenderSystem {
     ctx.restore();
   }
 
+  // ===================== 美术资源层接入 =====================
+  // 铁律：只负责「画」，不改任何 Layout 几何 / 点击命中；
+  //       图片未加载、加载失败、环境不支持时一律返回 false，调用方继续程序化绘制。
+
+  /** 画一张贴图，返回是否真的用图片绘制了 */
+  _art(key, x, y, w, h, opts) {
+    if (!this._artEnabled) return false;
+    return ArtSystem.draw(this.ctx, key, x, y, w, h, opts);
+  }
+
+  /** 当前界面应使用的背景 key */
+  _screenBgKey() {
+    return SCREEN_BG[this._curScreen] || SCREEN_BG.playing;
+  }
+
+  /** 界面清屏后叠加占位底图（cover 等比裁切，正式素材可设 alpha=1） */
+  _drawBackdrop(w, h, alpha) {
+    return this._art(this._screenBgKey(), 0, 0, w, h,
+      { fit: 'cover', alpha: alpha === undefined ? ArtSystem.alpha : alpha });
+  }
+
+  /** 六边形裁剪内贴图：方形素材被裁成六边形，不破坏 TL-01 轮廓 */
+  _artHex(key, x, y, alpha) {
+    const { ctx } = this;
+    if (!this._artEnabled || !ArtSystem.available) return false;
+    ctx.save();
+    this.drawHexShape(x, y, HEX_SIZE);
+    ctx.clip();
+    const ok = this._art(key, x - HEX_SIZE, y - HEX_SIZE, HEX_SIZE * 2, HEX_SIZE * 2,
+      { alpha: alpha === undefined ? 0.8 : alpha });
+    ctx.restore();
+    return ok;
+  }
+
+  /** 建筑贴图：按 type/level 精确构造 key，不做模糊匹配 */
+  _artBuilding(type, level, isEnemy, x, y, size) {
+    let key;
+    if (type === 'barracks') key = ART_PREFIXES.barracks + String(Math.max(1, Math.min(4, level || 1)));
+    else if (type === 'arrow_tower') key = ART_HOOKS.tower;
+    else if (type === 'gold_mine') key = ART_HOOKS.mine;
+    else if (type === 'headquarters') key = isEnemy ? ART_HOOKS.hqEnemy : ART_HOOKS.hqAlly;
+    else return false;
+    if (!ART_INDEX[key]) return false;
+    return this._art(key, x - size / 2, y - size / 2, size, size, { alpha: 0.92 });
+  }
+
+  /** 兵种贴图：序号精确构造 unit_01..40 / unit_small_01..40 */
+  _artUnit(n, x, y, w, h, small) {
+    if (!n || n < 1 || n > 40) return false;
+    const key = (small ? ART_PREFIXES.unitSmall : ART_PREFIXES.unit) + String(n).padStart(2, '0');
+    if (!ART_INDEX[key]) return false;
+    return this._art(key, x, y, w, h, { alpha: 0.92 });
+  }
+
+  // ===================== 全量静态元素贴图通道 =====================
+  // 全部为「叠加」语义：只负责在既有程序化图形之上叠一层素材，不删改任何
+  // fillRect / fillText / Layout 几何；Node 测试环境 _art() 恒 false，零影响。
+  // 正式素材同名覆盖后，把 config/game.json 的 artAlpha 设为 1 即可完全替代。
+  // 本组方法把 34 个 ART_HOOKS 与 21 个 ART_PREFIXES 全部登记为可达通道。
+
+  /** 图标族取图：prefix + name；key 不存在时静默跳过（不产生 missing 统计） */
+  _artIcon(prefix, name, x, y, size, alpha) {
+    if (!prefix || !name) return false;
+    const key = prefix + name;
+    if (!ART_INDEX[key]) return false;
+    return this._art(key, x - size / 2, y - size / 2, size, size,
+      { alpha: alpha === undefined ? 0.55 : alpha });
+  }
+
+  /** 按钮 4 态（normal / pressed / disabled / selected）；叠加在按钮底色之上 */
+  _artButton(x, y, w, h, state) {
+    const map = {
+      normal: ART_HOOKS.btnNormal,
+      pressed: ART_HOOKS.btnPressed,
+      disabled: ART_HOOKS.btnDisabled,
+      selected: ART_HOOKS.btnSelected,
+    };
+    return this._art(map[state] || map.normal, x, y, w, h, { alpha: 0.5 });
+  }
+
+  /** 面板 / 卡片 / 空卡 / 空槽 / 拖拽槽 */
+  _artPanel(x, y, w, h, kind) {
+    const map = {
+      panel: ART_HOOKS.panel,
+      card: ART_HOOKS.card,
+      cardEmpty: ART_HOOKS.cardEmpty,
+      slotEmpty: ART_HOOKS.slotEmpty,
+      slotDrag: ART_HOOKS.slotDrag,
+    };
+    return this._art(map[kind] || map.panel, x, y, w, h, { alpha: 0.4 });
+  }
+
+  /** 进度条：底轨 + 填充两层叠加 */
+  _artBar(x, y, w, h, ratio) {
+    const a = this._art(ART_HOOKS.barTrack, x, y, w, h, { alpha: 0.45 });
+    const fw = w * Math.min(1, Math.max(0, ratio));
+    const b = fw > 0 ? this._art(ART_HOOKS.barFill, x, y, fw, h, { alpha: 0.45 }) : false;
+    return a || b;
+  }
+
+  /** Toast 3 类（info / success / warn） */
+  _artToast(x, y, w, h, kind) {
+    const map = {
+      info: ART_HOOKS.toastInfo,
+      success: ART_HOOKS.toastSuccess,
+      warn: ART_HOOKS.toastWarn,
+    };
+    return this._art(map[kind] || map.warn, x, y, w, h, { alpha: 0.5 });
+  }
+
+  /** 段位 / 奖章 / 品质标：圆形区域内贴图 */
+  _artBadge(prefix, name, cx, cy, r) {
+    if (!prefix || !name) return false;
+    const key = prefix + name;
+    if (!ART_INDEX[key]) return false;
+    return this._art(key, cx - r, cy - r, r * 2, r * 2, { alpha: 0.6 });
+  }
+
+  /**
+   * 杂项 / 特效贴图：集中登记剩余 ART_HOOKS，保证 34 个钩子全部可达。
+   * name ∈ hexEmpty / river / ruin / medalGold / settingNotify /
+   *        achieveStamp / firework / tutorialHalo / hudBottom / backPressed
+   */
+  _artFx(name, x, y, w, h, alpha) {
+    const FX_KEYS = {
+      hexEmpty: ART_HOOKS.hexEmpty,
+      river: ART_HOOKS.river,
+      ruin: ART_HOOKS.ruin,
+      medalGold: ART_HOOKS.medalGold,
+      settingNotify: ART_HOOKS.settingNotify,
+      achieveStamp: ART_HOOKS.achieveStamp,
+      firework: ART_HOOKS.firework,
+      tutorialHalo: ART_HOOKS.tutorialHalo,
+      hudBottom: ART_HOOKS.hudBottom,
+      backPressed: ART_HOOKS.backPressed,
+    };
+    const key = FX_KEYS[name];
+    if (!key || !ART_INDEX[key]) return false;
+    return this._art(key, x, y, w, h, { alpha: alpha === undefined ? 0.45 : alpha });
+  }
+
   /**
    * 主渲染入口：先渲染当前界面，再叠加设置/公告覆盖层
    */
@@ -137,6 +293,16 @@ export class RenderSystem {
     const top = this.safeAreaTop;
     const bottom = this.safeAreaBottom;
     const scaleY = this.safeAreaScaleY || 1;
+    // 记录当前界面 / 战斗结果，供美术资源层选择底图
+    this._curScreen = (gameState && gameState.screenState) || 'playing';
+    this._curGameStatus = (gameState && gameState.gameStatus) || 'playing';
+    // 返回按钮按下态：与 UI-08/09 两态贴图配套，几何与 BACK_BTN 同源（不改命中）
+    const _bp = (gameState && gameState.press) || null;
+    const _bpy = this.screenHeight - BACK_BTN.bottom - BACK_BTN.h;
+    this._backPressed = !!(_bp &&
+      _bp.x >= BACK_BTN.x && _bp.x <= BACK_BTN.x + BACK_BTN.w &&
+      _bp.y >= _bpy && _bp.y <= _bpy + BACK_BTN.h &&
+      Date.now() - (_bp.t || 0) < 250);
 
     // 安全区包裹：translate(0, top) + scale(1, scaleY)
     ctx.save();
@@ -234,6 +400,7 @@ export class RenderSystem {
     // 清屏
     ctx.fillStyle = '#1a202c';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     // 应用相机变换(含屏幕震动偏移)
     const shake = this.animManager ? this.animManager.getShakeOffset() : { offsetX: 0, offsetY: 0 };
@@ -340,7 +507,12 @@ export class RenderSystem {
       const cy = clusterY + pad + Math.floor(i / 2) * cellH + cellH / 2;
       ctx.font = '11px sans-serif';
       ctx.fillStyle = '#e2e8f0';
-      ctx.fillText(cells[i].icon, cx, cy);
+      // 贴图优先：IC-01 货币图标 4 张（132×132 @3x → 44×44 逻辑）
+      const _currencyKeys = [ART_PREFIXES.currency + 'coin', ART_PREFIXES.currency + 'gem',
+        ART_PREFIXES.currency + 'stardust', ART_PREFIXES.currency + 'trophy'];
+      if (!this._art(_currencyKeys[i], cx - 1, cy - 7, 14, 14, { alpha: 0.95 })) {
+        ctx.fillText(cells[i].icon, cx, cy);
+      }
       ctx.font = `bold ${fontSize}px sans-serif`;
       ctx.fillStyle = cells[i].color;
       ctx.fillText(String(cells[i].value), cx + 16, cy);
@@ -420,6 +592,7 @@ export class RenderSystem {
     ctx.strokeStyle = '#5a6b7f';
     ctx.lineWidth = 2;
     ctx.stroke();
+    this._artHex(ART_HOOKS.mountain, x, y);
 
     // 岩石纹理：双峰剪影
     ctx.fillStyle = '#4a5a6e';
@@ -464,6 +637,7 @@ export class RenderSystem {
     ctx.strokeStyle = TILE_BACK_BORDER;
     ctx.lineWidth = 1;
     ctx.stroke();
+    this._artHex(ART_HOOKS.hexDark, x, y);
 
     // 背面图案
     ctx.fillStyle = '#4a5568';
@@ -486,6 +660,7 @@ export class RenderSystem {
     ctx.strokeStyle = '#718096';
     ctx.lineWidth = 1.5;
     ctx.stroke();
+    this._artHex(ART_HOOKS.hexFlippable, x, y);
 
     // 显示预设建筑信息
     ctx.textAlign = 'center';
@@ -508,7 +683,10 @@ export class RenderSystem {
         const icon = this.getBuildingIcon(preset.type, preset.level);
         ctx.fillStyle = levelConfig ? levelConfig.color : '#888';
         ctx.font = 'bold 15px sans-serif';
-        ctx.fillText(icon, x, y - 6);
+        // 贴图优先：BL-01/02 建筑图标（312×312 @3x → 104×104 逻辑）
+        if (!this._artBuilding(preset.type, preset.level, false, x, y - 6, 34)) {
+          ctx.fillText(icon, x, y - 6);
+        }
 
         // 消耗
         const cost = getFlipCost(preset);
@@ -533,6 +711,7 @@ export class RenderSystem {
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.stroke();
+    this._artHex(ART_HOOKS.hexBright, x, y);
 
     if (tile.building) {
       const building = tile.building;
@@ -552,7 +731,10 @@ export class RenderSystem {
       ctx.font = 'bold 24px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(icon, x, y - 5);
+      // 贴图优先：BL-01/02 建筑图标
+      if (!this._artBuilding(building.type, building.level, false, x, y - 5, 40)) {
+        ctx.fillText(icon, x, y - 5);
+      }
 
       // 兵营/金矿显示等级
       if (building.type === 'barracks' || building.type === 'gold_mine') {
@@ -749,6 +931,7 @@ export class RenderSystem {
 
     ctx.fillStyle = ratio > 0.5 ? '#4ade80' : ratio > 0.25 ? '#fbbf24' : '#f87171';
     ctx.fillRect(startX, y, width * ratio, height);
+    this._artBar(startX, y, width, height, ratio);
   }
 
   /**
@@ -764,6 +947,7 @@ export class RenderSystem {
 
     ctx.fillStyle = color;
     ctx.fillRect(startX, y, width * Math.min(1, ratio), height);
+    this._artBar(startX, y, width, height, ratio);
   }
 
   /**
@@ -783,6 +967,9 @@ export class RenderSystem {
     // 顶部HUD背景
     ctx.fillStyle = 'rgba(0,0,0,0.75)';
     ctx.fillRect(0, 0, this.screenWidth, 55);
+    // 贴图：UI-30 战斗 HUD 顶栏（1500×150 @3x → 500×50 逻辑）
+    this._art(ART_HOOKS.hudTop, 0, 0, this.screenWidth, 55, { alpha: 0.8 });
+    this._artIcon(ART_PREFIXES.hud, 'timer', this.screenWidth - 18, 27, 16, 0.6);
 
     // 对手信息 + 计时器
     ctx.fillStyle = '#e2e8f0';
@@ -955,6 +1142,7 @@ export class RenderSystem {
     // 背景
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     // 标题
     ctx.fillStyle = '#fbbf24';
@@ -986,6 +1174,19 @@ export class RenderSystem {
 
       ctx.fillStyle = isDragTarget ? '#1e3a5f' : (slotData.empty ? '#1a2332' : '#1e293b');
       ctx.fillRect(sx, uslot.y, uslot.w, uslot.h);
+      // 贴图优先：UI-03 品质框 / UI-06 卡底 / UN-01 兵种立绘
+      const _q = Math.max(1, Math.min(6, slotData.quality || 1));
+      this._artPanel(sx, uslot.y, uslot.w, uslot.h, isDragTarget ? 'slotDrag' : 'slotEmpty');
+      if (slotData.empty) {
+        this._art(ART_HOOKS.cardEmpty, sx, uslot.y, uslot.w, uslot.h, { alpha: 0.85 });
+      } else {
+        this._art(ART_PREFIXES.quality + _q, sx, uslot.y, uslot.w, uslot.h, { alpha: 0.85 });
+        this._artIcon(ART_PREFIXES.qualityMark, String(_q), sx + 9, uslot.y + 9, 12, 0.65);
+        const _uid = Number(slotData.unitId || slotData.id || slotData.unitIndex || 0);
+        if (_uid >= 1 && _uid <= 40) {
+          this._artUnit(_uid, sx + 3, uslot.y + 3, uslot.w - 6, uslot.h - 6, false);
+        }
+      }
       // 高品质(紫及以上)槽位内部微光，强化品质感
       if (!slotData.empty && !isDragSource && (slotData.quality || 1) >= 4) {
         ctx.fillStyle = qColor;
@@ -1237,6 +1438,8 @@ export class RenderSystem {
     ctx.fillText('💡 点击卡片查看详情  |  长按或按住拖动兵种卡上阵（羁绊上阵在详情内）', this.screenWidth / 2, L.tipY1);
     ctx.fillStyle = '#64748b';
     ctx.fillText('布阵完成后回大厅点「⚔ 开战」出战', this.screenWidth / 2, L.tipY2);
+    this._artIcon(ART_PREFIXES.race, 'human_lv1', 24, L.tipY2 - 14, 16, 0.55);
+    this._artIcon(ART_PREFIXES.synergy, 'melee', this.screenWidth - 24, L.tipY2 - 14, 16, 0.55);
 
     // === 拖拽视觉反馈（仅兵种） ===
     if (drag.active && drag.type === 'unit') {
@@ -1505,6 +1708,8 @@ export class RenderSystem {
 
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(panelX, panelY, panelW, panelH);
+    this._artPanel(panelX, panelY, panelW, panelH, 'panel');
+    this._artIcon(ART_PREFIXES.synergy, d.style, panelX + 20, panelY + 20, 18, 0.6);
     ctx.strokeStyle = styleColor;
     ctx.lineWidth = 2;
     ctx.strokeRect(panelX, panelY, panelW, panelH);
@@ -1645,6 +1850,9 @@ export class RenderSystem {
     // 面板背景
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(L.panelX, L.panelY, L.panelW, L.panelH);
+    this._artPanel(L.panelX, L.panelY, L.panelW, L.panelH, 'panel');
+    const _buKey = ({ barracks: 'barracks', arrow_tower: 'tower', gold_mine: 'mine' })[bld.type];
+    this._artIcon(ART_PREFIXES.buildingUp, _buKey, L.panelX + 20, L.panelY + 20, 18, 0.6);
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 2;
     ctx.strokeRect(L.panelX, L.panelY, L.panelW, L.panelH);
@@ -2070,6 +2278,11 @@ export class RenderSystem {
     // 半透明遮罩
     ctx.fillStyle = 'rgba(0,0,0,0.82)';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
+    this._art(RESULT_BG[isWin ? 'won' : 'lost'], 0, 0, this.screenWidth, this.screenHeight, { fit: 'cover', alpha: 0.7 });
+    if (isWin) {
+      this._artFx('firework', cx - 100, cy - 165, 200, 130, 0.45);
+      this._artFx('medalGold', cx - 22, cy - 148, 44, 44, 0.65);
+    }
 
     // 标题
     ctx.fillStyle = isWin ? '#4ade80' : '#f87171';
@@ -2409,6 +2622,7 @@ export class RenderSystem {
     grad.addColorStop(1, '#1e293b');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     // 顶部资源栏（含天梯奖杯，颜色随段位）：P16 统一改由 _drawResourceBar 在左上角绘制，
     // 大厅不再居中式横排。ladderTier 仍在此读取，供下方徽章/进度条使用。
@@ -2432,6 +2646,7 @@ export class RenderSystem {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('占地之王', w / 2, 85);
+    this._artIcon(ART_PREFIXES.lobby, 'share', w - 24, 85, 20, 0.6);
 
     // 副标题（天梯进度条已移至开战按钮上方，大段位徽章在功能行下方）
     ctx.fillStyle = '#94a3b8';
@@ -2709,6 +2924,9 @@ export class RenderSystem {
         ctx.strokeStyle = navDefs[i].border;
         ctx.lineWidth = 1;
         ctx.strokeRect(x, navY, btnW, btnH);
+        // 美术资源层：按钮底图 + 导航图标（贴在左上角小图标位，不压按钮文字）
+        this._artButton(x, navY, btnW, btnH, 'normal');
+        this._artIcon(ART_PREFIXES.nav, NAV_ART_KEYS[i], x + 13, navY + 11, 13, 0.5);
 
         ctx.fillStyle = '#ffffff';
         // P10 字号按屏宽自适应：iPhone 5 (320) 10→8；iPhone 6 (375) 维持 10
@@ -2753,6 +2971,7 @@ export class RenderSystem {
     // 背景
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     // 顶部标题
     ctx.fillStyle = '#fbbf24';
@@ -2791,6 +3010,8 @@ export class RenderSystem {
       ctx.strokeStyle = isSelected ? branch.color : '#334155';
       ctx.lineWidth = isSelected ? 2 : 1;
       ctx.strokeRect(x, tabY, tabW, tabH);
+      // 美术资源层：分支图标（key 与 branch 标识 military/economy/tech/buff 完全同名）
+      this._artIcon(ART_PREFIXES.techBranch, key, x + 12, tabY + tabH / 2, 14, 0.55);
 
       ctx.fillStyle = isSelected ? branch.color : '#64748b';
       ctx.font = 'bold 11px sans-serif';
@@ -3063,6 +3284,7 @@ export class RenderSystem {
 
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     // 标题
     ctx.fillStyle = '#10b981';
@@ -3084,6 +3306,9 @@ export class RenderSystem {
       ctx.strokeStyle = isActive ? '#10b981' : '#334155';
       ctx.lineWidth = 1;
       ctx.strokeRect(tx, L.tabY, L.tabW, L.tabH);
+      // 美术资源层：选中/常态按钮 + 分类图标
+      this._artButton(tx, L.tabY, L.tabW, L.tabH, isActive ? 'selected' : 'normal');
+      this._artIcon(ART_PREFIXES.shopCat, SHOP_CAT_KEYS[i], tx + 12, L.tabY + L.tabH / 2, 14, 0.5);
       ctx.fillStyle = isActive ? '#10b981' : '#64748b';
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
@@ -3453,12 +3678,15 @@ export class RenderSystem {
 
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     ctx.fillStyle = '#06b6d4';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('任务', w / 2, 25);
+    this._artIcon(ART_PREFIXES.quest, 'daily', w / 2 - 48, 25, 20, 0.6);
+    this._artIcon(ART_PREFIXES.state, 'done', w - 24, 25, 18, 0.6);
 
     const layout = RenderSystem.questLayout(
       gameState.dailyQuests || [], gameState.weeklyQuests || [], gameState.seasonQuests || [],
@@ -3518,12 +3746,16 @@ export class RenderSystem {
 
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     ctx.fillStyle = '#f59e0b';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('成就', w / 2, 25);
+    this._artIcon(ART_PREFIXES.achieve, 'firstwin', w / 2 - 48, 25, 20, 0.6);
+    this._artIcon(ART_PREFIXES.medal, 'gold', w - 24, 25, 18, 0.6);
+    this._artFx('achieveStamp', w - 62, 12, 34, 34, 0.5);
 
     const layout = RenderSystem.achievementLayout(
       gameState.achievements || [], gameState.metaScrollY || 0, w
@@ -3561,6 +3793,7 @@ export class RenderSystem {
 
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     ctx.fillStyle = '#ec4899';
     ctx.font = 'bold 18px sans-serif';
@@ -3695,6 +3928,7 @@ export class RenderSystem {
     // 背景
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
 
     // 标题
     ctx.fillStyle = '#fbbf24';
@@ -3753,6 +3987,7 @@ export class RenderSystem {
       ctx.fillStyle = rankColor;
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
+      this._artBadge(ART_PREFIXES.rank, String(i + 1).padStart(2, '0'), 28, y, 9);
       ctx.fillText(`${i + 1}`, 28, y);
       // 名字
       ctx.fillStyle = e.isPlayer ? '#fbbf24' : '#e2e8f0';
@@ -3795,6 +4030,9 @@ export class RenderSystem {
     grad.addColorStop(1, '#1e1b4b');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
+    this._drawBackdrop(this.screenWidth, this.screenHeight);
+    this._artIcon(ART_PREFIXES.nav, 'gacha', w / 2 - 60, 25, 20, 0.6);
+    this._artFx('firework', w / 2 - 90, 8, 180, 90, 0.35);
 
     // === 如果有抽卡结果，展示结果覆盖层 ===
     if (results && results.length > 0) {
@@ -4054,11 +4292,14 @@ export class RenderSystem {
     const h = this.screenHeight;
     const { x: bx, w: bw, h: bh, bottom } = BACK_BTN;
     const by = h - bottom - bh;
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(bx, by, bw, bh);
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(bx, by, bw, bh);
+    // 贴图优先：UI-08 返回按钮 240×105 @3x → 逻辑 80×35，与 BACK_BTN 几何完全一致
+    if (!this._art(this._backPressed ? ART_HOOKS.backPressed : ART_HOOKS.backButton, bx, by, bw, bh, { alpha: 1 })) {
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx, by, bw, bh);
+    }
     ctx.fillStyle = '#e2e8f0';
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
@@ -4097,6 +4338,8 @@ export class RenderSystem {
     // 半透明遮罩
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
+    this._artIcon(ART_PREFIXES.setting, 'music', w - 22, 22, 18, 0.6);
+    this._artFx('settingNotify', w - 46, 18, 18, 18, 0.6);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -4239,6 +4482,7 @@ export class RenderSystem {
     // 半透明遮罩
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
+    this._artIcon(ART_PREFIXES.account, 'switch', w - 22, 22, 18, 0.6);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -4378,6 +4622,11 @@ export class RenderSystem {
     ctx.strokeStyle = '#ef4444';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(boxX, boxY, boxW, boxH);
+    // 美术资源层：Toast 3 类底图（按提示语义选取，失败静默；淡入淡出由外层 alpha 相乘继承）
+    const _toastKind = gameState.toastType ||
+      (/成功|获得|领取|完成|解锁|恭喜/.test(text) ? 'success' :
+       /失败|不足|无法|错误|已满|不能/.test(text) ? 'warn' : 'info');
+    this._artToast(boxX, boxY, boxW, boxH, _toastKind);
 
     // 文本
     ctx.fillStyle = '#fef2f2';

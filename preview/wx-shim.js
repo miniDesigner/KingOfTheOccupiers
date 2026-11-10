@@ -41,6 +41,15 @@ const wx = {
     return canvas;
   },
 
+  /**
+   * 图片加载（浏览器预览）：真微信由基础库提供 wx.createImage()，
+   * 这里返回浏览器原生 Image。路径前缀 '../assets/' 由 ArtSystem 依据
+   * wx.__tkBrowser 统一拼接，与 ConfigLoader 的 '../config/' 同一套相对基准。
+   */
+  createImage() {
+    return new Image();
+  },
+
   getSystemInfoSync() {
     return {
       screenWidth: window.innerWidth,

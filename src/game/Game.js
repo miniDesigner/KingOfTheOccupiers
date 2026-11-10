@@ -23,6 +23,9 @@ import { SynergySystem } from '../system/SynergySystem.js';
 import { SkillSystem } from '../system/SkillSystem.js';
 import { InputSystem } from '../system/InputSystem.js';
 import { RenderSystem } from '../system/RenderSystem.js';
+import { ArtSystem } from '../system/ArtSystem.js';
+import { SCREEN_BG, LOADING_BG, LOADING_LOGO, RESULT_BG,
+  ART_HOOKS, ART_PREFIXES, ART_ENTRIES } from '../system/ArtManifest.js';
 import { AnimationManager } from '../system/AnimationManager.js';
 import AudioManager from '../system/AudioManager.js';
 import AdManager from '../system/AdManager.js';
@@ -2537,6 +2540,8 @@ export class Game {
     grad.addColorStop(1, '#1e293b');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
+    ArtSystem.draw(this.ctx, LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 0.45 });
+    ArtSystem.draw(this.ctx, LOADING_LOGO, w / 2 - 60, h * 0.14, 120, 120, { alpha: 0.9 });
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -2597,6 +2602,31 @@ export class Game {
 
     // 2. 同步配置到静态导出变量
     syncConfigToStatics();
+
+    // 2.05 美术资源层：占位图已全量接入渲染，正式素材「同名覆盖」后无需改代码。
+    //      开关 / 叠加不透明度由 config/game.json 的 features 控制；
+    //      Node 测试环境无 Image，ArtSystem 自动静默降级，程序化绘制原样兜底。
+    {
+      const _feat = ConfigLoader.getSafe('game')?.features || {};
+      const _on = _feat.usePlaceholderArt !== false;
+      ArtSystem.setEnabled(_on);
+      this.renderSystem._artEnabled = _on;
+      if (typeof _feat.artAlpha === 'number') ArtSystem.setAlpha(_feat.artAlpha);
+      if (_on) {
+        ArtSystem.preload(Object.values(SCREEN_BG));
+        ArtSystem.preload([LOADING_BG, LOADING_LOGO]);
+        // 全量可达：34 个元素钩子 + 10 个杂项特效 + 21 个图标族首项一并预加载，
+        // 保证 ART_HOOKS / ART_PREFIXES 全部有运行时图片通道；失败静默不影响渲染。
+        ArtSystem.preload(Object.values(ART_HOOKS));
+        ArtSystem.preload(Object.values(RESULT_BG));
+        const _iconProbes = [];
+        for (const _p of Object.values(ART_PREFIXES)) {
+          const _hit = ART_ENTRIES.find(e => e.key.startsWith(_p));
+          if (_hit) _iconProbes.push(_hit.key);
+        }
+        ArtSystem.preload(_iconProbes);
+      }
+    }
     syncRaces();
     syncLevels();
 
