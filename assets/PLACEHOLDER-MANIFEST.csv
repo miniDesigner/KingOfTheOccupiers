@@ -1,0 +1,332 @@
+﻿编号,目标路径（相对 assets/）,品类,状态 / 名称,尺寸（@3x 出图）,格式,九宫格,品质/段位色,数据来源,备注,后续替换说明
+AP-01,assets/icon_432.png,应用,应用图标 432,432×432,PNG,,,占地之王-逐界面素材清单.csv,应用图标多尺寸 1 套；仓库现有 2 个 144×144 文件未引用、未覆盖,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+AP-02,assets/splash.png,应用,启动图,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+AP-02,assets/share_card.png,应用,战绩分享图,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-01,bg/lobby_bg.jpg,背景,远景城邦,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,文档标注 3 层（远景/中景暗纹/前景）；中景六边形暗纹合入 lobby_bg,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-01,bg/lobby_fg.png,背景,前景光斑,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,文档标注 3 层（远景/中景暗纹/前景）；中景六边形暗纹合入 lobby_bg,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-02,bg/gacha_bg.jpg,背景,渐变底,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-02,bg/gacha_circle.png,背景,光柱 + 符文阵,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_bg.jpg,背景,基础暗纹,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_plains.png,背景,变体 plains,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_twin_canyon.png,背景,变体 twin_canyon,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_tri_lanes.png,背景,变体 tri_lanes,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_river_ford.png,背景,变体 river_ford,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_citadel.png,背景,变体 citadel,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-04,bg/result_win.jpg,背景,结算胜利主视觉,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-05,bg/result_lose.jpg,背景,结算失败主视觉,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-06,bg/loading_logo.png,背景,品牌 Logo,900×1080,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-06,bg/loading_art.jpg,背景,竖屏插画,900×1080,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-07,bg/match_panel.png,背景,异步匹配面板底图,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-08,bg/panel_bg.9.png,背景,通用深色面板背景,1500×2115,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-09,bg/bp_banner.jpg,背景,通行证主视觉横幅,1500×480,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-10,bg/subpage_bg.jpg,背景,子界面通用背景,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,可与 BG-08 合并交付,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-01,buildings/barracks_1.png,建筑,Lv1 兵营,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-01,buildings/barracks_2.png,建筑,Lv2 兵营,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-01,buildings/barracks_3.png,建筑,Lv3 兵营,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-01,buildings/barracks_4.png,建筑,Lv4 兵营,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-02,buildings/tower.png,建筑,箭塔,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-02,buildings/mine.png,建筑,金矿,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-02,buildings/hq_ally.png,建筑,HQ 我方,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-02,buildings/hq_enemy.png,建筑,HQ 敌方,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BL-03,buildings/ruin.png,建筑,建筑摧毁态,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-01,tiles/hex_bright.png,地块,明格,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-01,tiles/hex_dark.png,地块,背面暗格,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-01,tiles/hex_flippable.png,地块,相邻可翻格,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-01,tiles/hex_empty.png,地块,空地,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-02,tiles/mountain.png,地块,山脉障碍,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-02,tiles/river.png,地块,河流障碍,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_edge.png,地块,边界纹理,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_plains.png,地块,氛围 plains,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_twin_canyon.png,地块,氛围 twin_canyon,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_tri_lanes.png,地块,氛围 tri_lanes,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_river_ford.png,地块,氛围 river_ford,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_citadel.png,地块,氛围 citadel,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-01,effects/gacha_epic_q4.png,特效,稀有度光效 紫 Q4,384×384,PNG,,#a855f7,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-01,effects/gacha_epic_q5.png,特效,稀有度光效 橙 Q5,384×384,PNG,,#f97316,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-01,effects/gacha_epic_q6.png,特效,稀有度光效 红 Q6,384×384,PNG,,#ef4444,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-02,effects/quality_glow_q1.png,特效,品质光晕 白 Q1,384×384,PNG,,#9ca3af,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-02,effects/quality_glow_q2.png,特效,品质光晕 绿 Q2,384×384,PNG,,#22c55e,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-02,effects/quality_glow_q3.png,特效,品质光晕 蓝 Q3,384×384,PNG,,#3b82f6,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-02,effects/quality_glow_q4.png,特效,品质光晕 紫 Q4,384×384,PNG,,#a855f7,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-02,effects/quality_glow_q5.png,特效,品质光晕 橙 Q5,384×384,PNG,,#f97316,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-02,effects/quality_glow_q6.png,特效,品质光晕 红 Q6,384×384,PNG,,#ef4444,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-03,effects/firework.png,特效,胜利烟花,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-04,effects/defeat_flash.png,特效,失败灰暗闪屏,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-04,effects/defeat_debris.png,特效,失败破碎粒子,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-05,effects/combat_hit.png,特效,命中,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-05,effects/combat_crit.png,特效,暴击,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-05,effects/combat_flash.png,特效,受击闪白,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-05,effects/combat_knockback.png,特效,击退,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-06,effects/territory_wave.png,特效,领地扩散波纹,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-07,effects/build_beam.png,特效,建筑升级光柱,192×768,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-08,effects/tutorial_halo.png,特效,引导高亮圈,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-09,effects/rank_shine.png,特效,段位徽章流光,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FX-10,effects/ambient.png,特效,环境氛围粒子,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-27,effects/achieve_stamp.png,特效,成就完成盖章,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FT-01,fonts/title.ttf.png,字体,标题字 · 字体占位说明卡,900×600,PNG,,,占地之王-逐界面素材清单.csv,fonts/title.ttf 为字体文件而非图片，后续需提供真实 .ttf；本 PNG 仅为占位预览,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+FT-02,fonts/number.ttf.png,字体,数字字 · 字体占位说明卡,900×600,PNG,,,占地之王-逐界面素材清单.csv,fonts/number.ttf 为字体文件而非图片，后续需提供真实 .ttf；本 PNG 仅为占位预览,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-01,icons/currency_coin.png,图标,金币,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-01,icons/currency_gem.png,图标,钻石,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-01,icons/currency_stardust.png,图标,星尘,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-01,icons/currency_trophy.png,图标,奖杯,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-02,icons/nav_shop.png,图标,商店,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-02,icons/nav_gacha.png,图标,招募,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-02,icons/nav_deploy.png,图标,布阵,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-02,icons/nav_tech.png,图标,科技,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-02,icons/nav_rank.png,图标,排行榜,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-03,icons/lobby_share.png,图标,分享,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-03,icons/lobby_quest.png,图标,任务,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-03,icons/lobby_achieve.png,图标,成就,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-03,icons/lobby_pass.png,图标,通行证,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-03,icons/lobby_battle.png,图标,开战,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-04,icons/hud_setting.png,图标,设置,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-04,icons/hud_battle.png,图标,战斗,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-04,icons/hud_enemy_hq.png,图标,敌方大本营,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-04,icons/hud_layout.png,图标,布局标签,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-04,icons/hud_synergy.png,图标,羁绊,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-04,icons/hud_timer.png,图标,计时,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_lock.png,图标,锁定,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_skill.png,图标,主动技,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_stardust.png,图标,星尘,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_ad.png,图标,广告,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_close.png,图标,关闭,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_done.png,图标,已完成,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_upgrade.png,图标,可升级,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-05,icons/state_delete.png,图标,删除,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_daily.png,图标,每日,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_weekly.png,图标,每周,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_season.png,图标,赛季,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_claimall.png,图标,一键领取,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_locked.png,图标,需高级,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_pay.png,图标,付费,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_reward_coin.png,图标,奖励·金币,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-06,icons/quest_reward_item.png,图标,奖励·道具,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-07,icons/quality_mark_q1.png,图标,品质角标 Q1,72×72,PNG,,#9ca3af,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-07,icons/quality_mark_q2.png,图标,品质角标 Q2,72×72,PNG,,#22c55e,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-07,icons/quality_mark_q3.png,图标,品质角标 Q3,72×72,PNG,,#3b82f6,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-07,icons/quality_mark_q4.png,图标,品质角标 Q4,72×72,PNG,,#a855f7,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-07,icons/quality_mark_q5.png,图标,品质角标 Q5,72×72,PNG,,#f97316,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-07,icons/quality_mark_q6.png,图标,品质角标 Q6,72×72,PNG,,#ef4444,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-08,icons/tech_branch_military.png,图标,军事分支,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-08,icons/tech_branch_economy.png,图标,经济分支,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-08,icons/tech_branch_tech.png,图标,科技分支,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-08,icons/tech_branch_buff.png,图标,增益分支,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-09,icons/synergy_melee.png,图标,近战羁绊,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-09,icons/synergy_ranged.png,图标,远程羁绊,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-09,icons/synergy_magic.png,图标,法术羁绊,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-09,icons/synergy_defense.png,图标,防御羁绊,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-10,icons/building_up_barracks.png,图标,兵营强化,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-10,icons/building_up_tower.png,图标,箭塔强化,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-10,icons/building_up_mine.png,图标,金矿强化,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-11,icons/setting_notify.png,图标,通知,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-11,icons/setting_music.png,图标,音乐,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-11,icons/setting_vibrate.png,图标,振动,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-12,icons/account_delete.png,图标,删除,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-12,icons/account_switch.png,图标,切换,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-12,icons/account_add.png,图标,新增,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-12,icons/account_logout.png,图标,退出,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-13,icons/tutorial_arrow.png,图标,箭头指示,108×108,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-13,icons/tutorial_hand.png,图标,手指指示,108×108,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-14,icons/medal_gold.png,图标,金牌,168×168,PNG,,#fbbf24,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-14,icons/medal_silver.png,图标,银牌,168×168,PNG,,#94a3b8,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-14,icons/medal_bronze.png,图标,铜牌,168×168,PNG,,#b45309,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-15,icons/shop_cat_coin.png,图标,金币品类,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-15,icons/shop_cat_gem.png,图标,钻石品类,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-15,icons/shop_cat_unit.png,图标,兵种品类,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-15,icons/shop_cat_item.png,图标,道具品类,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-15,icons/shop_cat_ad.png,图标,广告品类,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_firstwin.png,图标,首胜徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_winstreak.png,图标,连胜徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_collect.png,图标,收集徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_rank.png,图标,段位徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_level.png,图标,关卡徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_unit.png,图标,兵种徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_synergy.png,图标,羁绊徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-16,icons/achieve_season.png,图标,赛季徽章,168×168,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_01.png,图标,段位 青铜,324×324,PNG,,#b45309,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_02.png,图标,段位 白银,324×324,PNG,,#94a3b8,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_03.png,图标,段位 黄金,324×324,PNG,,#fbbf24,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_04.png,图标,段位 铂金,324×324,PNG,,#22d3ee,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_05.png,图标,段位 钻石,324×324,PNG,,#60a5fa,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_06.png,图标,段位 大师,324×324,PNG,,#a78bfa,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_07.png,图标,段位 宗师,324×324,PNG,,#fb923c,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+RG-01,icons/rank_08.png,图标,段位 王者,324×324,PNG,,#ef4444,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-01,ui/btn_normal.9.png,界面,按钮·常态,264×120,PNG,是,,占地之王-逐界面素材清单.csv,另有 6 组主题配色（开战/返回/分享/任务/成就/通行证），后续在 5 态基础上叠加,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-01,ui/btn_hover.9.png,界面,按钮·悬停聚焦,264×120,PNG,是,,占地之王-逐界面素材清单.csv,另有 6 组主题配色（开战/返回/分享/任务/成就/通行证），后续在 5 态基础上叠加,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-01,ui/btn_pressed.9.png,界面,按钮·按压,264×120,PNG,是,,占地之王-逐界面素材清单.csv,另有 6 组主题配色（开战/返回/分享/任务/成就/通行证），后续在 5 态基础上叠加,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-01,ui/btn_disabled.9.png,界面,按钮·禁用,264×120,PNG,是,,占地之王-逐界面素材清单.csv,另有 6 组主题配色（开战/返回/分享/任务/成就/通行证），后续在 5 态基础上叠加,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-01,ui/btn_selected.9.png,界面,按钮·选中,264×120,PNG,是,,占地之王-逐界面素材清单.csv,另有 6 组主题配色（开战/返回/分享/任务/成就/通行证），后续在 5 态基础上叠加,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-02,ui/panel.9.png,界面,面板九宫格,900×1395,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-03,ui/quality_q1.9.png,界面,品质框 白 Q1,156×255,PNG,是,#9ca3af,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-03,ui/quality_q2.9.png,界面,品质框 绿 Q2,156×255,PNG,是,#22c55e,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-03,ui/quality_q3.9.png,界面,品质框 蓝 Q3,156×255,PNG,是,#3b82f6,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-03,ui/quality_q4.9.png,界面,品质框 紫 Q4,156×255,PNG,是,#a855f7,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-03,ui/quality_q5.9.png,界面,品质框 橙 Q5,156×255,PNG,是,#f97316,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-03,ui/quality_q6.9.png,界面,品质框 红 Q6,156×255,PNG,是,#ef4444,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-04,ui/bar_track.9.png,界面,进度条·底槽,840×36,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-04,ui/bar_fill.9.png,界面,进度条·填充,840×36,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-04,ui/bar_highlight.9.png,界面,进度条·高光,840×36,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-04,ui/bar_cap.9.png,界面,进度条·端帽,840×36,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-05,ui/tab_normal.9.png,界面,Tab·常态,210×90,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-05,ui/tab_selected.9.png,界面,Tab·选中,210×90,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-05,ui/tab_indicator.9.png,界面,滑动指示条,210×90,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-06,ui/card.9.png,界面,通用卡底,174×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-06,ui/card_empty.9.png,界面,空槽位,174×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-07,ui/badge.png,界面,红点角标,48×48,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-08,ui/back_normal.png,界面,返回按钮·常态,240×105,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-08,ui/back_pressed.png,界面,返回按钮·按压,240×105,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-09,ui/toast_info.9.png,界面,Toast·信息,900×120,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-09,ui/toast_success.9.png,界面,Toast·成功,900×120,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-09,ui/toast_warn.9.png,界面,Toast·警示,900×120,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-10,ui/fade_top.png,界面,顶部渐隐遮罩,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-10,ui/fade_bottom.png,界面,底部渐隐遮罩,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-11,ui/switch_off.png,界面,开关·关闭,156×84,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-11,ui/switch_on.png,界面,开关·开启,156×84,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-12,ui/slider_sfx.9.png,界面,音效音量滑块,840×72,PNG,是,,占地之王-逐界面素材清单.csv,当前代码暂无此 UI，见 C1 功能缺口,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-12,ui/slider_bgm.9.png,界面,音乐音量滑块,840×72,PNG,是,,占地之王-逐界面素材清单.csv,当前代码暂无此 UI，见 C1 功能缺口,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-13,ui/shop_card_normal.9.png,界面,普通商品卡,1020×210,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-13,ui/shop_card_free.9.png,界面,免费商品卡,1020×210,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-14,ui/quest_item_progress.9.png,界面,任务条目·进行中,1020×165,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-14,ui/quest_item_claimable.9.png,界面,任务条目·可领,1020×165,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-14,ui/quest_item_claimed.9.png,界面,任务条目·已领,1020×165,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-15,ui/tech_node_locked.9.png,界面,科技节点·未解锁,450×192,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-15,ui/tech_node_upgradeable.9.png,界面,科技节点·可升级,450×192,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-15,ui/tech_node_max.9.png,界面,科技节点·满级,450×192,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-15,ui/tech_line.png,界面,连线点亮,450×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-16,ui/bp_cell_locked.9.png,界面,奖励格·未解锁,216×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-16,ui/bp_cell_claimable.9.png,界面,奖励格·可领,216×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-16,ui/bp_cell_claimed.9.png,界面,奖励格·已领,216×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-16,ui/bp_cell_premium.9.png,界面,奖励格·需高级,216×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-17,ui/rank_row_normal.9.png,界面,榜单行·普通,1020×144,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-17,ui/rank_row_self.9.png,界面,榜单行·自己高亮,1020×144,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-17,ui/rank_empty.png,界面,空榜占位,1020×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-18,ui/account_row_normal.9.png,界面,账号行·普通,900×132,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-18,ui/account_row_current.9.png,界面,账号行·当前态,900×132,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-19,ui/tutorial_card.9.png,界面,引导文案卡,900×360,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-19,ui/tutorial_dots.png,界面,步骤指示器 4 点,900×360,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-20,ui/slot_empty.9.png,界面,布阵槽位空态,156×255,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-20,ui/slot_drag.png,界面,拖拽卡面高亮,156×255,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-21,ui/unit_detail.9.png,界面,兵种详情专属底板,900×1395,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-22,ui/building_detail.9.png,界面,建筑详情对比区,900×1200,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-23,ui/result_star.9.png,界面,星级评价底板,900×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-23,ui/result_promote.9.png,界面,段位晋升图形,900×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-23,ui/result_summary.9.png,界面,招募摘要条目,900×216,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-24,ui/gacha_ten.9.png,界面,十连圆点指示器,900×120,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-24,ui/gacha_ten_summary.9.png,界面,十连汇总页底板,900×120,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-25,ui/gacha_rate.9.png,界面,概率条,840×36,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-25,ui/gacha_pity.9.png,界面,保底进度条,840×36,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-25,ui/gacha_collection.9.png,界面,已收集图鉴底板,840×36,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-26,ui/list_item.9.png,界面,列表项底板,900×132,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-28,ui/avatar_frame.png,界面,头像框,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-29,ui/loading_tip.9.png,界面,加载提示底板,900×132,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-30,ui/hud_top.9.png,界面,战斗 HUD·顶栏,1500×150,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-30,ui/hud_hp.9.png,界面,战斗 HUD·双方 HP 条,1500×150,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-30,ui/hud_synergy.9.png,界面,战斗 HUD·羁绊面板,1500×150,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UI-30,ui/hud_bottom.9.png,界面,战斗 HUD·底部提示,1500×150,PNG,是,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_01.png,兵种,剑士,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_02.png,兵种,弓箭手,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_03.png,兵种,枪兵,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_04.png,兵种,斥候,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_05.png,兵种,民兵,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_06.png,兵种,投石兵,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_07.png,兵种,学徒,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_08.png,兵种,盾兵,174×216,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_09.png,兵种,骑士,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_10.png,兵种,狂战士,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_11.png,兵种,骷髅兵,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_12.png,兵种,战士,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_13.png,兵种,猎人,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_14.png,兵种,牧师,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_15.png,兵种,卫兵,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_16.png,兵种,海盗,174×216,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_17.png,兵种,弩手,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_18.png,兵种,游侠,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_19.png,兵种,长枪兵,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_20.png,兵种,神射手,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_21.png,兵种,冰法师,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_22.png,兵种,圣堂武士,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_23.png,兵种,战车,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_24.png,兵种,驯兽师,174×216,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_25.png,兵种,法师,174×216,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_26.png,兵种,圣骑士,174×216,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_27.png,兵种,刽子手,174×216,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_28.png,兵种,战斗法师,174×216,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_29.png,兵种,大法师,174×216,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_30.png,兵种,十字军,174×216,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_31.png,兵种,死灵法师,174×216,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_32.png,兵种,吸血鬼,174×216,PNG,,#f97316,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_33.png,兵种,蒸汽坦克,174×216,PNG,,#f97316,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_34.png,兵种,死亡骑士,174×216,PNG,,#f97316,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_35.png,兵种,风暴法师,174×216,PNG,,#f97316,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_36.png,兵种,战象,174×216,PNG,,#f97316,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_37.png,兵种,凤凰,174×216,PNG,,#f97316,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_38.png,兵种,幼龙,174×216,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_39.png,兵种,战争泰坦,174×216,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-01,units/unit_40.png,兵种,古龙,174×216,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv,40 张兵种立绘，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_01.png,兵种,剑士·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_02.png,兵种,弓箭手·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_03.png,兵种,枪兵·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_04.png,兵种,斥候·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_05.png,兵种,民兵·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_06.png,兵种,投石兵·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_07.png,兵种,学徒·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_08.png,兵种,盾兵·小,96×96,PNG,,#9ca3af,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_09.png,兵种,骑士·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_10.png,兵种,狂战士·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_11.png,兵种,骷髅兵·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_12.png,兵种,战士·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_13.png,兵种,猎人·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_14.png,兵种,牧师·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_15.png,兵种,卫兵·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_16.png,兵种,海盗·小,96×96,PNG,,#22c55e,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_17.png,兵种,弩手·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_18.png,兵种,游侠·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_19.png,兵种,长枪兵·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_20.png,兵种,神射手·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_21.png,兵种,冰法师·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_22.png,兵种,圣堂武士·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_23.png,兵种,战车·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_24.png,兵种,驯兽师·小,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_25.png,兵种,法师·小,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_26.png,兵种,圣骑士·小,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_27.png,兵种,刽子手·小,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_28.png,兵种,战斗法师·小,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_29.png,兵种,大法师·小,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_30.png,兵种,十字军·小,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_31.png,兵种,死灵法师·小,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_32.png,兵种,吸血鬼·小,96×96,PNG,,#f97316,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_33.png,兵种,蒸汽坦克·小,96×96,PNG,,#f97316,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_34.png,兵种,死亡骑士·小,96×96,PNG,,#f97316,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_35.png,兵种,风暴法师·小,96×96,PNG,,#f97316,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_36.png,兵种,战象·小,96×96,PNG,,#f97316,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_37.png,兵种,凤凰·小,96×96,PNG,,#f97316,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_38.png,兵种,幼龙·小,96×96,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_39.png,兵种,战争泰坦·小,96×96,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-02,units/unit_small_40.png,兵种,古龙·小,96×96,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv（UN-01 对应序号）,由 UN-01 裁切的局内小图标（文档标注 0 增量），此处仍给独立占位位,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_human_lv1.png,兵种,步兵,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_human_lv2.png,兵种,剑士,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_human_lv3.png,兵种,骑士,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_human_lv4.png,兵种,圣骑士,96×96,PNG,,#3b82f6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_beast_lv1.png,兵种,兽人战士,96×96,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_beast_lv2.png,兵种,狂战士,96×96,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_beast_lv3.png,兵种,兽王,96×96,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_beast_lv4.png,兵种,战争领主,96×96,PNG,,#ef4444,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_undead_lv1.png,兵种,骷髅兵,96×96,PNG,,#8b5cf6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_undead_lv2.png,兵种,僵尸,96×96,PNG,,#8b5cf6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_undead_lv3.png,兵种,死灵法师,96×96,PNG,,#8b5cf6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_undead_lv4.png,兵种,巫妖,96×96,PNG,,#8b5cf6,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_elf_lv1.png,兵种,弓箭手,96×96,PNG,,#10b981,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_elf_lv2.png,兵种,游侠,96×96,PNG,,#10b981,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_elf_lv3.png,兵种,精灵骑士,96×96,PNG,,#10b981,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_elf_lv4.png,兵种,月之骑士,96×96,PNG,,#10b981,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dwarf_lv1.png,兵种,矮人战士,96×96,PNG,,#f59e0b,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dwarf_lv2.png,兵种,矮人守卫,96×96,PNG,,#f59e0b,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dwarf_lv3.png,兵种,矮人火枪手,96×96,PNG,,#f59e0b,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dwarf_lv4.png,兵种,矮人王,96×96,PNG,,#f59e0b,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dragon_lv1.png,兵种,龙裔,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dragon_lv2.png,兵种,幼龙,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dragon_lv3.png,兵种,龙骑士,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-03,units/race_dragon_lv4.png,兵种,古龙,96×96,PNG,,#a855f7,占地之王-兵种美术逐项清单.csv,6 种族 × 4 阶，逐项见 占地之王-兵种美术逐项清单.csv,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-04,units/unit_walk_start.png,兵种,行走序列·起步,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-04,units/unit_walk_loop.png,兵种,行走序列·行走,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+UN-04,units/unit_walk_attack.png,兵种,行走序列·攻击前冲,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
