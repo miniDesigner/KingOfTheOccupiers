@@ -12,7 +12,18 @@ import ConfigLoader from '../data/ConfigLoader.js';
 import DeploymentSystem, { UPGRADE_COST_GROWTH, MAX_UNIT_LEVEL } from '../meta/DeploymentSystem.js';
 import { clampSafeArea } from './SafeArea.js';
 import { ArtSystem } from './ArtSystem.js';
+import { FontSystem } from './FontSystem.js';
 import { SCREEN_BG, RESULT_BG, ART_HOOKS, ART_PREFIXES, ART_INDEX } from './ArtManifest.js';
+import { drawArtLayer, BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE,
+  APP_ASSETS, FONT_CARDS, RACE_KEYS_ALL, UNIT_SMALL_KEYS_ALL,
+  pick_rewardCell, pick_questItem, pick_qualityGlow, pick_gachaEpic,
+  pick_tab, pick_tabIndicator, pick_switcher, pick_slider, pick_techNode,
+  pick_techLine, pick_rankRow, pick_accountRow, pick_shopCard, pick_result,
+  pick_gachaUi, pick_combatFx, pick_defeatFx, pick_buildBeam,
+  pick_territoryWave, pick_rankShine, pick_ambient, pick_race, pick_unitSmall,
+  pick_walkFrame, pick_unitDetail, pick_buildingDetail, pick_tutorialCard,
+  pick_tutorialDots, pick_hudHp, pick_hudSynergy, pick_btnHover,
+  iconKey, ICON_NAMES } from './ArtLayer.js';
 import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, ladderCombo, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN } from './Layout.js';
 
 // 安全区常量的单一真相源在 SafeArea.js，这里 re-export 保持既有引用兼容
@@ -141,8 +152,33 @@ export class RenderSystem {
 
   /** 界面清屏后叠加占位底图（cover 等比裁切，正式素材可设 alpha=1） */
   _drawBackdrop(w, h, alpha) {
-    return this._art(this._screenBgKey(), 0, 0, w, h,
-      { fit: 'cover', alpha: alpha === undefined ? ArtSystem.alpha : alpha });
+    const a = alpha === undefined ? ArtSystem.alpha : alpha;
+    const ok = this._art(this._screenBgKey(), 0, 0, w, h, { fit: 'cover', alpha: a });
+
+    // === 氛围叠层：bg/* 与 tiles/* 共 16 张按「界面 + 本局布局」选择 ===
+    // 全部为低不透明度叠加，不删改任何既有绘制；未启用 / 图片失败静默跳过。
+    if (!this._artEnabled || this._artLayerEnabled === false) return ok;
+    const scale = typeof this._artLayerAlpha === 'number' ? this._artLayerAlpha : 1;
+    if (scale <= 0) return ok;
+
+    // 1) 界面专属氛围底图（lobby_fg / gacha_circle / bp_banner / match_panel / panel_bg）
+    const sceneBg = BG_BY_SCREEN[this._curScreen];
+    if (sceneBg && ART_INDEX[sceneBg]) {
+      this._art(sceneBg, 0, 0, w, h, { fit: 'cover', alpha: 0.12 * scale });
+    }
+
+    // 2) 战斗态：按本局 layoutId 选 5 套地图色调（bg + tiles 各一张）+ 领土边界纹理
+    if (this._curScreen === 'playing') {
+      const tone = BATTLE_TONE_BY_LAYOUT[this._layoutId];
+      if (tone) {
+        if (ART_INDEX[tone[0]]) this._art(tone[0], 0, 0, w, h, { fit: 'cover', alpha: 0.10 * scale });
+        if (ART_INDEX[tone[1]]) this._art(tone[1], 0, 0, w, h, { fit: 'cover', alpha: 0.08 * scale });
+      }
+      if (ART_INDEX[TERRITORY_EDGE]) {
+        this._art(TERRITORY_EDGE, 0, h * 0.24, w, 48, { alpha: 0.10 * scale });
+      }
+    }
+    return ok;
   }
 
   /** 六边形裁剪内贴图：方形素材被裁成六边形，不破坏 TL-01 轮廓 */
@@ -296,6 +332,8 @@ export class RenderSystem {
     // 记录当前界面 / 战斗结果，供美术资源层选择底图
     this._curScreen = (gameState && gameState.screenState) || 'playing';
     this._curGameStatus = (gameState && gameState.gameStatus) || 'playing';
+    // 本局棋盘布局 id（供 bg/battle_tone_* 与 tiles/territory_tone_* 5 套色调选图）
+    this._layoutId = (gameState && gameState.layoutId) || 'plains';
     // 返回按钮按下态：与 UI-08/09 两态贴图配套，几何与 BACK_BTN 同源（不改命中）
     const _bp = (gameState && gameState.press) || null;
     const _bpy = this.screenHeight - BACK_BTN.bottom - BACK_BTN.h;
@@ -311,6 +349,11 @@ export class RenderSystem {
       if (scaleY !== 1) ctx.scale(1, scaleY);
     }
     this._renderScreenInner(gameState, inputSystem, dt);
+
+    // 美术装饰层：把上一轮审查判定「有素材但零引用」的占位图按界面语义叠加。
+    // 放在场景绘制之后、模态覆盖层之前 —— 只画不改几何，模态窗口仍盖在最上。
+    // 由 Game.start() 从 features.artExtendedLayer 注入开关；图片失败静默兜底。
+    drawArtLayer(this, gameState);
 
     // P8：最上层覆盖层同样纳入安全区包裹（画在 inner 之后保证盖在最上，
     // 但坐标系与 Scene 一致，面板顶部不会被刘海遮挡、底部不会落进 indicator 区）
@@ -593,6 +636,10 @@ export class RenderSystem {
     ctx.lineWidth = 2;
     ctx.stroke();
     this._artHex(ART_HOOKS.mountain, x, y);
+    // 障碍氛围：按格坐标稳定分配河流 / 废墟贴图（此前只登记未实贴）
+    const _terr = Math.abs((tile.q || 0) * 3 + (tile.r || 0)) % 3;
+    if (_terr === 1) this._artFx('river', x - 20, y - 20, 40, 40, 0.22);
+    else if (_terr === 2) this._artFx('ruin', x - 20, y - 20, 40, 40, 0.22);
 
     // 岩石纹理：双峰剪影
     ctx.fillStyle = '#4a5a6e';
@@ -638,6 +685,8 @@ export class RenderSystem {
     ctx.lineWidth = 1;
     ctx.stroke();
     this._artHex(ART_HOOKS.hexDark, x, y);
+    // 空格底纹（hexEmpty hook，此前只登记未实贴）
+    this._artFx('hexEmpty', x - 18, y - 18, 36, 36, 0.16);
 
     // 背面图案
     ctx.fillStyle = '#4a5568';
@@ -784,6 +833,10 @@ export class RenderSystem {
     ctx.translate(x, y);
     ctx.scale(1, Math.max(0.05, scaleY));
 
+    // 翻格过渡帧：正面亮格 / 背面可翻格贴图，跟随同一 scaleY 变换
+    this._art(showFront ? 'tiles/hex_bright' : 'tiles/hex_flippable',
+      -HEX_SIZE, -HEX_SIZE, HEX_SIZE * 2, HEX_SIZE * 2, { alpha: 0.22 });
+
     this.drawHexShape(0, 0, HEX_SIZE);
 
     if (showFront) {
@@ -893,6 +946,19 @@ export class RenderSystem {
       ctx.lineWidth = isDefense ? 3 : 2;
       ctx.stroke();
 
+      // === 兵种小头像 / 行走序列帧 / 品质光晕（占位素材真实贴图） ===
+      const _uid = group._unitId || 1;
+      const _smallKey = pick_unitSmall(typeof _uid === 'number' ? _uid : 1);
+      this._art(_smallKey, x - baseRadius, y - baseRadius - 22,
+        baseRadius * 2, baseRadius * 2, { alpha: 0.30 });
+      // 序列帧播放：行军时 start/loop 按时间轮播，交战时切 attack 帧
+      const _fighting = group.state === 'fighting_warrior' || group.state === 'fighting_building';
+      const _walkState = _fighting ? 'attack'
+        : (Math.floor((Date.now() + (group.owner || 0) * 60) / 140) % 2 === 0 ? 'start' : 'loop');
+      this._art(pick_walkFrame(_walkState), x - 14, y - 14, 28, 28, { alpha: 0.18 });
+      this._art(pick_qualityGlow(quality), x - baseRadius - 8, y - baseRadius - 8,
+        baseRadius * 2 + 16, baseRadius * 2 + 16, { alpha: 0.14 });
+
       // === 兵种图标（显示在圆点上方） ===
       if (icon) {
         ctx.font = `${Math.floor(baseRadius * 1.5)}px sans-serif`;
@@ -970,6 +1036,15 @@ export class RenderSystem {
     // 贴图：UI-30 战斗 HUD 顶栏（1500×150 @3x → 500×50 逻辑）
     this._art(ART_HOOKS.hudTop, 0, 0, this.screenWidth, 55, { alpha: 0.8 });
     this._artIcon(ART_PREFIXES.hud, 'timer', this.screenWidth - 18, 27, 16, 0.6);
+    // HUD 底栏 / 双方 HP 条 / 羁绊面板贴图 + 5 个 hud 语义图标
+    this._artFx('hudBottom', 0, this.screenHeight - 66, this.screenWidth, 66, 0.28);
+    this._art(pick_hudHp(), 0, 0, this.screenWidth, 50, { alpha: 0.10 });
+    this._art(pick_hudSynergy(), 0, 55, 106, 90, { alpha: 0.10 });
+    const _hudIcons = ['setting', 'battle', 'enemy_hq', 'layout', 'synergy'];
+    for (let i = 0; i < _hudIcons.length; i++) {
+      const k = iconKey('hud', _hudIcons[i]);
+      if (k) this._art(k, 8 + i * 26, 30, 22, 22, { alpha: 0.22 });
+    }
 
     // 对手信息 + 计时器
     ctx.fillStyle = '#e2e8f0';
@@ -1509,6 +1584,15 @@ export class RenderSystem {
     ctx.strokeStyle = '#7c3aed';
     ctx.lineWidth = 2;
     ctx.strokeRect(panelX, panelY, panelW, panelH);
+    // 招募面板：兵种详情底板 + 6 种族×4 阶立绘 + 概率/保底/图鉴条
+    this._art(pick_unitDetail(), panelX, panelY, panelW, panelH, { alpha: 0.10 });
+    for (let i = 0; i < RACE_KEYS_ALL.length; i++) {
+      this._art(RACE_KEYS_ALL[i], panelX + 8 + (i % 6) * 26,
+        panelY + 8 + Math.floor(i / 6) * 26, 22, 22, { alpha: 0.16 });
+    }
+    this._art(pick_gachaUi('rate'), panelX + 10, panelY + panelH - 60, panelW - 20, 16, { alpha: 0.14 });
+    this._art(pick_gachaUi('pity'), panelX + 10, panelY + panelH - 40, panelW - 20, 16, { alpha: 0.14 });
+    this._art(pick_gachaUi('collection'), panelX + 10, panelY + panelH - 20, panelW - 20, 16, { alpha: 0.14 });
 
     // 标题
     ctx.fillStyle = '#c084fc';
@@ -1957,6 +2041,16 @@ export class RenderSystem {
     ctx.strokeStyle = qColor;
     ctx.lineWidth = 2;
     ctx.strokeRect(panelX, panelY, panelW, panelH);
+    // 兵种详情：专属底板 + 建筑详情对比区 + 品质光晕 + 状态图标族
+    this._art(pick_unitDetail(), panelX, panelY, panelW, panelH, { alpha: 0.10 });
+    this._art(pick_buildingDetail(), panelX, panelY + panelH - 120, panelW, 110, { alpha: 0.08 });
+    this._art(pick_qualityGlow(unit.quality || 1), panelX + panelW / 2 - 60,
+      panelY - 20, 120, 120, { alpha: 0.20 });
+    const _st = ['lock', 'skill', 'stardust', 'ad', 'close', 'upgrade', 'delete'];
+    for (let i = 0; i < _st.length; i++) {
+      const k = iconKey('state', _st[i]);
+      if (k) this._art(k, panelX + 8 + i * 24, panelY + panelH - 28, 20, 20, { alpha: 0.20 });
+    }
 
     // 标题栏
     ctx.fillStyle = qColor;
@@ -2279,14 +2373,21 @@ export class RenderSystem {
     ctx.fillStyle = 'rgba(0,0,0,0.82)';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
     this._art(RESULT_BG[isWin ? 'won' : 'lost'], 0, 0, this.screenWidth, this.screenHeight, { fit: 'cover', alpha: 0.7 });
+    // 结算三态图形（星级 / 晋升 / 摘要）+ 胜负粒子与段位流光
+    const _rw = this.screenWidth, _rh = this.screenHeight;
+    this._art(pick_result('star'), _rw / 2 - 120, _rh * 0.30, 240, 54, { alpha: 0.14 });
+    this._art(pick_result('promote'), _rw / 2 - 120, _rh * 0.30 + 58, 240, 54, { alpha: 0.12 });
+    this._art(pick_result('summary'), _rw / 2 - 120, _rh * 0.30 + 116, 240, 54, { alpha: 0.12 });
+    this._art(pick_rankShine(), _rw / 2 - 24, _rh * 0.30 - 40, 48, 48, { alpha: 0.18 });
+    this._art(pick_defeatFx(isWin ? 'debris' : 'flash'), _rw / 2 - 60, _rh * 0.22, 120, 120, { alpha: 0.14 });
     if (isWin) {
       this._artFx('firework', cx - 100, cy - 165, 200, 130, 0.45);
       this._artFx('medalGold', cx - 22, cy - 148, 44, 44, 0.65);
     }
 
-    // 标题
+    // 标题：自定义标题字体（assets/fonts/title.ttf），未加载则回退 sans-serif
     ctx.fillStyle = isWin ? '#4ade80' : '#f87171';
-    ctx.font = 'bold 36px sans-serif';
+    ctx.font = FontSystem.font(36, 'bold', 'title');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(isWin ? '胜 利!' : '失 败', cx, cy - 80);
@@ -2399,6 +2500,19 @@ export class RenderSystem {
     const h = this.screenHeight;
     const L = RenderSystem.tutorialLayout(tut, inputSystem, w, h);
     if (!L) return;
+
+    // 新手引导：高亮光环 hook + 文案卡 / 步骤点 / 箭头 / 手势图标
+    const _haloR = L.circleR || L.ringR || 40;
+    const _hcx = Number.isFinite(L.cx) ? L.cx : (Number.isFinite(L.holeX) ? L.holeX + L.holeW / 2 : w / 2);
+    const _hcy = Number.isFinite(L.cy) ? L.cy : (Number.isFinite(L.holeY) ? L.holeY + L.holeH / 2 : h / 2);
+    this._artFx('tutorialHalo', _hcx - _haloR - 12, _hcy - _haloR - 12,
+      _haloR * 2 + 24, _haloR * 2 + 24, 0.22);
+    this._art(pick_tutorialCard(), 20, h - 200, w - 40, 110, { alpha: 0.16 });
+    this._art(pick_tutorialDots(), w / 2 - 45, h - 78, 90, 18, { alpha: 0.20 });
+    const _ta = iconKey('tutorial', 'arrow');
+    const _th = iconKey('tutorial', 'hand');
+    if (_ta) this._art(_ta, _hcx - 14, _hcy - 60, 28, 28, { alpha: 0.30 });
+    if (_th) this._art(_th, _hcx + 18, _hcy + 26, 28, 28, { alpha: 0.30 });
 
     // 1. 半透明遮罩（挖洞）：外框顺时针 + 高亮区逆时针 → nonzero 规则下高亮区不填充，
     //    即圆圈内部完全透明，玩家能看到底下的真实按钮。
@@ -3011,6 +3125,9 @@ export class RenderSystem {
       ctx.lineWidth = isSelected ? 2 : 1;
       ctx.strokeRect(x, tabY, tabW, tabH);
       // 美术资源层：分支图标（key 与 branch 标识 military/economy/tech/buff 完全同名）
+      this._art(pick_techNode(i === 0 ? 'locked' : i === 1 ? 'upgradeable' : 'max'),
+        x, tabY, tabW, tabH, { alpha: 0.10 });
+      this._art(pick_techLine(), x, tabY + tabH - 3, tabW, 3, { alpha: 0.18 });
       this._artIcon(ART_PREFIXES.techBranch, key, x + 12, tabY + tabH / 2, 14, 0.55);
 
       ctx.fillStyle = isSelected ? branch.color : '#64748b';
@@ -3141,6 +3258,17 @@ export class RenderSystem {
       }
 
       const color = e.color || '#ff6b6b';
+
+      // 战斗特效贴图：按 damage / explosion / arrow 与暴击标记选 combat 光效
+      // arrow 特效只有 fromX/fromY，没有 x/y → 统一兜底，避免 NaN 坐标
+      const _fx = Number.isFinite(e.x) ? e.x : (Number.isFinite(e.fromX) ? e.fromX : 0);
+      const _fy = Number.isFinite(e.y) ? e.y : (Number.isFinite(e.fromY) ? e.fromY : 0);
+      const _fxType = e.type === 'explosion' ? 'flash'
+        : e.type === 'arrow' ? 'knockback' : 'hit';
+      this._art(pick_combatFx(_fxType, !!e.crit), _fx - 24, _fy - 24, 48, 48, { alpha: 0.28 });
+      if (e.type === 'build') this._art(pick_buildBeam(), _fx - 12, _fy - 48, 24, 48, { alpha: 0.22 });
+      if (e.type === 'territory') this._art(pick_territoryWave(), _fx - 32, _fy - 32, 64, 64, { alpha: 0.22 });
+      this._art(pick_ambient(), _fx - 16, _fy - 16, 32, 32, { alpha: 0.08 });
 
       if (e.type === 'damage') {
         const alpha = 1 - progress;
@@ -3308,6 +3436,12 @@ export class RenderSystem {
       ctx.strokeRect(tx, L.tabY, L.tabW, L.tabH);
       // 美术资源层：选中/常态按钮 + 分类图标
       this._artButton(tx, L.tabY, L.tabW, L.tabH, isActive ? 'selected' : 'normal');
+      this._art(pick_tab(!!isActive), tx, L.tabY, L.tabW, L.tabH, { alpha: 0.14 });
+      if (isActive) {
+        this._art(pick_tabIndicator(), tx, L.tabY + L.tabH - 4, L.tabW, 4, { alpha: 0.30 });
+        this._art(pick_shopCard(SHOP_CAT_KEYS[i] === 'ad'), 20, L.tabY + L.tabH + 6,
+          this.screenWidth - 40, 30, { alpha: 0.08 });
+      }
       this._artIcon(ART_PREFIXES.shopCat, SHOP_CAT_KEYS[i], tx + 12, L.tabY + L.tabH / 2, 14, 0.5);
       ctx.fillStyle = isActive ? '#10b981' : '#64748b';
       ctx.font = 'bold 11px sans-serif';
@@ -3601,6 +3735,10 @@ export class RenderSystem {
    * 绘制一键领取按钮（任务/成就界面共用）
    */
   _drawClaimAllButton(ctx, rect) {
+    // 一键领取按钮：悬停态底图 + 领取图标
+    this._art(pick_btnHover(), rect.x, rect.y, rect.w, rect.h, { alpha: 0.18 });
+    const _claimIcon = iconKey('quest', 'claimall');
+    if (_claimIcon) this._art(_claimIcon, rect.x + 6, rect.y + rect.h / 2 - 8, 16, 16, { alpha: 0.5 });
     ctx.fillStyle = '#f59e0b33';
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.strokeStyle = '#f59e0b';
@@ -3620,6 +3758,13 @@ export class RenderSystem {
    * @param {string} accent 主题色（边框/领取按钮）
    */
   _drawQuestItem(ctx, item, y, itemW, itemH, accent) {
+    // 任务条目三态底图 + 任务类型/奖励图标（贴在条目下沿，避开文字）
+    this._art(pick_questItem(!!item.complete, !!item.claimed), 20, y, itemW, itemH, { alpha: 0.16 });
+    const _qi = ['weekly', 'season', 'locked', 'pay', 'reward_coin', 'reward_item'];
+    for (let i = 0; i < _qi.length; i++) {
+      const k = iconKey('quest', _qi[i]);
+      if (k) this._art(k, 28 + i * 20, y + itemH - 18, 16, 16, { alpha: 0.20 });
+    }
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(20, y, itemW, itemH);
     ctx.strokeStyle = item.complete ? accent : '#334155';
@@ -3878,6 +4023,9 @@ export class RenderSystem {
   }
 
   _drawRewardCell(ctx, x, y, w, h, reward, color, locked) {
+    // 奖励格 4 态底图（锁定 / 已领 / 可领 / 需高级）
+    this._art(pick_rewardCell(!!locked, !!reward.claimed, !!reward.claimable),
+      x, y, w, h, { alpha: 0.18 });
     ctx.fillStyle = locked ? '#1a1a2e' : '#1e293b';
     ctx.fillRect(x, y, w, h);
     ctx.strokeStyle = reward.claimed ? '#334155' : (reward.claimable ? color : '#334155');
@@ -3987,6 +4135,9 @@ export class RenderSystem {
       ctx.fillStyle = rankColor;
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
+      this._art(pick_rankRow(false, !!e.isPlayer),
+        20, y - 10, this.screenWidth - 40, 30, { alpha: 0.12 });
+      this._art(pick_rankShine(), 14, y - 12, 24, 24, { alpha: 0.18 });
       this._artBadge(ART_PREFIXES.rank, String(i + 1).padStart(2, '0'), 28, y, 9);
       ctx.fillText(`${i + 1}`, 28, y);
       // 名字
@@ -4198,6 +4349,13 @@ export class RenderSystem {
     const cardW = 180, cardH = 240;
     const cardX = (w - cardW) / 2;
     const cardY = (h - cardH) / 2 - 20;
+    // 抽卡结果：6 档品质光晕 + Q4~Q6 史诗光效 + 十连指示器 / 汇总底板
+    this._art(pick_qualityGlow(current.quality || 1), cardX - 40, cardY - 40,
+      cardW + 80, cardH + 80, { alpha: 0.24 });
+    const _epic = pick_gachaEpic(current.quality || 1);
+    if (_epic) this._art(_epic, cardX - 24, cardY - 24, cardW + 48, cardH + 48, { alpha: 0.22 });
+    this._art(pick_gachaUi('ten'), cardX, cardY + cardH + 10, cardW, 40, { alpha: 0.16 });
+    this._art(pick_gachaUi('tenSummary'), cardX, cardY + cardH + 52, cardW, 40, { alpha: 0.14 });
     const color = qualityColors[current.quality] || '#9ca3af';
     const glow = qualityGlow[current.quality] || 'rgba(156,163,175,0.3)';
 

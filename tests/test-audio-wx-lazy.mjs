@@ -217,14 +217,29 @@ test('wechat: muted=true skips play (no lazy create)', () => {
 });
 
 // =============================================
-// 10. 微信环境：音频资源未就绪（wxAudioReady=false）时 play 静默跳过
+// 10. 音频实体已补齐：init 后默认 wxAudioReady=true（可正常懒创建）
+//     2026-11 美术资源补齐：assets/audio/ 下已放置 17 sfx + 1 BGM，
+//     原先「默认未就绪」的兜底改为「默认就绪」，未就绪改由配置显式声明。
 // =============================================
-test('wechat: wxAudioReady=false skips play silently (no set src)', () => {
+test('wechat: 默认 wxAudioReady=true（音频实体已就绪）', () => {
   resetWxCount();
   resetSfx();
   audioManager.init({ sfx: { click: { url: 'sfx/click.mp3' } } });
-  // init 后默认 wxAudioReady=false（WX_AUDIO_ASSETS_READY=false）
-  assert.equal(audioManager.wxAudioReady, false, 'init 后默认未就绪');
+  assert.equal(audioManager.wxAudioReady, true, '音频文件已放置 → init 后默认就绪');
+  audioManager.sfxEnabled = true; audioManager.muted = false;
+  audioManager.play('click');
+  assert.equal(createdInstances, 1, '就绪时 play 懒创建 1 个实例');
+});
+
+// =============================================
+// 11. 显式关闭（assetsReady=false）时 play 静默跳过 —— 保留防御性覆盖
+//     正式音源替换前 / 真机未打包音频时，可由 config.audio.json 关闭。
+// =============================================
+test('wechat: assetsReady=false skips play silently (no set src)', () => {
+  resetWxCount();
+  resetSfx();
+  audioManager.init({ assetsReady: false, sfx: { click: { url: 'sfx/click.mp3' } } });
+  assert.equal(audioManager.wxAudioReady, false, '配置显式关闭后未就绪');
   audioManager.sfxEnabled = true; audioManager.muted = false;
   audioManager.play('click');
   assert.equal(createdInstances, 0, '未就绪时 play 不创建实例（避免缺失文件 set src 报错）');

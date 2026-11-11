@@ -24,8 +24,11 @@ import { SkillSystem } from '../system/SkillSystem.js';
 import { InputSystem } from '../system/InputSystem.js';
 import { RenderSystem } from '../system/RenderSystem.js';
 import { ArtSystem } from '../system/ArtSystem.js';
+import { FontSystem } from '../system/FontSystem.js';
 import { SCREEN_BG, LOADING_BG, LOADING_LOGO, RESULT_BG,
   ART_HOOKS, ART_PREFIXES, ART_ENTRIES } from '../system/ArtManifest.js';
+import { APP_ASSETS, FONT_CARDS, RACE_KEYS_ALL, UNIT_SMALL_KEYS_ALL,
+  BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE } from '../system/ArtLayer.js';
 import { AnimationManager } from '../system/AnimationManager.js';
 import AudioManager from '../system/AudioManager.js';
 import AdManager from '../system/AdManager.js';
@@ -2541,14 +2544,16 @@ export class Game {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
     ArtSystem.draw(this.ctx, LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 0.45 });
+    // 应用级启动图（assets/assets/splash.png）：叠加在渐变之上，占位阶段低不透明度
+    ArtSystem.draw(this.ctx, APP_ASSETS.splash, 0, 0, w, h, { fit: 'cover', alpha: 0.18 });
     ArtSystem.draw(this.ctx, LOADING_LOGO, w / 2 - 60, h * 0.14, 120, 120, { alpha: 0.9 });
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // 标题
+    // 标题：优先用 assets/fonts/title.ttf 自定义字体，未加载成功则回退系统 sans-serif
     ctx.fillStyle = '#fbbf24';
-    ctx.font = 'bold 30px sans-serif';
+    ctx.font = FontSystem.font(30, 'bold', 'title');
     ctx.fillText('⚔ 占地之王', w / 2, h * 0.36);
 
     ctx.fillStyle = '#94a3b8';
@@ -2569,10 +2574,10 @@ export class Game {
     ctx.lineWidth = 1;
     ctx.strokeRect(barX, barY, barW, barH);
 
-    // 百分比
+    // 百分比：数字字体（assets/fonts/number.ttf）
     const pct = Math.round(p * 100);
     ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = FontSystem.font(14, 'bold', 'number');
     ctx.fillText(`加载中... ${pct}%`, w / 2, barY + barH + 26);
   }
 
@@ -2612,6 +2617,13 @@ export class Game {
       ArtSystem.setEnabled(_on);
       this.renderSystem._artEnabled = _on;
       if (typeof _feat.artAlpha === 'number') ArtSystem.setAlpha(_feat.artAlpha);
+
+      // 全量装饰层：把上一轮审查判定「有素材但零引用」的 192 张占位图按界面语义叠加。
+      // 开关与叠加系数均由 features 注入渲染层；false 时完全退回首轮 139 张核心贴图。
+      this.renderSystem._artLayerEnabled = _feat.artExtendedLayer !== false;
+      this.renderSystem._artLayerAlpha = (typeof _feat.artLayerAlpha === 'number')
+        ? Math.max(0, Math.min(1, _feat.artLayerAlpha)) : 1;
+
       if (_on) {
         ArtSystem.preload(Object.values(SCREEN_BG));
         ArtSystem.preload([LOADING_BG, LOADING_LOGO]);
@@ -2625,8 +2637,31 @@ export class Game {
           if (_hit) _iconProbes.push(_hit.key);
         }
         ArtSystem.preload(_iconProbes);
+
+        if (this.renderSystem._artLayerEnabled) {
+          // 装饰层 / 背景层全量预热：避免首次进入某界面时才发起请求导致首帧空白。
+          ArtSystem.preload(Object.values(APP_ASSETS));      // icon_432 / splash / share_card
+          ArtSystem.preload(FONT_CARDS);                     // 2 张字体说明卡
+          ArtSystem.preload(RACE_KEYS_ALL);                  // 24 张种族立绘
+          ArtSystem.preload(UNIT_SMALL_KEYS_ALL);            // 40 张兵种小图
+          ArtSystem.preload([TERRITORY_EDGE]);               // 领土边界纹理
+          ArtSystem.preload(Object.values(BG_BY_SCREEN));    // 5 张界面氛围底图
+          for (const _pair of Object.values(BATTLE_TONE_BY_LAYOUT)) {
+            ArtSystem.preload(_pair);                       // 5 套 × (bg + tiles) 色调
+          }
+        }
       }
     }
+
+    // 2.06 字体资源层：加载 assets/fonts/ 下真实 .ttf；失败静默回退系统 sans-serif。
+    //      Node 测试环境无 wx / document，FontSystem.available=false，零副作用。
+    if (ConfigLoader.getSafe('game')?.features?.useCustomFont !== false) {
+      FontSystem.load({}, { enabled: true });
+    }
+
+    // 2.07 应用级资源（打包 / 分享链路）：把 icon_432 / splash / share_card 登记到
+    //      运行时常量，供加载页启动图与 ShareSystem 分享卡片使用；不走 Canvas 命中几何。
+    this.appAssets = APP_ASSETS;
     syncRaces();
     syncLevels();
 
@@ -2643,9 +2678,14 @@ export class Game {
     }
 
     // 3. 初始化音频系统
+    //    assets/audio/ 下 17 个 sfx + 1 个 BGM 占位音频已放置；
+    //    features.useAudioAssets=false 可一键静音（不删文件，方便正式音源替换前调试）。
     const audioConfig = ConfigLoader.getSafe('audio');
     if (audioConfig) {
       this.audioManager.init(audioConfig);
+      if (ConfigLoader.getSafe('game')?.features?.useAudioAssets === false) {
+        this.audioManager.wxAudioReady = false;
+      }
     }
 
     // 3.1 初始化广告系统（在 ConfigLoader 完成后才能拿到 ads 配置）
@@ -3136,6 +3176,8 @@ export class Game {
       elapsedTime: this.elapsedTime,
       // 本局棋盘布局（上下对战：玩家在下方向上进攻）
       layoutName: this.currentBattleConfig ? (this.currentBattleConfig.layoutName || '') : '',
+      // 布局 id：供美术层按 plains / twin_canyon / tri_lanes / river_ford / citadel 选 5 套色调
+      layoutId: this.currentBattleConfig ? (this.currentBattleConfig.layoutId || 'plains') : 'plains',
       layoutLanes: this.currentBattleConfig ? (this.currentBattleConfig.layoutLanes || 0) : 0,
       enemyName: enemyPlayer ? enemyPlayer.name : '',
       enemyRace: enemyPlayer ? enemyPlayer.race : '',

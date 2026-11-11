@@ -32,6 +32,9 @@ function getShareConfig(opts = {}) {
 
   const shareData = {
     title: '占地之王：策略占地的对战小游戏，来和我一决高下！',
+    // 应用级分享卡片图（assets/assets/share_card.png，当前为占位图，正式素材同名覆盖）。
+    // 微信小游戏 shareAppMessage 支持本地包内图片路径；浏览器预览由 wx-shim stub 忽略。
+    imageUrl: 'assets/assets/share_card.png',
     // 小游戏无页面路由：path 可省略（默认进入游戏主入口）；
     // 需要带参数时用 query 形式，如 'index?from=share'
   };

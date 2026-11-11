@@ -17,7 +17,15 @@ module.exports = {
     "usePlaceholderArt": true,
     "_doc_usePlaceholderArt": "美术资源层总开关。true=渲染走 assets/ 下素材（当前为占位图，正式素材同名覆盖后无需改代码）；false=完全回退程序化绘制。Node 测试环境无 Image 时自动静默降级，不受此开关影响",
     "artAlpha": 0.5,
-    "_doc_artAlpha": "占位底图叠加不透明度（0~1）。占位图带水印，默认 0.5 半透明以免遮挡动态文本；正式素材到位后可设 1 使用不透明贴图"
+    "_doc_artAlpha": "占位底图叠加不透明度（0~1）。占位图带水印，默认 0.5 半透明以免遮挡动态文本；正式素材到位后可设 1 使用不透明贴图",
+    "artExtendedLayer": true,
+    "_doc_artExtendedLayer": "全量装饰层总开关。true=把上一轮审查判定「有素材但零引用」的 192 张占位图按界面语义叠加绘制；false=只保留首轮已接入的 139 张核心贴图。正式素材到位后可分别调节 artLayerAlpha",
+    "artLayerAlpha": 1,
+    "_doc_artLayerAlpha": "装饰层叠加系数（0~1，与每张素材的基准 alpha 相乘）。占位图阶段设 1；若觉得水印偏花可下调到 0.5 或关闭 artExtendedLayer",
+    "useAudioAssets": true,
+    "_doc_useAudioAssets": "音频资源总开关。assets/audio/ 下已放置 17 个 sfx + 1 个 BGM 占位音频；true=真微信环境启用音效/BGM（浏览器预览始终启用），false=静默。正式音源同名覆盖即可",
+    "useCustomFont": true,
+    "_doc_useCustomFont": "自定义字体开关。assets/fonts/ 下已放置 title.ttf / number.ttf 两个真实字体；true=启动时尝试 wx.loadFont / FontFace 加载，失败静默回退系统 sans-serif"
   },
   "hex": {
     "size": 52,

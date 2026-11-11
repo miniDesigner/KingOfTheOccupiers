@@ -16,14 +16,15 @@
 const MAX_POOL_SIZE = 6; // 每种音效最多同时播放实例数
 
 /**
- * 微信小游戏音频资源就绪开关。
+ * 微信小游戏音频资源就绪开关（默认值）。
  *
- * 工程当前未放置任何 mp3（assets/audio/sfx/*.mp3 与 assets/audio/bgm/battle.mp3 均不存在）。
- * 若在 WX 环境强行 set src，会触发微信基础库主动打印的 stat:fail / operateAudio:fail 红字，
- * 这类日志不经过 InnerAudioContext.onError 回调，无法被吞掉。
- * 因此 WX 环境默认禁用音效/BGM 播放；策划放置音频文件后将其置为 true 即可恢复。
+ * assets/audio/ 下已放置 17 个 sfx + 1 个 BGM 占位音频（由 tools/gen-missing-assets.py
+ * 生成，与 config/audio.json 的 url 一一对应），故默认置为 true。
+ * 若真机上仍未打包音频文件，可由 config/audio.json 的 assetsReady=false 或
+ * config/game.json 的 features.useAudioAssets=false 关闭（Game.start 会覆盖本值），
+ * 避免基础库打印 stat:fail / operateAudio:fail 红字。
  */
-const WX_AUDIO_ASSETS_READY = false;
+const WX_AUDIO_ASSETS_READY = true;
 
 class AudioManager {
   constructor() {
@@ -91,9 +92,11 @@ class AudioManager {
     this.initialized = true;
 
     // WX 环境：音频资源未就绪时禁用音效/BGM 播放（缺失文件 set src 会刷基础库红字，无法拦截）
-    this.wxAudioReady = this.platform !== 'wechat' || WX_AUDIO_ASSETS_READY;
+    // config.assetsReady 可单独关闭；Game.start() 还会按 features.useAudioAssets 覆盖一次。
+    const _assetsReady = config.assetsReady !== false;
+    this.wxAudioReady = this.platform !== 'wechat' || (WX_AUDIO_ASSETS_READY && _assetsReady);
     if (this.platform === 'wechat' && !this.wxAudioReady) {
-      console.warn('[AudioManager] 音频资源未就绪（assets/audio/ 下无 mp3），已禁用音效播放以避免基础库报错；放置音频文件后请将 WX_AUDIO_ASSETS_READY 置为 true');
+      console.warn('[AudioManager] 音频资源未就绪，已禁用音效播放以避免基础库报错');
     }
 
     console.log('[AudioManager] Initialized with', Object.keys(config.sfx || {}).length, 'sound effects');
