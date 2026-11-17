@@ -202,6 +202,54 @@ export class RenderSystem {
     this._drawCard(rect, drawFn);
   }
 
+  /**
+   * 信息胶囊底板：给「直接压在地图/天空上的裸文字」加一层云白承载区，
+   * 让文字/图标与复杂背景分离。只画底板，不碰文字——调用方照常 ctx.fillText，
+   * 因此测试的 fillText 断言与点击命中都不受影响。
+   * @param {number} cx 文字水平中心
+   * @param {number} cy 文字垂直中心
+   * @param {string} text 文字内容（用于估算胶囊宽度）
+   * @param {string} font 与文字一致的 font 字符串（用于解析字号）
+   * @param {{padX?:number,padY?:number,border?:string}} opts
+   */
+  _drawTextPillBg(cx, cy, text, font, opts) {
+    const { ctx } = this;
+    const o = opts || {};
+    const padX = o.padX === undefined ? 9 : o.padX;
+    const padY = o.padY === undefined ? 3 : o.padY;
+    let fontSize = 12;
+    const fm = /(\d+(?:\.\d+)?)px/.exec(font || '');
+    if (fm) fontSize = parseFloat(fm[1]);
+    let tw = fontSize * String(text || '').length * 0.82;
+    if (typeof ctx.measureText === 'function') {
+      ctx.save();
+      ctx.font = font;
+      const mt = ctx.measureText(text);
+      if (mt && mt.width) tw = mt.width;
+      ctx.restore();
+    }
+    const pillW = Math.min(this.screenWidth - 12, tw + padX * 2);
+    const pillH = fontSize + padY * 2;
+    const x = cx - pillW / 2;
+    const y = cy - pillH / 2;
+    const r = Math.min(pillH / 2, 12);
+    // 薄厚底：与悬浮卡片同一视觉语言，但更轻
+    if (typeof ctx.arcTo === 'function' && typeof ctx.fill === 'function') {
+      ctx.save();
+      ctx.fillStyle = 'rgba(22,48,79,0.16)';
+      this._roundRectPath(x, y + 2, pillW, pillH, r);
+      ctx.fill();
+      ctx.restore();
+    }
+    this._drawCard({ x, y, w: pillW, h: pillH, r }, () => {
+      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      ctx.fillRect(x, y, pillW, pillH);
+      ctx.strokeStyle = o.border || 'rgba(43,74,111,0.32)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, pillW, pillH);
+    });
+  }
+
   // ===================== 美术资源层接入 =====================
   // 铁律：只负责「画」，不改任何 Layout 几何 / 点击命中；
   //       图片未加载、加载失败、环境不支持时一律返回 false，调用方继续程序化绘制。
@@ -2842,8 +2890,9 @@ export class RenderSystem {
     this._artIcon(ART_PREFIXES.lobby, 'share', w - 24, 85, 20, 0.6);
 
     // 副标题（天梯进度条已移至开战按钮上方，大段位徽章在功能行下方）
-    ctx.fillStyle = UI_THEME.navy;
     ctx.font = '12px sans-serif';
+    this._drawTextPillBg(w / 2, 108, '— 主城大厅 —', '12px sans-serif', { padX: 12, border: 'rgba(43,74,111,0.22)' });
+    ctx.fillStyle = UI_THEME.navy;
     ctx.fillText('— 主城大厅 —', w / 2, 108);
 
     // 玩家账号信息（昵称 + 本地账号尾号，副标题下方；▾ 暗示可点击打开账号面板）
@@ -2855,13 +2904,15 @@ export class RenderSystem {
       ctx.fillStyle = UI_THEME.ink;
       let label = '👤 ' + ai.nickname;
       if (ai.uid) label += '  ·  账号尾号 ' + ai.uid.slice(-6);
+      this._drawTextPillBg(w / 2, 124, label + ' ▾', '11px sans-serif', { padX: 10, border: 'rgba(43,74,111,0.22)' });
       ctx.fillText(label + ' ▾', w / 2, 124);
     }
 
     // 上阵兵种预览
     const deployY = 140;
-    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 11px sans-serif';
+    this._drawTextPillBg(w / 2, deployY, '上阵兵种', 'bold 11px sans-serif', { padX: 10 });
+    ctx.fillStyle = UI_THEME.ink;
     ctx.fillText('上阵兵种', w / 2, deployY);
 
     if (profile && profile.deployment) {
@@ -2915,14 +2966,17 @@ export class RenderSystem {
       const pi = gameState.powerInfo;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      const powerLabel = `⚔ 战力 ${pi.total}`;
       ctx.font = 'bold 15px sans-serif';
+      this._drawTextPillBg(w / 2, 233, powerLabel, 'bold 15px sans-serif', { padX: 12, padY: 4, border: 'rgba(43,74,111,0.32)' });
       ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.orangeDeep;
-      ctx.fillText(`⚔ 战力 ${pi.total}`, w / 2, 233);
+      ctx.fillText(powerLabel, w / 2, 233);
       ctx.font = '10px sans-serif';
-      ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navy;
       const status = pi.ratio >= 1
         ? `↑ 已达本段位参考战力 ${pi.reference}`
         : `本段位参考战力 ${pi.reference}（还差 ${Math.max(0, Math.round(pi.reference - pi.total))}）`;
+      this._drawTextPillBg(w / 2, 251, status, '10px sans-serif', { padX: 9, padY: 3 });
+      ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navy;
       ctx.fillText(status, w / 2, 251);
     }
 
@@ -3039,9 +3093,11 @@ export class RenderSystem {
       // 奖杯 + 最高纪录（一行，徽章下方，infoY 由 combo 统一计算）
       const highest = profile ? (profile.highestTrophies || 0) : 0;
       const infoSize = Math.max(9, Math.round(badgeR * 0.2));
-      ctx.fillStyle = UI_THEME.navy;
+      const infoText = `🏆 ${profile ? (profile.trophies || 0) : 0}杯 · 最高 ${highest}`;
       ctx.font = `${infoSize}px sans-serif`;
-      ctx.fillText(`🏆 ${profile ? (profile.trophies || 0) : 0}杯 · 最高 ${highest}`, cx, infoY);
+      this._drawTextPillBg(cx, infoY, infoText, `${infoSize}px sans-serif`, { padX: 10 });
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.fillText(infoText, cx, infoY);
     }
 
     // === 段位进度条（徽章下方，居中，长度自适应，P20） ===
@@ -3072,14 +3128,13 @@ export class RenderSystem {
         ctx.fillText('👑 巅峰王者', w / 2, barY + barH / 2);
       }
       // 进度条下方小字（P23）：还差杯数 + 赛季倒计时（文本信息统一放进度条下面，避免与上方奖杯文字重叠）
-      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '9px sans-serif';
-      if (ladderProgress.next) {
-        const need = ladderProgress.need - ladderProgress.cur;
-        ctx.fillText(`距 ${ladderProgress.next.icon}${ladderProgress.next.label} 还差 ${need} 杯 · 赛季剩 ${gameState.seasonDaysLeft || 7} 天`, w / 2, barY + barH + 7);
-      } else {
-        ctx.fillText(`赛季剩 ${gameState.seasonDaysLeft || 7} 天`, w / 2, barY + barH + 7);
-      }
+      const seasonText = ladderProgress.next
+        ? `距 ${ladderProgress.next.icon}${ladderProgress.next.label} 还差 ${ladderProgress.need - ladderProgress.cur} 杯 · 赛季剩 ${gameState.seasonDaysLeft || 7} 天`
+        : `赛季剩 ${gameState.seasonDaysLeft || 7} 天`;
+      this._drawTextPillBg(w / 2, barY + barH + 7, seasonText, '9px sans-serif', { padX: 8, padY: 3, border: 'rgba(43,74,111,0.28)' });
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.fillText(seasonText, w / 2, barY + barH + 7);
     }
 
     // === 联网入口已合并到「开战」按钮（异步 PvP 匹配 + 10s 降级 AI），不再单独渲染联机/加入按钮 ===
