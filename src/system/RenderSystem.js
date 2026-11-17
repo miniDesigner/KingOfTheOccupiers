@@ -36,6 +36,8 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 // ART_INDEX 中做存在性检查，未命中即静默跳过，绝不产生 missing 统计。
 // 大厅底部导航：商店 / 抽卡 / 布阵 / 科技 / 排行榜（第 6 项战斗复用 rank 兜底）
 const NAV_ART_KEYS = ['shop', 'gacha', 'deploy', 'tech', 'rank', 'rank'];
+// 大厅右上角功能按钮：分享 / 任务 / 成就 / 通行证（正式图标素材 icons/lobby_*.png）
+const FUNC_ART_KEYS = ['share', 'quest', 'achieve', 'medal'];
 // 商店分类：金币 / 钻石 / 兵种 / 道具 / 广告（P37 免费分页）
 const SHOP_CAT_KEYS = ['coin', 'gem', 'unit', 'item', 'ad'];
 
@@ -2935,11 +2937,20 @@ export class RenderSystem {
       ctx.fillText(status, card.x + 10, card.y + card.h - 14);
     }
 
-    // === 上阵兵种预览（移到开战按钮上方）===
+    // === 上阵兵种预览：标题 + 兵种牌统一放进一个有质感的框，兵种牌本身不再画独立底框 ===
     const deployY = lobbyDeployLabelY(h);
+    const deployCardY = lobbyDeployCardY(h);
+    const deployBox = { x: 8, y: deployY - 15, w: w - 16, h: deployCardY + 65 + 6 - (deployY - 15), r: 12 };
+    this._drawRaisedCard(deployBox, () => {
+      ctx.fillStyle = tintOf(UI_THEME.skyDeep, 0.07);
+      ctx.fillRect(deployBox.x, deployBox.y, deployBox.w, deployBox.h);
+      ctx.strokeStyle = UI_THEME.skyDeep;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(deployBox.x, deployBox.y, deployBox.w, deployBox.h);
+    });
     ctx.font = 'bold 11px sans-serif';
-    this._drawTextPillBg(w / 2, deployY, '上阵兵种', 'bold 11px sans-serif', { padX: 10, tint: UI_THEME.skyDeep, border: 'rgba(62,159,209,0.42)' });
     ctx.fillStyle = UI_THEME.ink;
+    ctx.textAlign = 'center';
     ctx.fillText('上阵兵种', w / 2, deployY);
 
     if (profile && profile.deployment) {
@@ -2948,23 +2959,15 @@ export class RenderSystem {
       const slotGap = 5;
       const slotW = rowItemWidth(units.length, slotGap, w, 8, LAYOUT_MIN.lobbySlot, LAYOUT_DESIGN_MAX.lobbySlot);
       const slotStartX = rowStartX(units.length, slotW, slotGap, w);
-      const y = lobbyDeployCardY(h);
+      const y = deployCardY;
 
       for (let i = 0; i < units.length; i++) {
         const actualX = slotStartX + i * (slotW + slotGap);
         const unitId = units[i];
         const u = (unitId && deployables?.units?.[unitId]) ? deployables.units[unitId] : null;
-        // P35：品质外框（与布阵界面同色系；品质不再用星星表达）
+        // 兵种牌去底框：品质色改为名称文字表达，不再画矩形卡底/描边/厚底
         const q = u?.quality || 1;
-        // 卡片背景（晴空乐园实心白卡 + 悬浮厚底；品质描边保留功能色语义与 strokeRect 调用）
-        const slotBorder = u ? (QUALITY_COLORS[q - 1] || '#9ca3af') : '#475569';
-        this._drawRaisedCard({ x: actualX, y, w: slotW, h: 65, r: 8 }, () => {
-          ctx.fillStyle = tintOf(slotBorder, 0.13);
-          ctx.fillRect(actualX, y, slotW, 65);
-          ctx.strokeStyle = slotBorder;
-          ctx.lineWidth = q >= 4 ? 2 : 1.5;
-          ctx.strokeRect(actualX, y, slotW, 65);
-        });
+        const nameColor = u ? (QUALITY_COLORS[q - 1] || '#9ca3af') : '#475569';
 
         if (u) {
           const collected = profile.collectedUnits[unitId];
@@ -2973,8 +2976,8 @@ export class RenderSystem {
           ctx.font = '20px sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText(u.icon || '?', actualX + slotW / 2, y + 22);
-          // 名称
-          ctx.fillStyle = UI_THEME.ink;
+          // 名称：用品质色渲染（保留品质语义，去掉卡片底框）
+          ctx.fillStyle = nameColor;
           ctx.font = 'bold 10px sans-serif';
           ctx.fillText(u.name, actualX + slotW / 2, y + 42);
           // 等级
@@ -2982,7 +2985,7 @@ export class RenderSystem {
           ctx.font = '9px sans-serif';
           ctx.fillText('Lv.' + (collected?.level || 1), actualX + slotW / 2, y + 56);
         } else {
-          ctx.fillStyle = UI_THEME.navy;
+          ctx.fillStyle = nameColor;
           ctx.font = '16px sans-serif';
           ctx.fillText('—', actualX + slotW / 2, y + 35);
         }
@@ -3004,8 +3007,6 @@ export class RenderSystem {
       { border: UI_THEME.navy },        // 通行证（海军蓝）
     ];
     const shareClaimed = gameState.shareRewardClaimed;
-    const rowFontSize = adaptiveFontSize(12, w);
-    const rowSubFontSize = adaptiveFontSize(9, w);
     for (let i = 0; i < _rowCount; i++) {
       const rect = lobbyFuncBtnRect(i, w, _rowCount);
       const { x, y, w: bw, h: bh } = rect;
@@ -3017,18 +3018,35 @@ export class RenderSystem {
           ctx.lineWidth = 2;
           ctx.strokeRect(x, y, bw, bh);
         });
-        ctx.fillStyle = UI_THEME.ink;
-        ctx.font = `${rowFontSize}px sans-serif`;
-        if (i === 0) {
-          ctx.fillText(shareClaimed ? '📤 分享' : '📤 分享🎁', x + bw / 2, y + (shareClaimed ? bh / 2 : bh / 2 - 6));
-          if (!shareClaimed) {
-            ctx.fillStyle = UI_THEME.orangeDeep;
-            ctx.font = `bold ${rowSubFontSize}px sans-serif`;
-            ctx.fillText('金币200✨5', x + bw / 2, y + bh / 2 + 9);
-          }
+        // 图标按钮：白色实心圆盘垫底 + 正式素材居中，避免浅色图标与淡色卡片融为一体
+        const iconCx = x + bw / 2, iconCy = y + bh / 2;
+        if (typeof ctx.arc === 'function') {
+          ctx.save();
+          ctx.fillStyle = UI_THEME.white;
+          ctx.beginPath();
+          ctx.arc(iconCx, iconCy + 1, 15, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = tintOf(rowDefs[i].border, 0.5);
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+        }
+        // 图标族：share/quest/achieve 走 lobby_；通行证走 medal_
+        if (i === 3) {
+          this._artIcon(ART_PREFIXES.medal, 'gold', iconCx, iconCy, 26, 1);
         } else {
-          const label = i === 1 ? '📋 任务' : (i === 2 ? '🏆 成就' : '🎖 通行证');
-          ctx.fillText(label, x + bw / 2, y + bh / 2);
+          this._artIcon(ART_PREFIXES.lobby, FUNC_ART_KEYS[i], iconCx, iconCy, 28, 1);
+        }
+        // 分享未领取：右上角红点提示（保留奖励可领的信息，不占据图标主体）
+        if (i === 0 && !shareClaimed) {
+          const bx = x + bw - 7, by = y + 7;
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(bx, by, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1;
+          ctx.stroke();
         }
       });
     }
@@ -3043,87 +3061,42 @@ export class RenderSystem {
       const { badgeR, badgeY, infoY } = ladderComboLayout;
       const cx = w / 2;
       const canArc = typeof ctx.arc === 'function' && typeof ctx.fill === 'function';
-      // 外圈光晕（段位主题色，呼吸动效）
-      const glow = Math.sin(Date.now() / 500) * 0.08 + 0.15;
-      ctx.fillStyle = ladderTier.color + Math.round(glow * 255).toString(16).padStart(2, '0');
-      ctx.beginPath();
-      ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
-      ctx.fill();
-      // 徽章底盘投影：海军蓝厚底 + 段位色淡底盘 + 柔和阴影，与地图背景分离
+      // 徽章底盘投影：海军蓝厚底 + 段位色淡底盘 + 柔和阴影，让图片化徽章浮起
       if (canArc) {
         ctx.save();
         ctx.fillStyle = 'rgba(22, 48, 79, 0.22)';
         ctx.beginPath();
-        ctx.arc(cx, badgeY + 4, badgeR, 0, Math.PI * 2);
+        ctx.arc(cx, badgeY + 5, badgeR * 0.92, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowColor = 'rgba(20, 48, 84, 0.24)';
-        ctx.shadowBlur = 12;
+        ctx.shadowColor = 'rgba(20, 48, 84, 0.28)';
+        ctx.shadowBlur = 14;
         ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 2;
-        ctx.fillStyle = tintOf(ladderTier.color, 0.42);
+        ctx.shadowOffsetY = 3;
+        ctx.fillStyle = tintOf(ladderTier.color, 0.34);
         ctx.beginPath();
-        ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
+        ctx.arc(cx, badgeY, badgeR * 0.92, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
-      // === 美化：金色外环 + 段位色主环 + 虚线点缀 ===
-      if (canArc) {
-        ctx.strokeStyle = UI_THEME.gold;
-        ctx.lineWidth = Math.max(2, Math.round(badgeR * 0.09));
-        ctx.beginPath();
-        ctx.arc(cx, badgeY, badgeR - 1, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.strokeStyle = ladderTier.color;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(cx, badgeY, badgeR * 0.8, 0, Math.PI * 2);
-        ctx.stroke();
-        // 四角星光
-        const sr = badgeR * 0.94;
-        ctx.fillStyle = UI_THEME.gold;
-        for (let k = 0; k < 4; k++) {
-          const a = Math.PI / 4 + k * Math.PI / 2;
-          const sx = cx + Math.cos(a) * sr;
-          const sy = badgeY + Math.sin(a) * sr;
-          const ss = Math.max(2, Math.round(badgeR * 0.09));
-          ctx.beginPath();
-          ctx.moveTo(sx, sy - ss);
-          ctx.lineTo(sx + ss * 0.35, sy - ss * 0.35);
-          ctx.lineTo(sx + ss, sy);
-          ctx.lineTo(sx + ss * 0.35, sy + ss * 0.35);
-          ctx.lineTo(sx, sy + ss);
-          ctx.lineTo(sx - ss * 0.35, sy + ss * 0.35);
-          ctx.lineTo(sx - ss, sy);
-          ctx.lineTo(sx - ss * 0.35, sy - ss * 0.35);
-          ctx.closePath();
-          ctx.fill();
-        }
-      }
-      // 内部淡色圆盘（随半径缩放；段位色系淡底承载图标，与外底盘形成内外层次）
-      const innerR = badgeR - Math.max(3, Math.round(badgeR * 0.13));
-      ctx.fillStyle = tintOf(ladderTier.color, 0.12);
-      ctx.beginPath();
-      ctx.arc(cx, badgeY, innerR, 0, Math.PI * 2);
-      ctx.fill();
-      // 大段位图标（字号随半径缩放）
-      const iconSize = Math.round(badgeR * 0.85);
-      ctx.fillStyle = UI_THEME.ink;
-      ctx.font = `${iconSize}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(ladderTier.icon, cx, badgeY - Math.round(badgeR * 0.11));
-      // 段位名：金色缎带胶囊（随半径缩放）
-      const labelSize = Math.max(8, Math.round(badgeR * 0.26));
+      // 图片化段位徽章：rank_01~08 正式素材（自带金属盾牌+宝石+月桂叶，含质感）
+      // index 0-7 对应 rank_01(青铜)~rank_08(王者)，尺寸略小于底盘直径，露出段位色光晕
+      const rankKey = String((ladderTier.index || 0) + 1).padStart(2, '0');
+      const badgeImgSize = Math.round(badgeR * 1.85);
+      this._artIcon(ART_PREFIXES.rank, rankKey, cx, badgeY - 2, badgeImgSize, 1);
+      // 段位名：金色缎带胶囊（图片下沿，随半径缩放）
+      const labelSize = Math.max(8, Math.round(badgeR * 0.24));
       const nameLabel = ladderTier.label;
-      this._drawTextPillBg(cx, badgeY + badgeR - Math.round(badgeR * 0.34), nameLabel,
+      const nameY = badgeY + badgeR - Math.round(badgeR * 0.3);
+      this._drawTextPillBg(cx, nameY, nameLabel,
         `bold ${labelSize}px sans-serif`, { padX: 10, padY: 2, tint: UI_THEME.gold, border: UI_THEME.goldDeep });
       ctx.fillStyle = ladderTier.color;
       ctx.font = `bold ${labelSize}px sans-serif`;
-      ctx.fillText(nameLabel, cx, badgeY + badgeR - Math.round(badgeR * 0.34));
-      // 奖杯 + 最高纪录（一行，徽章下方，infoY 由 combo 统一计算）
-      const highest = profile ? (profile.highestTrophies || 0) : 0;
-      const infoSize = Math.max(9, Math.round(badgeR * 0.2));
-      const infoText = `🏆 ${profile ? (profile.trophies || 0) : 0}杯 · 最高 ${highest}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(nameLabel, cx, nameY);
+      // 当前杯数（infoY 由 combo 统一计算）——只显示当前杯数，不再显示最高纪录
+      const infoSize = Math.max(10, Math.round(badgeR * 0.22));
+      const infoText = `🏆 ${profile ? (profile.trophies || 0) : 0} 杯`;
       ctx.font = `${infoSize}px sans-serif`;
       this._drawTextPillBg(cx, infoY, infoText, `${infoSize}px sans-serif`, { padX: 10, tint: ladderTier.color, border: ladderTier.color });
       ctx.fillStyle = UI_THEME.navy;
@@ -3147,21 +3120,19 @@ export class RenderSystem {
       // 进度填充（最高段位满条）
       ctx.fillStyle = ladderTier.color + '88';
       ctx.fillRect(barX, barY, barW * (ladderProgress.next ? ladderProgress.ratio : 1), barH);
-      // 进度条内文字（居中，只显示段位进度：当前杯 → 目标段位 / 巅峰王者）
+      // 进度条内文字（居中）：当前杯 / 升级需要杯数（升级需求直接表达在进度条上，不再写下一级段位名）
       ctx.font = 'bold 11px sans-serif';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.fillStyle = UI_THEME.ink;
       if (ladderProgress.next) {
-        ctx.fillText(`🏆 ${ladderProgress.cur} → ${ladderProgress.next.icon}${ladderProgress.next.label}`, w / 2, barY + barH / 2);
+        ctx.fillText(`${ladderProgress.cur} / ${ladderProgress.need} 杯`, w / 2, barY + barH / 2);
       } else {
-        ctx.fillText('👑 巅峰王者', w / 2, barY + barH / 2);
+        ctx.fillText('巅峰王者 · 已满级', w / 2, barY + barH / 2);
       }
-      // 进度条下方小字（P23）：还差杯数 + 赛季倒计时（文本信息统一放进度条下面，避免与上方奖杯文字重叠）
+      // 进度条下方小字：仅赛季倒计时（最高杯/下一级段位信息已移除）
       ctx.font = '9px sans-serif';
-      const seasonText = ladderProgress.next
-        ? `距 ${ladderProgress.next.icon}${ladderProgress.next.label} 还差 ${ladderProgress.need - ladderProgress.cur} 杯 · 赛季剩 ${gameState.seasonDaysLeft || 7} 天`
-        : `赛季剩 ${gameState.seasonDaysLeft || 7} 天`;
+      const seasonText = `赛季剩 ${gameState.seasonDaysLeft || 7} 天`;
       this._drawTextPillBg(w / 2, barY + barH + 7, seasonText, '9px sans-serif', { padX: 8, padY: 3, tint: UI_THEME.skyDeep, border: 'rgba(62,159,209,0.42)' });
       ctx.fillStyle = UI_THEME.navy;
       ctx.fillText(seasonText, w / 2, barY + barH + 7);
@@ -3230,7 +3201,7 @@ export class RenderSystem {
     const navY = h - 72;
     const navStartX = (w - totalW) / 2;
 
-    const navLabels = ['🏪 商店', '🎲 招募', '⚔ 布阵', '🔬 科技', '🏅 排行榜'];
+    const navLabels = ['商店', '招募', '布阵', '科技', '排行榜'];
     // 晴空乐园统一卡片式 Tab：云白底 + 主题色描边 + 深色字，5 个视觉一致不再花杂。
     // 不再叠加 btn_normal 明黄贴图底框——它与程序化底色叠色导致浑浊方块观感。
     const navDefs = [
@@ -3252,15 +3223,15 @@ export class RenderSystem {
           ctx.lineWidth = 2;
           ctx.strokeRect(x, navY, btnW, btnH);
         });
-        // 美术资源层：仅叠导航图标（居中偏上），不再叠 btn_normal 贴图底框
-        this._artIcon(ART_PREFIXES.nav, NAV_ART_KEYS[i], x + btnW / 2, navY + 20, 22, 0.9);
+        // 图标按钮：正式导航图标放大居中偏上，取代原 emoji 前缀；文字去掉表情只留纯文字
+        this._artIcon(ART_PREFIXES.nav, NAV_ART_KEYS[i], x + btnW / 2, navY + 19, 28, 1);
 
         ctx.fillStyle = UI_THEME.ink;
         // P10 字号按屏宽自适应：iPhone 5 (320) 10→8；iPhone 6 (375) 维持 10
         ctx.font = `bold ${adaptiveFontSize(10, w)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(navLabels[i], x + btnW / 2, navY + btnH - 13);
+        ctx.fillText(navLabels[i], x + btnW / 2, navY + btnH - 11);
 
         // 可升级角标（右上角红点 + 数量）：布阵=可升级兵种数 / 科技=可升级节点数
         // 来源 Game 注入的 lobbyBadges（仅大厅态有值），口径与实际升级校验一致

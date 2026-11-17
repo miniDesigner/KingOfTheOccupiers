@@ -127,8 +127,8 @@ console.log('=== 测试2: 上移后其余栏位仍保持间隙 ===');
   assert(ok, `13 栏全部无重叠${bad ? ' — ' + bad : ''}`);
 }
 
-// ==================== 2. 大厅品质外框 ====================
-console.log('=== 测试3: 大厅上阵兵种卡片按品质着色外框 ===');
+// ==================== 2. 大厅品质色（名称文字表达） ====================
+console.log('=== 测试3: 大厅上阵兵种名称按品质着色（牌去底框） ===');
 {
   const rs = new RenderSystem(ctxProxy, 400, 700);
   const profile = ProfileManager.get();
@@ -146,24 +146,21 @@ console.log('=== 测试3: 大厅上阵兵种卡片按品质着色外框 ===');
   ctxProxy.__calls.length = 0;
   rs.drawLobby({ profile, accountInfo: null, powerInfo: null, lobbyBadges: {} });
 
-  // v2：上阵卡片移到开战按钮上方，Y 由 Game.lobbyDeployCardY 统一计算（不再硬编码 155）
-  const SLOT_Y = Game.lobbyDeployCardY(700);
-  const frames = ctxProxy.__calls.filter(
-    (c) => c.op === 'strokeRect' && c.args[1] === SLOT_Y && c.args[3] === 65
-  );
-  assert(frames.length >= 3, `大厅绘制了 ${frames.length} 个上阵卡片外框`);
-  const colored = frames.filter((f) => f.state.strokeStyle !== '#475569');
-  assert(colored.length === 3, `3 个有兵种槽位用品质色（空槽位仍为灰）`);
+  // 兵种牌已去底框：品质色改由单位名称 fillText 的 fillStyle 表达
+  // 收集所有 fillText 调用的 (文字, 颜色) 供断言
+  const nameTexts = ctxProxy.__calls
+    .filter((c) => c.op === 'fillText' && typeof c.args[0] === 'string')
+    .map((c) => ({ text: c.args[0], color: c.state.fillStyle }));
 
   let allMatch = true;
   for (let i = 0; i < 3; i++) {
-    const q = cfg.units[picked[i]].quality || 1;
+    const unitCfg = cfg.units[picked[i]];
+    const q = unitCfg.quality || 1;
     const expect = QUALITY_COLORS[q - 1];
-    const hit = frames.some((f) => f.state.strokeStyle === expect);
-    if (!hit) { allMatch = false; console.log(`      (缺少 ${picked[i]} Q${q} 期望色 ${expect})`); }
+    const hit = nameTexts.some((t) => t.text === unitCfg.name && t.color === expect);
+    if (!hit) { allMatch = false; console.log(`      (缺少 ${picked[i]} Q${q} 期望名称色 ${expect})`); }
   }
-  assert(allMatch, '每个上阵兵种卡片外框颜色 = 其品质色');
-  assert(frames.slice(3).every((f) => f.state.strokeStyle === '#475569'), '空槽位保持灰色边框');
+  assert(allMatch, '每个上阵兵种名称文字色 = 其品质色（去底框后以文字表达品质）');
 
   // 还原上阵数据（临时兵种可能未收集，会让 bundle 为空）
   profile.deployment.units = origUnits;
