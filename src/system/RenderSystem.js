@@ -55,6 +55,25 @@ const UI_THEME = {
   orange: '#FF8C42', orangeDeep: '#E8722F',
   white: '#FFFFFF', green: '#168A4A',
 };
+
+/**
+ * 由框体轮廓色/内容色派生「同色系淡底」，替代统一白底。
+ * ratio = 原色占比（越小越接近白，保证深色文字可读）；返回不透明 rgb，彻底盖住背景地图。
+ * 兼容 #RGB / #RRGGBB；异常输入回落到晴空乐园云白。
+ */
+function tintOf(color, ratio) {
+  const k = Math.max(0.04, Math.min(0.55, ratio === undefined ? 0.14 : ratio));
+  let hex = String(color || '').trim();
+  if (hex[0] === '#') hex = hex.slice(1);
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return 'rgb(234,248,255)';
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const mix = (c) => Math.round(c * k + 255 * (1 - k));
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
+
 // 滚动列表底部裁剪间隙：内容不进入返回按钮上方 8px 以内，避免与返回按钮重叠（P21）
 const SCROLL_BOTTOM_GAP = 8;
 
@@ -210,13 +229,16 @@ export class RenderSystem {
    * @param {number} cy 文字垂直中心
    * @param {string} text 文字内容（用于估算胶囊宽度）
    * @param {string} font 与文字一致的 font 字符串（用于解析字号）
-   * @param {{padX?:number,padY?:number,border?:string}} opts
+   * @param {{padX?:number,padY?:number,border?:string,tint?:string}} opts
+   *        tint: 底色来源色（轮廓/内容色），会派生同色系淡底；缺省用 border。
    */
   _drawTextPillBg(cx, cy, text, font, opts) {
     const { ctx } = this;
     const o = opts || {};
     const padX = o.padX === undefined ? 9 : o.padX;
     const padY = o.padY === undefined ? 3 : o.padY;
+    const border = o.border || 'rgba(43,74,111,0.32)';
+    const tint = o.tint || border;
     let fontSize = 12;
     const fm = /(\d+(?:\.\d+)?)px/.exec(font || '');
     if (fm) fontSize = parseFloat(fm[1]);
@@ -242,9 +264,9 @@ export class RenderSystem {
       ctx.restore();
     }
     this._drawCard({ x, y, w: pillW, h: pillH, r }, () => {
-      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      ctx.fillStyle = tintOf(tint, 0.10);
       ctx.fillRect(x, y, pillW, pillH);
-      ctx.strokeStyle = o.border || 'rgba(43,74,111,0.32)';
+      ctx.strokeStyle = border;
       ctx.lineWidth = 1;
       ctx.strokeRect(x, y, pillW, pillH);
     });
@@ -653,7 +675,7 @@ export class RenderSystem {
     const clusterX = 8;
     const clusterY = 4;
     this._drawCard({ x: clusterX, y: clusterY, w: clusterW, h: clusterH, r: 9 }, () => {
-      ctx.fillStyle = 'rgba(234,248,255,0.92)';
+      ctx.fillStyle = tintOf(UI_THEME.skyDeep, 0.12);
       ctx.fillRect(clusterX, clusterY, clusterW, clusterH);
       ctx.strokeStyle = UI_THEME.skyDeep;
       ctx.lineWidth = 1;
@@ -2864,7 +2886,7 @@ export class RenderSystem {
 
     // 设置按钮（右上角小图标，打开设置窗口）——晴空乐园圆角卡片
     this._drawRaisedCard({ x: w - 45, y: 10, w: 35, h: 30, r: 9 }, () => {
-      ctx.fillStyle = UI_THEME.white;
+      ctx.fillStyle = tintOf(UI_THEME.navySoft, 0.12);
       ctx.fillRect(w - 45, 10, 35, 30);
       ctx.strokeStyle = UI_THEME.navySoft;
       ctx.lineWidth = 1;
@@ -2891,7 +2913,7 @@ export class RenderSystem {
 
     // 副标题（天梯进度条已移至开战按钮上方，大段位徽章在功能行下方）
     ctx.font = '12px sans-serif';
-    this._drawTextPillBg(w / 2, 108, '— 主城大厅 —', '12px sans-serif', { padX: 12, border: 'rgba(43,74,111,0.22)' });
+    this._drawTextPillBg(w / 2, 108, '— 主城大厅 —', '12px sans-serif', { padX: 12, tint: UI_THEME.navy, border: 'rgba(43,74,111,0.30)' });
     ctx.fillStyle = UI_THEME.navy;
     ctx.fillText('— 主城大厅 —', w / 2, 108);
 
@@ -2904,14 +2926,14 @@ export class RenderSystem {
       ctx.fillStyle = UI_THEME.ink;
       let label = '👤 ' + ai.nickname;
       if (ai.uid) label += '  ·  账号尾号 ' + ai.uid.slice(-6);
-      this._drawTextPillBg(w / 2, 124, label + ' ▾', '11px sans-serif', { padX: 10, border: 'rgba(43,74,111,0.22)' });
+      this._drawTextPillBg(w / 2, 124, label + ' ▾', '11px sans-serif', { padX: 10, tint: UI_THEME.navy, border: 'rgba(43,74,111,0.30)' });
       ctx.fillText(label + ' ▾', w / 2, 124);
     }
 
     // 上阵兵种预览
     const deployY = 140;
     ctx.font = 'bold 11px sans-serif';
-    this._drawTextPillBg(w / 2, deployY, '上阵兵种', 'bold 11px sans-serif', { padX: 10 });
+    this._drawTextPillBg(w / 2, deployY, '上阵兵种', 'bold 11px sans-serif', { padX: 10, tint: UI_THEME.skyDeep, border: 'rgba(62,159,209,0.42)' });
     ctx.fillStyle = UI_THEME.ink;
     ctx.fillText('上阵兵种', w / 2, deployY);
 
@@ -2930,10 +2952,11 @@ export class RenderSystem {
         // P35：品质外框（与布阵界面同色系；品质不再用星星表达）
         const q = u?.quality || 1;
         // 卡片背景（晴空乐园实心白卡 + 悬浮厚底；品质描边保留功能色语义与 strokeRect 调用）
+        const slotBorder = u ? (QUALITY_COLORS[q - 1] || '#9ca3af') : '#475569';
         this._drawRaisedCard({ x: actualX, y, w: slotW, h: 65, r: 8 }, () => {
-          ctx.fillStyle = UI_THEME.white;
+          ctx.fillStyle = tintOf(slotBorder, 0.13);
           ctx.fillRect(actualX, y, slotW, 65);
-          ctx.strokeStyle = u ? (QUALITY_COLORS[q - 1] || '#9ca3af') : '#475569';
+          ctx.strokeStyle = slotBorder;
           ctx.lineWidth = q >= 4 ? 2 : 1.5;
           ctx.strokeRect(actualX, y, slotW, 65);
         });
@@ -2967,15 +2990,16 @@ export class RenderSystem {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const powerLabel = `⚔ 战力 ${pi.total}`;
+      const powerTone = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.orangeDeep;
       ctx.font = 'bold 15px sans-serif';
-      this._drawTextPillBg(w / 2, 233, powerLabel, 'bold 15px sans-serif', { padX: 12, padY: 4, border: 'rgba(43,74,111,0.32)' });
-      ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.orangeDeep;
+      this._drawTextPillBg(w / 2, 233, powerLabel, 'bold 15px sans-serif', { padX: 12, padY: 4, tint: powerTone, border: powerTone });
+      ctx.fillStyle = powerTone;
       ctx.fillText(powerLabel, w / 2, 233);
       ctx.font = '10px sans-serif';
       const status = pi.ratio >= 1
         ? `↑ 已达本段位参考战力 ${pi.reference}`
         : `本段位参考战力 ${pi.reference}（还差 ${Math.max(0, Math.round(pi.reference - pi.total))}）`;
-      this._drawTextPillBg(w / 2, 251, status, '10px sans-serif', { padX: 9, padY: 3 });
+      this._drawTextPillBg(w / 2, 251, status, '10px sans-serif', { padX: 9, padY: 3, tint: UI_THEME.navy, border: 'rgba(43,74,111,0.30)' });
       ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navy;
       ctx.fillText(status, w / 2, 251);
     }
@@ -3010,7 +3034,7 @@ export class RenderSystem {
       const rect = { x, y: ROW.y, w: ROW.w, h: ROW.h };
       this._drawPressed(rect, gameState.press, () => {
         this._drawRaisedCard(rect, () => {
-          ctx.fillStyle = UI_THEME.white;
+          ctx.fillStyle = tintOf(rowDefs[i].border, 0.13);
           ctx.fillRect(x, ROW.y, ROW.w, ROW.h);
           ctx.strokeStyle = rowDefs[i].border;
           ctx.lineWidth = 2;
@@ -3049,7 +3073,7 @@ export class RenderSystem {
       ctx.beginPath();
       ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
       ctx.fill();
-      // 徽章底盘投影：海军蓝厚底 + 半透明白盘 + 柔和阴影，与地图背景分离
+      // 徽章底盘投影：海军蓝厚底 + 段位色淡底盘 + 柔和阴影，与地图背景分离
       if (typeof ctx.arc === 'function' && typeof ctx.fill === 'function') {
         ctx.save();
         ctx.fillStyle = 'rgba(22, 48, 79, 0.22)';
@@ -3060,7 +3084,7 @@ export class RenderSystem {
         ctx.shadowBlur = 12;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 2;
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillStyle = tintOf(ladderTier.color, 0.42);
         ctx.beginPath();
         ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
         ctx.fill();
@@ -3072,9 +3096,9 @@ export class RenderSystem {
       ctx.beginPath();
       ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
       ctx.stroke();
-      // 内部云白圆盘（随半径缩放；浅色承载区避免暗块）
+      // 内部淡色圆盘（随半径缩放；段位色系淡底承载图标，与外底盘形成内外层次）
       const innerR = badgeR - Math.max(3, Math.round(badgeR * 0.13));
-      ctx.fillStyle = UI_THEME.cloud;
+      ctx.fillStyle = tintOf(ladderTier.color, 0.12);
       ctx.beginPath();
       ctx.arc(cx, badgeY, innerR, 0, Math.PI * 2);
       ctx.fill();
@@ -3095,7 +3119,7 @@ export class RenderSystem {
       const infoSize = Math.max(9, Math.round(badgeR * 0.2));
       const infoText = `🏆 ${profile ? (profile.trophies || 0) : 0}杯 · 最高 ${highest}`;
       ctx.font = `${infoSize}px sans-serif`;
-      this._drawTextPillBg(cx, infoY, infoText, `${infoSize}px sans-serif`, { padX: 10 });
+      this._drawTextPillBg(cx, infoY, infoText, `${infoSize}px sans-serif`, { padX: 10, tint: ladderTier.color, border: ladderTier.color });
       ctx.fillStyle = UI_THEME.navy;
       ctx.fillText(infoText, cx, infoY);
     }
@@ -3108,7 +3132,7 @@ export class RenderSystem {
       const barH = ladderComboLayout.barH;
       // 底色（实心白轨道 + 悬浮厚底，圆角）
       this._drawRaisedCard({ x: barX, y: barY, w: barW, h: barH, r: 6 }, () => {
-        ctx.fillStyle = UI_THEME.white;
+        ctx.fillStyle = tintOf(ladderTier.color, 0.14);
         ctx.fillRect(barX, barY, barW, barH);
         ctx.strokeStyle = ladderTier.color;
         ctx.lineWidth = 1;
@@ -3132,7 +3156,7 @@ export class RenderSystem {
       const seasonText = ladderProgress.next
         ? `距 ${ladderProgress.next.icon}${ladderProgress.next.label} 还差 ${ladderProgress.need - ladderProgress.cur} 杯 · 赛季剩 ${gameState.seasonDaysLeft || 7} 天`
         : `赛季剩 ${gameState.seasonDaysLeft || 7} 天`;
-      this._drawTextPillBg(w / 2, barY + barH + 7, seasonText, '9px sans-serif', { padX: 8, padY: 3, border: 'rgba(43,74,111,0.28)' });
+      this._drawTextPillBg(w / 2, barY + barH + 7, seasonText, '9px sans-serif', { padX: 8, padY: 3, tint: UI_THEME.skyDeep, border: 'rgba(62,159,209,0.42)' });
       ctx.fillStyle = UI_THEME.navy;
       ctx.fillText(seasonText, w / 2, barY + barH + 7);
     }
@@ -3216,7 +3240,7 @@ export class RenderSystem {
       const rect = { x, y: navY, w: btnW, h: btnH };
       this._drawPressed(rect, gameState.press, () => {
         this._drawRaisedCard(rect, () => {
-          ctx.fillStyle = UI_THEME.white;
+          ctx.fillStyle = tintOf(navDefs[i].border, 0.13);
           ctx.fillRect(x, navY, btnW, btnH);
           ctx.strokeStyle = navDefs[i].border;
           ctx.lineWidth = 2;
