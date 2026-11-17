@@ -24,7 +24,7 @@ import { drawArtLayer, BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE,
   pick_walkFrame, pick_unitDetail, pick_buildingDetail, pick_tutorialCard,
   pick_tutorialDots, pick_hudHp, pick_hudSynergy, pick_btnHover,
   iconKey, ICON_NAMES } from './ArtLayer.js';
-import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, ladderCombo, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN } from './Layout.js';
+import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN, lobbyFuncBtnRect, lobbyPlayerCardRect, lobbySeasonCombo, lobbyDeployCardY, lobbyDeployLabelY } from './Layout.js';
 
 // 安全区常量的单一真相源在 SafeArea.js，这里 re-export 保持既有引用兼容
 export { SAFE_AREA_MAX } from './SafeArea.js';
@@ -2898,40 +2898,45 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillText('⚙', w - 27, 25);
 
-    // 标题（云白描边 + 海军蓝主字，在浅色天空上清晰且不刺眼）
-    ctx.font = 'bold 28px sans-serif';
-    ctx.textAlign = 'center';
+    // v2 布局：已移除「占地之王」大标题与副标题，页面重心交给玩家卡 / 赛季区 / 上阵区。
+
+    // === 左上角玩家信息卡（账号 + 战力合并，点击打开账号面板）===
+    const card = lobbyPlayerCardRect(w);
+    this._drawRaisedCard(card, () => {
+      ctx.fillStyle = tintOf(UI_THEME.navy, 0.11);
+      ctx.fillRect(card.x, card.y, card.w, card.h);
+      ctx.strokeStyle = UI_THEME.navy;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(card.x, card.y, card.w, card.h);
+    });
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    if (typeof ctx.strokeText === 'function') {
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = UI_THEME.cloud;
-      ctx.strokeText('占地之王', w / 2, 85);
-    }
-    ctx.fillStyle = UI_THEME.ink;
-    ctx.fillText('占地之王', w / 2, 85);
-    this._artIcon(ART_PREFIXES.lobby, 'share', w - 24, 85, 20, 0.6);
-
-    // 副标题（天梯进度条已移至开战按钮上方，大段位徽章在功能行下方）
-    ctx.font = '12px sans-serif';
-    this._drawTextPillBg(w / 2, 108, '— 主城大厅 —', '12px sans-serif', { padX: 12, tint: UI_THEME.navy, border: 'rgba(43,74,111,0.30)' });
-    ctx.fillStyle = UI_THEME.navy;
-    ctx.fillText('— 主城大厅 —', w / 2, 108);
-
-    // 玩家账号信息（昵称 + 本地账号尾号，副标题下方；▾ 暗示可点击打开账号面板）
+    // 账号行（昵称 + 尾号 + ▾）
     if (gameState.accountInfo) {
       const ai = gameState.accountInfo;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = '11px sans-serif';
-      ctx.fillStyle = UI_THEME.ink;
       let label = '👤 ' + ai.nickname;
-      if (ai.uid) label += '  ·  账号尾号 ' + ai.uid.slice(-6);
-      this._drawTextPillBg(w / 2, 124, label + ' ▾', '11px sans-serif', { padX: 10, tint: UI_THEME.navy, border: 'rgba(43,74,111,0.30)' });
-      ctx.fillText(label + ' ▾', w / 2, 124);
+      if (ai.uid) label += ' · 账号尾号 ' + ai.uid.slice(-6);
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillStyle = UI_THEME.ink;
+      ctx.fillText(label + ' ▾', card.x + 10, card.y + 16);
+    }
+    // 战力两行（总战力 + 参考战力，颜色随达成状态）
+    if (gameState.powerInfo) {
+      const pi = gameState.powerInfo;
+      const powerTone = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.orangeDeep;
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillStyle = powerTone;
+      ctx.fillText(`⚔ 战力 ${pi.total}`, card.x + 10, card.y + 40);
+      ctx.font = '10px sans-serif';
+      ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navy;
+      const status = pi.ratio >= 1
+        ? `↑ 已达本段位参考战力 ${pi.reference}`
+        : `本段位参考战力 ${pi.reference}（差 ${Math.max(0, Math.round(pi.reference - pi.total))}）`;
+      ctx.fillText(status, card.x + 10, card.y + card.h - 14);
     }
 
-    // 上阵兵种预览
-    const deployY = 140;
+    // === 上阵兵种预览（移到开战按钮上方）===
+    const deployY = lobbyDeployLabelY(h);
     ctx.font = 'bold 11px sans-serif';
     this._drawTextPillBg(w / 2, deployY, '上阵兵种', 'bold 11px sans-serif', { padX: 10, tint: UI_THEME.skyDeep, border: 'rgba(62,159,209,0.42)' });
     ctx.fillStyle = UI_THEME.ink;
@@ -2943,7 +2948,7 @@ export class RenderSystem {
       const slotGap = 5;
       const slotW = rowItemWidth(units.length, slotGap, w, 8, LAYOUT_MIN.lobbySlot, LAYOUT_DESIGN_MAX.lobbySlot);
       const slotStartX = rowStartX(units.length, slotW, slotGap, w);
-      const y = deployY + 15;
+      const y = lobbyDeployCardY(h);
 
       for (let i = 0; i < units.length; i++) {
         const actualX = slotStartX + i * (slotW + slotGap);
@@ -2984,89 +2989,60 @@ export class RenderSystem {
       }
     }
 
-    // 战力值（总战力 + 当前段位参考战力，颜色随达成状态）
-    if (gameState.powerInfo) {
-      const pi = gameState.powerInfo;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const powerLabel = `⚔ 战力 ${pi.total}`;
-      const powerTone = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.orangeDeep;
-      ctx.font = 'bold 15px sans-serif';
-      this._drawTextPillBg(w / 2, 233, powerLabel, 'bold 15px sans-serif', { padX: 12, padY: 4, tint: powerTone, border: powerTone });
-      ctx.fillStyle = powerTone;
-      ctx.fillText(powerLabel, w / 2, 233);
-      ctx.font = '10px sans-serif';
-      const status = pi.ratio >= 1
-        ? `↑ 已达本段位参考战力 ${pi.reference}`
-        : `本段位参考战力 ${pi.reference}（还差 ${Math.max(0, Math.round(pi.reference - pi.total))}）`;
-      this._drawTextPillBg(w / 2, 251, status, '10px sans-serif', { padX: 9, padY: 3, tint: UI_THEME.navy, border: 'rgba(43,74,111,0.30)' });
-      ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navy;
-      ctx.fillText(status, w / 2, 251);
-    }
+    // 战力信息已合并进左上角玩家信息卡（见上方），此处不再单独绘制。
 
-    // === 功能按钮行（战力下方，与 Game.handleLobbyClick 命中框同源）：分享 / 任务 / 成就 [+通行证] ===
-    // P9+P11：宽度按屏宽自适应。iPhone 5 (320) 70px，iPhone 6 (375) 83.75px，340 模拟器 74.75px。
-    //        上一版硬编码 88 导致 iPhone 5 总宽 376>320，第 4 个按钮溢出屏外。
+    // === 功能按钮纵列（右上角，与 Game.handleLobbyClick 命中框同源）：分享 / 任务 / 成就 [+通行证] ===
+    // v2：横向功能行改为右上角纵向排列，坐标由 Layout.lobbyFuncBtnRect 统一计算。
     // P25 features 开关：battlePass=false 时完全折叠通行证按钮（count 4→3，不留空位）
     const _features2 = ConfigLoader.getSafe('game')?.features || {};
     const _battlePassEnabled = _features2.battlePass !== false;
     const _rowCount = _battlePassEnabled ? 4 : 3;
-    const ROW = {
-      w: rowItemWidth(_rowCount, 8, w, 8, LAYOUT_MIN.lobbyRow, LAYOUT_DESIGN_MAX.lobbyRow),
-      h: 40, gap: 8, y: 262, count: _rowCount,
-    };
-    const rowX = (i) => (w - (ROW.count * ROW.w + (ROW.count - 1) * ROW.gap)) / 2 + i * (ROW.w + ROW.gap);
-    // 晴空乐园统一卡片式功能行：云白底 + 主题色描边 + 深色字，与槽位/底栏同风格
     const rowDefs = [
       { border: UI_THEME.skyDeep },     // 分享（天蓝）
       { border: UI_THEME.orangeDeep },  // 任务（活力橙）
       { border: UI_THEME.goldDeep },    // 成就（明黄）
       { border: UI_THEME.navy },        // 通行证（海军蓝）
     ];
-
-    // 分享按钮（带每日奖励副标题）
     const shareClaimed = gameState.shareRewardClaimed;
-    // P10 字号按屏宽自适应：iPhone 5 (320) 12→10，9→8；iPhone 6 (375) 维持 12/9
     const rowFontSize = adaptiveFontSize(12, w);
     const rowSubFontSize = adaptiveFontSize(9, w);
-    for (let i = 0; i < ROW.count; i++) {
-      const x = rowX(i);
-      const rect = { x, y: ROW.y, w: ROW.w, h: ROW.h };
+    for (let i = 0; i < _rowCount; i++) {
+      const rect = lobbyFuncBtnRect(i, w, _rowCount);
+      const { x, y, w: bw, h: bh } = rect;
       this._drawPressed(rect, gameState.press, () => {
         this._drawRaisedCard(rect, () => {
           ctx.fillStyle = tintOf(rowDefs[i].border, 0.13);
-          ctx.fillRect(x, ROW.y, ROW.w, ROW.h);
+          ctx.fillRect(x, y, bw, bh);
           ctx.strokeStyle = rowDefs[i].border;
           ctx.lineWidth = 2;
-          ctx.strokeRect(x, ROW.y, ROW.w, ROW.h);
+          ctx.strokeRect(x, y, bw, bh);
         });
         ctx.fillStyle = UI_THEME.ink;
+        ctx.font = `${rowFontSize}px sans-serif`;
         if (i === 0) {
-          ctx.font = `${rowFontSize}px sans-serif`;
-          ctx.fillText(shareClaimed ? '📤 分享' : '📤 分享🎁', x + ROW.w / 2, ROW.y + (shareClaimed ? ROW.h / 2 : ROW.h / 2 - 7));
+          ctx.fillText(shareClaimed ? '📤 分享' : '📤 分享🎁', x + bw / 2, y + (shareClaimed ? bh / 2 : bh / 2 - 6));
           if (!shareClaimed) {
             ctx.fillStyle = UI_THEME.orangeDeep;
             ctx.font = `bold ${rowSubFontSize}px sans-serif`;
-            ctx.fillText('金币200✨5', x + ROW.w / 2, ROW.y + ROW.h / 2 + 10);
+            ctx.fillText('金币200✨5', x + bw / 2, y + bh / 2 + 9);
           }
         } else {
-          ctx.font = `${rowFontSize}px sans-serif`;
           const label = i === 1 ? '📋 任务' : (i === 2 ? '🏆 成就' : '🎖 通行证');
-          ctx.fillText(label, x + ROW.w / 2, ROW.y + ROW.h / 2);
+          ctx.fillText(label, x + bw / 2, y + bh / 2);
         }
       });
     }
 
-    // === 大段位徽章 + 段位进度条（组合单元，P20） ===
-    // 组合单元整体在 [功能行底, 开战按钮顶] 内垂直居中，坐标由 Layout.ladderCombo 统一计算
-    // 进度条由「开战按钮上方」移到「徽章下方」，与徽章组成一个视觉单元
+    // === 大段位徽章 + 段位进度条（v2：赛季区移到屏幕中偏上） ===
+    // 组合单元整体在 [顶部玩家卡/功能按钮底, 上阵区上方] 内，坐标由 Layout.lobbySeasonCombo 统一计算
     const ladderProgress = gameState.ladderProgress;
     const ladderComboLayout = (ladderTier || ladderProgress)
-      ? ladderCombo(ROW.y + ROW.h, h - 150)   // battleTop = Game.lobbyBattleY(h)
+      ? lobbySeasonCombo(w, h, _rowCount)
       : null;
     if (ladderTier) {
       const { badgeR, badgeY, infoY } = ladderComboLayout;
       const cx = w / 2;
+      const canArc = typeof ctx.arc === 'function' && typeof ctx.fill === 'function';
       // 外圈光晕（段位主题色，呼吸动效）
       const glow = Math.sin(Date.now() / 500) * 0.08 + 0.15;
       ctx.fillStyle = ladderTier.color + Math.round(glow * 255).toString(16).padStart(2, '0');
@@ -3074,7 +3050,7 @@ export class RenderSystem {
       ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
       ctx.fill();
       // 徽章底盘投影：海军蓝厚底 + 段位色淡底盘 + 柔和阴影，与地图背景分离
-      if (typeof ctx.arc === 'function' && typeof ctx.fill === 'function') {
+      if (canArc) {
         ctx.save();
         ctx.fillStyle = 'rgba(22, 48, 79, 0.22)';
         ctx.beginPath();
@@ -3090,12 +3066,39 @@ export class RenderSystem {
         ctx.fill();
         ctx.restore();
       }
-      // 主环
-      ctx.strokeStyle = ladderTier.color;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
-      ctx.stroke();
+      // === 美化：金色外环 + 段位色主环 + 虚线点缀 ===
+      if (canArc) {
+        ctx.strokeStyle = UI_THEME.gold;
+        ctx.lineWidth = Math.max(2, Math.round(badgeR * 0.09));
+        ctx.beginPath();
+        ctx.arc(cx, badgeY, badgeR - 1, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = ladderTier.color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, badgeY, badgeR * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
+        // 四角星光
+        const sr = badgeR * 0.94;
+        ctx.fillStyle = UI_THEME.gold;
+        for (let k = 0; k < 4; k++) {
+          const a = Math.PI / 4 + k * Math.PI / 2;
+          const sx = cx + Math.cos(a) * sr;
+          const sy = badgeY + Math.sin(a) * sr;
+          const ss = Math.max(2, Math.round(badgeR * 0.09));
+          ctx.beginPath();
+          ctx.moveTo(sx, sy - ss);
+          ctx.lineTo(sx + ss * 0.35, sy - ss * 0.35);
+          ctx.lineTo(sx + ss, sy);
+          ctx.lineTo(sx + ss * 0.35, sy + ss * 0.35);
+          ctx.lineTo(sx, sy + ss);
+          ctx.lineTo(sx - ss * 0.35, sy + ss * 0.35);
+          ctx.lineTo(sx - ss, sy);
+          ctx.lineTo(sx - ss * 0.35, sy - ss * 0.35);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
       // 内部淡色圆盘（随半径缩放；段位色系淡底承载图标，与外底盘形成内外层次）
       const innerR = badgeR - Math.max(3, Math.round(badgeR * 0.13));
       ctx.fillStyle = tintOf(ladderTier.color, 0.12);
@@ -3109,11 +3112,14 @@ export class RenderSystem {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(ladderTier.icon, cx, badgeY - Math.round(badgeR * 0.11));
-      // 段位名（徽章下沿，字号/位置随半径缩放）
+      // 段位名：金色缎带胶囊（随半径缩放）
       const labelSize = Math.max(8, Math.round(badgeR * 0.26));
+      const nameLabel = ladderTier.label;
+      this._drawTextPillBg(cx, badgeY + badgeR - Math.round(badgeR * 0.34), nameLabel,
+        `bold ${labelSize}px sans-serif`, { padX: 10, padY: 2, tint: UI_THEME.gold, border: UI_THEME.goldDeep });
       ctx.fillStyle = ladderTier.color;
       ctx.font = `bold ${labelSize}px sans-serif`;
-      ctx.fillText(ladderTier.label, cx, badgeY + badgeR - Math.round(badgeR * 0.37));
+      ctx.fillText(nameLabel, cx, badgeY + badgeR - Math.round(badgeR * 0.34));
       // 奖杯 + 最高纪录（一行，徽章下方，infoY 由 combo 统一计算）
       const highest = profile ? (profile.highestTrophies || 0) : 0;
       const infoSize = Math.max(9, Math.round(badgeR * 0.2));

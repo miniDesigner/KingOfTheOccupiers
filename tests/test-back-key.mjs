@@ -149,7 +149,8 @@ for (const t of navStates) {
 
 // ========== 功能行面板 ==========
 section('功能行面板返回');
-const row = Game.LOBBY_LAYOUT.row;
+// v2：功能按钮纵向排列，点击坐标走 lobbyFuncBtnRect 中心
+const funcBtn = (i) => Game.lobbyFuncBtnRect(i, W);
 const rowStates = [
   { idx: 1, name: '任务 quest', expect: 'quest' },
   { idx: 2, name: '成就 achievement', expect: 'achievement' },
@@ -157,8 +158,8 @@ const rowStates = [
   //   验证放在「折叠 vs 展开」分支测试（见下方）
 ];
 for (const t of rowStates) {
-  const x = Game.lobbyRowX(t.idx, W);
-  game.handleLobbyClick(x + row.w / 2, row.y + row.h / 2);
+  const btn = funcBtn(t.idx);
+  game.handleLobbyClick(btn.x + btn.w / 2, btn.y + btn.h / 2);
   game.render(0.016);
   check(`打开 ${t.name}`, game.screenState === t.expect && hasBackLayer(), `state=${game.screenState}`);
   browserBack();
@@ -170,8 +171,8 @@ for (const t of rowStates) {
 // P25 折叠态验证：features.battlePass=false 时功能行 idx=3 不切屏
 section('P25 features 折叠态：通行证点击不响应');
 {
-  const x = Game.lobbyRowX(3, W);
-  game.handleLobbyClick(x + row.w / 2, row.y + row.h / 2);
+  const btn = funcBtn(3);
+  game.handleLobbyClick(btn.x + btn.w / 2, btn.y + btn.h / 2);
   game.render(0.016);
   check('折叠态点击 idx=3 停留在 lobby', game.screenState === 'lobby', `state=${game.screenState}`);
 }
@@ -183,8 +184,8 @@ section('P25 features 展开态：临时开 battlePass=true → idx=3 恢复通�
   const _cfg = ConfigLoader.get('game');
   const _origBattlePass = _cfg.features?.battlePass;
   _cfg.features = { ..._cfg.features, battlePass: true };
-  const x = Game.lobbyRowX(3, W);
-  game.handleLobbyClick(x + row.w / 2, row.y + row.h / 2);
+  const btn = funcBtn(3);
+  game.handleLobbyClick(btn.x + btn.w / 2, btn.y + btn.h / 2);
   game.render(0.016);
   check('展开态 idx=3 → battle_pass', game.screenState === 'battle_pass' && hasBackLayer(), `state=${game.screenState}`);
   browserBack();

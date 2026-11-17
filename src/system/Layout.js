@@ -191,6 +191,69 @@ export function ladderBarWidth(screenW) {
   return rowItemWidth(1, 0, screenW, 24, LADDER_BAR_MIN_W, LADDER_BAR_MAX_W);
 }
 
+// ==================== 大厅 v2 布局（渲染 / 命中 / 引导共用单一真相源）====================
+// 布局：左上玩家信息卡（账号+战力） / 右上功能按钮纵列 / 中偏上赛季区 / 开战按钮上方上阵兵种 / 底部导航
+// 顶部资源栏 0~50：货币簇（左）+ 设置按钮（右），由 _drawResourceBar 独立绘制，不在此列。
+
+const LOBBY_TOP_Y = 54;          // 资源栏（0~50）下方起始
+const FUNC_BTN_H = 36;           // 功能按钮纵列：单按钮高
+const FUNC_BTN_GAP = 6;          // 功能按钮纵列：间距
+const PLAYER_CARD_H = 82;        // 左上玩家信息卡高
+const DEPLOY_CARD_H = 65;        // 上阵卡片高（沿用 v1 的 65，仅位置上移到开战按钮上方）
+const DEPLOY_BATTLE_GAP = 12;    // 上阵卡片底 → 开战按钮顶
+
+/** 右上角功能按钮单按钮宽（窄屏下限 72 / 宽屏上限 96） */
+export function lobbyFuncBtnW(screenW) {
+  return Math.max(72, Math.min(96, Math.round(screenW * 0.25)));
+}
+
+/** 右上角功能按钮纵列：第 i 个按钮 rect（分享/任务/成就/通行证） */
+export function lobbyFuncBtnRect(i, screenW, funcCount = 3) {
+  const w = lobbyFuncBtnW(screenW);
+  return {
+    x: screenW - 8 - w,
+    y: LOBBY_TOP_Y + i * (FUNC_BTN_H + FUNC_BTN_GAP),
+    w,
+    h: FUNC_BTN_H,
+  };
+}
+
+/** 右上角功能按钮纵列底部 Y */
+export function lobbyFuncBottom(funcCount = 3) {
+  return LOBBY_TOP_Y + funcCount * FUNC_BTN_H + (funcCount - 1) * FUNC_BTN_GAP;
+}
+
+/** 左上角玩家信息卡 rect（账号 + 战力合并到同一框体） */
+export function lobbyPlayerCardRect(screenW) {
+  const funcX = lobbyFuncBtnRect(0, screenW).x;
+  return { x: 8, y: LOBBY_TOP_Y, w: Math.max(140, funcX - 16), h: PLAYER_CARD_H };
+}
+
+/** 上阵兵种卡片顶 Y（开战按钮上方） */
+export function lobbyDeployCardY(screenH) {
+  return screenH - 150 - DEPLOY_BATTLE_GAP - DEPLOY_CARD_H;
+}
+
+/** 上阵兵种标签中心 Y */
+export function lobbyDeployLabelY(screenH) {
+  return lobbyDeployCardY(screenH) - 12;
+}
+
+/** 赛季区顶部 Y（顶部玩家卡/功能按钮列下方的可用区起点） */
+export function lobbySeasonTop(screenW, funcCount = 3) {
+  const card = lobbyPlayerCardRect(screenW);
+  return Math.max(card.y + card.h, lobbyFuncBottom(funcCount)) + 8;
+}
+
+/** 赛季区 combo（中偏上）：复用 ladderCombo 的间距规则，区间 = [顶部区块底, 上阵区上方] */
+export function lobbySeasonCombo(screenW, screenH, funcCount = 3) {
+  const top = lobbySeasonTop(screenW, funcCount);
+  const bottom = lobbyDeployLabelY(screenH) - 16;
+  return ladderCombo(top, bottom);
+}
+
+export const LOBBY_V2 = { LOBBY_TOP_Y, FUNC_BTN_H, FUNC_BTN_GAP, PLAYER_CARD_H, DEPLOY_CARD_H, DEPLOY_BATTLE_GAP };
+
 /**
  * 顶部资源栏布局：根据最长货币数字字符串自适应
  * PM 2026-09-07：货币上限提到 99999999（8 位），资源栏必须能完整显示

@@ -343,18 +343,18 @@ console.log('=== 测试12: 大厅段位徽章与进度条布局 ===');
   assert(barY + LADDER_BAR_H <= bY, `进度条不与开战按钮重叠 (barBottom=${barY + LADDER_BAR_H}, battleY=${bY})`);
   // 进度条长度自适应：钳制在 [min, max]
   assert(barW >= LADDER_BAR_MIN_W && barW <= LADDER_BAR_MAX_W, `进度条宽度在 [${LADDER_BAR_MIN_W},${LADDER_BAR_MAX_W}] (barW=${barW})`);
-  // 组合单元整体在 [功能行底, 开战按钮顶] 内
-  const rowBottom = Game.LOBBY_LAYOUT.row.y + Game.LOBBY_LAYOUT.row.h; // 302
-  assert(badgeY - badgeR >= rowBottom - 0.5, `徽章顶不低于功能行底 (badgeTop=${(badgeY - badgeR).toFixed(1)}, rowBottom=${rowBottom})`);
+  // v2：赛季区移到屏幕中偏上，徽章顶锚点改为顶部玩家卡/功能按钮列底（lobbySeasonTop）
+  const seasonTop = Game.lobbySeasonTop(w);
+  assert(badgeY - badgeR >= seasonTop - 0.5, `徽章顶不低于赛季区顶 (badgeTop=${(badgeY - badgeR).toFixed(1)}, seasonTop=${seasonTop})`);
 
-  // P20：多屏高验证——中小屏（iPhone 5/6/8）组合单元自适应缩小，绝不压功能行/开战按钮
+  // 多屏高验证——各屏组合单元自适应缩小，绝不压顶部区块/上阵区/开战按钮
   for (const H of [568, 667, 700, 844, 932]) {
     const r = Game.lobbyBadgeRadius(H);
     const y = Game.lobbyBadgeY(H);
     const tb = Game.lobbyLadderBarY(H);
-    const rb = Game.LOBBY_LAYOUT.row.y + Game.LOBBY_LAYOUT.row.h;
+    const rb = Game.lobbySeasonTop(w);
     const bb = Game.lobbyBattleY(H);
-    assert(y - r >= rb - 0.5, `H=${H} 徽章顶不低于功能行底 (top=${(y - r).toFixed(1)}, row=${rb})`);
+    assert(y - r >= rb - 0.5, `H=${H} 徽章顶不低于赛季区顶 (top=${(y - r).toFixed(1)}, seasonTop=${rb})`);
     assert(tb >= y + r, `H=${H} 进度条在徽章下方 (barY=${tb.toFixed(1)}, badgeBottom=${(y + r).toFixed(1)})`);
     assert(tb + LADDER_BAR_H <= bb + 0.5, `H=${H} 进度条不压开战按钮 (barBottom=${tb + LADDER_BAR_H}, battle=${bb})`);
     assert(r >= 20 && r <= 54, `H=${H} 半径在 [20,54] (R=${r})`);

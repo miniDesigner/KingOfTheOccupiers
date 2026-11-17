@@ -146,7 +146,8 @@ console.log('=== 测试3: 大厅上阵兵种卡片按品质着色外框 ===');
   ctxProxy.__calls.length = 0;
   rs.drawLobby({ profile, accountInfo: null, powerInfo: null, lobbyBadges: {} });
 
-  const SLOT_Y = 140 + 15; // deployY + 15
+  // v2：上阵卡片移到开战按钮上方，Y 由 Game.lobbyDeployCardY 统一计算（不再硬编码 155）
+  const SLOT_Y = Game.lobbyDeployCardY(700);
   const frames = ctxProxy.__calls.filter(
     (c) => c.op === 'strokeRect' && c.args[1] === SLOT_Y && c.args[3] === 65
   );

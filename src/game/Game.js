@@ -41,7 +41,7 @@ import { syncRaces, RACES } from '../data/races.js';
 import ConfigLoader from '../data/ConfigLoader.js';
 import { pixelToHex, hexToPixel } from '../world/HexMath.js';
 import { setBattleRng, createRng } from '../utils/rng.js';
-import { rowItemWidth, rowStartX, techNodeWidth, techTabWidth, ladderCombo, ladderBarWidth, LAYOUT_DESIGN_MAX, LAYOUT_MIN } from '../system/Layout.js';
+import { rowItemWidth, rowStartX, techNodeWidth, techTabWidth, ladderBarWidth, LAYOUT_DESIGN_MAX, LAYOUT_MIN, lobbyFuncBtnRect as layoutFuncBtnRect, lobbyFuncBottom, lobbyPlayerCardRect as layoutPlayerCardRect, lobbySeasonTop, lobbySeasonCombo as layoutSeasonCombo, lobbyDeployCardY as layoutDeployCardY, lobbyDeployLabelY as layoutDeployLabelY } from '../system/Layout.js';
 
 // 局外养成系统
 import ProfileManager from '../meta/ProfileManager.js';
@@ -776,17 +776,16 @@ export class Game {
   // 运行时命中框全部通过 lobbyRowItemW / lobbyNavItemW / battleBtnW 三个静态方法取值
   static get LOBBY_LAYOUT() {
     return {
-      // 功能按钮行（战力下方）：分享 / 任务 / 成就 [+通行证]
-      // P25：battlePass=false 时 count=3，lobbyRowItemW 用 lobbyRowItemWByCount(3, screenW)
-      //   battlePass=true 时 count=4，lobbyRowItemW 用 lobbyRowItemWByCount(4, screenW)
-      //   默认值仍为 4（向后兼容无 features 配置的旧版本）
+      // 功能按钮：分享 / 任务 / 成就 [+通行证]（v2 已改为右上角纵向排列，实际 rect 走 lobbyFuncBtnRect）
+      // 下方 w/h/gap/y 仅保留作「设计稿参考值 / 宽度公式兼容」（test-device-matrix 依赖 lobbyRowItemWByCount 公式）
+      // P25：battlePass=false 时 count=3，battlePass=true 时 count=4，默认 4 向后兼容
       row: { w: LAYOUT_DESIGN_MAX.lobbyRow, h: 40, gap: 8, y: 262, count: 4 },
       // 开战按钮（底部导航上方）：使用当前布阵直接开战
       battle: { w: LAYOUT_DESIGN_MAX.battle, h: 58, yOffset: 150 },
       // 底部导航：商店 / 招募 / 布阵 / 科技 / 排行榜
       nav: { w: LAYOUT_DESIGN_MAX.lobbyNav, h: 56, gap: 6, count: 5 },
-      // 天梯区：大段位徽章 + 奖杯文字 + 段位进度条（进度条在徽章下方，P20）
-      // badgeR/barH 仅作设计稿参考值；运行时坐标由 Layout.ladderCombo 统一计算
+      // 天梯区：大段位徽章 + 奖杯文字 + 段位进度条（v2 已移到屏幕中偏上）
+      // badgeR/barH 仅作设计稿参考值；运行时坐标由 Layout.lobbySeasonCombo 统一计算
       ladder: { barH: 20, barGap: 34, badgeR: 54 },
     };
   }
@@ -826,10 +825,12 @@ export class Game {
     return (screenW - (count * w + (count - 1) * r.gap)) / 2 + i * (w + r.gap);
   }
 
-  /** 段位组合单元布局（大徽章 + 奖杯文字 + 进度条，整体居中，P20） */
+  /** 段位组合单元布局（大徽章 + 奖杯文字 + 进度条，v2：赛季区中偏上） */
   static lobbyLadderCombo(screenH) {
-    const row = Game.LOBBY_LAYOUT.row;
-    return ladderCombo(row.y + row.h, Game.lobbyBattleY(screenH));
+    // v2：徽章区移到屏幕中偏上，锚点由 Layout.lobbySeasonCombo 统一计算；
+    // 传 400 作为参考屏宽（徽章为水平居中，宽高不含屏宽相关项，仅 count 影响顶部区块高度）。
+    const screenW = this.screenWidth || 400;
+    return layoutSeasonCombo(screenW, screenH, Game.lobbyRowCount());
   }
 
   /** 段位进度条 Y（徽章下方，跟随徽章） */
@@ -851,6 +852,22 @@ export class Game {
   static lobbyLadderBarWidth(screenW) {
     return ladderBarWidth(screenW);
   }
+
+  // === 大厅 v2 布局（与 RenderSystem.drawLobby 共用 Layout.js 单一真相源）===
+  /** 功能按钮纵列：第 i 个按钮 rect（分享/任务/成就/通行证，右上角纵向） */
+  static lobbyFuncBtnRect(i, screenW) {
+    return layoutFuncBtnRect(i, screenW, Game.lobbyRowCount());
+  }
+  /** 功能按钮纵列底部 Y */
+  static lobbyFuncBottom() { return lobbyFuncBottom(Game.lobbyRowCount()); }
+  /** 左上玩家信息卡 rect（账号 + 战力合并） */
+  static lobbyPlayerCardRect(screenW) { return layoutPlayerCardRect(screenW); }
+  /** 赛季区顶部 Y（徽章上界锚点，替代旧 rowBottom=302） */
+  static lobbySeasonTop(screenW) { return lobbySeasonTop(screenW, Game.lobbyRowCount()); }
+  /** 上阵卡片顶 Y（开战按钮上方） */
+  static lobbyDeployCardY(screenH) { return layoutDeployCardY(screenH); }
+  /** 上阵兵种标签 Y */
+  static lobbyDeployLabelY(screenH) { return layoutDeployLabelY(screenH); }
 
   /** 底部导航 Y */
   static lobbyNavY(screenH) { return screenH - 72; }
@@ -1759,48 +1776,45 @@ export class Game {
       return;
     }
 
-    // 玩家账号信息行（副标题下方，👤 昵称 · 账号尾号）→ 打开账号面板（登录/切换/注销）
-    if (screenY >= 112 && screenY <= 138 &&
-        screenX >= w / 2 - 140 && screenX <= w / 2 + 140) {
+    // 左上玩家信息卡（账号 + 战力合并框）→ 打开账号面板（登录/切换/注销）
+    const card = Game.lobbyPlayerCardRect(w);
+    if (screenX >= card.x && screenX <= card.x + card.w &&
+        screenY >= card.y && screenY <= card.y + card.h) {
       this.audioManager.playButtonClick();
       this._accountOpen = true;
       return;
     }
 
-    // === 功能按钮行（战力下方）：分享 / 任务 / 成就 [+通行证] ===
+    // === 功能按钮纵列（右上角）：分享 / 任务 / 成就 [+通行证] ===
     // P25 features 开关：battlePass=false 时该入口完全折叠（count 4→3，i 最大 2）
-    const _features2 = ConfigLoader.getSafe('game')?.features || {};
-    const _battlePassEnabled2 = _features2.battlePass !== false;
-    const row = Game.LOBBY_LAYOUT.row;
+    const _battlePassEnabled2 = ConfigLoader.getSafe('game')?.features?.battlePass !== false;
     const _rowCount = _battlePassEnabled2 ? 4 : 3;
-    const _rowItemW = Game.lobbyRowItemWByCount(_rowCount, w);
-    if (screenY >= row.y && screenY <= row.y + row.h) {
-      for (let i = 0; i < _rowCount; i++) {
-        const x = Game.lobbyRowXByCount(i, _rowCount, w);
-        if (screenX >= x && screenX <= x + _rowItemW) {
-          this.audioManager.playButtonClick();
-          if (i === 0) {
-            // 分享 + 每日奖励
-            const result = ShareSystem.shareAndReward({ scene: 'lobby' });
-            this.showToast(result.message, 2.5);
-          } else if (i === 1) {
-            // 任务
-            this.metaScrollY = 0;
-            QuestSystem.checkDailyRefresh();
-            QuestSystem.checkWeeklyRefresh();
-            QuestSystem.checkSeasonRefresh();
-            this.screenState = 'quest';
-          } else if (i === 2) {
-            // 成就
-            this.metaScrollY = 0;
-            this.screenState = 'achievement';
-          } else if (i === 3 && _battlePassEnabled2) {
-            // 通行证（仅 battlePass=true 时才会进入此分支）
-            this.metaScrollY = 0;
-            this.screenState = 'battle_pass';
-          }
-          return;
+    for (let i = 0; i < _rowCount; i++) {
+      const btn = Game.lobbyFuncBtnRect(i, w);
+      if (screenX >= btn.x && screenX <= btn.x + btn.w &&
+          screenY >= btn.y && screenY <= btn.y + btn.h) {
+        this.audioManager.playButtonClick();
+        if (i === 0) {
+          // 分享 + 每日奖励
+          const result = ShareSystem.shareAndReward({ scene: 'lobby' });
+          this.showToast(result.message, 2.5);
+        } else if (i === 1) {
+          // 任务
+          this.metaScrollY = 0;
+          QuestSystem.checkDailyRefresh();
+          QuestSystem.checkWeeklyRefresh();
+          QuestSystem.checkSeasonRefresh();
+          this.screenState = 'quest';
+        } else if (i === 2) {
+          // 成就
+          this.metaScrollY = 0;
+          this.screenState = 'achievement';
+        } else if (i === 3 && _battlePassEnabled2) {
+          // 通行证（仅 battlePass=true 时才会进入此分支）
+          this.metaScrollY = 0;
+          this.screenState = 'battle_pass';
         }
+        return;
       }
     }
 

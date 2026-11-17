@@ -133,14 +133,13 @@ game.inputSystem.onDeployTouchEnd(56, H - 33, false); // 返回按钮（左下�
 game.render(0.016);
 check('布阵返回 → lobby', game.screenState === 'lobby', `实际=${game.screenState}`);
 
-// ========== T3 功能行 3 项（任务/成就/通行证，跳过分享） ==========
-console.log('\n[3] 功能行遍历');
-const rowY = Game.LOBBY_LAYOUT.row.y;
+// ========== T3 功能按钮 3 项（任务/成就/通行证，跳过分享）v2 纵向排列 ==========
+console.log('\n[3] 功能按钮遍历');
 const rowStates = ['quest', 'achievement', 'battle_pass'];
 for (let i = 1; i <= 3; i++) {
-  const x = Game.lobbyRowX(i, W);
-  click(game, x + Game.LOBBY_LAYOUT.row.w / 2, rowY + 20);
-  check(`功能行[${i}] → ${rowStates[i - 1]}`, game.screenState === rowStates[i - 1], `实际=${game.screenState}`);
+  const btn = Game.lobbyFuncBtnRect(i, W);
+  click(game, btn.x + btn.w / 2, btn.y + btn.h / 2);
+  check(`功能按钮[${i}] → ${rowStates[i - 1]}`, game.screenState === rowStates[i - 1], `实际=${game.screenState}`);
   await renderFrame(game, rowStates[i - 1]);
   game.screenState = 'lobby';
   await renderFrame(game, 'lobby→back');

@@ -208,18 +208,17 @@ console.log('=== 测试7: 大厅成就入口 → 成就界面 → 返回 ===');
   const profile = ProfileManager.get();
   profile.tutorialStep = 4;
   ProfileManager.save();
-  // 功能行第3个按钮(i=2)=成就
-  const row = Game.LOBBY_LAYOUT.row;
-  const x = Game.lobbyRowX(2, 400);
+  // v2：功能按钮纵向排列，第3个按钮(i=2)=成就
+  const ach = Game.lobbyFuncBtnRect(2, 400);
   game.screenState = 'lobby';
-  game.handleLobbyClick(x + row.w / 2, row.y + row.h / 2);
+  game.handleLobbyClick(ach.x + ach.w / 2, ach.y + ach.h / 2);
   assert(game.screenState === 'achievement', `点击成就入口进入成就界面 (实际 ${game.screenState})`);
   // 返回大厅
   game.handleAchievementClick(56, game.screenHeight - 33);
   assert(game.screenState === 'lobby', '成就界面返回按钮回大厅');
   // 任务入口仍正常
-  const x1 = Game.lobbyRowX(1, 400);
-  game.handleLobbyClick(x1 + row.w / 2, row.y + row.h / 2);
+  const quest = Game.lobbyFuncBtnRect(1, 400);
+  game.handleLobbyClick(quest.x + quest.w / 2, quest.y + quest.h / 2);
   assert(game.screenState === 'quest', `点击任务入口进入任务界面 (实际 ${game.screenState})`);
   game.handleQuestClick(56, game.screenHeight - 33);
   assert(game.screenState === 'lobby', '任务界面返回按钮回大厅');

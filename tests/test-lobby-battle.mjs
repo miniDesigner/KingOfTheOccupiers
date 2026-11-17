@@ -73,22 +73,24 @@ const h = game.screenHeight;
 const ROW = Game.LOBBY_LAYOUT.row;
 const NAV = Game.LOBBY_LAYOUT.nav;
 const BL = Game.LOBBY_LAYOUT.battle;
-const rowX = (i) => Game.lobbyRowX(i, w);
+// v2：功能按钮改为右上角纵向排列，点击坐标走 lobbyFuncBtnRect 中心
+const funcBtn = (i) => Game.lobbyFuncBtnRect(i, w);
 const navX = (i) => Game.lobbyNavX(i, w);
 const navY = Game.lobbyNavY(h);
 const blY = Game.lobbyBattleY(h);
 
 console.log('=== 测试1: 布局常量与坐标计算 ===');
 {
-  // P25 features 折叠：功能行实际 count 跟 features.battlePass 联动（4=含通行证/3=折叠）
+  // v2：功能按钮纵向排列在右上角，单按钮宽由 lobbyFuncBtnW 决定；count 随 features.battlePass 联动
   const _rowCount = Game.lobbyRowCount();
-  const _rowItemW = Game.lobbyRowItemW(w);
-  const _rowTotal = _rowCount * _rowItemW + (_rowCount - 1) * ROW.gap;
-  assert(_rowTotal <= w, `功能行总宽 ${_rowTotal}（count=${_rowCount}）不超屏宽 ${w}`);
+  const _f0 = funcBtn(0);
+  const _fLast = funcBtn(_rowCount - 1);
+  assert(_f0.x >= 0 && _f0.x + _f0.w <= w, `功能按钮列在屏内（x=${_f0.x}, w=${_f0.w}）`);
+  assert(_fLast.y + _fLast.h < blY, `功能按钮列底部(${_fLast.y + _fLast.h})不压开战按钮(${blY})`);
+  const card = Game.lobbyPlayerCardRect(w);
+  assert(card.x + card.w < _f0.x, `玩家卡右缘(${card.x + card.w})不与功能按钮列(${_f0.x})重叠`);
   const navTotal = NAV.count * NAV.w + (NAV.count - 1) * NAV.gap;
   assert(navTotal <= w, `导航总宽 ${navTotal} 不超屏宽 ${w}`);
-  assert(rowX(0) >= 0 && rowX(_rowCount - 1) + _rowItemW <= w,
-    `功能行按钮均在屏内（count=${_rowCount}）`);
   assert(blY + BL.h <= navY, `开战按钮(${blY}-${blY + BL.h})不与导航栏(${navY})重叠`);
 }
 
@@ -143,20 +145,20 @@ console.log('=== 测试4: 布阵界面原「开始对战」位置点击 → 不�
 console.log('=== 测试5: 功能按钮行：分享/任务/成就（通行证已折叠） ===');
 {
   game.screenState = 'lobby';
-  game.handleLobbyClick(rowX(0) + ROW.w / 2, ROW.y + ROW.h / 2);
+  game.handleLobbyClick(funcBtn(0).x + funcBtn(0).w / 2, funcBtn(0).y + funcBtn(0).h / 2);
   // 分享在原 i=0 位置（未变）
   assert(/分享/.test(game._toastText || '') || game.screenState === 'lobby',
     '分享按钮 → 触发分享并停留大厅');
   game.screenState = 'lobby';
-  game.handleLobbyClick(rowX(1) + ROW.w / 2, ROW.y + ROW.h / 2);
+  game.handleLobbyClick(funcBtn(1).x + funcBtn(1).w / 2, funcBtn(1).y + funcBtn(1).h / 2);
   assert(game.screenState === 'quest', '任务按钮(i=1) → 任务面板');
   game.screenState = 'lobby';
-  game.handleLobbyClick(rowX(2) + ROW.w / 2, ROW.y + ROW.h / 2);
+  game.handleLobbyClick(funcBtn(2).x + funcBtn(2).w / 2, funcBtn(2).y + funcBtn(2).h / 2);
   assert(game.screenState === 'achievement', '成就按钮(i=2) → 成就面板');
   game.screenState = 'lobby';
   // P25 features 折叠：battlePass=false 时功能行 count=3，原 i=3 通行证位已折叠，
   //   rowX(3) 算出来是 count=4 的位置（在 320 屏宽上会越出屏外），点击空白区不切屏
-  game.handleLobbyClick(rowX(3) + ROW.w / 2, ROW.y + ROW.h / 2);
+  game.handleLobbyClick(funcBtn(3).x + funcBtn(3).w / 2, funcBtn(3).y + funcBtn(3).h / 2);
   assert(game.screenState === 'lobby', '原通行证位(i=3)已折叠，点击越界空白不切屏');
 }
 
@@ -164,7 +166,7 @@ console.log('=== 测试6: 功能按钮行：分享（单独验证：留在大厅
 {
   global.__lastShare = null;
   game.screenState = 'lobby';
-  game.handleLobbyClick(rowX(0) + ROW.w / 2, ROW.y + ROW.h / 2);
+  game.handleLobbyClick(funcBtn(0).x + funcBtn(0).w / 2, funcBtn(0).y + funcBtn(0).h / 2);
   assert(game.screenState === 'lobby', '分享后停留在大厅');
   assert(global.__lastShare && global.__lastShare.title, 'wx.shareAppMessage 被调用');
 }
@@ -219,11 +221,12 @@ console.log('=== 测试9: P25 features.battlePass=true 展开路径（验证可�
   _origConfig.features = { ..._origConfig.features, battlePass: true };
   // 重新计算布局（静态方法走 features）
   const _newCount = Game.lobbyRowCount();
-  assert(_newCount === 4, `battlePass=true 时功能行 count=${_newCount}（期望 4）`);
-  // 折叠态下的 rowX(2) 与展开态 rowX(2) 不应重叠/跨越中心
-  const _xFold2 = Game.lobbyRowXByCount(2, 3, w);
-  const _xOpen2 = Game.lobbyRowXByCount(2, 4, w);
-  assert(Math.abs(_xFold2 - _xOpen2) > 1, `折叠/展开下 rowX(2) 偏移 ${Math.abs(_xFold2 - _xOpen2)}>1px（布局自动重排）`);
+  assert(_newCount === 4, `battlePass=true 时功能按钮数 count=${_newCount}（期望 4）`);
+  // v2 纵向：展开态应多出第 4 个按钮（通行证），且纵向 Y 递增、不压开战按钮
+  const _btn3 = Game.lobbyFuncBtnRect(3, w);
+  const _btn2 = Game.lobbyFuncBtnRect(2, w);
+  assert(_btn3.y > _btn2.y && _btn3.y + _btn3.h < blY,
+    `展开态第 4 按钮纵向排列(${_btn2.y}→${_btn3.y})且不压开战(${blY})`);
   // 恢复配置
   _origConfig.features = { ..._origConfig.features, battlePass: false };
 }
