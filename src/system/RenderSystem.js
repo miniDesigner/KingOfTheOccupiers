@@ -174,6 +174,34 @@ export class RenderSystem {
     }
   }
 
+  /**
+   * 悬浮卡片：建立 UI 与背景的前后景层次。
+   * 先在卡片矩形外扩一圈画柔和深色投影（不裁切、不落进 clip），
+   * 再交给 _drawCard 用原有几何/fillRect 画卡片本体——测试断言与点击命中均不变。
+   * 仅用于大厅；老基础库无 arcTo/fill 时静默跳过投影，视觉降级但不报错。
+   */
+  _drawRaisedCard(rect, drawFn) {
+    const { ctx } = this;
+    const r = Math.max(2, Math.min(rect.r === undefined ? 8 : rect.r, rect.w / 2, rect.h / 2));
+    if (typeof ctx.arcTo === 'function' && typeof ctx.fill === 'function') {
+      ctx.save();
+      // 卡通厚底：卡片正下方偏移 4px 的海军蓝实心层，形成清晰的前后景分离（Q版卡片常用）
+      ctx.fillStyle = 'rgba(22, 48, 79, 0.22)';
+      this._roundRectPath(rect.x, rect.y + 4, rect.w, rect.h, r);
+      ctx.fill();
+      // 柔和阴影：让厚底与卡片本体之间的过渡更自然
+      ctx.shadowColor = 'rgba(20, 48, 84, 0.26)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      this._roundRectPath(rect.x, rect.y, rect.w, rect.h, r);
+      ctx.fill();
+      ctx.restore();
+    }
+    this._drawCard(rect, drawFn);
+  }
+
   // ===================== 美术资源层接入 =====================
   // 铁律：只负责「画」，不改任何 Layout 几何 / 点击命中；
   //       图片未加载、加载失败、环境不支持时一律返回 false，调用方继续程序化绘制。
@@ -2787,8 +2815,8 @@ export class RenderSystem {
     const ladderTier = gameState.ladderTier;
 
     // 设置按钮（右上角小图标，打开设置窗口）——晴空乐园圆角卡片
-    this._drawCard({ x: w - 45, y: 10, w: 35, h: 30, r: 9 }, () => {
-      ctx.fillStyle = UI_THEME.cloud;
+    this._drawRaisedCard({ x: w - 45, y: 10, w: 35, h: 30, r: 9 }, () => {
+      ctx.fillStyle = UI_THEME.white;
       ctx.fillRect(w - 45, 10, 35, 30);
       ctx.strokeStyle = UI_THEME.navySoft;
       ctx.lineWidth = 1;
@@ -2850,9 +2878,9 @@ export class RenderSystem {
         const u = (unitId && deployables?.units?.[unitId]) ? deployables.units[unitId] : null;
         // P35：品质外框（与布阵界面同色系；品质不再用星星表达）
         const q = u?.quality || 1;
-        // 卡片背景（晴空乐园云白卡片；品质描边保留功能色语义与 strokeRect 调用）
-        this._drawCard({ x: actualX, y, w: slotW, h: 65, r: 8 }, () => {
-          ctx.fillStyle = UI_THEME.cloud;
+        // 卡片背景（晴空乐园实心白卡 + 悬浮厚底；品质描边保留功能色语义与 strokeRect 调用）
+        this._drawRaisedCard({ x: actualX, y, w: slotW, h: 65, r: 8 }, () => {
+          ctx.fillStyle = UI_THEME.white;
           ctx.fillRect(actualX, y, slotW, 65);
           ctx.strokeStyle = u ? (QUALITY_COLORS[q - 1] || '#9ca3af') : '#475569';
           ctx.lineWidth = q >= 4 ? 2 : 1.5;
@@ -2927,8 +2955,8 @@ export class RenderSystem {
       const x = rowX(i);
       const rect = { x, y: ROW.y, w: ROW.w, h: ROW.h };
       this._drawPressed(rect, gameState.press, () => {
-        this._drawCard(rect, () => {
-          ctx.fillStyle = UI_THEME.cloud;
+        this._drawRaisedCard(rect, () => {
+          ctx.fillStyle = UI_THEME.white;
           ctx.fillRect(x, ROW.y, ROW.w, ROW.h);
           ctx.strokeStyle = rowDefs[i].border;
           ctx.lineWidth = 2;
@@ -2967,6 +2995,23 @@ export class RenderSystem {
       ctx.beginPath();
       ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
       ctx.fill();
+      // 徽章底盘投影：海军蓝厚底 + 半透明白盘 + 柔和阴影，与地图背景分离
+      if (typeof ctx.arc === 'function' && typeof ctx.fill === 'function') {
+        ctx.save();
+        ctx.fillStyle = 'rgba(22, 48, 79, 0.22)';
+        ctx.beginPath();
+        ctx.arc(cx, badgeY + 4, badgeR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowColor = 'rgba(20, 48, 84, 0.24)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath();
+        ctx.arc(cx, badgeY, badgeR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
       // 主环
       ctx.strokeStyle = ladderTier.color;
       ctx.lineWidth = 1.5;
@@ -3005,9 +3050,9 @@ export class RenderSystem {
       const barX = (w - barW) / 2;
       const barY = ladderComboLayout.barY;
       const barH = ladderComboLayout.barH;
-      // 底色（云白轨道，圆角）
-      this._drawCard({ x: barX, y: barY, w: barW, h: barH, r: 6 }, () => {
-        ctx.fillStyle = UI_THEME.cloudDim;
+      // 底色（实心白轨道 + 悬浮厚底，圆角）
+      this._drawRaisedCard({ x: barX, y: barY, w: barW, h: barH, r: 6 }, () => {
+        ctx.fillStyle = UI_THEME.white;
         ctx.fillRect(barX, barY, barW, barH);
         ctx.strokeStyle = ladderTier.color;
         ctx.lineWidth = 1;
@@ -3053,6 +3098,21 @@ export class RenderSystem {
       // 外发光：活力橙呼吸光晕
       ctx.fillStyle = `rgba(255, 140, 66, ${blPulse * 0.35})`;
       ctx.fillRect(bx - 3, blY - 3, BL.w + 6, BL.h + 6);
+      // CTA 悬浮投影：海军蓝厚底 + 柔和阴影，让开战按钮从背景中跳出
+      if (typeof ctx.arcTo === 'function' && typeof ctx.fill === 'function') {
+        ctx.save();
+        ctx.fillStyle = 'rgba(22, 48, 79, 0.28)';
+        this._roundRectPath(bx, blY + 5, BL.w, BL.h, 12);
+        ctx.fill();
+        ctx.shadowColor = 'rgba(20, 48, 84, 0.3)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+        ctx.fillStyle = UI_THEME.orange;
+        this._roundRectPath(bx, blY, BL.w, BL.h, 12);
+        ctx.fill();
+        ctx.restore();
+      }
       // 主体：明黄→活力橙暖色 CTA（晴空乐园强调色），圆角
       const bGrad = ctx.createLinearGradient(0, blY, 0, blY + BL.h);
       bGrad.addColorStop(0, UI_THEME.gold);
@@ -3100,8 +3160,8 @@ export class RenderSystem {
       const x = navStartX + i * (btnW + navGap);
       const rect = { x, y: navY, w: btnW, h: btnH };
       this._drawPressed(rect, gameState.press, () => {
-        this._drawCard(rect, () => {
-          ctx.fillStyle = UI_THEME.cloud;
+        this._drawRaisedCard(rect, () => {
+          ctx.fillStyle = UI_THEME.white;
           ctx.fillRect(x, navY, btnW, btnH);
           ctx.strokeStyle = navDefs[i].border;
           ctx.lineWidth = 2;
