@@ -38,6 +38,8 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 const NAV_ART_KEYS = ['shop', 'gacha', 'deploy', 'tech', 'rank', 'rank'];
 // 大厅右上角功能按钮：分享 / 任务 / 成就 / 通行证（正式图标素材 icons/lobby_*.png）
 const FUNC_ART_KEYS = ['share', 'quest', 'achieve', 'medal'];
+// 右上角功能按钮文字（与图标一一对应，去掉底框后由图标+文字直接表达入口语义）
+const FUNC_LABELS = ['分享', '任务', '成就', '通行证'];
 // 商店分类：金币 / 钻石 / 兵种 / 道具 / 广告（P37 免费分页）
 const SHOP_CAT_KEYS = ['coin', 'gem', 'unit', 'item', 'ad'];
 
@@ -3011,35 +3013,31 @@ export class RenderSystem {
       const rect = lobbyFuncBtnRect(i, w, _rowCount);
       const { x, y, w: bw, h: bh } = rect;
       this._drawPressed(rect, gameState.press, () => {
-        this._drawRaisedCard(rect, () => {
-          ctx.fillStyle = tintOf(rowDefs[i].border, 0.13);
-          ctx.fillRect(x, y, bw, bh);
-          ctx.strokeStyle = rowDefs[i].border;
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, bw, bh);
-        });
-        // 图标按钮：白色实心圆盘垫底 + 正式素材居中，避免浅色图标与淡色卡片融为一体
-        const iconCx = x + bw / 2, iconCy = y + bh / 2;
-        if (typeof ctx.arc === 'function') {
-          ctx.save();
-          ctx.fillStyle = UI_THEME.white;
-          ctx.beginPath();
-          ctx.arc(iconCx, iconCy + 1, 15, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = tintOf(rowDefs[i].border, 0.5);
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          ctx.restore();
-        }
+        // 无底框：只在图标（正式素材）下方带一行入口文字，靠素材自带底色+文字描边与地图分层
+        const iconCx = x + bw / 2, iconCy = y + 15;
         // 图标族：share/quest/achieve 走 lobby_；通行证走 medal_
         if (i === 3) {
           this._artIcon(ART_PREFIXES.medal, 'gold', iconCx, iconCy, 26, 1);
         } else {
           this._artIcon(ART_PREFIXES.lobby, FUNC_ART_KEYS[i], iconCx, iconCy, 28, 1);
         }
-        // 分享未领取：右上角红点提示（保留奖励可领的信息，不占据图标主体）
+        // 图标下文字：无任何底框/胶囊，靠白色描边保证在天空背景上清晰可读
+        const label = FUNC_LABELS[i];
+        const labelY = y + bh - 8;
+        ctx.font = `bold ${adaptiveFontSize(10, w)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (typeof ctx.strokeText === 'function') {
+          ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+          ctx.lineWidth = 3;
+          ctx.lineJoin = 'round';
+          ctx.strokeText(label, iconCx, labelY);
+        }
+        ctx.fillStyle = rowDefs[i].border;
+        ctx.fillText(label, iconCx, labelY);
+        // 分享未领取：右上角红点提示
         if (i === 0 && !shareClaimed) {
-          const bx = x + bw - 7, by = y + 7;
+          const bx = x + bw - 7, by = y + 5;
           ctx.fillStyle = '#ef4444';
           ctx.beginPath();
           ctx.arc(bx, by, 5, 0, Math.PI * 2);
@@ -3058,49 +3056,25 @@ export class RenderSystem {
       ? lobbySeasonCombo(w, h, _rowCount)
       : null;
     if (ladderTier) {
-      const { badgeR, badgeY, infoY } = ladderComboLayout;
+      const { badgeR, badgeY } = ladderComboLayout;
       const cx = w / 2;
-      const canArc = typeof ctx.arc === 'function' && typeof ctx.fill === 'function';
-      // 徽章底盘投影：海军蓝厚底 + 段位色淡底盘 + 柔和阴影，让图片化徽章浮起
-      if (canArc) {
-        ctx.save();
-        ctx.fillStyle = 'rgba(22, 48, 79, 0.22)';
-        ctx.beginPath();
-        ctx.arc(cx, badgeY + 5, badgeR * 0.92, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowColor = 'rgba(20, 48, 84, 0.28)';
-        ctx.shadowBlur = 14;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 3;
-        ctx.fillStyle = tintOf(ladderTier.color, 0.34);
-        ctx.beginPath();
-        ctx.arc(cx, badgeY, badgeR * 0.92, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-      // 图片化段位徽章：rank_01~08 正式素材（自带金属盾牌+宝石+月桂叶，含质感）
-      // index 0-7 对应 rank_01(青铜)~rank_08(王者)，尺寸略小于底盘直径，露出段位色光晕
+      // 3D 城堡图标：从 rank_01~08 正式素材取图（无圆形底盘，图片自带立体城堡造型）
+      // index 0-7 对应 rank_01(青铜)~rank_08(王者)，放大到 badgeR*2.3 让城堡成为赛季区主视觉
       const rankKey = String((ladderTier.index || 0) + 1).padStart(2, '0');
-      const badgeImgSize = Math.round(badgeR * 1.85);
+      const badgeImgSize = Math.round(badgeR * 2.3);
       this._artIcon(ART_PREFIXES.rank, rankKey, cx, badgeY - 2, badgeImgSize, 1);
-      // 段位名：金色缎带胶囊（图片下沿，随半径缩放）
-      const labelSize = Math.max(8, Math.round(badgeR * 0.24));
+      // 段位名：金色缎带胶囊（城堡下沿，随半径缩放）
+      const labelSize = Math.max(10, Math.round(badgeR * 0.28));
       const nameLabel = ladderTier.label;
-      const nameY = badgeY + badgeR - Math.round(badgeR * 0.3);
+      const nameY = badgeY + badgeR - Math.round(badgeR * 0.18);
       this._drawTextPillBg(cx, nameY, nameLabel,
-        `bold ${labelSize}px sans-serif`, { padX: 10, padY: 2, tint: UI_THEME.gold, border: UI_THEME.goldDeep });
+        `bold ${labelSize}px sans-serif`, { padX: 12, padY: 3, tint: UI_THEME.gold, border: UI_THEME.goldDeep });
       ctx.fillStyle = ladderTier.color;
       ctx.font = `bold ${labelSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(nameLabel, cx, nameY);
-      // 当前杯数（infoY 由 combo 统一计算）——只显示当前杯数，不再显示最高纪录
-      const infoSize = Math.max(10, Math.round(badgeR * 0.22));
-      const infoText = `🏆 ${profile ? (profile.trophies || 0) : 0} 杯`;
-      ctx.font = `${infoSize}px sans-serif`;
-      this._drawTextPillBg(cx, infoY, infoText, `${infoSize}px sans-serif`, { padX: 10, tint: ladderTier.color, border: ladderTier.color });
-      ctx.fillStyle = UI_THEME.navy;
-      ctx.fillText(infoText, cx, infoY);
+      // 杯数信息栏已移除：当前杯数直接显示在进度条内，避免重复与画面拥挤
     }
 
     // === 段位进度条（徽章下方，居中，长度自适应，P20） ===
@@ -3130,12 +3104,14 @@ export class RenderSystem {
       } else {
         ctx.fillText('巅峰王者 · 已满级', w / 2, barY + barH / 2);
       }
-      // 进度条下方小字：仅赛季倒计时（最高杯/下一级段位信息已移除）
-      ctx.font = '9px sans-serif';
+      // 进度条下文字：统一用段位色表达「赛季剩余时间」（与进度条同一色彩语义）
+      // 与进度条的间距由 Layout.LADDER_SEASON_TEXT_OFFSET 统一控制（已拉开，不再贴条）
+      ctx.font = '10px sans-serif';
       const seasonText = `赛季剩 ${gameState.seasonDaysLeft || 7} 天`;
-      this._drawTextPillBg(w / 2, barY + barH + 7, seasonText, '9px sans-serif', { padX: 8, padY: 3, tint: UI_THEME.skyDeep, border: 'rgba(62,159,209,0.42)' });
-      ctx.fillStyle = UI_THEME.navy;
-      ctx.fillText(seasonText, w / 2, barY + barH + 7);
+      this._drawTextPillBg(w / 2, ladderComboLayout.seasonY, seasonText, '10px sans-serif',
+        { padX: 10, padY: 3, tint: ladderTier.color, border: ladderTier.color });
+      ctx.fillStyle = ladderTier.color;
+      ctx.fillText(seasonText, w / 2, ladderComboLayout.seasonY);
     }
 
     // === 联网入口已合并到「开战」按钮（异步 PvP 匹配 + 10s 降级 AI），不再单独渲染联机/加入按钮 ===
@@ -3219,12 +3195,16 @@ export class RenderSystem {
         this._drawRaisedCard(rect, () => {
           ctx.fillStyle = tintOf(navDefs[i].border, 0.13);
           ctx.fillRect(x, navY, btnW, btnH);
+          // 边框更清晰：3px 实线主题色 + 1px 白色内描边，双线强化按钮轮廓
           ctx.strokeStyle = navDefs[i].border;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 3;
           ctx.strokeRect(x, navY, btnW, btnH);
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + 2.5, navY + 2.5, btnW - 5, btnH - 5);
         });
-        // 图标按钮：正式导航图标放大居中偏上，取代原 emoji 前缀；文字去掉表情只留纯文字
-        this._artIcon(ART_PREFIXES.nav, NAV_ART_KEYS[i], x + btnW / 2, navY + 19, 28, 1);
+        // 图标加大：正式导航图标 34px（原 28px），上移到 navY+20，文字仍在底部
+        this._artIcon(ART_PREFIXES.nav, NAV_ART_KEYS[i], x + btnW / 2, navY + 20, 34, 1);
 
         ctx.fillStyle = UI_THEME.ink;
         // P10 字号按屏宽自适应：iPhone 5 (320) 10→8；iPhone 6 (375) 维持 10

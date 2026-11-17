@@ -68,7 +68,7 @@ export const LAYOUT_DESIGN_MAX = {
   battle: 220,     // 开战按钮
   techNode: 150,   // 科技树节点（设计稿原值，2 列）
   techTab: 80,     // 科技树分支标签
-  ladderBadgeR: 54, // 大厅段位大徽章半径（设计稿原值）
+  ladderBadgeR: 62, // 大厅段位城堡图标半径（设计稿原值；放大后的 3D 城堡）
 };
 
 /**
@@ -129,13 +129,7 @@ export function techTabWidth(screenW) {
 }
 
 /**
- * 大厅段位徽章下方一行文字（🏆 奖杯 · 最高）预留高度
- * 徽章整体 = 2R（圆） + 本文字区，必须 ≤ 功能行底到进度条顶的可用高度，否则中小屏会压到进度条/开战按钮
- */
-export const LADDER_BADGE_TEXT_H = 14;
-
-/**
- * 大厅段位进度条高度（徽章下方，居中表现）
+ * 大厅段位进度条高度（城堡下方，居中表现）
  */
 export const LADDER_BAR_H = 20;
 
@@ -149,37 +143,38 @@ export const LADDER_BAR_MAX_W = 300;
  */
 export const LADDER_BAR_MIN_W = 200;
 
-// 段位组合单元垂直间距（徽章 → 奖杯文字 → 进度条 → 进度条下方文字 → 开战按钮）
-const LADDER_PAD_TOP = 6;          // 组合单元顶 → 徽章顶
-const LADDER_GAP_BADGE_INFO = 6;   // 徽章底 → 奖杯文字顶
-const LADDER_GAP_INFO_BAR = 8;     // 奖杯文字底 → 进度条顶
-const LADDER_PAD_BOTTOM = 18;      // 进度条底 → 组合单元底（开战按钮上方留白，含进度条下方文字「还差X杯·赛季剩X天」）
+// 段位组合单元垂直间距（城堡 → 进度条 → 赛季文字 → 上阵区）
+const LADDER_PAD_TOP = 6;          // 组合单元顶 → 城堡顶
+const LADDER_GAP_CASTLE_BAR = 12;  // 城堡底 → 进度条顶（原杯数信息栏已移除，间距保留给城堡呼吸）
+const LADDER_PAD_BOTTOM = 28;      // 进度条底 → 组合单元底（赛季文字中心在 barY+barH+16，含胶囊内边距）
+
+/** 赛季剩余时间文字中心相对进度条底的偏移（拉开间距，避免文字贴条） */
+export const LADDER_SEASON_TEXT_OFFSET = 16;
 
 /**
- * 大厅段位组合单元布局：大徽章 + 奖杯文字 + 段位进度条，整体在 [rowBottom, battleTop] 内垂直居中
+ * 大厅段位组合单元布局：大城堡图标 + 段位进度条 + 赛季剩余时间，整体在 [rowBottom, battleTop] 内垂直居中
  *
- * P20：进度条由「开战按钮上方」移到「段位徽章下方」，与徽章组成一个视觉单元；
- * 进度条文字居中、长度随屏宽自适应（见 ladderBarWidth）。
+ * v3：图标改为 3D 城堡图片（无圆形底盘），移除图标下方杯数文字栏；
+ *     赛季剩余时间与进度条间距由 LADDER_SEASON_TEXT_OFFSET 统一控制。
  *
- * @param {number} rowBottom  功能按钮行底部 Y
+ * @param {number} rowBottom  顶部区块底 Y
  * @param {number} battleTop  开战按钮顶部 Y
- * @returns {{badgeR:number, badgeY:number, infoY:number, barY:number, barH:number}}
- *          badgeR 徽章半径 / badgeY 圆心 Y / infoY 奖杯文字中心 Y / barY 进度条顶 Y / barH 进度条高
+ * @returns {{badgeR:number, badgeY:number, barY:number, barH:number, seasonY:number}}
  */
 export function ladderCombo(rowBottom, battleTop) {
   const avail = battleTop - rowBottom;
-  // 徽章直径之外的所有固定开销
-  const fixed = LADDER_PAD_TOP + LADDER_BADGE_TEXT_H + LADDER_GAP_BADGE_INFO + LADDER_GAP_INFO_BAR + LADDER_BAR_H + LADDER_PAD_BOTTOM;
+  // 城堡直径之外的所有固定开销
+  const fixed = LADDER_PAD_TOP + LADDER_GAP_CASTLE_BAR + LADDER_BAR_H + LADDER_PAD_BOTTOM;
   const badgeR = Math.max(
     LAYOUT_MIN.ladderBadgeR,
     Math.min(LAYOUT_DESIGN_MAX.ladderBadgeR, Math.floor((avail - fixed) / 2))
   );
-  const unitH = LADDER_PAD_TOP + 2 * badgeR + LADDER_GAP_BADGE_INFO + LADDER_BADGE_TEXT_H + LADDER_GAP_INFO_BAR + LADDER_BAR_H + LADDER_PAD_BOTTOM;
+  const unitH = LADDER_PAD_TOP + 2 * badgeR + LADDER_GAP_CASTLE_BAR + LADDER_BAR_H + LADDER_PAD_BOTTOM;
   const unitTop = rowBottom + (avail - unitH) / 2;
   const badgeY = unitTop + LADDER_PAD_TOP + badgeR;
-  const infoY = badgeY + badgeR + LADDER_GAP_BADGE_INFO + LADDER_BADGE_TEXT_H / 2;
-  const barY = infoY + LADDER_BADGE_TEXT_H / 2 + LADDER_GAP_INFO_BAR;
-  return { badgeR, badgeY, infoY, barY, barH: LADDER_BAR_H };
+  const barY = badgeY + badgeR + LADDER_GAP_CASTLE_BAR;
+  const seasonY = barY + LADDER_BAR_H + LADDER_SEASON_TEXT_OFFSET;
+  return { badgeR, badgeY, barY, barH: LADDER_BAR_H, seasonY };
 }
 
 /**
