@@ -49,7 +49,8 @@ const QUALITY_COLORS = ['#9ca3af', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '
 const UI_THEME = {
   sky: '#5BB8E8', skyLight: '#7FC9EC', skyDeep: '#3E9FD1',
   cloud: '#EAF8FF', cloudDim: '#D6EEFB',
-  navy: '#2B4A6F', navySoft: '#4A6B8F',
+  // 文字三级色阶：ink 正文主色（最深）/ navy 次级 / navySoft 弱提示（仅深色底备用）
+  ink: '#16304F', navy: '#2B4A6F', navySoft: '#4A6B8F',
   gold: '#FFD23F', goldDeep: '#E8A838',
   orange: '#FF8C42', orangeDeep: '#E8722F',
   white: '#FFFFFF', green: '#168A4A',
@@ -2777,7 +2778,9 @@ export class RenderSystem {
     grad.addColorStop(1, UI_THEME.cloud);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
-    this._drawBackdrop(this.screenWidth, this.screenHeight);
+    // 晴空乐园：大厅背景已是正式素材，以不透明绘制，避免 artAlpha=0.5 让城堡发白；
+    // 全局 artAlpha 保持 0.5，只影响其他界面仍未替换的占位图水印。
+    this._drawBackdrop(w, h, 1);
 
     // 顶部资源栏（含天梯奖杯，颜色随段位）：P16 统一改由 _drawResourceBar 在左上角绘制，
     // 大厅不再居中式横排。ladderTier 仍在此读取，供下方徽章/进度条使用。
@@ -2802,16 +2805,16 @@ export class RenderSystem {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     if (typeof ctx.strokeText === 'function') {
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 5;
       ctx.strokeStyle = UI_THEME.cloud;
       ctx.strokeText('占地之王', w / 2, 85);
     }
-    ctx.fillStyle = UI_THEME.navy;
+    ctx.fillStyle = UI_THEME.ink;
     ctx.fillText('占地之王', w / 2, 85);
     this._artIcon(ART_PREFIXES.lobby, 'share', w - 24, 85, 20, 0.6);
 
     // 副标题（天梯进度条已移至开战按钮上方，大段位徽章在功能行下方）
-    ctx.fillStyle = UI_THEME.navySoft;
+    ctx.fillStyle = UI_THEME.navy;
     ctx.font = '12px sans-serif';
     ctx.fillText('— 主城大厅 —', w / 2, 108);
 
@@ -2821,7 +2824,7 @@ export class RenderSystem {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = '11px sans-serif';
-      ctx.fillStyle = UI_THEME.navy;
+      ctx.fillStyle = UI_THEME.ink;
       let label = '👤 ' + ai.nickname;
       if (ai.uid) label += '  ·  账号尾号 ' + ai.uid.slice(-6);
       ctx.fillText(label + ' ▾', w / 2, 124);
@@ -2829,8 +2832,8 @@ export class RenderSystem {
 
     // 上阵兵种预览
     const deployY = 140;
-    ctx.fillStyle = UI_THEME.navy;
-    ctx.font = '11px sans-serif';
+    ctx.fillStyle = UI_THEME.ink;
+    ctx.font = 'bold 11px sans-serif';
     ctx.fillText('上阵兵种', w / 2, deployY);
 
     if (profile && profile.deployment) {
@@ -2864,15 +2867,15 @@ export class RenderSystem {
           ctx.textAlign = 'center';
           ctx.fillText(u.icon || '?', actualX + slotW / 2, y + 22);
           // 名称
-          ctx.fillStyle = UI_THEME.navy;
-          ctx.font = '10px sans-serif';
+          ctx.fillStyle = UI_THEME.ink;
+          ctx.font = 'bold 10px sans-serif';
           ctx.fillText(u.name, actualX + slotW / 2, y + 42);
           // 等级
-          ctx.fillStyle = UI_THEME.navySoft;
+          ctx.fillStyle = UI_THEME.navy;
           ctx.font = '9px sans-serif';
           ctx.fillText('Lv.' + (collected?.level || 1), actualX + slotW / 2, y + 56);
         } else {
-          ctx.fillStyle = UI_THEME.navySoft;
+          ctx.fillStyle = UI_THEME.navy;
           ctx.font = '16px sans-serif';
           ctx.fillText('—', actualX + slotW / 2, y + 35);
         }
@@ -2888,7 +2891,7 @@ export class RenderSystem {
       ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.orangeDeep;
       ctx.fillText(`⚔ 战力 ${pi.total}`, w / 2, 233);
       ctx.font = '10px sans-serif';
-      ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navySoft;
+      ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navy;
       const status = pi.ratio >= 1
         ? `↑ 已达本段位参考战力 ${pi.reference}`
         : `本段位参考战力 ${pi.reference}（还差 ${Math.max(0, Math.round(pi.reference - pi.total))}）`;
@@ -2907,11 +2910,12 @@ export class RenderSystem {
       h: 40, gap: 8, y: 262, count: _rowCount,
     };
     const rowX = (i) => (w - (ROW.count * ROW.w + (ROW.count - 1) * ROW.gap)) / 2 + i * (ROW.w + ROW.gap);
+    // 晴空乐园统一卡片式功能行：云白底 + 主题色描边 + 深色字，与槽位/底栏同风格
     const rowDefs = [
-      { bg: UI_THEME.skyDeep,     border: UI_THEME.sky },       // 分享（天蓝）
-      { bg: UI_THEME.orangeDeep,  border: UI_THEME.orange },    // 任务（活力橙）
-      { bg: UI_THEME.goldDeep,    border: UI_THEME.gold },      // 成就（明黄）
-      { bg: UI_THEME.navySoft,    border: UI_THEME.skyLight },  // 通行证（海军蓝）
+      { border: UI_THEME.skyDeep },     // 分享（天蓝）
+      { border: UI_THEME.orangeDeep },  // 任务（活力橙）
+      { border: UI_THEME.goldDeep },    // 成就（明黄）
+      { border: UI_THEME.navy },        // 通行证（海军蓝）
     ];
 
     // 分享按钮（带每日奖励副标题）
@@ -2924,19 +2928,19 @@ export class RenderSystem {
       const rect = { x, y: ROW.y, w: ROW.w, h: ROW.h };
       this._drawPressed(rect, gameState.press, () => {
         this._drawCard(rect, () => {
-          ctx.fillStyle = rowDefs[i].bg;
+          ctx.fillStyle = UI_THEME.cloud;
           ctx.fillRect(x, ROW.y, ROW.w, ROW.h);
           ctx.strokeStyle = rowDefs[i].border;
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 2;
           ctx.strokeRect(x, ROW.y, ROW.w, ROW.h);
         });
-        ctx.fillStyle = UI_THEME.white;
+        ctx.fillStyle = UI_THEME.ink;
         if (i === 0) {
           ctx.font = `${rowFontSize}px sans-serif`;
           ctx.fillText(shareClaimed ? '📤 分享' : '📤 分享🎁', x + ROW.w / 2, ROW.y + (shareClaimed ? ROW.h / 2 : ROW.h / 2 - 7));
           if (!shareClaimed) {
-            ctx.fillStyle = UI_THEME.gold;
-            ctx.font = `${rowSubFontSize}px sans-serif`;
+            ctx.fillStyle = UI_THEME.orangeDeep;
+            ctx.font = `bold ${rowSubFontSize}px sans-serif`;
             ctx.fillText('金币200✨5', x + ROW.w / 2, ROW.y + ROW.h / 2 + 10);
           }
         } else {
@@ -2977,7 +2981,7 @@ export class RenderSystem {
       ctx.fill();
       // 大段位图标（字号随半径缩放）
       const iconSize = Math.round(badgeR * 0.85);
-      ctx.fillStyle = UI_THEME.navy;
+      ctx.fillStyle = UI_THEME.ink;
       ctx.font = `${iconSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -3016,7 +3020,7 @@ export class RenderSystem {
       ctx.font = 'bold 11px sans-serif';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
-      ctx.fillStyle = UI_THEME.navy;
+      ctx.fillStyle = UI_THEME.ink;
       if (ladderProgress.next) {
         ctx.fillText(`🏆 ${ladderProgress.cur} → ${ladderProgress.next.icon}${ladderProgress.next.label}`, w / 2, barY + barH / 2);
       } else {
@@ -3082,13 +3086,14 @@ export class RenderSystem {
     const navStartX = (w - totalW) / 2;
 
     const navLabels = ['🏪 商店', '🎲 招募', '⚔ 布阵', '🔬 科技', '🏅 排行榜'];
-    // 各按钮主题色（背景 + 边框）——晴空乐园同一暖冷配比；文字统一云白
+    // 晴空乐园统一卡片式 Tab：云白底 + 主题色描边 + 深色字，5 个视觉一致不再花杂。
+    // 不再叠加 btn_normal 明黄贴图底框——它与程序化底色叠色导致浑浊方块观感。
     const navDefs = [
-      { bg: UI_THEME.goldDeep,   border: UI_THEME.gold },      // 商店（明黄）
-      { bg: UI_THEME.skyDeep,    border: UI_THEME.skyLight },  // 招募（天蓝）
-      { bg: UI_THEME.orangeDeep, border: UI_THEME.orange },    // 布阵（活力橙）
-      { bg: UI_THEME.navySoft,   border: UI_THEME.sky },       // 科技（海军蓝）
-      { bg: UI_THEME.sky,        border: UI_THEME.cloud },     // 排行榜（亮天蓝）
+      { border: UI_THEME.goldDeep },    // 商店（明黄）
+      { border: UI_THEME.skyDeep },     // 招募（天蓝）
+      { border: UI_THEME.orangeDeep },  // 布阵（活力橙）
+      { border: UI_THEME.navy },        // 科技（海军蓝）
+      { border: UI_THEME.sky },         // 排行榜（亮天蓝）
     ];
 
     for (let i = 0; i < navCount; i++) {
@@ -3096,22 +3101,21 @@ export class RenderSystem {
       const rect = { x, y: navY, w: btnW, h: btnH };
       this._drawPressed(rect, gameState.press, () => {
         this._drawCard(rect, () => {
-          ctx.fillStyle = navDefs[i].bg;
+          ctx.fillStyle = UI_THEME.cloud;
           ctx.fillRect(x, navY, btnW, btnH);
           ctx.strokeStyle = navDefs[i].border;
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 2;
           ctx.strokeRect(x, navY, btnW, btnH);
         });
-        // 美术资源层：按钮底图 + 导航图标（贴在左上角小图标位，不压按钮文字）
-        this._artButton(x, navY, btnW, btnH, 'normal');
-        this._artIcon(ART_PREFIXES.nav, NAV_ART_KEYS[i], x + 13, navY + 11, 13, 0.5);
+        // 美术资源层：仅叠导航图标（居中偏上），不再叠 btn_normal 贴图底框
+        this._artIcon(ART_PREFIXES.nav, NAV_ART_KEYS[i], x + btnW / 2, navY + 20, 22, 0.9);
 
-        ctx.fillStyle = UI_THEME.white;
+        ctx.fillStyle = UI_THEME.ink;
         // P10 字号按屏宽自适应：iPhone 5 (320) 10→8；iPhone 6 (375) 维持 10
-        ctx.font = `${adaptiveFontSize(10, w)}px sans-serif`;
+        ctx.font = `bold ${adaptiveFontSize(10, w)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(navLabels[i], x + btnW / 2, navY + btnH / 2);
+        ctx.fillText(navLabels[i], x + btnW / 2, navY + btnH - 13);
 
         // 可升级角标（右上角红点 + 数量）：布阵=可升级兵种数 / 科技=可升级节点数
         // 来源 Game 注入的 lobbyBadges（仅大厅态有值），口径与实际升级校验一致

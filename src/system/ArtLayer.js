@@ -157,24 +157,13 @@ const BIND_LOADING = [
   ['fonts/title.ttf', 'icon', 0.18],
 ];
 
-const BIND_LOBBY = [
-  ['icons/lobby_achieve', 'icon', 0.26],
-  ['icons/lobby_battle', 'icon', 0.26],
-  ['icons/lobby_pass', 'icon', 0.26],
-  ['icons/lobby_quest', 'icon', 0.26],
-  ['ui/avatar_frame', 'icon', 0.22],
-  ['ui/badge', 'icon', 0.22],
-  ['ui/bar_cap', 'row', 0.16],
-  ['ui/bar_highlight', 'row', 0.16],
-  ['ui/btn_hover', 'icon', 0.22],
-  ['ui/fade_bottom', 'full', 0.1],
-  ['ui/fade_top', 'full', 0.1],
-  ['ui/list_item', 'row', 0.16],
-  ['ui/loading_tip', 'icon', 0.22],
-  ['ui/tab_indicator', 'row', 0.16],
-  ['ui/tab_normal', 'row', 0.16],
-  ['ui/tab_selected', 'row', 0.16],
-];
+// 大厅装饰层已清空（2026-11 视觉重构）：
+// 这些条目是占位图审查期「让零引用素材露个脸」的临时机制——把 tab/list_item/bar_cap
+// 等 UI 控件贴图以 row 布局拉伸到画面中部（y≈0.30h+i*50），形成 5 条白色横条；
+// fade_top/fade_bottom 全屏叠加又蒙了一层白；icon 类条目在左上角堆出色块。
+// 如今这些素材已正式化并在 RenderSystem.drawLobby 的真实位置正确绘制，装饰层叠加
+// 纯属重复且破坏画面，故移除。其他界面（战斗/商店/结算等）的装饰层保持不变。
+const BIND_LOBBY = [];
 
 const BIND_PLAYING = [
   ['effects/ambient', 'center', 0.18],

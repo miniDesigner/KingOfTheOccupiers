@@ -103,6 +103,8 @@
 
 - **改主调时**：同步改 `UI_THEME` 与本文 2.1，一处即可覆盖所有程序化 UI；不要在每个 `draw*` 方法里散落硬编码色值。
 - **圆角卡片**：用 `RenderSystem._drawCard()` 做圆角裁剪，内部照常 `fillRect`/`strokeRect`，不改几何与点击命中；老基础库无 `clip`/`arcTo` 时自动降级为直角。
+- **文字色阶**：浅色背景上统一用三级深色字——正文 `UI_THEME.ink` `#16304F`（最深）/ 次级 `navy` `#2B4A6F` / 弱提示 `navySoft` `#4A6B8F`（仅深色底备用）。禁止在云白卡片上用白字或浅金字（对比不足）。
+- **Tab / 功能行样式**：统一「云白底 + 主题色 2px 描边 + 彩色图标 + 深色字」的卡片式，5 个视觉一致；不再叠 `btn_normal` 明黄贴图底框（与程序化底色叠色会浑浊）。开战按钮作为唯一彩色渐变 CTA 保留。
 - **功能色隔离**：`QUALITY_COLORS`（品质）与段位色是独立体系，不随 `UI_THEME` 改变，见 2.4。
 
 ---
@@ -175,8 +177,9 @@ node tools/gen-art-manifest.mjs   # 自动重写 src/system/ArtManifest.js
 |---|---|---|
 | `features.usePlaceholderArt` | `true` | 保持 `true`（只是历史命名，已指向真实素材层） |
 | `features.artAlpha` | `0.5` | 整批到位后改 `1`（占位图带水印，半透明以免遮挡） |
-| `features.artExtendedLayer` | `true` | 保持 |
+| `features.artExtendedLayer` | `true` | 保持（大厅 `BIND_LOBBY` 已清空，其余界面装饰层仍生效）|
 | `features.artLayerAlpha` | `1` | 若装饰层显花，可下调 |
+| 大厅背景 alpha | `1` | `drawLobby` 显式传 `1`，正式背景不透明；全局 `artAlpha=0.5` 只影响其他界面未替换的占位图 |
 
 > 单张正式素材（如幼龙）想单独不透明显示，可在渲染调用点单独传 `alpha`，**不必**全局改 `artAlpha`——否则其余仍是半透明占位图，会露出水印。
 > 改完 `config/*.json` **必须**跑 `node tools/build-config-js.mjs`，否则真机读旧配置（浏览器预览读 JSON 不受影响，最易漏）。
@@ -204,6 +207,7 @@ node tools/gen-art-manifest.mjs   # 自动重写 src/system/ArtManifest.js
 | 白色立绘 vs 亮背景 | 单位白高光（如幼龙肚皮）可能糊在亮色背景里 | 彩色主背景与内容承载区分离：卡片区用云白 `#EAF8FF` 半透底 |
 | 包体膨胀 | `assets/` 约 12MB，微信主包有上限 | 正式化前定分包或远程加载，见 6.4 |
 | 装饰层脚本路径 | 192 张装饰层生成脚本依赖旧 `/workspace` 分析 JSON | 本地跑不通；新增装饰 key 时需适配路径 |
+| 装饰层重复叠加 | 审查期把 tab/list_item/bar_cap/fade 等控件贴图当装饰拉伸到画面中部，形成白色横条 + 白蒙 | 大厅 `BIND_LOBBY` 已清空（素材正式化后属重复叠加）；其他界面装饰层保留 |
 
 ---
 
@@ -228,3 +232,4 @@ node tools/gen-art-manifest.mjs   # 自动重写 src/system/ArtManifest.js
 | 2026-11-17 | 初版：以幼龙 `unit_38.png` 为基准建立风格规范，含量化色板、造型/材质语言、品类规格、替换验收标准 |
 | 2026-11-17 | 修订：明确「风格 ≠ 配色」——风格语言以幼龙为标杆，界面/整体主调独立定为「晴空乐园」（天蓝 `#5BB8E8`/云白 `#EAF8FF`/明黄 `#FFD23F`/活力橙 `#FF8C42`，粉色换活力橙去少女感）；幼龙蓝紫降级为角色级色板案例，场景色与验收标准同步更新 |
 | 2026-11-17 | 新增 2.6：程序化 UI 配色真相源 `RenderSystem.UI_THEME`；大厅写死的暗色方块（单位槽/功能行/开战/底栏/顶栏/徽章/进度条）统一改为晴空乐园圆角卡片，消除方块观感 |
+| 2026-11-17 | 视觉重构二轮：清空大厅装饰层 `BIND_LOBBY`（消除中部 5 条白色横条 + 白蒙 + 占位叠加），大厅背景改不透明；新增文字三级色阶 `ink/navy/navySoft`；功能行与底部 Tab 改统一云白卡片 + 主题描边 + 深色字，移除 `btn_normal` 重复底框 |
