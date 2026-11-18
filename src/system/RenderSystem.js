@@ -2897,17 +2897,16 @@ export class RenderSystem {
     // 晴空乐园：大厅背景已是正式素材，以不透明绘制，避免 artAlpha=0.5 让城堡发白；
     // 全局 artAlpha 保持 0.5，只影响其他界面仍未替换的占位图水印。
     this._drawBackdrop(w, h, 1);
-    // 背景已重绘为「三层景深」低明度底（夜空 L17 → 地平线 L78 → 地面 L19），
-    // 整体压暗的 20% 黑遮罩会把唯一的地平线层次压掉、并拉大与前景的明度断层，
-    // 故改为「上下暗角」：只在顶部资源栏 / 底部导航两端轻微压暗保证文字可读，
-    // 中间城堡区完全通透，保留远山与地平线的景深过渡。
+    // 背景按「大厅可见窗口」重排为层叠景深：夜空 0-20% → 远山 24-52% → 雾面平台 52-62%
+    // → 云海+暖光 62-75% → 暗底 75-100%。其中 75% 以下全部被上阵卡/开战按钮/导航遮挡，
+    // 故暗角只需收在两端：顶部压资源栏、底部压导航，58%-78% 的云海与暖光必须完全通透。
     const vignette = ctx.createLinearGradient(0, 0, 0, h);
     vignette.addColorStop(0, 'rgba(8, 12, 24, 0.34)');
     vignette.addColorStop(0.14, 'rgba(8, 12, 24, 0.15)');
     vignette.addColorStop(0.45, 'rgba(8, 12, 24, 0)');
-    vignette.addColorStop(0.7, 'rgba(8, 12, 24, 0)');
-    vignette.addColorStop(0.86, 'rgba(8, 12, 24, 0.18)');
-    vignette.addColorStop(1, 'rgba(8, 12, 24, 0.36)');
+    vignette.addColorStop(0.8, 'rgba(8, 12, 24, 0)');
+    vignette.addColorStop(0.9, 'rgba(8, 12, 24, 0.16)');
+    vignette.addColorStop(1, 'rgba(8, 12, 24, 0.34)');
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, w, h);
 
