@@ -1,6 +1,6 @@
 /**
  * 自动生成，请勿手改。由 tools/gen-art-manifest.mjs 从
- * assets/PLACEHOLDER-MANIFEST.csv 生成，共 331 条。
+ * assets/PLACEHOLDER-MANIFEST.csv 生成，共 339 条。
  *
  * 全量贴图映射：ART_ENTRIES / ART_INDEX / ART_BY_CODE / ART_BINDINGS
  * 界面背景：SCREEN_BG / RESULT_BG / LOADING_BG
@@ -8,7 +8,7 @@
  *
  * 占位图被正式素材「同名覆盖」时本文件无需改动。
  */
-export const ART_COUNT = 331;
+export const ART_COUNT = 339;
 
 export const ART_ENTRIES = [
   {
@@ -2289,6 +2289,126 @@ export const ART_ENTRIES = [
     "slice": 0,
     "quality": "#ef4444",
     "source": "占地之王-逐界面素材清单.csv",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_01",
+    "code": "RG-02",
+    "path": "icons/rank_badge_01.png",
+    "label": "段位徽章 青铜",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#b45309",
+    "source": "段位城堡正面徽章裁切",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_02",
+    "code": "RG-02",
+    "path": "icons/rank_badge_02.png",
+    "label": "段位徽章 白银",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#94a3b8",
+    "source": "段位城堡正面徽章裁切",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_03",
+    "code": "RG-02",
+    "path": "icons/rank_badge_03.png",
+    "label": "段位徽章 黄金",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#fbbf24",
+    "source": "段位城堡正面徽章裁切",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_04",
+    "code": "RG-02",
+    "path": "icons/rank_badge_04.png",
+    "label": "段位徽章 铂金",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#22d3ee",
+    "source": "段位城堡正面徽章裁切",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_05",
+    "code": "RG-02",
+    "path": "icons/rank_badge_05.png",
+    "label": "段位徽章 钻石",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#60a5fa",
+    "source": "段位城堡正面徽章裁切",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_06",
+    "code": "RG-02",
+    "path": "icons/rank_badge_06.png",
+    "label": "段位徽章 大师",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#a78bfa",
+    "source": "段位城堡正面徽章裁切",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_07",
+    "code": "RG-02",
+    "path": "icons/rank_badge_07.png",
+    "label": "段位徽章 宗师",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#fb923c",
+    "source": "段位城堡正面徽章裁切",
+    "note": ""
+  },
+  {
+    "key": "icons/rank_badge_08",
+    "code": "RG-02",
+    "path": "icons/rank_badge_08.png",
+    "label": "段位徽章 王者",
+    "cat": "icons",
+    "w": 128,
+    "h": 128,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "#ef4444",
+    "source": "段位城堡正面徽章裁切",
     "note": ""
   },
   {
@@ -5229,6 +5349,16 @@ export const ART_BY_CODE = {
     "icons/rank_07",
     "icons/rank_08"
   ],
+  "RG-02": [
+    "icons/rank_badge_01",
+    "icons/rank_badge_02",
+    "icons/rank_badge_03",
+    "icons/rank_badge_04",
+    "icons/rank_badge_05",
+    "icons/rank_badge_06",
+    "icons/rank_badge_07",
+    "icons/rank_badge_08"
+  ],
   "UI-01": [
     "ui/btn_normal",
     "ui/btn_hover",
@@ -5836,6 +5966,19 @@ export const ART_BINDINGS = {
       "icons/rank_08"
     ]
   },
+  "RG-02": {
+    "hook": "icon",
+    "keys": [
+      "icons/rank_badge_01",
+      "icons/rank_badge_02",
+      "icons/rank_badge_03",
+      "icons/rank_badge_04",
+      "icons/rank_badge_05",
+      "icons/rank_badge_06",
+      "icons/rank_badge_07",
+      "icons/rank_badge_08"
+    ]
+  },
   "TL-01": {
     "hook": "tile",
     "keys": [
@@ -6282,6 +6425,7 @@ export const ART_PREFIXES = {
   "race": "units/race_",
   "currency": "icons/currency_",
   "rank": "icons/rank_",
+  "rankBadge": "icons/rank_badge_",
   "qualityMark": "icons/quality_mark_q",
   "nav": "icons/nav_",
   "lobby": "icons/lobby_",

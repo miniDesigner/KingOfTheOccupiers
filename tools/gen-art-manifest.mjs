@@ -152,6 +152,7 @@ const ART_PREFIXES = {
   race: 'units/race_',
   currency: 'icons/currency_',
   rank: 'icons/rank_',
+  rankBadge: 'icons/rank_badge_',
   qualityMark: 'icons/quality_mark_q',
   nav: 'icons/nav_',
   lobby: 'icons/lobby_',

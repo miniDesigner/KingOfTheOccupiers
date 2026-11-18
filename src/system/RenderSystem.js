@@ -3113,7 +3113,7 @@ export class RenderSystem {
     const ladderComboLayout = (ladderTier || ladderProgress)
       ? lobbySeasonCombo(w, h, _rowCount)
       : null;
-    // rank_01~08 素材 key：大城堡与进度条左侧小图标共用；index 0-7 对应青铜~王者
+    // rank_01~08 素材 key：大城堡单独使用；进度条左侧改用从城堡正面裁出的 rank_badge_01~08
     const rankKey = ladderTier
       ? String((ladderTier.index || 0) + 1).padStart(2, '0')
       : '01';
@@ -3124,7 +3124,7 @@ export class RenderSystem {
       // index 0-7 对应 rank_01(青铜)~rank_08(王者)
       const badgeImgSize = Math.round(badgeR * 2);
       this._artIcon(ART_PREFIXES.rank, rankKey, cx, badgeY, badgeImgSize, 1);
-      // 段位名胶囊已移除：段位由进度条左侧的小 rank 图标 + 进度条颜色表达
+      // 段位名胶囊已移除：段位由进度条左侧的段位徽章 + 进度条颜色表达
     }
 
     // === 段位进度条（徽章下方，居中，长度自适应，P20） ===
@@ -3133,7 +3133,7 @@ export class RenderSystem {
       const barX = (w - barW) / 2;
       const barY = ladderComboLayout.barY;
       const barH = ladderComboLayout.barH;
-      // 当前段位小图标：紧贴进度条左侧，与进度条同色语义表达当前段位
+      // 当前段位徽章（城堡正面徽章裁切）：紧贴进度条左侧，与进度条同色语义表达当前段位
       const miniSize = Math.round(barH * 1.7);
       const miniCy = barY + barH / 2;
       const miniCx = barX - miniSize / 2 - 5;
@@ -3146,7 +3146,7 @@ export class RenderSystem {
         ctx.fill();
         ctx.restore();
       }
-      this._artIcon(ART_PREFIXES.rank, rankKey, miniCx, miniCy, miniSize, 1);
+      this._artIcon(ART_PREFIXES.rankBadge, rankKey, miniCx, miniCy, miniSize, 1);
       // 底色（实心白轨道 + 悬浮厚底，圆角）
       this._drawRaisedCard({ x: barX, y: barY, w: barW, h: barH, r: 6 }, () => {
         ctx.fillStyle = tintOf(ladderTier.color, 0.14);
