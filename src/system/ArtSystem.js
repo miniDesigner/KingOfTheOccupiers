@@ -24,6 +24,7 @@ class ArtSystemClass {
     this.total = ART_COUNT;
     this.enabled = true;
     this.alpha = 0.5;              // 占位底图叠加不透明度
+    this.subpageBgAlpha = 0;       // 子界面底图叠加不透明度（占位期 0，正式素材到位后设 1）
     this._cache = new Map();       // key -> { status, img }
     this._stats = {
       requested: 0, ready: 0, failed: 0,
@@ -59,6 +60,7 @@ class ArtSystemClass {
 
   setEnabled(v) { this.enabled = !!v; }
   setAlpha(v) { this.alpha = Math.max(0, Math.min(1, Number(v) || 0)); }
+  setSubpageBgAlpha(v) { this.subpageBgAlpha = Math.max(0, Math.min(1, Number(v) || 0)); }
 
   /** 该编号下的全部 key（供按状态/序号批量取图） */
   byCode(code) { return ART_BY_CODE[code] || []; }

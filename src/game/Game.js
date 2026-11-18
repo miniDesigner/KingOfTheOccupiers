@@ -2633,6 +2633,7 @@ export class Game {
       ArtSystem.setEnabled(_on);
       this.renderSystem._artEnabled = _on;
       if (typeof _feat.artAlpha === 'number') ArtSystem.setAlpha(_feat.artAlpha);
+      if (typeof _feat.artSubpageBgAlpha === 'number') ArtSystem.setSubpageBgAlpha(_feat.artSubpageBgAlpha);
 
       // 全量装饰层：把上一轮审查判定「有素材但零引用」的 192 张占位图按界面语义叠加。
       // 开关与叠加系数均由 features 注入渲染层；false 时完全退回首轮 139 张核心贴图。
