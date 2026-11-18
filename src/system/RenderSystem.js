@@ -2905,6 +2905,7 @@ export class RenderSystem {
     // v2 布局：已移除「占地之王」大标题与副标题，页面重心交给玩家卡 / 赛季区 / 上阵区。
 
     // === 左上角玩家信息卡（账号 + 战力合并，点击打开账号面板）===
+    // 宽度 = 屏宽 1/3，内容紧凑分四行：昵称 / 尾号 / 战力 / 参考战力
     const card = lobbyPlayerCardRect(w);
     this._drawRaisedCard(card, () => {
       ctx.fillStyle = tintOf(UI_THEME.navy, 0.11);
@@ -2915,28 +2916,41 @@ export class RenderSystem {
     });
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    // 账号行（昵称 + 尾号 + ▾）
+    const cardPadX = 7;
+    const cardInnerW = card.w - cardPadX * 2;
+    // 窄卡文本截断：真实浏览器按 measureText 实际宽度裁；测试 stub 返回固定宽度则原样保留
+    const fitCardText = (text, maxW) => {
+      if (typeof ctx.measureText !== 'function' || ctx.measureText(text).width <= maxW) return text;
+      let out = text;
+      while (out.length > 1 && ctx.measureText(out + '…').width > maxW) out = out.slice(0, -1);
+      return out + '…';
+    };
+    // 行1：昵称（截断）+ ▾
     if (gameState.accountInfo) {
       const ai = gameState.accountInfo;
-      let label = '👤 ' + ai.nickname;
-      if (ai.uid) label += ' · 账号尾号 ' + ai.uid.slice(-6);
       ctx.font = 'bold 11px sans-serif';
       ctx.fillStyle = UI_THEME.ink;
-      ctx.fillText(label + ' ▾', card.x + 10, card.y + 16);
+      ctx.fillText(fitCardText('👤 ' + ai.nickname + ' ▾', cardInnerW), card.x + cardPadX, card.y + 14);
+      // 行2：账号尾号（uid 后 6 位）
+      if (ai.uid) {
+        ctx.font = '9px sans-serif';
+        ctx.fillStyle = tintOf(UI_THEME.ink, 0.35);
+        ctx.fillText(fitCardText('账号尾号 ' + ai.uid.slice(-6), cardInnerW), card.x + cardPadX, card.y + 33);
+      }
     }
-    // 战力两行（总战力 + 参考战力，颜色随达成状态）
+    // 行3：战力（醒目大字）+ 行4：参考战力状态（颜色随达成状态）
     if (gameState.powerInfo) {
       const pi = gameState.powerInfo;
       const powerTone = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.orangeDeep;
       ctx.font = 'bold 15px sans-serif';
       ctx.fillStyle = powerTone;
-      ctx.fillText(`⚔ 战力 ${pi.total}`, card.x + 10, card.y + 40);
-      ctx.font = '10px sans-serif';
+      ctx.fillText(fitCardText(`⚔ 战力 ${pi.total}`, cardInnerW), card.x + cardPadX, card.y + 54);
+      ctx.font = '8px sans-serif';
       ctx.fillStyle = pi.ratio >= 1 ? UI_THEME.green : UI_THEME.navy;
       const status = pi.ratio >= 1
-        ? `↑ 已达本段位参考战力 ${pi.reference}`
+        ? `已达本段位参考战力 ${pi.reference}`
         : `本段位参考战力 ${pi.reference}（差 ${Math.max(0, Math.round(pi.reference - pi.total))}）`;
-      ctx.fillText(status, card.x + 10, card.y + card.h - 14);
+      ctx.fillText(fitCardText(status, cardInnerW), card.x + cardPadX, card.y + 72);
     }
 
     // === 上阵兵种预览：标题 + 兵种牌统一放进一个有质感的框，兵种牌本身不再画独立底框 ===
@@ -3013,13 +3027,15 @@ export class RenderSystem {
       const rect = lobbyFuncBtnRect(i, w, _rowCount);
       const { x, y, w: bw, h: bh } = rect;
       this._drawPressed(rect, gameState.press, () => {
-        // 无底框：只在图标（正式素材）下方带一行入口文字，靠素材自带底色+文字描边与地图分层
-        const iconCx = x + bw / 2, iconCy = y + 15;
+        // 无底框：正方形按钮里图标居中偏上 + 下方一行入口文字，靠素材自带底色+文字描边与地图分层
+        const iconCx = x + bw / 2;
+        const iconCy = y + bh * 0.42;
+        const iconSize = Math.round(bh * 0.62);
         // 图标族：share/quest/achieve 走 lobby_；通行证走 medal_
         if (i === 3) {
-          this._artIcon(ART_PREFIXES.medal, 'gold', iconCx, iconCy, 26, 1);
+          this._artIcon(ART_PREFIXES.medal, 'gold', iconCx, iconCy, iconSize, 1);
         } else {
-          this._artIcon(ART_PREFIXES.lobby, FUNC_ART_KEYS[i], iconCx, iconCy, 28, 1);
+          this._artIcon(ART_PREFIXES.lobby, FUNC_ART_KEYS[i], iconCx, iconCy, iconSize, 1);
         }
         // 图标下文字：无任何底框/胶囊，靠白色描边保证在天空背景上清晰可读
         const label = FUNC_LABELS[i];
@@ -3058,15 +3074,15 @@ export class RenderSystem {
     if (ladderTier) {
       const { badgeR, badgeY } = ladderComboLayout;
       const cx = w / 2;
-      // 3D 城堡图标：从 rank_01~08 正式素材取图（无圆形底盘，图片自带立体城堡造型）
+      // 3D 城堡图标：从 rank_01~08 正式素材取图（石质城堡 + 圆形底盘 + 正面段位徽章，斜45°）
       // index 0-7 对应 rank_01(青铜)~rank_08(王者)，放大到 badgeR*2.3 让城堡成为赛季区主视觉
       const rankKey = String((ladderTier.index || 0) + 1).padStart(2, '0');
       const badgeImgSize = Math.round(badgeR * 2.3);
       this._artIcon(ART_PREFIXES.rank, rankKey, cx, badgeY - 2, badgeImgSize, 1);
-      // 段位名：金色缎带胶囊（城堡下沿，随半径缩放）
+      // 段位名：金色缎带胶囊，放在城堡城门处（图标中心略上），避免遮住下方代表段位的徽章
       const labelSize = Math.max(10, Math.round(badgeR * 0.28));
       const nameLabel = ladderTier.label;
-      const nameY = badgeY + badgeR - Math.round(badgeR * 0.18);
+      const nameY = badgeY - Math.round(badgeR * 0.05);
       this._drawTextPillBg(cx, nameY, nameLabel,
         `bold ${labelSize}px sans-serif`, { padX: 12, padY: 3, tint: UI_THEME.gold, border: UI_THEME.goldDeep });
       ctx.fillStyle = ladderTier.color;

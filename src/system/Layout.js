@@ -191,37 +191,38 @@ export function ladderBarWidth(screenW) {
 // 顶部资源栏 0~50：货币簇（左）+ 设置按钮（右），由 _drawResourceBar 独立绘制，不在此列。
 
 const LOBBY_TOP_Y = 54;          // 资源栏（0~50）下方起始
-const FUNC_BTN_H = 36;           // 功能按钮纵列：单按钮高
+const FUNC_BTN_H = 48;           // 功能按钮纵列：正方形边长基准（390 宽屏满值）
+const FUNC_BTN_MIN_H = 38;       // 窄屏下限：320 屏缩小以免挤压赛季区
 const FUNC_BTN_GAP = 6;          // 功能按钮纵列：间距
 const PLAYER_CARD_H = 82;        // 左上玩家信息卡高
 const DEPLOY_CARD_H = 65;        // 上阵卡片高（沿用 v1 的 65，仅位置上移到开战按钮上方）
 const DEPLOY_BATTLE_GAP = 12;    // 上阵卡片底 → 开战按钮顶
 
-/** 右上角功能按钮单按钮宽（窄屏下限 72 / 宽屏上限 96） */
+/** 右上角功能按钮正方形边长（390 基准 48，窄屏线性缩到 38，避免 4 个按钮挤爆赛季区） */
 export function lobbyFuncBtnW(screenW) {
-  return Math.max(72, Math.min(96, Math.round(screenW * 0.25)));
+  return Math.max(FUNC_BTN_MIN_H, Math.min(FUNC_BTN_H, Math.round(screenW * FUNC_BTN_H / 390)));
 }
 
-/** 右上角功能按钮纵列：第 i 个按钮 rect（分享/任务/成就/通行证） */
+/** 右上角功能按钮纵列：第 i 个按钮 rect（分享/任务/成就/通行证），正方形 w=h */
 export function lobbyFuncBtnRect(i, screenW, funcCount = 3) {
-  const w = lobbyFuncBtnW(screenW);
+  const s = lobbyFuncBtnW(screenW);
   return {
-    x: screenW - 8 - w,
-    y: LOBBY_TOP_Y + i * (FUNC_BTN_H + FUNC_BTN_GAP),
-    w,
-    h: FUNC_BTN_H,
+    x: screenW - 8 - s,
+    y: LOBBY_TOP_Y + i * (s + FUNC_BTN_GAP),
+    w: s,
+    h: s,
   };
 }
 
 /** 右上角功能按钮纵列底部 Y */
-export function lobbyFuncBottom(funcCount = 3) {
-  return LOBBY_TOP_Y + funcCount * FUNC_BTN_H + (funcCount - 1) * FUNC_BTN_GAP;
+export function lobbyFuncBottom(funcCount = 3, screenW = 390) {
+  const s = lobbyFuncBtnW(screenW);
+  return LOBBY_TOP_Y + funcCount * s + (funcCount - 1) * FUNC_BTN_GAP;
 }
 
-/** 左上角玩家信息卡 rect（账号 + 战力合并到同一框体） */
+/** 左上角玩家信息卡 rect：宽度 = 屏宽 1/3（账号+战力合并，内容紧凑换行） */
 export function lobbyPlayerCardRect(screenW) {
-  const funcX = lobbyFuncBtnRect(0, screenW).x;
-  return { x: 8, y: LOBBY_TOP_Y, w: Math.max(140, funcX - 16), h: PLAYER_CARD_H };
+  return { x: 8, y: LOBBY_TOP_Y, w: Math.round(screenW / 3), h: PLAYER_CARD_H };
 }
 
 /** 上阵兵种卡片顶 Y（开战按钮上方） */
@@ -237,7 +238,7 @@ export function lobbyDeployLabelY(screenH) {
 /** 赛季区顶部 Y（顶部玩家卡/功能按钮列下方的可用区起点） */
 export function lobbySeasonTop(screenW, funcCount = 3) {
   const card = lobbyPlayerCardRect(screenW);
-  return Math.max(card.y + card.h, lobbyFuncBottom(funcCount)) + 8;
+  return Math.max(card.y + card.h, lobbyFuncBottom(funcCount, screenW)) + 8;
 }
 
 /** 赛季区 combo（中偏上）：复用 ladderCombo 的间距规则，区间 = [顶部区块底, 上阵区上方] */

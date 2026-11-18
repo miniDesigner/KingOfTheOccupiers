@@ -859,7 +859,7 @@ export class Game {
     return layoutFuncBtnRect(i, screenW, Game.lobbyRowCount());
   }
   /** 功能按钮纵列底部 Y */
-  static lobbyFuncBottom() { return lobbyFuncBottom(Game.lobbyRowCount()); }
+  static lobbyFuncBottom(screenW = 390) { return lobbyFuncBottom(Game.lobbyRowCount(), screenW); }
   /** 左上玩家信息卡 rect（账号 + 战力合并） */
   static lobbyPlayerCardRect(screenW) { return layoutPlayerCardRect(screenW); }
   /** 赛季区顶部 Y（徽章上界锚点，替代旧 rowBottom=302） */
