@@ -61,6 +61,20 @@ const UI_THEME = {
 };
 
 /**
+ * 十六进制颜色 → rgba() 字符串，用于功能色发光/描边。异常输入回落白色半透明。
+ */
+function hexToRgba(color, alpha) {
+  let hex = String(color || '').trim();
+  if (hex[0] === '#') hex = hex.slice(1);
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return `rgba(255,255,255,${alpha})`;
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/**
  * 由框体轮廓色/内容色派生「同色系淡底」，替代统一白底。
  * ratio = 原色占比（越小越接近白，保证深色文字可读）；返回不透明 rgb，彻底盖住背景地图。
  * 兼容 #RGB / #RRGGBB；异常输入回落到晴空乐园云白。
@@ -3027,10 +3041,38 @@ export class RenderSystem {
       const rect = lobbyFuncBtnRect(i, w, _rowCount);
       const { x, y, w: bw, h: bh } = rect;
       this._drawPressed(rect, gameState.press, () => {
-        // 无底框：正方形按钮里图标居中偏上 + 下方一行入口文字，靠素材自带底色+文字描边与地图分层
+        // 无底框：正方形按钮里图标居中偏上 + 下方一行入口文字。
+        // 图标加功能色发光描边：在冷色夜空背景上让入口跳出来，不改几何与命中。
         const iconCx = x + bw / 2;
         const iconCy = y + bh * 0.42;
         const iconSize = Math.round(bh * 0.62);
+        const glowColor = rowDefs[i].border;
+        const glowR = iconSize * 0.62;
+        if (typeof ctx.createRadialGradient === 'function' && typeof ctx.arc === 'function') {
+          ctx.save();
+          // 外发光：功能色径向渐变，中心亮、边缘透明，垫在图标下方
+          const grad = ctx.createRadialGradient(iconCx, iconCy, iconSize * 0.28, iconCx, iconCy, glowR * 1.5);
+          grad.addColorStop(0, hexToRgba(glowColor, 0.55));
+          grad.addColorStop(0.55, hexToRgba(glowColor, 0.22));
+          grad.addColorStop(1, hexToRgba(glowColor, 0));
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(iconCx, iconCy, glowR * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          // 功能色描边环：紧贴图标外沿的实心细环，强化轮廓
+          ctx.beginPath();
+          ctx.arc(iconCx, iconCy, glowR, 0, Math.PI * 2);
+          ctx.strokeStyle = hexToRgba(glowColor, 0.9);
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          // 白色内描边：再套一圈细白线，让图标主体与功能色环分离、层次更清晰
+          ctx.beginPath();
+          ctx.arc(iconCx, iconCy, glowR - 2, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+        }
         // 图标族：share/quest/achieve 走 lobby_；通行证走 medal_
         if (i === 3) {
           this._artIcon(ART_PREFIXES.medal, 'gold', iconCx, iconCy, iconSize, 1);
