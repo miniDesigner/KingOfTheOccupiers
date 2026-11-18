@@ -1819,10 +1819,10 @@ export class Game {
     }
 
     // === 大段位徽章（功能行与进度条之间）：点击打开排行榜天梯榜 ===
-    // 命中半径放大到 badgeR*1.15：段位图标已改为 3D 城堡图片（边长 2.3R），
-    // 需覆盖城堡视觉范围而非旧的圆形底盘，避免点击城堡边缘无响应
+    // 命中半径放大到 badgeR*1.1：段位城堡图片边长=2R（≈屏宽一半），badgeR 已是视觉半径，
+    // 略放大覆盖城堡边角，避免点击边缘无响应（不过度放大以免误触相邻区域）
     const badgeY = Game.lobbyBadgeY(h);
-    const badgeR = Game.lobbyBadgeRadius(h) * 1.15;
+    const badgeR = Game.lobbyBadgeRadius(h) * 1.1;
     const bdx = screenX - w / 2;
     const bdy = screenY - badgeY;
     if (bdx * bdx + bdy * bdy <= badgeR * badgeR) {

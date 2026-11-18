@@ -357,7 +357,7 @@ console.log('=== 测试12: 大厅段位徽章与进度条布局 ===');
     assert(y - r >= rb - 0.5, `H=${H} 徽章顶不低于赛季区顶 (top=${(y - r).toFixed(1)}, seasonTop=${rb})`);
     assert(tb >= y + r, `H=${H} 进度条在徽章下方 (barY=${tb.toFixed(1)}, badgeBottom=${(y + r).toFixed(1)})`);
     assert(tb + LADDER_BAR_H <= bb + 0.5, `H=${H} 进度条不压开战按钮 (barBottom=${tb + LADDER_BAR_H}, battle=${bb})`);
-    assert(r >= 20 && r <= 62, `H=${H} 半径在 [20,62] (R=${r})`);
+    assert(r >= 20 && r <= 100, `H=${H} 半径在 [20,100] (R=${r})`);
   }
 
   const game = new Game(canvasStub, ctxProxy, w, h);

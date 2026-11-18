@@ -3113,26 +3113,18 @@ export class RenderSystem {
     const ladderComboLayout = (ladderTier || ladderProgress)
       ? lobbySeasonCombo(w, h, _rowCount)
       : null;
+    // rank_01~08 素材 key：大城堡与进度条左侧小图标共用；index 0-7 对应青铜~王者
+    const rankKey = ladderTier
+      ? String((ladderTier.index || 0) + 1).padStart(2, '0')
+      : '01';
     if (ladderTier) {
       const { badgeR, badgeY } = ladderComboLayout;
       const cx = w / 2;
-      // 3D 城堡图标：从 rank_01~08 正式素材取图（石质城堡 + 圆形底盘 + 正面段位徽章，斜45°）
-      // index 0-7 对应 rank_01(青铜)~rank_08(王者)，放大到 badgeR*2.3 让城堡成为赛季区主视觉
-      const rankKey = String((ladderTier.index || 0) + 1).padStart(2, '0');
-      const badgeImgSize = Math.round(badgeR * 2.3);
-      this._artIcon(ART_PREFIXES.rank, rankKey, cx, badgeY - 2, badgeImgSize, 1);
-      // 段位名：金色缎带胶囊，放在城堡城门处（图标中心略上），避免遮住下方代表段位的徽章
-      const labelSize = Math.max(10, Math.round(badgeR * 0.28));
-      const nameLabel = ladderTier.label;
-      const nameY = badgeY - Math.round(badgeR * 0.05);
-      this._drawTextPillBg(cx, nameY, nameLabel,
-        `bold ${labelSize}px sans-serif`, { padX: 12, padY: 3, tint: UI_THEME.gold, border: UI_THEME.goldDeep });
-      ctx.fillStyle = ladderTier.color;
-      ctx.font = `bold ${labelSize}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(nameLabel, cx, nameY);
-      // 杯数信息栏已移除：当前杯数直接显示在进度条内，避免重复与画面拥挤
+      // 3D 城堡图标：边长≈屏宽一半（badgeR 目标=screenW/4，矮屏按高度自适应缩小）
+      // index 0-7 对应 rank_01(青铜)~rank_08(王者)
+      const badgeImgSize = Math.round(badgeR * 2);
+      this._artIcon(ART_PREFIXES.rank, rankKey, cx, badgeY, badgeImgSize, 1);
+      // 段位名胶囊已移除：段位由进度条左侧的小 rank 图标 + 进度条颜色表达
     }
 
     // === 段位进度条（徽章下方，居中，长度自适应，P20） ===
@@ -3141,6 +3133,20 @@ export class RenderSystem {
       const barX = (w - barW) / 2;
       const barY = ladderComboLayout.barY;
       const barH = ladderComboLayout.barH;
+      // 当前段位小图标：紧贴进度条左侧，与进度条同色语义表达当前段位
+      const miniSize = Math.round(barH * 1.7);
+      const miniCy = barY + barH / 2;
+      const miniCx = barX - miniSize / 2 - 5;
+      if (typeof ctx.arc === 'function') {
+        // 淡色圆盘垫底，让小图标从背景中跳出来
+        ctx.save();
+        ctx.fillStyle = tintOf(ladderTier.color, 0.22);
+        ctx.beginPath();
+        ctx.arc(miniCx, miniCy, miniSize * 0.62, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      this._artIcon(ART_PREFIXES.rank, rankKey, miniCx, miniCy, miniSize, 1);
       // 底色（实心白轨道 + 悬浮厚底，圆角）
       this._drawRaisedCard({ x: barX, y: barY, w: barW, h: barH, r: 6 }, () => {
         ctx.fillStyle = tintOf(ladderTier.color, 0.14);

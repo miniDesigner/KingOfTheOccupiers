@@ -68,7 +68,7 @@ export const LAYOUT_DESIGN_MAX = {
   battle: 220,     // 开战按钮
   techNode: 150,   // 科技树节点（设计稿原值，2 列）
   techTab: 80,     // 科技树分支标签
-  ladderBadgeR: 62, // 大厅段位城堡图标半径（设计稿原值；放大后的 3D 城堡）
+  ladderBadgeR: 100, // 大厅段位城堡图标半径上限（图标边长=2R≈屏宽一半；受可用高度钳制）
 };
 
 /**
@@ -159,15 +159,18 @@ export const LADDER_SEASON_TEXT_OFFSET = 16;
  *
  * @param {number} rowBottom  顶部区块底 Y
  * @param {number} battleTop  开战按钮顶部 Y
+ * @param {number} screenW    屏宽（用于让图标边长尽量接近屏宽一半）
  * @returns {{badgeR:number, badgeY:number, barY:number, barH:number, seasonY:number}}
  */
-export function ladderCombo(rowBottom, battleTop) {
+export function ladderCombo(rowBottom, battleTop, screenW = 390) {
   const avail = battleTop - rowBottom;
-  // 城堡直径之外的所有固定开销
+  // 城堡图标边长之外的固定开销
   const fixed = LADDER_PAD_TOP + LADDER_GAP_CASTLE_BAR + LADDER_BAR_H + LADDER_PAD_BOTTOM;
+  // 目标：图标边长 = 屏宽一半 → 半径 = screenW/4；矮屏按可用高度自动缩小，绝不压开战按钮
+  const targetR = Math.round(screenW / 4);
   const badgeR = Math.max(
     LAYOUT_MIN.ladderBadgeR,
-    Math.min(LAYOUT_DESIGN_MAX.ladderBadgeR, Math.floor((avail - fixed) / 2))
+    Math.min(targetR, LAYOUT_DESIGN_MAX.ladderBadgeR, Math.floor((avail - fixed) / 2))
   );
   const unitH = LADDER_PAD_TOP + 2 * badgeR + LADDER_GAP_CASTLE_BAR + LADDER_BAR_H + LADDER_PAD_BOTTOM;
   const unitTop = rowBottom + (avail - unitH) / 2;
@@ -178,12 +181,13 @@ export function ladderCombo(rowBottom, battleTop) {
 }
 
 /**
- * 大厅段位进度条宽度自适应（居中，左右各留 24px）
+ * 大厅段位进度条宽度自适应：屏宽 2/3（居中，左侧留白放当前段位小图标）
+ * 仍钳制在 [LADDER_BAR_MIN_W, LADDER_BAR_MAX_W] 保证文字可读、宽屏不过长
  * @param {number} screenW
  * @returns {number} 钳制在 [LADDER_BAR_MIN_W, LADDER_BAR_MAX_W]
  */
 export function ladderBarWidth(screenW) {
-  return rowItemWidth(1, 0, screenW, 24, LADDER_BAR_MIN_W, LADDER_BAR_MAX_W);
+  return Math.max(LADDER_BAR_MIN_W, Math.min(LADDER_BAR_MAX_W, Math.round(screenW * 2 / 3)));
 }
 
 // ==================== 大厅 v2 布局（渲染 / 命中 / 引导共用单一真相源）====================
@@ -245,7 +249,7 @@ export function lobbySeasonTop(screenW, funcCount = 3) {
 export function lobbySeasonCombo(screenW, screenH, funcCount = 3) {
   const top = lobbySeasonTop(screenW, funcCount);
   const bottom = lobbyDeployLabelY(screenH) - 16;
-  return ladderCombo(top, bottom);
+  return ladderCombo(top, bottom, screenW);
 }
 
 export const LOBBY_V2 = { LOBBY_TOP_Y, FUNC_BTN_H, FUNC_BTN_GAP, PLAYER_CARD_H, DEPLOY_CARD_H, DEPLOY_BATTLE_GAP };
