@@ -109,10 +109,16 @@ class ArtSystemClass {
 
   /** 九宫格 3×3 切片绘制；保护边距取自占位图上画的同一份 slice 参数 */
   _draw9(ctx, img, e, x, y, w, h) {
+    // 同 _drawFit：源坐标按图片实际像素算，声明尺寸仅作为兜底。
+    // 实际尺寸与声明一致时（正常情况）mr/mc 恒等于 m，行为完全不变。
+    const iw = (img && img.width) || e.w;
+    const ih = (img && img.height) || e.h;
     const m = e.slice || Math.max(3, Math.floor(Math.min(e.w, e.h) * 0.16));
+    const mr = m * (iw / e.w);
+    const mc = m * (ih / e.h);
     const dm = Math.max(1, Math.min(m, w / 3, h / 3));
-    const sx = [0, m, e.w - m, e.w];
-    const sy = [0, m, e.h - m, e.h];
+    const sx = [0, mr, iw - mr, iw];
+    const sy = [0, mc, ih - mc, ih];
     const dx = [x, x + dm, x + w - dm, x + w];
     const dy = [y, y + dm, y + h - dm, y + h];
     for (let r = 0; r < 3; r++) {
@@ -127,15 +133,21 @@ class ArtSystemClass {
 
   /** 等比裁切（cover）/ 完整显示（contain） */
   _drawFit(ctx, img, e, x, y, w, h, mode) {
-    const ir = e.w / e.h, tr = w / h;
-    let sx = 0, sy = 0, sw = e.w, sh = e.h;
+    // 源尺寸优先取图片实际像素，而不是清单声明值 e.w/e.h。
+    // 原因：替换素材时若实际尺寸与 PLACEHOLDER-MANIFEST 声明不一致，
+    // 用声明值算出的源矩形会越界到图片之外，drawImage 取不到像素，
+    // 右侧/底部就会露出底层渐变（表现为背景左右两条浅色竖边）。
+    const iw = (img && img.width) || e.w;
+    const ih = (img && img.height) || e.h;
+    const ir = iw / ih, tr = w / h;
+    let sx = 0, sy = 0, sw = iw, sh = ih;
     if (mode === 'cover') {
-      if (ir > tr) { sw = e.h * tr; sx = (e.w - sw) / 2; }
-      else { sh = e.w / tr; sy = (e.h - sh) / 2; }
+      if (ir > tr) { sw = ih * tr; sx = (iw - sw) / 2; }
+      else { sh = iw / tr; sy = (ih - sh) / 2; }
       ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
     } else {
-      const scale = Math.min(w / e.w, h / e.h);
-      const dw = e.w * scale, dh = e.h * scale;
+      const scale = Math.min(w / iw, h / ih);
+      const dw = iw * scale, dh = ih * scale;
       ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
     }
   }
