@@ -107,6 +107,24 @@
 **空状态**
 - 居中云白卡 + 灰蓝说明 + 主 CTA（不留纯黑空区）。
 
+**骨架组件 API（`RenderSystem` 私有方法，全部只画不改几何）**
+
+| 方法 | 用途 | 关键参数 |
+| --- | --- | --- |
+| `_screenBg(bgKey?, artAlpha?)` | 界面底：天蓝→云白渐变 + 可选界面底图 + 顶/底渐隐 | 占位期底图默认走 `features.artSubpageBgAlpha`（当前 0） |
+| `_screenHeader(title, opts)` | 居中标题胶囊 | `{cy, accent}`；`w<380` 自动让开左上角资源簇 |
+| `_sectionLabel(text, x, y, opts)` | 区块标题：竖条 + 标题 + 右侧弱提示 | `{accent, hint, hintRight}` |
+| `_cardBg(rect, opts)` | 云白厚底内容卡（只画底板） | `{tint, border, edge, edgeSide:'left'|'top', r}` |
+| `_listRow(rect, opts)` | 列表行底（任务/成就/排行榜通用） | `{alt, tint, border, edge}` |
+| `_progressBar(rect, ratio, opts)` | 进度条，ratio 自动夹 0~1 | `{color, track, r}` |
+| `_tabs(rect, labels, activeIndex, opts)` | 分段页签，返回各段命中框 | `{accent}` |
+| `_primaryButton(rect, label, opts)` | 主 CTA：明黄→橙渐变 | `{disabled}` |
+| `_emptyState(cx, cy, text, opts)` | 空态：图标 + 主文案 + 副文案 | `{icon, hint}` |
+| `_drawBackButton(ctx)` | 左下返回按钮 | 已在 `SHELL_SCREENS` 的界面自动切云白胶囊 |
+
+> 降级约束：所有组件在缺少 `arcTo/clip/arc` 的老基础库上必须能画出东西且不抛错，
+> 由 `tests/test-ui-shell.mjs` 锁定（含 `_cardBg` 描边的直角退化）。
+
 ---
 
 ## 4. 验收
@@ -139,9 +157,9 @@
 
 | 批次 | 状态 | 提交 | 说明 |
 | --- | --- | --- | --- |
-| P0 ScreenShell | ✅ 完成 | `669b186` | `_screenBg / _screenHeader / _sectionLabel / _cardBg / _primaryButton`；`SHELL_SCREENS` 白名单跳过深色占位装饰层 |
-| P1 对战准备 | ✅ 完成 | `669b186` | 四区块卡片化，建筑卡宽自适应修 320 溢出 |
-| P2 兵种招募 | ✅ 完成 | 见 git log | 图鉴/概率双卡 + 代码绘制召唤法阵 + 单抽次按钮 / 十连主 CTA；结果卡改云白厚底 |
+| P0 ScreenShell | ✅ 完成 | `669b186` + 收尾提交 | 10 个组件：背景/标题/区块标题/内容卡/列表行/进度条/页签/主按钮/空态/返回按钮；`SHELL_SCREENS` 白名单跳过深色占位装饰层；`tests/test-ui-shell.mjs` 7 条锁定几何与降级 |
+| P1 对战准备 | ✅ 完成 | `669b186` + 收尾提交 | 四区块卡片化；建筑卡宽自适应修 320 溢出；品质色改左侧竖条避开「阵N」角标；槽位卡窄屏（<50px）只留居中 Lv；兵种列表容器按内容自适应 + 空区招募引导 |
+| P2 兵种招募 | ✅ 完成 | `a57ad51` + 收尾提交 | 图鉴/概率双卡 + 代码绘制召唤法阵 + 单抽次按钮 / 十连主 CTA；结果卡改云白厚底；矮屏（320）法阵自动缩小不压说明文字 |
 | P3 商店 | ⏳ 待做 | — | — |
 | P4 结算 | ⏳ 待做 | — | — |
 | P5 科技 | ⏳ 待做 | — | — |

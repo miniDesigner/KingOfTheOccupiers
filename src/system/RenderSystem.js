@@ -362,10 +362,16 @@ export class RenderSystem {
       ctx.restore();
     }
     const padX = o.accent ? 16 : 18;
-    const pillW = Math.min(w - 24, tw + padX * 2);
+    // 窄屏（<=380）左上角资源簇占约 100px，标题若仍居中会与货币格叠在一起
+    const narrow = w < 380;
+    const leftLimit = narrow ? 104 : 0;
+    const rightLimit = 12;
+    const availW = Math.max(80, w - leftLimit - rightLimit);
+    const pillW = Math.min(availW, tw + padX * 2);
     const pillH = 34;
     const cy = o.cy === undefined ? 25 : o.cy;
-    const x = (w - pillW) / 2;
+    const cx = narrow ? leftLimit + availW / 2 : w / 2;
+    const x = cx - pillW / 2;
     const y = cy - pillH / 2;
 
     this._drawRaisedCard({ x, y, w: pillW, h: pillH, r: 12 }, () => {
@@ -381,7 +387,7 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillStyle = UI_THEME.ink;
     ctx.font = font;
-    ctx.fillText(text, w / 2 + (o.accent ? 4 : 0), cy + 1);
+    ctx.fillText(text, cx + (o.accent ? 4 : 0), cy + 1);
   }
 
   /**
@@ -432,12 +438,19 @@ export class RenderSystem {
       }
     });
     if (o.border) {
-      ctx.save();
-      this._roundRectPath(x, y, cw, ch, Math.max(2, Math.min(r, cw / 2, ch / 2)));
-      ctx.strokeStyle = o.border;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.restore();
+      // 老基础库没有 arcTo：退化为直角描边，视觉降级但绝不能让整个界面抛错
+      if (typeof ctx.arcTo === 'function') {
+        ctx.save();
+        this._roundRectPath(x, y, cw, ch, Math.max(2, Math.min(r, cw / 2, ch / 2)));
+        ctx.strokeStyle = o.border;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        ctx.strokeStyle = o.border;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x, y, cw, ch);
+      }
     }
   }
 
@@ -476,6 +489,141 @@ export class RenderSystem {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);
+  }
+
+  /**
+   * 进度条：低饱和槽底 + 强调色填充（任务 / 通行证 / 科技 / 图鉴等所有进度复用）。
+   * 只画底板与填充，不改调用方几何；ratio 自动夹在 0~1。
+   * @param {{x:number,y:number,w:number,h:number}} rect
+   * @param {number} ratio 0~1
+   * @param {{color?:string, track?:string, r?:number}} [opts]
+   */
+  _progressBar(rect, ratio, opts) {
+    const { ctx } = this;
+    const o = opts || {};
+    const x = rect.x, y = rect.y, bw = rect.w, bh = rect.h;
+    const r = Math.max(1, Math.min(bh / 2, o.r === undefined ? bh / 2 : o.r));
+    const v = Math.max(0, Math.min(1, Number(ratio) || 0));
+    const track = o.track || 'rgba(43,74,111,0.13)';
+    const fill = o.color || UI_THEME.skyDeep;
+    if (typeof ctx.arcTo !== 'function') {
+      ctx.fillStyle = track;
+      ctx.fillRect(x, y, bw, bh);
+      if (v > 0) {
+        ctx.fillStyle = fill;
+        ctx.fillRect(x, y, bw * v, bh);
+      }
+      return;
+    }
+    ctx.save();
+    this._roundRectPath(x, y, bw, bh, r);
+    ctx.fillStyle = track;
+    ctx.fill();
+    ctx.restore();
+    if (v > 0) {
+      ctx.save();
+      // 填充段最小宽度取一个条高，避免 1% 时视觉上「消失」
+      this._roundRectPath(x, y, Math.max(bh, bw * v), bh, r);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  /**
+   * 分段页签：云白胶囊底 + 激活项强调色实底药丸。
+   * 用于商店品类、排行榜分类、任务/成就切换等「同一屏内多列表」的场景。
+   * 返回值与各段几何一致，调用方可直接用来对齐原有命中框。
+   * @param {{x:number,y:number,w:number,h:number}} rect 页签整条区域（不含外扩内边距）
+   * @param {string[]} labels
+   * @param {number} activeIndex
+   * @param {{accent?:string}} [opts]
+   * @returns {Array<{x:number,y:number,w:number,h:number,cx:number}>}
+   */
+  _tabs(rect, labels, activeIndex, opts) {
+    const { ctx } = this;
+    const o = opts || {};
+    const accent = o.accent || UI_THEME.skyDeep;
+    const list = Array.isArray(labels) ? labels : [];
+    const n = Math.max(1, list.length);
+    const gap = 4;
+    const segW = (rect.w - gap * (n - 1)) / n;
+    const cells = [];
+
+    // 整体槽底：云白半透胶囊，托住所有页签
+    this._cardBg(
+      { x: rect.x - 4, y: rect.y - 4, w: rect.w + 8, h: rect.h + 8, r: (rect.h + 8) / 2 },
+      { tint: 'rgba(255,255,255,0.74)' }
+    );
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < n; i++) {
+      const x = rect.x + i * (segW + gap);
+      const isActive = i === activeIndex;
+      if (isActive) {
+        if (typeof ctx.arcTo === 'function') {
+          ctx.save();
+          this._roundRectPath(x, rect.y, segW, rect.h, rect.h / 2);
+          ctx.fillStyle = accent;
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = accent;
+          ctx.fillRect(x, rect.y, segW, rect.h);
+        }
+      }
+      ctx.fillStyle = isActive ? UI_THEME.white : UI_THEME.navy;
+      ctx.font = isActive ? 'bold 13px sans-serif' : '12px sans-serif';
+      ctx.fillText(list[i], x + segW / 2, rect.y + rect.h / 2 + 1);
+      cells.push({ x, y: rect.y, w: segW, h: rect.h, cx: x + segW / 2 });
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    return cells;
+  }
+
+  /**
+   * 列表行底（任务 / 成就 / 排行榜通用）：云白卡 + 可选左侧强调条 + 可选交错底色。
+   * 只画底板，行内图标/文字/按钮由调用方按原几何绘制。
+   * @param {{x:number,y:number,w:number,h:number,r?:number}} rect
+   * @param {{alt?:boolean, tint?:string, border?:string, edge?:string, edgeSide?:'left'|'top', r?:number}} [opts]
+   */
+  _listRow(rect, opts) {
+    const o = opts || {};
+    this._cardBg(rect, {
+      tint: o.tint || (o.alt ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.95)'),
+      border: o.border || null,
+      edge: o.edge || null,
+      edgeSide: o.edgeSide || 'left',
+      r: o.r === undefined ? 12 : o.r,
+    });
+  }
+
+  /**
+   * 空态提示：居中图标 + 主文案 + 可选副文案（列表为空 / 未解锁 / 无数据）。
+   * @param {number} cx @param {number} cy 图标中心
+   * @param {string} text 主文案
+   * @param {{icon?:string, hint?:string}} [opts]
+   */
+  _emptyState(cx, cy, text, opts) {
+    const { ctx } = this;
+    const o = opts || {};
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(43,74,111,0.26)';
+    ctx.font = 'bold 34px sans-serif';
+    ctx.fillText(o.icon || '🗒', cx, cy);
+    ctx.fillStyle = 'rgba(22,48,79,0.58)';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(text, cx, cy + 34);
+    if (o.hint) {
+      ctx.fillStyle = 'rgba(22,48,79,0.40)';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(o.hint, cx, cy + 52);
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
   }
 
   // ===================== 美术资源层接入 =====================
@@ -1623,15 +1771,24 @@ export class RenderSystem {
         ctx.font = 'bold 8px sans-serif';
         ctx.fillText(slotData.name || '?', sx + uslot.w / 2, uslot.y + 48);
         // 品质名（左）+ 等级（右）—— 品质用名称描述（与抽卡界面一致），不用颜色字
+        // 卡宽 < 50 时两端会挤在一起（320 屏约 46）：品质已由描边色表达，此处只留居中等级。
+        // 注意 430 屏卡宽被 LAYOUT_DESIGN_MAX 夹到 52，仍属可放下，阈值不能设到 52 以上。
         const qNames = ['普通', '精良', '稀有', '史诗', '传说', '神话'];
-        ctx.fillStyle = qColor;
-        ctx.font = 'bold 8px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(qNames[(slotData.quality || 1) - 1] || '普通', sx + 5, uslot.y + 62);
-        ctx.fillStyle = UI_THEME.orangeDeep;
-        ctx.font = 'bold 8px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w - 5, uslot.y + 62);
+        if (uslot.w < 50) {
+          ctx.fillStyle = UI_THEME.orangeDeep;
+          ctx.font = 'bold 8px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w / 2, uslot.y + 62);
+        } else {
+          ctx.fillStyle = qColor;
+          ctx.font = 'bold 8px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(qNames[(slotData.quality || 1) - 1] || '普通', sx + 5, uslot.y + 62);
+          ctx.fillStyle = UI_THEME.orangeDeep;
+          ctx.font = 'bold 8px sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w - 5, uslot.y + 62);
+        }
         // P35：品质改由外框颜色 + 品质名表达，移除 ★ 重复计数
       } else {
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
@@ -1724,6 +1881,27 @@ export class RenderSystem {
       accent: UI_THEME.skyDeep, hint: '长按拖入上阵',
     });
 
+    // === 列表容器底：高度按实际内容自适应（最少一行），内容少时不铺成一大块空白板 ===
+    const _listTop = unitListY - 6;
+    const _listMaxH = L.scrollAreaBottom - unitListY + 4;
+    const _unitRows = Math.ceil(Math.max(1, collected.length) / Math.max(1, L.unit.perRow));
+    const _contentH = _unitRows * (L.unit.h + L.unit.gap) - L.unit.gap + 16;
+    const _listH = Math.min(_listMaxH, Math.max(_contentH, 128));
+    this._cardBg(
+      { x: 8, y: _listTop, w: w - 16, h: _listH, r: 14 },
+      { tint: 'rgba(255,255,255,0.26)' }
+    );
+
+    // 内容不足可视高度时，空区给招募引导（否则界面上半截有东西、下半截空荡）
+    const _guideTop = _listTop + _listH;
+    if (L.scrollAreaBottom - _guideTop > 90) {
+      const _gy = (_guideTop + L.scrollAreaBottom) / 2 - 10;
+      this._emptyState(w / 2, _gy, '兵种还不够多', {
+        icon: '🎲',
+        hint: '去「招募」收服更多兵种，壮大你的军团',
+      });
+    }
+
     // === 可滚动区域：兵种卡列表（clip 顶部 = unitListY，标题成为固定头不随滚动） ===
     ctx.save();
     ctx.beginPath();
@@ -1748,17 +1926,13 @@ export class RenderSystem {
       const isDragging = drag.active && drag.id === unit.id && drag.type === 'unit';
 
       const qColor = qualityColor(unit.quality);
+      // 品质色走左侧竖条：卡片左上要留给「阵N」上阵角标，顶部色条会与之叠在一起显脏
       this._cardBg({ x: cx, y: cy, w: card.w, h: card.h, r: 10 }, {
         tint: isDragging ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.97)',
         border: isDeployed ? qColor : 'rgba(43,74,111,0.20)',
         edge: qColor,
-        edgeSide: 'top',
+        edgeSide: 'left',
       });
-      // 已上阵：左下角蓝色实底角标（与卡片上阵标记同语言）
-      if (isDeployed && !isDragging) {
-        ctx.fillStyle = hexToRgba(UI_THEME.skyDeep, 0.20);
-        ctx.fillRect(cx + card.w - 16, cy + 2, 14, 12);
-      }
 
       // 可升级标记（右上角绿色角标）
       // 完整口径：等级上限 + 招募次数 + 星尘 + 金币全部满足才亮（与 upgradeUnit 校验一致），
@@ -1797,27 +1971,35 @@ export class RenderSystem {
           const needed = unit.recruitRequired * unit.level;
           const current = unit.recruitCount || 0;
           const isReady = current >= needed;
-          ctx.fillStyle = isReady ? UI_THEME.green : 'rgba(43,74,111,0.45)';
-          ctx.font = '7px sans-serif';
+          ctx.fillStyle = isReady ? UI_THEME.green : 'rgba(22,48,79,0.58)';
+          ctx.font = '8px sans-serif';
           ctx.fillText(`招募 ${current}/${needed}`, cx + card.w / 2, cy + 62);
         } else if (unit.level >= MAX_UNIT_LEVEL) {
           ctx.fillStyle = UI_THEME.green;
-          ctx.font = '7px sans-serif';
+          ctx.font = 'bold 8px sans-serif';
           ctx.fillText('MAX', cx + card.w / 2, cy + 62);
         }
-        // 上阵标记：蓝色实底角标「阵N」（醒目区分是否已上阵，置于左上角）
+        // 上阵标记：「阵N」圆角胶囊（醒目区分是否已上阵，置于左上角）
         if (isDeployed) {
           const slotIdx = deployedUnits.indexOf(unit.id);
           const tagW = 22, tagH = 11;
-          ctx.fillStyle = '#2563eb';
-          ctx.fillRect(cx + 1, cy + 1, tagW, tagH);
-          ctx.strokeStyle = '#60a5fa';
-          ctx.lineWidth = 0.5;
-          ctx.strokeRect(cx + 1, cy + 1, tagW, tagH);
-          ctx.fillStyle = '#ffffff';
+          const tagX = cx + 5, tagY = cy + 4;
+          if (typeof ctx.arcTo === 'function') {
+            ctx.save();
+            this._roundRectPath(tagX, tagY, tagW, tagH, tagH / 2);
+            ctx.fillStyle = UI_THEME.skyDeep;
+            ctx.fill();
+            ctx.restore();
+          } else {
+            ctx.fillStyle = UI_THEME.skyDeep;
+            ctx.fillRect(tagX, tagY, tagW, tagH);
+          }
+          ctx.fillStyle = UI_THEME.white;
           ctx.font = 'bold 8px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('阵' + (slotIdx + 1), cx + 1 + tagW / 2, cy + tagH / 2 + 1);
+          ctx.textBaseline = 'middle';
+          ctx.fillText('阵' + (slotIdx + 1), tagX + tagW / 2, tagY + tagH / 2 + 0.5);
+          ctx.textBaseline = 'alphabetic';
         }
       }
     }
@@ -1832,7 +2014,7 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillText('💡 点击卡片查看详情  |  长按拖动兵种卡上阵', this.screenWidth / 2, L.tipY1);
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = 'rgba(43,74,111,0.55)';
+    ctx.fillStyle = 'rgba(22,48,79,0.72)';
     ctx.fillText('布阵完成后回大厅点「⚔ 开战」出战', this.screenWidth / 2, L.tipY2);
 
     // === 拖拽视觉反馈（仅兵种） ===
@@ -4104,15 +4286,16 @@ export class RenderSystem {
 
     // ---- 顶部区域自上而下排布 ----
     const titleY = 26;
-    const ownedY = 52;
+    // 纵向下移 6px：云白卡有 4px 厚底投影，标题胶囊下沿到卡顶需要留出呼吸位
+    const ownedY = 64;
     const progressW = Math.min(280, w - 60);
     const progressX = (w - progressW) / 2;
-    const progressY = 62;
-    const pityTextY = 88;
-    const pityBarY = 98;
+    const progressY = 76;
+    const pityTextY = 100;
+    const pityBarY = 110;
     // 概率卡下移 10px：与上方图鉴卡留出卡片间隙（云白厚底卡需要呼吸位）
-    const rateTitleY = 136;
-    const rateStartY = 158;
+    const rateTitleY = 144;
+    const rateStartY = 166;
 
     // 概率行步长：按可用高度自适应，下限 16 保证不重叠
     const avail = (noteY1 - 16) - rateStartY;
@@ -4684,7 +4867,7 @@ export class RenderSystem {
 
     // === 收集 / 保底卡 ===
     const pityProgress = info.pityCount / info.pityThreshold;
-    const collectCard = { x: 12, y: 46, w: w - 24, h: 62, r: 14 };
+    const collectCard = { x: 12, y: 48, w: w - 24, h: 70, r: 14 };
     this._cardBg(collectCard, { tint: 'rgba(255,255,255,0.95)' });
 
     ctx.textAlign = 'left';
@@ -4752,11 +4935,14 @@ export class RenderSystem {
 
     // === 召唤法阵：占位期用代码绘制（正式 BG-02 光柱素材到位后可淡出）===
     {
-      const circleTop = rateCardBottom + 10;
-      const circleBottom = L.noteY1 - 18;
-      if (circleBottom - circleTop > 80) {
+      const circleTop = rateCardBottom + 8;
+      const circleBottom = L.noteY1 - 22;
+      // 矮屏（320×568）概率卡底到说明文字只有 ~79px：阈值放到 40、半径下限 18，
+      // 让矮屏也能落一个小法阵，否则整段中区空成一片纯渐变。半径上限由可用高度决定，
+      // 保证圆环不会压到下方说明文字。
+      if (circleBottom - circleTop > 40) {
         const cy = (circleTop + circleBottom) / 2;
-        const r = Math.max(56, Math.min(132, (circleBottom - circleTop) / 2 - 8, w * 0.34));
+        const r = Math.max(18, Math.min(132, (circleBottom - circleTop) / 2 - 4, w * 0.34));
         this._drawSummonCircle(w / 2, cy, r);
       }
     }
@@ -4887,9 +5073,10 @@ export class RenderSystem {
 
     // 中心徽记：六边形（与地块语言一致）+ 中心星芒
     const hr = r * 0.34;
-    ctx.fillStyle = `rgba(255,255,255,${0.62 + pulse * 0.22})`;
-    ctx.strokeStyle = 'rgba(124,58,237,0.85)';
-    ctx.lineWidth = 2;
+    // 中心水晶：云白实底 + 紫色内外双描边。半透白在蓝底上会混成灰块，看不出是水晶
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = 'rgba(168,85,247,0.55)';
+    ctx.lineWidth = 5;
     if (typeof ctx.beginPath === 'function') {
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
@@ -4901,8 +5088,12 @@ export class RenderSystem {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
+      // 内描边：让水晶边缘从柔光里“立”起来
+      ctx.strokeStyle = 'rgba(124,58,237,0.85)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
-    ctx.fillStyle = `rgba(124,58,237,${0.65 + pulse * 0.30})`;
+    ctx.fillStyle = `rgba(124,58,237,${0.75 + pulse * 0.25})`;
     ctx.font = 'bold 26px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -5028,6 +5219,22 @@ export class RenderSystem {
     const h = this.screenHeight;
     const { x: bx, w: bw, h: bh, bottom } = BACK_BTN;
     const by = h - bottom - bh;
+    // 已接入晴空乐园骨架的界面：云白厚底 + 海军蓝文字，与内容卡同一套语言。
+    // 占位期的 UI-08 返回按钮是深色水印图，压在浅色界面上会形成脏块，故不走贴图。
+    if (SHELL_SCREENS.has(this._curScreen)) {
+      const pressed = !!this._backPressed;
+      this._cardBg({ x: bx, y: by, w: bw, h: bh, r: 12 }, {
+        tint: pressed ? 'rgba(255,255,255,0.70)' : 'rgba(255,255,255,0.95)',
+        border: 'rgba(43,74,111,0.22)',
+      });
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('← 返回', bx + bw / 2, by + bh / 2 + 1);
+      ctx.textBaseline = 'alphabetic';
+      return;
+    }
     // 贴图优先：UI-08 返回按钮 240×105 @3x → 逻辑 80×35，与 BACK_BTN 几何完全一致
     if (!this._art(this._backPressed ? ART_HOOKS.backPressed : ART_HOOKS.backButton, bx, by, bw, bh, { alpha: 1 })) {
       ctx.fillStyle = '#334155';
