@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>占地之王 · 界面栅格图 v1</title>
+<style>
+:root{
+  --stage:#0B1424; --panel:#16243A; --line:rgba(234,248,255,0.14);
+  --ink:#EAF8FF; --ink-2:rgba(234,248,255,0.72); --ink-3:rgba(234,248,255,0.45);
+  --card:#EAF8FF; --navy:#2B4A6F; --gold:#FFD23F;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:40px 32px 64px;background:var(--stage);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+header{max-width:1440px;margin:0 auto 28px}
+h1{margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:.5px}
+.sub{color:var(--ink-3);font-size:13px;line-height:1.7;margin:0}
+.sub b{color:var(--ink-2);font-weight:500}
+.scale{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0;padding:0;list-style:none}
+.scale li{
+  background:rgba(234,248,255,0.05);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px;font-size:12px;color:var(--ink-2)
+}
+.scale li b{color:var(--gold);font-weight:600;margin-right:6px;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin:20px 0 0;font-size:12px;color:var(--ink-3)}
+.legend span{display:flex;align-items:center;gap:7px}
+.sw{width:14px;height:10px;border-radius:3px;display:inline-block}
+.sw.card{background:var(--card)}
+.sw.stage{background:rgba(91,184,232,0.12);border:1px dashed rgba(234,248,255,0.3)}
+.sw.zone{background:rgba(234,248,255,0.04);border:1px dashed rgba(234,248,255,0.2)}
+.sw.list{background:rgba(234,248,255,0.08);border:1px solid rgba(234,248,255,0.2)}
+.sw.cta{background:var(--gold)}
+.sw.bar{background:rgba(234,248,255,0.14);border:1px solid rgba(234,248,255,0.24)}
+.grid{
+  max-width:1440px;margin:0 auto;display:grid;gap:30px 26px;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+}
+.item{min-width:0}
+.head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.no{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.name{font-size:15px;font-weight:600}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--ink-2)}
+.tag.done{color:#4ADE80;border-color:rgba(74,222,128,0.4)}
+.tag.todo{color:#FFB84D;border-color:rgba(255,184,77,0.4)}
+.phone{
+  position:relative;width:100%;aspect-ratio:430/932;background:var(--panel);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;
+}
+.blk{
+  position:absolute;border-radius:6px;display:flex;align-items:center;
+  padding:0 8px;font-size:10px;line-height:1.25;overflow:hidden;
+}
+.k-bar{background:rgba(234,248,255,0.13);border:1px solid rgba(234,248,255,0.22);color:#CBD9E6}
+.k-card{background:var(--card);color:var(--navy);box-shadow:0 2px 0 rgba(6,14,28,0.5)}
+.k-stage{background:rgba(91,184,232,0.10);border:1px dashed rgba(234,248,255,0.24);color:#9FB6CC}
+.k-zone{background:rgba(234,248,255,0.035);border:1px dashed rgba(234,248,255,0.15);color:#8FA5B8}
+.k-list{background:rgba(234,248,255,0.07);border:1px solid rgba(234,248,255,0.16);color:#B9CADB}
+.k-cta{background:var(--gold);color:#4A2A00;font-weight:600;justify-content:center}
+.k-back{background:rgba(234,248,255,0.9);color:var(--navy);justify-content:center;font-weight:600}
+.k-ghost{background:transparent;border:1px solid rgba(234,248,255,0.3);color:var(--ink-2);justify-content:center}
+.ta{align-items:flex-start;padding-top:9px}
+.tick{position:absolute;left:0;width:7px;height:1px;background:rgba(234,248,255,0.22)}
+.tick.r{left:auto;right:0}
+.bound{position:absolute;left:0;width:9px;height:0;border-top:1px dashed rgba(255,210,63,0.75)}
+.bound.r{left:auto;right:0}
+.k-fx{border-radius:50%;padding:0;background:rgba(124,58,237,0.10);border:1px dashed rgba(167,139,250,0.6)}
+.k-fx::after{content:'';position:absolute;left:50%;top:50%;width:26%;height:26%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(234,248,255,0.9)}
+.meta{margin-top:7px;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.foot{max-width:1440px;margin:44px auto 0;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.8}
+</style>
+</head>
+<body>
+<header>
+  <h1>占地之王 · 界面栅格图 v1</h1>
+  <p class="sub">
+    基准 <b>430 × 932</b>，所有界面共用同一套纵向栅格 <b>L-SCALE</b>。
+    屏体<b style="color:#FFD23F">左右边缘的黄色刻度</b>是内容区上下边界（72 / 852），灰色短线每 100px 一道，用于检查各屏是否对齐。
+  </p>
+  <ul class="scale">
+    <li><b>8</b>状态带顶</li>
+    <li><b>52</b>状态带高</li>
+    <li><b>72</b>内容区顶</li>
+    <li><b>852</b>内容区底</li>
+    <li><b>780</b>内容区高 · 84%</li>
+    <li><b>56</b>操作带高</li>
+    <li><b>16</b>左右安全边</li>
+    <li><b>80</b>返回按钮宽</li>
+  </ul>
+  <div class="legend">
+    <span><i class="sw bar"></i>状态带 / 导航</span>
+    <span><i class="sw card"></i>云白内容卡</span>
+    <span><i class="sw stage"></i>图示区（法阵 / 主视觉 / 节点）</span>
+    <span><i class="sw list"></i>列表容器</span>
+    <span><i class="sw zone"></i>弱面 / 空档</span>
+    <span><i class="sw cta"></i>主 CTA</span>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<div class="foot">
+  说明：本图为布局栅格，不表现最终视觉。卡片圆角、描边、阴影以 ART-STYLE.md 为准；
+  所有 y 值来自同一套常量，实施时落在 RenderSystem.L_SCALE，禁止各屏自填。
+</div>
+
+<script>
+const H = 932, W = 430;
+const P = v => (v / H * 100).toFixed(3) + '%';
+const S = v => (v / W * 100).toFixed(3) + '%';
+
+const screens = [
+  {
+    no: '00', name: '大厅', tag: '已实现', cls: 'done', meta: '不使用状态带约束，自带底部导航', noBound: true,
+    blocks: [
+      { y: 8, h: 40, x: 8, w: 150, t: '资源栏 2×2', k: 'bar' },
+      { y: 8, h: 40, x: 292, w: 130, t: '设置 / 公告', k: 'bar' },
+      { y: 56, h: 93, t: '玩家卡 + 功能键 ×3', k: 'card' },
+      { y: 157, h: 80, t: '空档（背景呼吸区）', k: 'zone' },
+      { y: 245, h: 426, t: '段位城堡 + 天梯进度条', k: 'stage' },
+      { y: 679, h: 67, t: '上阵兵种白卡 ×6', k: 'card' },
+      { y: 754, h: 75, t: '开战', k: 'cta' },
+      { y: 838, h: 92, t: '底部导航 ×5（商店 / 招募 / 布阵 / 科技 / 排行）', k: 'bar' }
+    ]
+  },
+  {
+    no: '01', name: '对战准备', tag: 'P1 · 余量回收', cls: 'todo', meta: '内容区 72–852 · 780px；三区块加外层分区卡',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 对战准备', k: 'bar' },
+      { y: 72, h: 118, t: 'A 上阵阵容 · 分区卡（6 槽 61×85）', k: 'card' },
+      { y: 200, h: 130, t: 'B 羁绊 · 分区卡（4 卡 86×86）', k: 'card' },
+      { y: 340, h: 100, t: 'C 建筑强化 · 分区卡（3 卡）', k: 'card' },
+      { y: 450, h: 402, t: 'D 兵库 · 分区卡（可滚动网格）', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' },
+      { y: 866, h: 48, x: 108, w: 306, t: '开战（回收底部 228px 空区）', k: 'cta' }
+    ]
+  },
+  {
+    no: '02', name: '兵种招募', tag: 'P2 · 余量回收', cls: 'todo', meta: '内容区 72–852；概率明细折叠后释放约 90px 给法阵',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 兵种招募', k: 'bar' },
+      { y: 72, h: 160, t: '信息卡 · 图鉴进度 6/40 + 概率色点行（折叠态）', k: 'card' },
+      { y: 244, h: 416, t: '召唤法阵区（代码绘制 · 直径 260 / r 上限 132）', k: 'stage ta' },
+      { y: 322, h: 260, x: 85, w: 260, t: '', k: 'fx' },
+      { y: 668, h: 40, t: '说明两行 · 法阵区 416 高（当前仅 380）', k: 'zone' },
+      { y: 716, h: 66, x: 16, w: 192, t: '单抽 ×1', k: 'card' },
+      { y: 716, h: 66, x: 220, w: 194, t: '十连（主）', k: 'cta' },
+      { y: 792, h: 44, t: '看广告免费抽 ×1', k: 'ghost' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '03', name: '商店', tag: 'P3', cls: 'todo', meta: '内容区底放宽到 h−64（无主 CTA）；2 列商品网格',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 商店', k: 'bar' },
+      { y: 72, h: 44, t: '分页 ×4（免费 / 金币 / 物资 / 特惠）', k: 'card' },
+      { y: 128, h: 92, x: 16, w: 194, t: '商品卡 1', k: 'card' },
+      { y: 128, h: 92, x: 220, w: 194, t: '商品卡 2', k: 'card' },
+      { y: 230, h: 92, x: 16, w: 194, t: '商品卡 3', k: 'card' },
+      { y: 230, h: 92, x: 220, w: 194, t: '商品卡 4', k: 'card' },
+      { y: 332, h: 92, x: 16, w: 194, t: '商品卡 5', k: 'card' },
+      { y: 332, h: 92, x: 220, w: 194, t: '商品卡 6', k: 'card' },
+      { y: 434, h: 92, x: 16, w: 194, t: '商品卡 7', k: 'card' },
+      { y: 434, h: 92, x: 220, w: 194, t: '商品卡 8', k: 'card' },
+      { y: 536, h: 92, x: 16, w: 194, t: '商品卡 9', k: 'card' },
+      { y: 536, h: 92, x: 220, w: 194, t: '商品卡 10', k: 'card' },
+      { y: 638, h: 92, x: 16, w: 194, t: '商品卡 11', k: 'card' },
+      { y: 638, h: 92, x: 220, w: 194, t: '商品卡 12', k: 'card' },
+      { y: 740, h: 92, x: 16, w: 194, t: '商品卡 13', k: 'card' },
+      { y: 740, h: 92, x: 220, w: 194, t: '商品卡 14', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '04', name: '战斗结算', tag: 'P4', cls: 'todo', meta: '内容区 72–852；三段：主视觉 / 结果卡 / 晋升',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 战斗结算', k: 'bar' },
+      { y: 72, h: 196, t: '胜负主视觉（奖牌 / 星级光晕）', k: 'stage' },
+      { y: 280, h: 250, t: '结果卡 · 星级 + 奖杯变化 + 奖励三行', k: 'card' },
+      { y: 542, h: 300, t: '晋升进度条 + 段位升降展示', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' },
+      { y: 866, h: 48, x: 108, w: 306, t: '再来一局', k: 'cta' }
+    ]
+  },
+  {
+    no: '05', name: '科技树', tag: 'P5', cls: 'todo', meta: '内容区 72–852；节点 2 列 × 5 行 + 底部进度摘要',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 科技树', k: 'bar' },
+      { y: 72, h: 44, t: '分支 ×4（军事 / 经济 / 防御 / 统帅）', k: 'card' },
+      { y: 132, h: 576, t: '节点区 · 2 列 × 5 行（96 高 + 24 间距，折线连线）', k: 'stage' },
+      { y: 720, h: 132, t: '本分支进度摘要（补满 38% 空区）', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '06', name: '通行证', tag: 'P6', cls: 'todo', meta: '内容区 72–852；行高 56 + 行间 8，必须留行界',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 通行证', k: 'bar' },
+      { y: 72, h: 84, t: '赛季卡 · 赛季名 + Lv / 高级标识 + EXP 条', k: 'card' },
+      { y: 164, h: 32, t: '列头 · Lv（右对齐 40） | 免费 | 高级', k: 'zone' },
+      { y: 204, h: 648, t: '奖励行 ×10（Lv 标签 + 免费格 + 高级格）', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '07', name: '任务', tag: 'P7', cls: 'todo', meta: '内容区 72–852；条目 64 高，一键领取与首分类同行',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 任务', k: 'bar' },
+      { y: 72, h: 40, x: 16, w: 240, t: '分类 · 每日任务', k: 'zone' },
+      { y: 72, h: 40, x: 268, w: 146, t: '一键领取', k: 'cta' },
+      { y: 120, h: 212, t: '每日 · 条目 ×3（64 高 + 8 间距）', k: 'list' },
+      { y: 340, h: 260, t: '每周 · 条目 ×4', k: 'list' },
+      { y: 608, h: 244, t: '赛季 · 条目 ×3', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '08', name: '成就', tag: 'P7', cls: 'todo', meta: '内容区 72–852；顶部补统计条，与任务拉开差异',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 成就', k: 'bar' },
+      { y: 72, h: 56, t: '统计条 · 已获得 5/13 + 一键领取', k: 'card' },
+      { y: 140, h: 712, t: '成就条目 ×11（64 高 + 8 间距）', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '09', name: '排行榜', tag: 'P8', cls: 'todo', meta: '内容区 72–852；行高 48（前三 56）+ 吸底自己排名',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 排行榜', k: 'bar' },
+      { y: 72, h: 44, t: '榜单 ×4（天梯 / 战力 / 胜场 / 收集）', k: 'card' },
+      { y: 128, h: 120, t: '前三名 podium（金银铜）', k: 'stage' },
+      { y: 260, h: 528, t: '榜单行 4–14（48 高）', k: 'list' },
+      { y: 797, h: 52, t: '吸底条 · 你的排名 第 12 名', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  }
+];
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = screens.map(s => {
+    const ticks = [];
+    for (let y = 100; y < H; y += 100) ticks.push(`<i class="tick" style="top:${P(y)}"></i><i class="tick r" style="top:${P(y)}"></i>`);
+    const bounds = s.noBound ? '' : [72, 852].map(y => `<i class="bound" style="top:${P(y)}"></i><i class="bound r" style="top:${P(y)}"></i>`).join('');
+    const blocks = s.blocks.map(b => {
+      const x = b.x === undefined ? 16 : b.x;
+      const w = b.w === undefined ? W - 32 : b.w;
+      return `<div class="blk k-${b.k}" style="top:${P(b.y)};height:${P(b.h)};left:${S(x)};width:${S(w)}">${b.t}</div>`;
+    }).join('');
+    return `<section class="item">
+      <div class="head"><span class="no">${s.no}</span><span class="name">${s.name}</span><span class="tag ${s.cls}">${s.tag}</span></div>
+      <div class="phone">${ticks.join('')}${bounds}${blocks}</div>
+      <div class="meta">${s.meta}</div>
+    </section>`;
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>
