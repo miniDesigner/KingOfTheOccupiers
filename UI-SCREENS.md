@@ -79,10 +79,12 @@
 
 ## 3. 统一规格（P0 ScreenShell 契约）
 
-**背景层**
-1. 竖向渐变 `#5BB8E8 → #7FC9EC → #EAF8FF`（天蓝 → 云白），与大厅同源。
-2. 其上叠当前界面底图 `SCREEN_BG[screen]`；占位阶段 `alpha ≤ 0.12` 仅作纹理，正式素材到位后改 `1`。
-3. 底部 30% 追加云白渐隐，保证列表滚动到底不撞暗色。
+**背景层（2026-11-18 调整：子界面直接复用大厅底图）**
+1. 底图取 `SCREEN_BG[screen]`，**所有子界面都已映射到 `bg/lobby_bg`**，与大厅同一张图，切换不再割裂。
+2. 底图上叠竖向压暗层：`0% 0.52 / 42% 0.24 / 72% 0.34 / 100% 0.58`（`rgba(6,14,28,·)`）。中段最亮保住远山与雾面层次，两端沉下去托住资源栏与底部按钮。
+3. 底图缺失时退化为一层夜景渐变 `#0B1424 → #16243A → #0A1220`，任何时候都不露白底。
+4. 背景明度必须远低于云白卡（≤ L130 vs 卡 ≈ L227）；**卡片是全屏唯一亮面**。
+5. 新增界面**不要**再自己画天蓝→云白渐变，直接调 `_screenBg()`。
 
 **顶栏（高度 52，距顶 8，左右 8）**
 - 云白厚底胶囊，圆角 14；左侧返回箭头（复用 `UI-03` ★正式），中间标题 18px bold `#16304F`，右侧操作区。
@@ -92,8 +94,10 @@
 - 底色 `tintOf(#2B4A6F, 0.11)`（云白偏蓝），圆角 14，厚底 `rgba(22,48,79,0.22)` 偏移 4px，投影 blur 8。
 - 卡内区块标题：12px bold `#2B4A6F`，左侧 3px 竖条强调。
 
-**文字**
-- 主 `#16304F` / 次 `#2B4A6F` / 弱 `rgba(22,48,79,0.45)`；深底上才允许 `navySoft`。
+**文字（两套色阶，按承载面选，不可混用）**
+- **云白卡内**：主 `#16304F` / 次 `#2B4A6F` / 弱 `rgba(22,48,79,0.45)`。
+- **直接压在夜景背景上**：主 `ON_DARK.title` `#EAF8FF` / 次 `ON_DARK.body` `rgba(234,248,255,0.88)` / 弱 `ON_DARK.hint` `rgba(234,248,255,0.55)`；绿色用 `ON_DARK.green` `#4ADE80`（`#168A4A` 在夜景上看不见）。
+- `_sectionLabel` / `_emptyState` 默认按「压背景」处理；若确实画在云白卡内，传 `{ onLight: true }`。
 
 **按钮**
 - 主 CTA：明黄 `#FFD23F` → 橙 `#FF8C42` 竖渐变，圆角 14，白描边 2，文字 `#4A2A00` bold 16。
@@ -114,7 +118,7 @@
 | `_screenBg(bgKey?, artAlpha?)` | 界面底：天蓝→云白渐变 + 可选界面底图 + 顶/底渐隐 | 占位期底图默认走 `features.artSubpageBgAlpha`（当前 0） |
 | `_screenHeader(title, opts)` | 居中标题胶囊 | `{cy, accent}`；`w<380` 自动让开左上角资源簇 |
 | `_sectionLabel(text, x, y, opts)` | 区块标题：竖条 + 标题 + 右侧弱提示 | `{accent, hint, hintRight}` |
-| `_cardBg(rect, opts)` | 云白厚底内容卡（只画底板） | `{tint, border, edge, edgeSide:'left'|'top', r}` |
+| `_cardBg(rect, opts)` | 云白厚底内容卡（只画底板） | `{tint, border, edge, edgeSide:'left'|'top', r, flat}`；`flat:true` = 平面弱面（容器底/空槽/未激活卡），不带厚底与柔光 |
 | `_listRow(rect, opts)` | 列表行底（任务/成就/排行榜通用） | `{alt, tint, border, edge}` |
 | `_progressBar(rect, ratio, opts)` | 进度条，ratio 自动夹 0~1 | `{color, track, r}` |
 | `_tabs(rect, labels, activeIndex, opts)` | 分段页签，返回各段命中框 | `{accent}` |

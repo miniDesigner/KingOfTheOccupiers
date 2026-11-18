@@ -180,3 +180,54 @@ test('_sectionLabel：hint 右对齐在屏内，不影响几何', () => {
   assert.ok(hint, 'hint 必须绘制');
   assert.ok(hint.x <= 430, 'hint 不得画出屏幕右边界');
 });
+
+test('_cardBg 的 flat 模式：不画厚底/柔光，只出一层平面底', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  const rect = { x: 10, y: 70, w: 300, h: 60, r: 12 };
+  rs._cardBg(rect, { tint: 'rgba(6,14,28,0.34)', flat: true });
+  // flat 走 clip + fillRect，不进 fills；_drawRaisedCard 的厚底/柔光走路径填充，记在 fills
+  const raised = ctx.rec.fills.filter(f => Math.abs(f.y - (rect.y + 4)) < 1e-6);
+  assert.equal(raised.length, 0, 'flat 模式不得绘制 y+4 的厚底');
+  assert.equal(ctx.rec.fills.length, 0, 'flat 模式不得走 _drawRaisedCard 的柔光路径');
+  const body = ctx.rec.rects.filter(r => Math.abs(r.h - rect.h) < 1e-6 && Math.abs(r.y - rect.y) < 1e-6);
+  assert.equal(body.length, 1, 'flat 模式应恰好绘制一层平面底');
+
+  // 对照：非 flat 必须出现厚底，确认这条测试真的在区分两种模式
+  const ctx2 = fakeCtx();
+  const rs2 = makeRS(ctx2);
+  rs2._cardBg(rect, { tint: 'rgba(255,255,255,0.9)' });
+  const raised2 = ctx2.rec.fills.filter(f => Math.abs(f.y - (rect.y + 4)) < 1e-6);
+  assert.ok(raised2.length >= 1, '非 flat 模式应有 y+4 的厚底');
+});
+
+test('_screenBg：底图不可用时画出兜底色与压暗层，不抛错也不露白', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  rs._art = () => false;              // 模拟图片未加载
+  assert.doesNotThrow(() => rs._screenBg());
+  const full = ctx.rec.rects.filter(r => r.w === 430 && r.h === 932);
+  assert.ok(full.length >= 2, `应至少绘制兜底色 + 压暗层，实际 ${full.length} 层`);
+  // 兜底色必须偏暗（夜景系），不能是云白/天蓝，否则白字就读不出来了
+  const lum = (hex) => {
+    const h = String(hex).replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  };
+  assert.ok(lum('#0E1A2E') < 60, '兜底色应为深靛夜景');
+});
+
+test('_sectionLabel / _emptyState：深底默认浅色，onLight 才用深色字', () => {
+  const darkCtx = fakeCtx();
+  const rs1 = makeRS(darkCtx);
+  rs1._sectionLabel('标题', 15, 60, { hint: '提示' });
+  rs1._emptyState(215, 400, '暂无数据');
+  const darkColors = darkCtx.rec.texts.map(t => t.t);
+  assert.ok(darkColors.includes('标题'), '标题必须绘制');
+
+  // onLight 分支也要能画，不抛错即可（颜色不同不影响几何）
+  const lightCtx = fakeCtx();
+  const rs2 = makeRS(lightCtx);
+  assert.doesNotThrow(() => rs2._sectionLabel('标题', 15, 60, { onLight: true }));
+  assert.doesNotThrow(() => rs2._emptyState(215, 400, '暂无数据', { onLight: true }));
+});

@@ -6360,14 +6360,14 @@ export const ART_BINDINGS = {
 
 export const SCREEN_BG = {
   "lobby": "bg/lobby_bg",
-  "deploy_select": "bg/subpage_bg",
-  "tech_panel": "bg/subpage_bg",
-  "shop": "bg/subpage_bg",
-  "quest": "bg/subpage_bg",
-  "achievement": "bg/subpage_bg",
-  "battle_pass": "bg/subpage_bg",
-  "gacha": "bg/gacha_bg",
-  "leaderboard": "bg/subpage_bg",
+  "deploy_select": "bg/lobby_bg",
+  "tech_panel": "bg/lobby_bg",
+  "shop": "bg/lobby_bg",
+  "quest": "bg/lobby_bg",
+  "achievement": "bg/lobby_bg",
+  "battle_pass": "bg/lobby_bg",
+  "gacha": "bg/lobby_bg",
+  "leaderboard": "bg/lobby_bg",
   "playing": "bg/battle_bg"
 };
 

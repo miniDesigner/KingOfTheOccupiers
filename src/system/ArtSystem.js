@@ -24,7 +24,7 @@ class ArtSystemClass {
     this.total = ART_COUNT;
     this.enabled = true;
     this.alpha = 0.5;              // 占位底图叠加不透明度
-    this.subpageBgAlpha = 0;       // 子界面底图叠加不透明度（占位期 0，正式素材到位后设 1）
+    this.subpageBgAlpha = 1;       // 子界面底图叠加不透明度（子界面复用大厅底图，默认满不透明）
     this._cache = new Map();       // key -> { status, img }
     this._stats = {
       requested: 0, ready: 0, failed: 0,

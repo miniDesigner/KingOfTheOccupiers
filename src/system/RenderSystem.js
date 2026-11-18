@@ -36,6 +36,18 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 // 用途：跳过 ArtLayer 的深色占位装饰层，避免水印/脏底透过云白卡。
 const SHELL_SCREENS = new Set(['deploy_select', 'gacha']);
 
+// 子界面兜底底色：底图未加载时用它顶上，避免露白底。
+// 底图本身走 SCREEN_BG（当前全部子界面已统一为 bg/lobby_bg），保持单一真相源。
+const SUBPAGE_BG_FALLBACK = '#0E1A2E';
+
+// 深底（大厅夜景）上的文字三级色阶：标题 / 正文 / 弱提示
+const ON_DARK = {
+  title: '#EAF8FF',
+  body: 'rgba(234, 248, 255, 0.88)',
+  hint: 'rgba(234, 248, 255, 0.55)',
+  green: '#4ADE80',   // UI_THEME.green(#168A4A) 在夜景底上几乎看不见
+};
+
 // 图标族语义键：与 assets/icons/ 下实际文件名一一对应；_artIcon 会在
 // ART_INDEX 中做存在性检查，未命中即静默跳过，绝不产生 missing 统计。
 // 大厅底部导航：商店 / 抽卡 / 布阵 / 科技 / 排行榜（第 6 项战斗复用 rank 兜底）
@@ -299,45 +311,52 @@ export class RenderSystem {
   // 全部为纯绘制，不改 Layout 几何、不改点击命中；各界面按制作顺序逐个接入。
 
   /**
-   * 子界面统一背景：天蓝→云白竖渐变 + 界面底图（占位期只作低透明度纹理）+ 底部云白渐隐。
-   * @param {string} [bgKey] 界面底图 key，缺省取 SCREEN_BG[screen]
-   * @param {number} [artAlpha] 底图不透明度；占位水印期默认 0.12，正式素材到位后设 1
+   * 子界面统一背景：直接复用大厅底图（`bg/lobby_bg`），再叠一层压暗层当「舞台底」。
+   *
+   * 为什么不各自画渐变：大厅是深靛夜景，子界面若用天蓝→云白，切换时色调割裂。
+   * 共用同一张底图后，远山/雾面/云海的层次在子界面同样成立，只是被压暗，
+   * 让云白内容卡成为唯一亮面——背景负责氛围，卡片负责信息。
+   *
+   * @param {string} [bgKey] 覆盖底图 key（默认 SCREEN_BG[screen]）
+   * @param {number} [artAlpha] 底图不透明度，缺省取 features.artSubpageBgAlpha
    */
   _screenBg(bgKey, artAlpha) {
     const { ctx } = this;
     const w = this.screenWidth;
     const h = this.screenHeight;
+    const a = artAlpha === undefined ? ArtSystem.subpageBgAlpha : artAlpha;
 
-    if (typeof ctx.createLinearGradient === 'function') {
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, UI_THEME.sky);
-      grad.addColorStop(0.48, UI_THEME.skyLight);
-      grad.addColorStop(1, UI_THEME.cloud);
-      ctx.fillStyle = grad;
-    } else {
-      ctx.fillStyle = UI_THEME.skyLight;
-    }
+    // 兜底底色：底图未加载 / 加载失败时不能露出白底
+    ctx.fillStyle = SUBPAGE_BG_FALLBACK;
     ctx.fillRect(0, 0, w, h);
 
-    const a = artAlpha === undefined ? ArtSystem.subpageBgAlpha : artAlpha;
-    if (a > 0) this._art(bgKey || this._screenBgKey(), 0, 0, w, h, { fit: 'cover', alpha: a });
-
-    // 顶部压深托住资源栏；底部云白渐隐，保证列表滚到底不撞暗色
-    if (typeof ctx.createLinearGradient === 'function') {
-      const topH = Math.max(40, h * 0.12);
-      const top = ctx.createLinearGradient(0, 0, 0, topH);
-      top.addColorStop(0, 'rgba(16, 52, 92, 0.20)');
-      top.addColorStop(1, 'rgba(16, 52, 92, 0)');
-      ctx.fillStyle = top;
-      ctx.fillRect(0, 0, w, topH);
-
-      const botH = Math.max(60, h * 0.16);
-      const bot = ctx.createLinearGradient(0, h - botH, 0, h);
-      bot.addColorStop(0, 'rgba(234, 248, 255, 0)');
-      bot.addColorStop(1, 'rgba(234, 248, 255, 0.85)');
-      ctx.fillStyle = bot;
-      ctx.fillRect(0, h - botH, w, botH);
+    const drawn = a > 0 && this._art(bgKey || this._screenBgKey(), 0, 0, w, h, { fit: 'cover', alpha: a });
+    if (!drawn) {
+      // 底图缺失时退化为一层夜景渐变，至少保持「深底 + 云白卡」的对比关系
+      if (typeof ctx.createLinearGradient === 'function') {
+        const fb = ctx.createLinearGradient(0, 0, 0, h);
+        fb.addColorStop(0, '#0B1424');
+        fb.addColorStop(0.55, '#16243A');
+        fb.addColorStop(1, '#0A1220');
+        ctx.fillStyle = fb;
+      } else {
+        ctx.fillStyle = SUBPAGE_BG_FALLBACK;
+      }
+      ctx.fillRect(0, 0, w, h);
     }
+
+    // 压暗层：中段留亮（保住远山与雾面层次），两端沉下去托住资源栏与底部按钮
+    if (typeof ctx.createLinearGradient === 'function') {
+      const veil = ctx.createLinearGradient(0, 0, 0, h);
+      veil.addColorStop(0, 'rgba(6, 14, 28, 0.52)');
+      veil.addColorStop(0.42, 'rgba(6, 14, 28, 0.24)');
+      veil.addColorStop(0.72, 'rgba(6, 14, 28, 0.34)');
+      veil.addColorStop(1, 'rgba(6, 14, 28, 0.58)');
+      ctx.fillStyle = veil;
+    } else {
+      ctx.fillStyle = 'rgba(6, 14, 28, 0.34)';
+    }
+    ctx.fillRect(0, 0, w, h);
   }
 
   /**
@@ -401,16 +420,18 @@ export class RenderSystem {
     const { ctx } = this;
     const o = opts || {};
     const accent = o.accent || UI_THEME.skyDeep;
+    // 子界面底已改为大厅夜景：标题直接压背景，必须用浅色；压在云白卡内时传 onLight
+    const onLight = !!o.onLight;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = accent;
     if (typeof ctx.fillRect === 'function') ctx.fillRect(x, y - 7, 3, 14);
-    ctx.fillStyle = UI_THEME.navy;
+    ctx.fillStyle = onLight ? UI_THEME.navy : ON_DARK.title;
     ctx.font = 'bold 12px sans-serif';
     ctx.fillText(text, x + 8, y);
     if (o.hint) {
       ctx.textAlign = 'right';
-      ctx.fillStyle = 'rgba(22,48,79,0.45)';
+      ctx.fillStyle = onLight ? 'rgba(22,48,79,0.45)' : ON_DARK.hint;
       ctx.font = '9px sans-serif';
       ctx.fillText(o.hint, o.hintRight === undefined ? this.screenWidth - 15 : o.hintRight, y);
       ctx.textAlign = 'left';
@@ -428,7 +449,8 @@ export class RenderSystem {
     const o = opts || {};
     const r = o.r === undefined ? 12 : o.r;
     const x = rect.x, y = rect.y, cw = rect.w, ch = rect.h;
-    this._drawRaisedCard({ x, y, w: cw, h: ch, r }, () => {
+
+    const paint = () => {
       ctx.fillStyle = o.tint || 'rgba(255,255,255,0.90)';
       ctx.fillRect(x, y, cw, ch);
       if (o.edge) {
@@ -436,7 +458,24 @@ export class RenderSystem {
         if (o.edgeSide === 'top') ctx.fillRect(x, y, cw, 3);
         else ctx.fillRect(x, y, 3, ch);
       }
-    });
+    };
+
+    // flat：只画平面底，不带厚底与投影。
+    // 用于「容器底 / 空槽位」这类本该比内容更弱的面——_drawRaisedCard 会预填一层
+    // rgba(255,255,255,0.8) 柔光，半透深色叠上去会变成灰白板，在夜景底上尤其明显。
+    if (o.flat) {
+      if (typeof ctx.arcTo === 'function') {
+        ctx.save();
+        this._roundRectPath(x, y, cw, ch, Math.max(2, Math.min(r, cw / 2, ch / 2)));
+        ctx.clip();
+        paint();
+        ctx.restore();
+      } else {
+        paint();
+      }
+    } else {
+      this._drawRaisedCard({ x, y, w: cw, h: ch, r }, paint);
+    }
     if (o.border) {
       // 老基础库没有 arcTo：退化为直角描边，视觉降级但绝不能让整个界面抛错
       if (typeof ctx.arcTo === 'function') {
@@ -465,10 +504,22 @@ export class RenderSystem {
     const o = opts || {};
     const r = rect.r === undefined ? 14 : rect.r;
     const x = rect.x, y = rect.y, bw = rect.w, bh = rect.h;
+    if (o.disabled) {
+      // 禁用态用平面暗块：亮灰块在夜景底上会显得"可点"，与语义相反
+      this._cardBg({ x, y, w: bw, h: bh, r }, {
+        tint: 'rgba(255,255,255,0.14)',
+        border: 'rgba(234,248,255,0.20)',
+        flat: true,
+      });
+      ctx.fillStyle = 'rgba(234,248,255,0.45)';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);
+      return;
+    }
     this._drawRaisedCard(rect, () => {
-      if (o.disabled) {
-        ctx.fillStyle = '#CBD5E1';
-      } else if (typeof ctx.createLinearGradient === 'function') {
+      if (typeof ctx.createLinearGradient === 'function') {
         const g = ctx.createLinearGradient(0, y, 0, y + bh);
         g.addColorStop(0, UI_THEME.gold);
         g.addColorStop(1, UI_THEME.orange);
@@ -484,7 +535,7 @@ export class RenderSystem {
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.restore();
-    ctx.fillStyle = o.disabled ? '#64748B' : '#4A2A00';
+    ctx.fillStyle = '#4A2A00';
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -609,16 +660,17 @@ export class RenderSystem {
   _emptyState(cx, cy, text, opts) {
     const { ctx } = this;
     const o = opts || {};
+    const onLight = !!o.onLight;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(43,74,111,0.26)';
+    ctx.fillStyle = onLight ? 'rgba(43,74,111,0.26)' : 'rgba(234,248,255,0.24)';
     ctx.font = 'bold 34px sans-serif';
     ctx.fillText(o.icon || '🗒', cx, cy);
-    ctx.fillStyle = 'rgba(22,48,79,0.58)';
+    ctx.fillStyle = onLight ? 'rgba(22,48,79,0.58)' : ON_DARK.body;
     ctx.font = 'bold 12px sans-serif';
     ctx.fillText(text, cx, cy + 34);
     if (o.hint) {
-      ctx.fillStyle = 'rgba(22,48,79,0.40)';
+      ctx.fillStyle = onLight ? 'rgba(22,48,79,0.40)' : ON_DARK.hint;
       ctx.font = '10px sans-serif';
       ctx.fillText(o.hint, cx, cy + 52);
     }
@@ -1005,10 +1057,10 @@ export class RenderSystem {
     const w = this.screenWidth;
     const profile = gameState.profile;
 
-    // 顶栏底色 + 底部分隔线（晴空乐园：浅色半透，不再压暗天空）
-    ctx.fillStyle = 'rgba(234,248,255,0.55)';
+    // 顶栏底色 + 底部分隔线：深底上用压暗条，浅色条会变成一道亮带把画面切开
+    ctx.fillStyle = 'rgba(6,14,28,0.55)';
     ctx.fillRect(0, 0, w, 50);
-    ctx.fillStyle = 'rgba(43,74,111,0.18)';
+    ctx.fillStyle = 'rgba(234,248,255,0.14)';
     ctx.fillRect(0, 50, w, 1);
 
     // 左上角货币簇（2×2）—— 自适应宽度（详见 Layout.resourceBarLayout）
@@ -1030,13 +1082,11 @@ export class RenderSystem {
     const clusterH = cellH * 2 + pad * 2;
     const clusterX = 8;
     const clusterY = 4;
-    this._drawCard({ x: clusterX, y: clusterY, w: clusterW, h: clusterH, r: 9 }, () => {
-      ctx.fillStyle = tintOf(UI_THEME.skyDeep, 0.12);
-      ctx.fillRect(clusterX, clusterY, clusterW, clusterH);
-      ctx.strokeStyle = UI_THEME.skyDeep;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(clusterX, clusterY, clusterW, clusterH);
-    });
+    // 货币簇用云白厚底：与内容卡同一套语言，深底上也能一眼读出数值
+    this._cardBg(
+      { x: clusterX, y: clusterY, w: clusterW, h: clusterH, r: 9 },
+      { tint: 'rgba(255,255,255,0.93)', border: 'rgba(234,248,255,0.30)' }
+    );
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -1734,10 +1784,12 @@ export class RenderSystem {
       // 云白厚底卡：品质只走外缘描边与顶部色条，卡底不再压深色
       const _q = slotData.quality || 1;
       this._cardBg({ x: sx, y: uslot.y, w: uslot.w, h: uslot.h, r: 10 }, {
-        tint: slotData.empty ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.97)',
-        border: isDragTarget ? UI_THEME.skyDeep : (slotData.empty ? 'rgba(43,74,111,0.25)' : qColor),
+        // 空槽在深底上压成半透暗块（表示"待填"），实槽才是云白亮面
+        tint: slotData.empty ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.97)',
+        border: isDragTarget ? UI_THEME.skyDeep : (slotData.empty ? 'rgba(234,248,255,0.26)' : qColor),
         edge: slotData.empty ? null : qColor,
         edgeSide: 'top',
+        flat: slotData.empty,
       });
       if (!slotData.empty) {
         const _uid = Number(slotData.unitId || slotData.id || slotData.unitIndex || 0);
@@ -1758,7 +1810,7 @@ export class RenderSystem {
       ctx.fillText('#' + (i + 1), sx + 5, uslot.y + 10);
 
       if (slotData.empty && !isDragSource) {
-        ctx.fillStyle = 'rgba(43,74,111,0.50)';
+        ctx.fillStyle = 'rgba(234,248,255,0.55)';
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('空槽位', sx + uslot.w / 2, uslot.y + uslot.h / 2);
@@ -1811,23 +1863,24 @@ export class RenderSystem {
       const isActive = syn && syn.level > 0;
       const styleKey = syn?.style || ['melee', 'ranged', 'defense', 'magic'][i];
       const styleColor = { melee: '#ef4444', ranged: '#22c55e', defense: '#3b82f6', magic: '#a855f7' }[styleKey] || '#a855f7';
-      // 云白卡：激活态用 style 色外缘标记，未激活降饱和
+      // 激活态云白亮卡 + style 色外缘；未激活用平面暗块，深底上与背景融为一体
       this._cardBg({ x: sx, y: ap.y, w: ap.size, h: ap.size, r: 10 }, {
-        tint: isActive ? 'rgba(255,255,255,0.94)' : 'rgba(255,255,255,0.60)',
-        border: isActive ? styleColor : 'rgba(43,74,111,0.22)',
+        tint: isActive ? 'rgba(255,255,255,0.94)' : 'rgba(255,255,255,0.10)',
+        border: isActive ? styleColor : 'rgba(234,248,255,0.22)',
         edge: isActive ? styleColor : null,
         edgeSide: 'top',
+        flat: !isActive,
       });
       // P35：未激活也显示真实羁绊图标 + 中文羁绊名（不再回落英文 style key）
-      ctx.fillStyle = isActive ? styleColor : 'rgba(43,74,111,0.35)';
+      ctx.fillStyle = isActive ? styleColor : 'rgba(234,248,255,0.38)';
       ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(syn?.icon || '?', sx + ap.size / 2, ap.y + 22);
-      ctx.fillStyle = isActive ? UI_THEME.ink : 'rgba(43,74,111,0.45)';
+      ctx.fillStyle = isActive ? UI_THEME.ink : 'rgba(234,248,255,0.50)';
       ctx.font = 'bold 9px sans-serif';
       ctx.fillText(syn?.name || '羁绊', sx + ap.size / 2, ap.y + 38);
       // 等级 (Lv.X/6) 或未激活
-      ctx.fillStyle = isActive ? UI_THEME.orangeDeep : 'rgba(43,74,111,0.40)';
+      ctx.fillStyle = isActive ? UI_THEME.orangeDeep : 'rgba(234,248,255,0.45)';
       ctx.font = 'bold 10px sans-serif';
       ctx.fillText(isActive ? `Lv.${syn.level}/${syn.maxLevel || 6}` : '未激活', sx + ap.size / 2, ap.y + 54);
     }
@@ -1889,7 +1942,7 @@ export class RenderSystem {
     const _listH = Math.min(_listMaxH, Math.max(_contentH, 128));
     this._cardBg(
       { x: 8, y: _listTop, w: w - 16, h: _listH, r: 14 },
-      { tint: 'rgba(255,255,255,0.26)' }
+      { tint: 'rgba(6,14,28,0.34)', flat: true }
     );
 
     // 内容不足可视高度时，空区给招募引导（否则界面上半截有东西、下半截空荡）
@@ -2014,7 +2067,7 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillText('💡 点击卡片查看详情  |  长按拖动兵种卡上阵', this.screenWidth / 2, L.tipY1);
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = 'rgba(22,48,79,0.72)';
+    ctx.fillStyle = ON_DARK.body;
     ctx.fillText('布阵完成后回大厅点「⚔ 开战」出战', this.screenWidth / 2, L.tipY2);
 
     // === 拖拽视觉反馈（仅兵种） ===
@@ -4950,7 +5003,7 @@ export class RenderSystem {
     // === 底部说明（P34：移到单抽/十连按钮上方居中）===
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(22,48,79,0.55)';
+    ctx.fillStyle = ON_DARK.hint;
     ctx.font = '10px sans-serif';
     ctx.fillText('重复兵种将转化为招募进度 + 星尘', w / 2, L.noteY1);
     ctx.fillText('保底：每 10 抽必出史诗品质以上兵种', w / 2, L.noteY2);
@@ -4985,7 +5038,7 @@ export class RenderSystem {
     }
 
     // 十连优惠提示（按钮下方，与广告按钮保持间隙）
-    ctx.fillStyle = UI_THEME.green;
+    ctx.fillStyle = ON_DARK.green;
     ctx.font = 'bold 10px sans-serif';
     ctx.fillText('9 折优惠 · 保底史诗+', L.multiX + L.btnW / 2, L.discountY);
 
@@ -5110,7 +5163,7 @@ export class RenderSystem {
     const h = this.screenHeight;
 
     // 全屏遮罩：海军蓝半透明，比纯黑更贴晴空乐园的冷色调
-    ctx.fillStyle = 'rgba(12,30,54,0.58)';
+    ctx.fillStyle = 'rgba(6,14,28,0.72)';
     ctx.fillRect(0, 0, w, h);
 
     const qualityColors = { 1: '#9ca3af', 2: '#22c55e', 3: '#3b82f6', 4: '#a855f7', 5: '#f97316', 6: '#ef4444' };
