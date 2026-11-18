@@ -2880,6 +2880,78 @@ export class RenderSystem {
     ctx.closePath();
   }
 
+  /**
+   * 段位城堡接地阴影：土台正下方的椭圆软投影，在城堡之前绘制。
+   * 用 translate + scale + arc 画椭圆径向渐变（不依赖 ctx.ellipse，跨基础库安全）。
+   * 只画在土台下方，不会在贴图矩形边缘留下硬边。
+   */
+  _drawRankCastleShadow(cx, cy, r) {
+    const { ctx } = this;
+    if (typeof ctx.createRadialGradient !== 'function' || typeof ctx.arc !== 'function') return;
+    ctx.save();
+    ctx.translate(cx, cy + r * 0.72);
+    ctx.scale(1, 0.30);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.98);
+    g.addColorStop(0, 'rgba(7, 10, 22, 0.66)');
+    g.addColorStop(0.46, 'rgba(7, 10, 22, 0.32)');
+    g.addColorStop(1, 'rgba(7, 10, 22, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.98, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /**
+   * 段位城堡环境整合：在城堡之后绘制三层，全部用渐变叠加。
+   * ① 冷调渗透 —— 极淡夜空蓝拉近色温，几乎不改明度
+   * ② 土台压暗 —— 只作用于圆盘侧壁（cy+0.34r 以下），塔身明度完全不受影响
+   * ③ 边缘雾吞没 —— 以土台底部为中心的环形雾，把锐利贴图边缘融进背景空气
+   */
+  _drawRankCastleFusion(cx, cy, r) {
+    const { ctx } = this;
+    if (typeof ctx.createLinearGradient !== 'function' || typeof ctx.createRadialGradient !== 'function') return;
+
+    if (typeof ctx.arc === 'function' && typeof ctx.clip === 'function') {
+      // ① 冷调渗透
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 0.99, 0, Math.PI * 2);
+      ctx.clip();
+      const gc = ctx.createLinearGradient(0, cy - r, 0, cy + r);
+      gc.addColorStop(0, 'rgba(54, 68, 122, 0.03)');
+      gc.addColorStop(0.6, 'rgba(46, 58, 108, 0.05)');
+      gc.addColorStop(1, 'rgba(28, 34, 66, 0.09)');
+      ctx.fillStyle = gc;
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      ctx.restore();
+
+      // ② 土台压暗（椭圆裁剪，只覆盖圆盘侧壁）
+      ctx.save();
+      ctx.translate(cx, cy + r * 0.12);
+      ctx.scale(1, 0.946);
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.93, 0, Math.PI * 2);
+      ctx.clip();
+      const gd = ctx.createLinearGradient(0, r * 0.38, 0, r * 0.98);
+      gd.addColorStop(0, 'rgba(24, 28, 46, 0)');
+      gd.addColorStop(0.55, 'rgba(24, 28, 46, 0.13)');
+      gd.addColorStop(1, 'rgba(22, 26, 44, 0.28)');
+      ctx.fillStyle = gd;
+      ctx.fillRect(-r, -r, r * 2, r * 2);
+      ctx.restore();
+    }
+
+    // ③ 边缘雾吞没
+    const gb = ctx.createRadialGradient(cx, cy + r * 0.62, r * 0.26, cx, cy + r * 0.62, r * 0.95);
+    gb.addColorStop(0, 'rgba(31, 37, 60, 0)');
+    gb.addColorStop(0.52, 'rgba(31, 37, 60, 0.08)');
+    gb.addColorStop(0.80, 'rgba(31, 37, 60, 0.24)');
+    gb.addColorStop(1, 'rgba(33, 39, 64, 0.38)');
+    ctx.fillStyle = gb;
+    ctx.fillRect(cx - r, cy, r * 2, r);
+  }
+
   drawLobby(gameState) {
     const { ctx } = this;
     const w = this.screenWidth;
@@ -3135,7 +3207,13 @@ export class RenderSystem {
       // 3D 城堡图标：边长≈屏宽一半（badgeR 目标=screenW/4，矮屏按高度自适应缩小）
       // index 0-7 对应 rank_01(青铜)~rank_08(王者)
       const badgeImgSize = Math.round(badgeR * 2);
+      // 段位城堡与夜景背景的物理整合：接地阴影在城堡之前，环境色/土台压暗/边缘雾在城堡之后。
+      // 目的不是「压暗城堡」，而是补上它进入大气环境后必须有的三样关系：
+      // ① 落地（土台下方有投影，不再是悬空圆盘）② 空气（边缘被雾吞没，不是锐利抠图边）
+      // ③ 环境色（暗部染上天光冷色，与背景同处一个光照系统）。城堡主体明度刻意保持不变。
+      this._drawRankCastleShadow(cx, badgeY, badgeR);
       this._artIcon(ART_PREFIXES.rank, rankKey, cx, badgeY, badgeImgSize, 1);
+      this._drawRankCastleFusion(cx, badgeY, badgeR);
       // 段位名胶囊已移除：段位由进度条左侧的段位徽章 + 进度条颜色表达
     }
 
