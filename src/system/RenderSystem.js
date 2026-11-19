@@ -2024,16 +2024,22 @@ export class RenderSystem {
       return name.length > max ? name.slice(0, max) + '…' : name;
     };
 
-    // 顶部HUD背景
+    // 顶部HUD背景（程序化黑底兜底，始终绘制）
     ctx.fillStyle = 'rgba(0,0,0,0.75)';
     ctx.fillRect(0, 0, this.screenWidth, 55);
-    // 贴图：UI-30 战斗 HUD 顶栏（1500×150 @3x → 500×50 逻辑）
-    this._art(ART_HOOKS.hudTop, 0, 0, this.screenWidth, 55, { alpha: 0.8 });
+    // 贴图装饰：UI-30 HUD 顶栏/底栏/HP 条/羁绊面板均为带水印占位图，
+    // 由 artEffectDecor 开关控制；默认关闭时跳过，程序化黑底 + 语义图标已足够。
+    // 待这些 .9 图同名替换为正式素材后设 artEffectDecor=true 恢复。
+    const _hudDecor = this._artEffectDecor === true;
+    if (_hudDecor) {
+      this._art(ART_HOOKS.hudTop, 0, 0, this.screenWidth, 55, { alpha: 0.8 });
+    }
     this._artIcon(ART_PREFIXES.hud, 'timer', this.screenWidth - 18, 27, 16, 0.6);
-    // HUD 底栏 / 双方 HP 条 / 羁绊面板贴图 + 5 个 hud 语义图标
-    this._artFx('hudBottom', 0, this.screenHeight - 66, this.screenWidth, 66, 0.28);
-    this._art(pick_hudHp(), 0, 0, this.screenWidth, 50, { alpha: 0.10 });
-    this._art(pick_hudSynergy(), 0, 55, 106, 90, { alpha: 0.10 });
+    if (_hudDecor) {
+      this._artFx('hudBottom', 0, this.screenHeight - 66, this.screenWidth, 66, 0.28);
+      this._art(pick_hudHp(), 0, 0, this.screenWidth, 50, { alpha: 0.10 });
+      this._art(pick_hudSynergy(), 0, 55, 106, 90, { alpha: 0.10 });
+    }
     const _hudIcons = ['setting', 'battle', 'enemy_hq', 'layout', 'synergy'];
     for (let i = 0; i < _hudIcons.length; i++) {
       const k = iconKey('hud', _hudIcons[i]);
@@ -3382,16 +3388,21 @@ export class RenderSystem {
     ctx.fillStyle = 'rgba(0,0,0,0.82)';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
     this._art(RESULT_BG[isWin ? 'won' : 'lost'], 0, 0, this.screenWidth, this.screenHeight, { fit: 'cover', alpha: 0.7 });
-    // 结算三态图形（星级 / 晋升 / 摘要）+ 胜负粒子与段位流光
+    // 结算三态图形（星级 / 晋升 / 摘要）+ 胜负粒子与段位流光。
+    // 这些是占位九宫格/特效素材，自带粉紫框线与「占位图」文字；云白卡已达标，
+    // 低 alpha 装饰反而透出脏底，故由 artResultDecor 开关控制（默认关闭）。
+    // 待同名替换为正式素材后设 artResultDecor=true 即可恢复，几何/命中不变。
     const _rw = this.screenWidth, _rh = this.screenHeight;
-    this._art(pick_result('star'), _rw / 2 - 120, _rh * 0.30, 240, 54, { alpha: 0.14 });
-    this._art(pick_result('promote'), _rw / 2 - 120, _rh * 0.30 + 58, 240, 54, { alpha: 0.12 });
-    this._art(pick_result('summary'), _rw / 2 - 120, _rh * 0.30 + 116, 240, 54, { alpha: 0.12 });
-    this._art(pick_rankShine(), _rw / 2 - 24, _rh * 0.30 - 40, 48, 48, { alpha: 0.18 });
-    this._art(pick_defeatFx(isWin ? 'debris' : 'flash'), _rw / 2 - 60, _rh * 0.22, 120, 120, { alpha: 0.14 });
+    if (this._artResultDecor !== false) {
+      this._art(pick_result('star'), _rw / 2 - 120, _rh * 0.30, 240, 54, { alpha: 0.14 });
+      this._art(pick_result('promote'), _rw / 2 - 120, _rh * 0.30 + 58, 240, 54, { alpha: 0.12 });
+      this._art(pick_result('summary'), _rw / 2 - 120, _rh * 0.30 + 116, 240, 54, { alpha: 0.12 });
+      this._art(pick_rankShine(), _rw / 2 - 24, _rh * 0.30 - 40, 48, 48, { alpha: 0.18 });
+      this._art(pick_defeatFx(isWin ? 'debris' : 'flash'), _rw / 2 - 60, _rh * 0.22, 120, 120, { alpha: 0.14 });
+    }
     if (isWin) {
-      this._artFx('firework', cx - 100, cy - 165, 200, 130, 0.45);
-      this._artFx('medalGold', cx - 22, cy - 148, 44, 44, 0.65);
+      if (this._artResultDecor !== false) this._artFx('firework', cx - 100, cy - 165, 200, 130, 0.45);
+      this._artFx('medalGold', cx - 22, cy - 148, 44, 44, 0.65); // 奖牌为本轮正式图，保留
     }
 
     // ===== 云白结果卡：散落文字收进卡片，深色三级文字（夜景舞台底 + 云白卡语言） =====
