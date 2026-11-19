@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>占地之王 · 部件格式栅格 v1</title>
+<style>
+:root{
+  --stage:#0B1424; --panel:#16243A; --line:rgba(234,248,255,0.14);
+  --ink:#EAF8FF; --ink-2:rgba(234,248,255,0.72); --ink-3:rgba(234,248,255,0.45);
+  --card:#EAF8FF; --navy:#2B4A6F; --gold:#FFD23F;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:40px 32px 64px;background:var(--stage);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+header{max-width:1440px;margin:0 auto 26px}
+h1{margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:.5px}
+.sub{color:var(--ink-3);font-size:13px;line-height:1.75;margin:0;max-width:900px}
+.sub b{color:var(--ink-2);font-weight:500}
+.wrap{max-width:1440px;margin:0 auto;display:grid;gap:26px;grid-template-columns:repeat(auto-fill,minmax(520px,1fr))}
+.spec{background:rgba(234,248,255,0.03);border:1px solid var(--line);border-radius:14px;padding:18px 20px 16px;overflow:hidden}
+.spec h3{margin:0 0 2px;font-size:14px;font-weight:600}
+.spec .desc{font-size:11.5px;color:var(--ink-3);margin:0 0 14px;line-height:1.6}
+.var{margin-bottom:14px}
+.var:last-child{margin-bottom:0}
+.vlabel{font-size:10.5px;color:var(--ink-3);margin-bottom:5px;letter-spacing:.3px}
+.stagearea{position:relative;background:#0F1B2C;border-radius:8px;border:1px solid rgba(234,248,255,0.08)}
+.el{position:absolute;border-radius:4px;display:flex;align-items:center;overflow:hidden;white-space:nowrap}
+.k-card{background:var(--card);color:var(--navy);box-shadow:0 2px 0 rgba(6,14,28,0.55)}
+.k-bar{background:rgba(234,248,255,0.13);border:1px solid rgba(234,248,255,0.22);color:#CBD9E6}
+.k-slot{background:rgba(43,74,111,0.06);border:1px dashed rgba(43,74,111,0.3);color:rgba(43,74,111,0.5)}
+.k-cta{background:var(--gold);color:#4A2A00;font-weight:600;justify-content:center}
+.k-ctr{justify-content:center}
+.k-sub{background:rgba(234,248,255,0.93);color:var(--navy);justify-content:center;font-weight:600}
+.k-dis{background:rgba(255,255,255,0.12);color:rgba(234,248,255,0.4);justify-content:center;border:1px solid rgba(234,248,255,0.14)}
+.k-text{background:transparent;color:var(--navy);align-items:center}
+.k-dim{color:rgba(43,74,111,0.55)}
+.k-light{color:#EAF8FF}
+.k-fill{background:#FF8C42}
+.k-track{background:rgba(234,248,255,0.16);border-radius:99px;overflow:hidden}
+.k-dot{background:#EAF8FF;border-radius:50%}
+.k-tag{background:#FFD23F;color:#4A2A00;font-weight:600;justify-content:center;border-radius:3px}
+.k-edge{background:#FF8C42}
+.k-base{background:rgba(22,48,79,0.55)}
+.dims{margin-top:12px;font-size:11px;color:var(--ink-3);line-height:1.85;font-variant-numeric:tabular-nums}
+.dims b{color:var(--ink-2);font-weight:500}
+.foot{max-width:1440px;margin:40px auto 0;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.8}
+</style>
+</head>
+<body>
+<header>
+  <h1>占地之王 · 部件格式栅格 v1</h1>
+  <p class="sub">
+    列表行 / 卡片 / 节点 / 按钮等部件的内部格式，按<b>设计尺寸放大</b>显示（放大倍数标在每张图右上角）。
+    所有数值为 430 屏设计值，实施时落在组件方法内，不在各屏重复写。
+  </p>
+</header>
+
+<div class="wrap" id="wrap"></div>
+
+<div class="foot">
+  部件与界面栅格的关系：界面栅格定「放在哪」，部件栅格定「长什么样、里面怎么分」。
+  两套图的数字必须能对上——列表行 64 高对应任务屏条目间距，商品卡 194×96 对应商店 2 列网格，节点 187×96 对应科技 2 列。
+</div>
+
+<script>
+const specs = [
+  {
+    name: '状态带 + 资源栏',
+    desc: '所有子界面共用。资源栏左对齐固定宽度，标题胶囊在剩余区间居中，不再全屏居中。',
+    w: 430, h: 60, z: 1.35,
+    variants: [
+      { label: '默认（宽屏 430）', h: 46, parts: [
+        { x: 8, y: 8, w: 120, h: 38, k: 'bar', t: '金币 / 钻石 / 星尘 / 奖杯', s: 8 },
+        { x: 130, y: 8, w: 292, h: 38, k: 'card ctr', t: '对战准备', s: 11 }
+      ]},
+      { label: '窄屏 320（资源栏收窄，标题让位后仍在剩余区间居中）', h: 46, parts: [
+        { x: 8, y: 8, w: 104, h: 38, k: 'bar', t: '金币 / 钻石…', s: 8 },
+        { x: 120, y: 8, w: 192, h: 38, k: 'card ctr', t: '对战准备', s: 11 }
+      ]}
+    ],
+    dims: '状态带 <b>8–60（h=52）</b> · 资源栏 <b>120×38</b>（最窄 104）· 标题 <b>130–422</b> · 间隙 <b>8</b>'
+  },
+  {
+    name: '列表行 · 任务 / 成就',
+    desc: '一行三栏：左图标位、中标题 + 进度、右状态按钮。三种状态只在右侧与进度条颜色上变化。',
+    w: 398, h: 64, z: 1.3,
+    variants: [
+      { label: '可领取', h: 64, parts: [
+        { x: 0, y: 0, w: 398, h: 64, k: 'card' },
+        { x: 12, y: 12, w: 40, h: 40, k: 'slot', t: '图标', s: 8 },
+        { x: 60, y: 9, w: 210, h: 16, k: 'text', t: '每日对战 3 次', s: 13 },
+        { x: 60, y: 29, w: 190, h: 12, k: 'text dim', t: '进度 3/3 · 奖励 100 金币', s: 10 },
+        { x: 60, y: 46, w: 230, h: 6, k: 'track' },
+        { x: 60, y: 46, w: 230, h: 6, k: 'fill' },
+        { x: 322, y: 14, w: 64, h: 36, k: 'cta', t: '领取', s: 12 }
+      ]},
+      { label: '未达成', h: 64, parts: [
+        { x: 0, y: 0, w: 398, h: 64, k: 'card' },
+        { x: 12, y: 12, w: 40, h: 40, k: 'slot', t: '图标', s: 8 },
+        { x: 60, y: 9, w: 210, h: 16, k: 'text', t: '占领 10 格土地', s: 13 },
+        { x: 60, y: 29, w: 190, h: 12, k: 'text dim', t: '进度 4/10 · 奖励 200 金币', s: 10 },
+        { x: 60, y: 46, w: 230, h: 6, k: 'track' },
+        { x: 60, y: 46, w: 92, h: 6, k: 'fill' },
+        { x: 322, y: 14, w: 64, h: 36, k: 'dis', t: '4/10', s: 11 }
+      ]}
+    ],
+    dims: '行高 <b>64</b> · 行间 <b>8</b> · 左右内边距 <b>12</b> · 图标位 <b>40×40</b> · 文字起点 <b>x+60</b> · 标题 <b>13px</b> / 副标题 <b>10px</b> · 进度条 <b>230×6 @ y+46</b> · 按钮 <b>64×36</b>'
+  },
+  {
+    name: '列表行 · 排行榜',
+    desc: '名次槽固定 32，头像 36，名字与数值两端对齐。自己行换成明黄左竖条，前三名升格 56 高。',
+    w: 398, h: 56, z: 1.3,
+    variants: [
+      { label: '普通行（48 高）', h: 56, parts: [
+        { x: 0, y: 4, w: 398, h: 48, k: 'card' },
+        { x: 8, y: 8, w: 32, h: 40, k: 'text ctr', t: '12', s: 13 },
+        { x: 48, y: 10, w: 36, h: 36, k: 'slot', t: '', s: 8 },
+        { x: 94, y: 11, w: 160, h: 14, k: 'text', t: '玩家昵称', s: 12 },
+        { x: 94, y: 29, w: 120, h: 11, k: 'text dim', t: '段位 · 王者', s: 9 },
+        { x: 300, y: 14, w: 86, h: 26, k: 'text', t: '1840 杯', s: 12 }
+      ]},
+      { label: '自己行（明黄左竖条 + 高亮底）', h: 56, parts: [
+        { x: 0, y: 4, w: 398, h: 48, k: 'card' },
+        { x: 0, y: 4, w: 4, h: 48, k: 'edge' },
+        { x: 8, y: 8, w: 32, h: 40, k: 'text ctr', t: '12', s: 13 },
+        { x: 48, y: 10, w: 36, h: 36, k: 'slot', t: '', s: 8 },
+        { x: 94, y: 11, w: 160, h: 14, k: 'text ctr', t: '我', s: 12 },
+        { x: 94, y: 29, w: 120, h: 11, k: 'text dim', t: '段位 · 王者', s: 9 },
+        { x: 300, y: 14, w: 86, h: 26, k: 'text', t: '1840 杯', s: 12 }
+      ]}
+    ],
+    dims: '普通行 <b>48</b> / 前三名 <b>56</b> · 行间 <b>4</b> · 名次槽 <b>32</b> · 头像 <b>36</b> · 名字 <b>12px</b> / 副文 <b>9px</b> · 自己行竖条 <b>4px</b>'
+  },
+  {
+    name: '商品卡',
+    desc: '商店 2 列网格。左图标 48、右侧名称 / 价格 / 购买钮三行，免费卡左上角加明黄角标。',
+    w: 420, h: 96, z: 1.3,
+    variants: [
+      { label: '普通商品 + 免费商品（并排两列）', h: 92, parts: [
+        { x: 0, y: 0, w: 194, h: 92, k: 'card' },
+        { x: 10, y: 10, w: 48, h: 48, k: 'slot', t: '', s: 8 },
+        { x: 68, y: 12, w: 116, h: 15, k: 'text', t: '金币 ×500', s: 12 },
+        { x: 68, y: 33, w: 116, h: 12, k: 'text dim', t: '限购 3/5', s: 9 },
+        { x: 68, y: 54, w: 76, h: 26, k: 'cta', t: '60 钻', s: 10 },
+        { x: 226, y: 0, w: 194, h: 92, k: 'card' },
+        { x: 226, y: 0, w: 52, h: 20, k: 'tag', t: '免费', s: 10 },
+        { x: 236, y: 26, w: 48, h: 48, k: 'slot', t: '', s: 8 },
+        { x: 294, y: 28, w: 116, h: 15, k: 'text', t: '看广告领', s: 12 },
+        { x: 294, y: 49, w: 116, h: 12, k: 'text dim', t: '每日 3 次', s: 9 },
+        { x: 294, y: 62, w: 76, h: 22, k: 'cta', t: '领取', s: 10 }
+      ]}
+    ],
+    dims: '卡 <b>194×92</b> · 列间距 <b>10</b> · 行间距 <b>10</b> · 图标 <b>48×48 @ 10,10</b> · 文字起点 <b>x+68</b> · 购买钮 <b>76×26</b> · 免费角标 <b>52×20</b>'
+  },
+  {
+    name: '通行证奖励格',
+    desc: '四态只差描边色与角标：未达灰、可领明黄、已领对勾、高级锁。可领态顶部加 3px 亮条。',
+    w: 560, h: 50, z: 1.2,
+    variants: [
+      { label: '未达 / 可领 / 已领 / 高级锁（并排）', h: 50, parts: [
+        { x: 0, y: 0, w: 132, h: 50, k: 'card' },
+        { x: 0, y: 0, w: 132, h: 50, k: 'text dim', t: '金币 +100', s: 10 },
+        { x: 140, y: 0, w: 132, h: 50, k: 'card' },
+        { x: 140, y: 0, w: 132, h: 3, k: 'tag', t: '', s: 8 },
+        { x: 140, y: 3, w: 132, h: 47, k: 'text', t: '星尘 +20  领取', s: 10 },
+        { x: 280, y: 0, w: 132, h: 50, k: 'card' },
+        { x: 280, y: 0, w: 132, h: 50, k: 'text dim', t: '已领取', s: 10 },
+        { x: 420, y: 0, w: 132, h: 50, k: 'bar', t: '需高级', s: 10 }
+      ]}
+    ],
+    dims: '格 <b>171×50</b>（图为压缩示意）· 格间距 <b>8</b> · 金额文字 <b>10px</b> 居中 · 可领亮条 <b>3px</b> · 高级锁走「需高级」文案 + 暗底'
+  },
+  {
+    name: '科技节点',
+    desc: '左侧 4px 品质竖条标识分支，右上角 Lv 角标，底部一行花费。三态差别在描边与文字明度。',
+    w: 400, h: 96, z: 1.35,
+    variants: [
+      { label: '可升级 / 已满级 / 前置未解锁（并排）', h: 96, parts: [
+        { x: 0, y: 0, w: 187, h: 96, k: 'card' },
+        { x: 0, y: 0, w: 4, h: 96, k: 'edge' },
+        { x: 12, y: 12, w: 40, h: 40, k: 'slot', t: '', s: 8 },
+        { x: 60, y: 14, w: 92, h: 15, k: 'text', t: '锋利武器', s: 12 },
+        { x: 150, y: 10, w: 28, h: 16, k: 'tag', t: 'Lv3', s: 9 },
+        { x: 12, y: 62, w: 163, h: 22, k: 'cta', t: '星尘 120', s: 10 },
+        { x: 205, y: 0, w: 187, h: 96, k: 'card' },
+        { x: 205, y: 0, w: 4, h: 96, k: 'edge' },
+        { x: 217, y: 12, w: 40, h: 40, k: 'slot', t: '', s: 8 },
+        { x: 265, y: 14, w: 92, h: 15, k: 'text', t: '城防加固', s: 12 },
+        { x: 355, y: 10, w: 28, h: 16, k: 'tag', t: 'MAX', s: 8 },
+        { x: 217, y: 62, w: 163, h: 22, k: 'dis', t: '已满级', s: 10 }
+      ]}
+    ],
+    dims: '节点 <b>187×96</b> · 列间距 <b>12</b> · 品质竖条 <b>4px</b> · 图标 <b>40×40</b> · 名称 <b>12px</b> · Lv 角标 <b>28×16</b> · 花费条 <b>163×22</b>'
+  },
+  {
+    name: '页签 + 按钮组',
+    desc: '页签四段等分，选中明黄实底、未选半透明白。按钮三种：主 CTA / 次按钮 / 返回，禁用态统一暗块弱字。',
+    w: 430, h: 190, z: 1.3,
+    variants: [
+      { label: '页签 ×4（h=44）', h: 44, parts: [
+        { x: 0, y: 0, w: 430, h: 44, k: 'bar' },
+        { x: 4, y: 4, w: 103, h: 36, k: 'cta', t: '免费', s: 11 },
+        { x: 111, y: 4, w: 103, h: 36, k: 'bar ctr', t: '金币', s: 11 },
+        { x: 218, y: 4, w: 103, h: 36, k: 'bar ctr', t: '物资', s: 11 },
+        { x: 325, y: 4, w: 101, h: 36, k: 'bar ctr', t: '特惠', s: 11 }
+      ]},
+      { label: '主 CTA / 次按钮 / 返回 / 禁用（同一操作带）', h: 182, parts: [
+        { x: 0, y: 70, w: 86, h: 48, k: 'sub', t: '返回', s: 11 },
+        { x: 96, y: 70, w: 120, h: 48, k: 'sub', t: '炫耀战绩', s: 11 },
+        { x: 226, y: 70, w: 204, h: 48, k: 'cta', t: '开战', s: 13 },
+        { x: 0, y: 134, w: 204, h: 48, k: 'dis', t: '余额不足', s: 12 }
+      ]}
+    ],
+    dims: '页签段宽 <b>103</b> · 段间距 <b>4</b> · 页签高 <b>44</b> · 主 CTA 高 <b>48</b> · 次按钮高 <b>48</b> · 返回 <b>86×48</b> · 按钮间距 <b>10</b>'
+  },
+  {
+    name: '卡片底板剖面 + 进度条',
+    desc: '云白厚底卡的三层结构：卡面 12px 圆角、下方 4px 厚底、8px 柔光投影。进度条轨道 20 高，填充随段位色。',
+    w: 430, h: 170, z: 1.3,
+    variants: [
+      { label: '厚底卡 / 平面弱面（flat，用于容器底与空槽）', h: 60, parts: [
+        { x: 0, y: 0, w: 200, h: 60, k: 'base' },
+        { x: 0, y: 0, w: 200, h: 56, k: 'card', t: '厚底卡', s: 11 },
+        { x: 220, y: 0, w: 200, h: 56, k: 'bar', t: '平面弱面 flat', s: 11 }
+      ]},
+      { label: '进度条（20 高，含中部文字）', h: 100, parts: [
+        { x: 0, y: 80, w: 420, h: 20, k: 'track' },
+        { x: 0, y: 80, w: 268, h: 20, k: 'fill' },
+        { x: 0, y: 80, w: 420, h: 20, k: 'text light ctr', t: '2480 / 3000 杯', s: 11 }
+      ]}
+    ],
+    dims: '卡面圆角 <b>12</b> · 厚底 <b>4px</b>（rgba(22,48,79,0.22)）· 投影 <b>blur 8 / y+2</b> · flat 卡无厚底无柔光 · 进度条 <b>h=20 / r=99</b>'
+  }
+];
+
+const wrap = document.getElementById('wrap');
+wrap.innerHTML = specs.map(s => {
+  const z = s.z;
+  const W = Math.round(s.w * z);
+  const vars = s.variants.map(v => {
+    const H = Math.round((v.h || s.h) * z);
+    const els = v.parts.map(p => {
+      const fs = p.s ? (p.s * z).toFixed(1) + 'px' : '0';
+      const style = `left:${(p.x*z).toFixed(1)}px;top:${(p.y*z).toFixed(1)}px;width:${(p.w*z).toFixed(1)}px;height:${(p.h*z).toFixed(1)}px;font-size:${fs}`;
+      const pad = 'padding:0 6px;';
+      return `<div class="el ${p.k.split(' ').map(c=>'k-'+c).join(' ')}" style="${style};${pad}">${p.t || ''}</div>`;
+    }).join('');
+    return `<div class="var"><div class="vlabel">${v.label}</div><div class="stagearea" style="width:${W}px;height:${H}px">${els}</div></div>`;
+  }).join('');
+  return `<section class="spec">
+    <h3>${s.name} <span style="float:right;font-size:10.5px;color:var(--ink-3);font-weight:400">×${z}</span></h3>
+    <p class="desc">${s.desc}</p>
+    ${vars}
+    <div class="dims">${s.dims}</div>
+  </section>`;
+}).join('');
+</script>
+</body>
+</html>

@@ -52,8 +52,10 @@ h1{margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:.5px}
 }
 .blk{
   position:absolute;border-radius:6px;display:flex;align-items:center;
-  padding:0 8px;font-size:10px;line-height:1.25;overflow:hidden;
+  padding:0 6px;font-size:10px;line-height:1.25;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;
 }
+.sm{padding:0 2px;font-size:9px;justify-content:center}
 .k-bar{background:rgba(234,248,255,0.13);border:1px solid rgba(234,248,255,0.22);color:#CBD9E6}
 .k-card{background:var(--card);color:var(--navy);box-shadow:0 2px 0 rgba(6,14,28,0.5)}
 .k-stage{background:rgba(91,184,232,0.10);border:1px dashed rgba(234,248,255,0.24);color:#9FB6CC}
@@ -67,9 +69,20 @@ h1{margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:.5px}
 .tick.r{left:auto;right:0}
 .bound{position:absolute;left:0;width:9px;height:0;border-top:1px dashed rgba(255,210,63,0.75)}
 .bound.r{left:auto;right:0}
+.k-ring{border-radius:50%;padding:0;justify-content:center;background:rgba(91,184,232,0.10);border:1px dashed rgba(91,184,232,0.55);color:#A8C6DE}
+.k-veil{background:rgba(6,14,28,0.74);border:none;color:var(--ink-3)}
 .k-fx{border-radius:50%;padding:0;background:rgba(124,58,237,0.10);border:1px dashed rgba(167,139,250,0.6)}
 .k-fx::after{content:'';position:absolute;left:50%;top:50%;width:26%;height:26%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(234,248,255,0.9)}
 .meta{margin-top:7px;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.tbl{max-width:1440px;margin:46px auto 0}
+.tbl h2{font-size:15px;font-weight:600;margin:0 0 6px}
+.tbl p{font-size:12px;color:var(--ink-3);margin:0 0 14px;line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid rgba(234,248,255,0.09);vertical-align:top}
+th{color:var(--ink-3);font-weight:500;font-size:11.5px;letter-spacing:.4px}
+td:first-child{color:var(--ink);white-space:nowrap;font-weight:500}
+td:nth-child(2){color:var(--ink-2)}
+td:nth-child(3){color:var(--ink-3)}
 .foot{max-width:1440px;margin:44px auto 0;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.8}
 </style>
 </head>
@@ -102,6 +115,27 @@ h1{margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:.5px}
 
 <div class="grid" id="grid"></div>
 
+<div class="tbl">
+  <h2>附 · 未在栅格图中的元素（遗漏审查）</h2>
+  <p>以下内容不占独立界面，或属于浮层 / 组件状态，已在表中列出归属，避免后续按图施工时漏项。</p>
+  <table>
+    <thead><tr><th>界面</th><th>图中未体现</th><th>归属 / 说明</th></tr></thead>
+    <tbody>
+      <tr><td>大厅</td><td>新手引导遮罩层、分享未领红点、功能键光晕</td><td>状态类浮层，P10 统一收口</td></tr>
+      <tr><td>对战准备</td><td>兵种详情 / 建筑详情 / 羁绊详情三类弹层</td><td>P9 覆盖层，共用同一套面板皮肤</td></tr>
+      <tr><td>兵种招募</td><td>结果揭示浮层</td><td>已单独出图（02b）</td></tr>
+      <tr><td>商店</td><td>售罄 / 限购次数 / 折扣倒计时</td><td>商品卡组件态，见部件栅格</td></tr>
+      <tr><td>战斗结算</td><td>失败态文案、战绩分享图</td><td>与胜利态同结构，只换主视觉与文案</td></tr>
+      <tr><td>科技树</td><td>节点连线、节点升级确认弹层</td><td>连线见部件栅格；弹层归 P9</td></tr>
+      <tr><td>通行证</td><td>高级版购买入口</td><td>待定：是否保留付费解锁，需产品确认</td></tr>
+      <tr><td>任务 / 成就</td><td>滚动条、领取动效、已领完成态</td><td>列表行组件态</td></tr>
+      <tr><td>排行榜</td><td>空列表态、名次上升箭头</td><td>榜单行组件态 + 空状态组件</td></tr>
+      <tr><td>全界面</td><td>设置弹窗、公告弹窗、账号面板、Toast</td><td>P9 覆盖层，共 5 件</td></tr>
+      <tr><td>战斗内</td><td>HUD、顶栏、羁绊面板</td><td>P10，不在本图范围</td></tr>
+    </tbody>
+  </table>
+</div>
+
 <div class="foot">
   说明：本图为布局栅格，不表现最终视觉。卡片圆角、描边、阴影以 ART-STYLE.md 为准；
   所有 y 值来自同一套常量，实施时落在 RenderSystem.L_SCALE，禁止各屏自填。
@@ -114,16 +148,22 @@ const S = v => (v / W * 100).toFixed(3) + '%';
 
 const screens = [
   {
-    no: '00', name: '大厅', tag: '已实现', cls: 'done', meta: '不使用状态带约束，自带底部导航', noBound: true,
+    no: '00', name: '大厅', tag: '已实现', cls: 'done', meta: '资源栏 0–46 / 顶部区块 54–264 / 赛季区 272–620 / 上阵 678–776 / 开战 782–840 / 导航 860–916', noBound: true,
     blocks: [
-      { y: 8, h: 40, x: 8, w: 150, t: '资源栏 2×2', k: 'bar' },
-      { y: 8, h: 40, x: 292, w: 130, t: '设置 / 公告', k: 'bar' },
-      { y: 56, h: 93, t: '玩家卡 + 功能键 ×3', k: 'card' },
-      { y: 157, h: 80, t: '空档（背景呼吸区）', k: 'zone' },
-      { y: 245, h: 426, t: '段位城堡 + 天梯进度条', k: 'stage' },
-      { y: 679, h: 67, t: '上阵兵种白卡 ×6', k: 'card' },
-      { y: 754, h: 75, t: '开战', k: 'cta' },
-      { y: 838, h: 92, t: '底部导航 ×5（商店 / 招募 / 布阵 / 科技 / 排行）', k: 'bar' }
+      { y: 8, h: 38, x: 8, w: 120, t: '资源栏 2×2', k: 'bar' },
+      { y: 10, h: 30, x: 385, w: 35, t: '设置', k: 'bar' },
+      { y: 54, h: 82, x: 8, w: 143, t: '玩家卡 · 昵称 / 战力', k: 'card' },
+      { y: 54, h: 48, x: 374, w: 48, t: '分享', k: 'bar sm' },
+      { y: 108, h: 48, x: 374, w: 48, t: '任务', k: 'bar sm' },
+      { y: 162, h: 48, x: 374, w: 48, t: '成就', k: 'bar sm' },
+      { y: 216, h: 48, x: 374, w: 48, t: '通行证', k: 'bar sm' },
+      { y: 272, h: 62, t: '赛季区上留白', k: 'zone' },
+      { y: 340, h: 216, x: 107, w: 216, t: '段位城堡 216×216', k: 'ring' },
+      { y: 567, h: 20, x: 71, w: 288, t: '天梯进度条 288×20', k: 'card' },
+      { y: 597, h: 24, x: 155, w: 120, t: '赛季剩 7 天', k: 'zone' },
+      { y: 678, h: 98, t: '上阵兵种 · 标题 + 6 张牌', k: 'card' },
+      { y: 782, h: 58, x: 95, w: 240, t: '开战 240×58', k: 'cta' },
+      { y: 860, h: 56, t: '底部导航 ×5', k: 'bar' }
     ]
   },
   {
@@ -155,6 +195,15 @@ const screens = [
     ]
   },
   {
+    no: '02b', name: '招募 · 结果揭示', tag: 'P2 状态', cls: 'todo', meta: '全屏遮罩上的浮层；单张卡 180×240 逐张揭示，顶部圆点指示进度',
+    blocks: [
+      { y: 0, h: 932, x: 0, w: 430, t: '', k: 'veil' },
+      { y: 326, h: 240, x: 125, w: 180, t: '结果卡 180×240', k: 'card' },
+      { y: 586, h: 14, x: 175, w: 80, t: '圆点 3 / 10', k: 'zone' },
+      { y: 618, h: 44, x: 115, w: 200, t: '点击任意处继续', k: 'ghost' }
+    ]
+  },
+  {
     no: '03', name: '商店', tag: 'P3', cls: 'todo', meta: '内容区底放宽到 h−64（无主 CTA）；2 列商品网格',
     blocks: [
       { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
@@ -178,15 +227,15 @@ const screens = [
     ]
   },
   {
-    no: '04', name: '战斗结算', tag: 'P4', cls: 'todo', meta: '内容区 72–852；三段：主视觉 / 结果卡 / 晋升',
+    no: '04', name: '战斗结算', tag: 'P4', cls: 'todo', meta: '内容区 72–852；现状为遮罩 + 居中散点文字，方案改三段式（主视觉 / 结果卡 / 晋升）',
     blocks: [
       { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
       { y: 8, h: 52, x: 130, w: 292, t: '标题 · 战斗结算', k: 'bar' },
       { y: 72, h: 196, t: '胜负主视觉（奖牌 / 星级光晕）', k: 'stage' },
-      { y: 280, h: 250, t: '结果卡 · 星级 + 奖杯变化 + 奖励三行', k: 'card' },
-      { y: 542, h: 300, t: '晋升进度条 + 段位升降展示', k: 'card' },
-      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' },
-      { y: 866, h: 48, x: 108, w: 306, t: '再来一局', k: 'cta' }
+      { y: 280, h: 250, t: '结果卡 · 星级 / 奖杯 / 奖励', k: 'card' },
+      { y: 542, h: 300, t: '晋升进度 + 段位升降', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 110, t: '炫耀战绩（仅胜利）', k: 'card' },
+      { y: 866, h: 48, x: 138, w: 276, t: '返回大厅', k: 'cta' }
     ]
   },
   {
@@ -201,13 +250,16 @@ const screens = [
     ]
   },
   {
-    no: '06', name: '通行证', tag: 'P6', cls: 'todo', meta: '内容区 72–852；行高 56 + 行间 8，必须留行界',
+    no: '06', name: '通行证', tag: 'P6', cls: 'todo', meta: '内容区 72–852；行高 50 + 行间 4；现状两列只占 x=40–300，右侧空 130，方案改三列铺满',
     blocks: [
       { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
       { y: 8, h: 52, x: 130, w: 292, t: '标题 · 通行证', k: 'bar' },
-      { y: 72, h: 84, t: '赛季卡 · 赛季名 + Lv / 高级标识 + EXP 条', k: 'card' },
-      { y: 164, h: 32, t: '列头 · Lv（右对齐 40） | 免费 | 高级', k: 'zone' },
-      { y: 204, h: 648, t: '奖励行 ×10（Lv 标签 + 免费格 + 高级格）', k: 'list' },
+      { y: 72, h: 84, x: 16, w: 270, t: '赛季卡 · Lv + EXP 条', k: 'card' },
+      { y: 72, h: 84, x: 296, w: 118, t: '一键领取', k: 'cta' },
+      { y: 164, h: 30, x: 16, w: 40, t: 'Lv', k: 'zone' },
+      { y: 164, h: 30, x: 64, w: 171, t: '免费轨道', k: 'zone' },
+      { y: 164, h: 30, x: 243, w: 171, t: '高级轨道', k: 'zone' },
+      { y: 202, h: 650, t: '奖励行 ×12 · Lv 40 + 免费格 + 高级格', k: 'list' },
       { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
     ]
   },
