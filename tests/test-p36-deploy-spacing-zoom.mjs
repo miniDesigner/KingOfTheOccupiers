@@ -153,13 +153,13 @@ console.log('=== 测试4: 战斗 HUD 战士数为整型（无小数）===');
   try { rs.drawHUD(gs); } catch (e) { err = e; }
   assert(!err, 'HUD 渲染无异常' + (err ? ' — ' + err.message : ''));
   const warriorTexts = ctxProxy.__calls
-    .filter(c => typeof c.args[0] === 'string' && c.args[0].startsWith('⚔'))
-    .map(c => c.args[0]);
+    .filter(c => c.op === 'fillText' && c.args[2] === 38 && /^\d+$/.test(String(c.args[0])))
+    .map(c => String(c.args[0]));
   assert(warriorTexts.length >= 2, `HUD 输出了 ${warriorTexts.length} 条战士数文本`);
-  assert(warriorTexts.every(t => /^⚔\d+$/.test(t)),
+  assert(warriorTexts.every(t => /^\d+$/.test(t)),
     `战士数全为整型：${warriorTexts.join(' / ')}`);
-  assert(warriorTexts.some(t => t === '⚔14'), `我方 10 + 4.37 → ⚔14（实际 ${warriorTexts.join('/')}）`);
-  assert(warriorTexts.some(t => t === '⚔10'), `敌方 7.25 + 2.9 → ⚔10（实际 ${warriorTexts.join('/')}）`);
+  assert(warriorTexts.some(t => t === '14'), `我方 10 + 4.37 → 14（实际 ${warriorTexts.join('/')}）`);
+  assert(warriorTexts.some(t => t === '10'), `敌方 7.25 + 2.9 → 10（实际 ${warriorTexts.join('/')}）`);
 }
 
 console.log('=== 测试5: 双指缩放以双指中心为锚点 ===');

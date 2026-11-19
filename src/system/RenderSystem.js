@@ -149,6 +149,18 @@ export class RenderSystem {
   }
 
   /**
+   * 异步对战匹配 overlay 的命中/绘制单一真相源。
+   * 数值与原 Game._handleMatchOverlayClick / _drawMatchOverlay 完全一致，仅换视觉容器。
+   */
+  static matchOverlayLayout(w, h) {
+    const panelW = 300, panelH = 240;
+    const panel = { x: (w - panelW) / 2, y: (h - panelH) / 2, w: panelW, h: panelH };
+    const btnW = 220, btnH = 44;
+    const cancelBtn = { x: (w - btnW) / 2, y: panel.y + panelH - btnH - 20, w: btnW, h: btnH, r: 12 };
+    return { panel, cancelBtn };
+  }
+
+  /**
    * 设置安全区（刘海上沿高度 + home indicator 高度），从 wx.getWindowInfo().safeArea 解出
    * @param {{ top: number, bottom: number, left: number, right: number }|null|undefined} safeArea
    */
@@ -587,6 +599,39 @@ export class RenderSystem {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);
+  }
+
+  /**
+   * 次级按钮：云白/浅蓝底 + 海军蓝描边与文字，语义为「取消 / 返回」而非主行动。
+   * 与 _primaryButton 共用几何参数，老基础库无 arcTo 时退化为直角，绝不抛错。
+   */
+  _secondaryButton(rect, label, opts) {
+    const { ctx } = this;
+    const o = opts || {};
+    const r = rect.r === undefined ? 12 : rect.r;
+    const x = rect.x, y = rect.y, bw = rect.w, bh = rect.h;
+    this._cardBg({ x, y, w: bw, h: bh, r }, {
+      tint: o.tint || 'rgba(234,248,255,0.96)',
+      border: o.border || 'rgba(43,74,111,0.42)',
+    });
+    ctx.save();
+    if (typeof ctx.arcTo === 'function') {
+      this._roundRectPath(x, y, bw, bh, Math.max(2, Math.min(r, bw / 2, bh / 2)));
+      ctx.strokeStyle = o.border || 'rgba(43,74,111,0.42)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = o.border || 'rgba(43,74,111,0.42)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, bw, bh);
+    }
+    ctx.restore();
+    ctx.fillStyle = o.color || UI_THEME.navy;
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
   }
 
   /**
@@ -1110,7 +1155,7 @@ export class RenderSystem {
     if (!iconDrawn) {
       ctx.fillStyle = onLight ? 'rgba(43,74,111,0.26)' : (o.card ? UI_THEME.skyDeep : 'rgba(234,248,255,0.24)');
       ctx.font = 'bold 34px sans-serif';
-      ctx.fillText(o.icon || '🗒', cx, cy);
+      ctx.fillText(o.icon || '▤', cx, cy);
     }
     ctx.fillStyle = onLight ? 'rgba(22,48,79,0.58)' : (o.card ? UI_THEME.ink : ON_DARK.body);
     ctx.font = 'bold 12px sans-serif';
@@ -1515,10 +1560,10 @@ export class RenderSystem {
     // 左上角货币簇（2×2）—— 自适应宽度（详见 Layout.resourceBarLayout）
     const tier = gameState.ladderTier;
     const cells = [
-      { icon: '💰', value: profile ? profile.gold : 0, color: UI_THEME.goldDeep },
-      { icon: '💎', value: profile ? profile.diamond : 0, color: UI_THEME.skyDeep },
+      { icon: '◆', value: profile ? profile.gold : 0, color: UI_THEME.goldDeep },
+      { icon: '✧', value: profile ? profile.diamond : 0, color: UI_THEME.skyDeep },
       { icon: '⭐', value: profile ? profile.stardust : 0, color: UI_THEME.navySoft },
-      { icon: '🏆', value: profile ? (profile.trophies || 0) : 0, color: tier ? tier.color : UI_THEME.goldDeep },
+      { icon: '★', value: profile ? (profile.trophies || 0) : 0, color: tier ? tier.color : UI_THEME.goldDeep },
     ];
 
     // safeRight：右上角设置按钮范围 [w-95, w-55] 之前留 8px 间隙
@@ -2089,41 +2134,62 @@ export class RenderSystem {
       }
     }
 
-    // 金币(左上)
+    // 金币(左上)：正式货币图标 + 数值，不再用 emoji
+    const goldText = String(Math.floor(player.gold));
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('💰' + Math.floor(player.gold), 8, 18);
+    if (!this._artIcon(ART_PREFIXES.currency, 'coin', 15, 17, 14, 1)) ctx.fillText('◆', 8, 18);
+    ctx.fillText(goldText, 24, 18);
 
     // 战士数（P36：warriorBuffer 按 rate*dt 累积为浮点，战斗表现统一取整）
     const marchingWarriors = player.getTotalMarchingWarriors(gameState.marchGroups);
     const bufferedWarriors = player.getBufferedWarriors();
-    ctx.fillStyle = '#60a5fa';
+    const warText = String(Math.floor(marchingWarriors + bufferedWarriors));
+    ctx.fillStyle = '#EAF8FF';
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText('⚔' + Math.floor(marchingWarriors + bufferedWarriors), 8, 38);
+    if (!this._artIcon(ART_PREFIXES.hud, 'battle', 15, 37, 14, 1)) ctx.fillText('⚔', 8, 38);
+    ctx.fillText(warText, 24, 38);
 
     // 敌方信息(右上)
     if (enemies.length > 0) {
       const firstEnemy = enemies[0];
-      ctx.fillStyle = '#fca5a5';
+      const eGold = String(Math.floor(firstEnemy.gold));
+      ctx.fillStyle = '#FCA5A5';
       ctx.font = 'bold 13px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText('💰' + Math.floor(firstEnemy.gold), this.screenWidth - 55, 18);
+      const eGoldW = ctx.measureText(eGold).width;
+      if (!this._artIcon(ART_PREFIXES.currency, 'coin', this.screenWidth - 66 - eGoldW, 17, 13, 1)) {
+        ctx.textAlign = 'left';
+        ctx.fillText('◆', this.screenWidth - 78 - eGoldW, 18);
+        ctx.textAlign = 'right';
+      }
+      ctx.fillText(eGold, this.screenWidth - 55, 18);
       const enemyWarriors = firstEnemy.getTotalMarchingWarriors(gameState.marchGroups) + firstEnemy.getBufferedWarriors();
-      ctx.fillText('⚔' + Math.floor(enemyWarriors), this.screenWidth - 55, 38);
+      const eWar = String(Math.floor(enemyWarriors));
+      const eWarW = ctx.measureText(eWar).width;
+      if (!this._artIcon(ART_PREFIXES.hud, 'battle', this.screenWidth - 66 - eWarW, 37, 13, 1)) {
+        ctx.textAlign = 'left';
+        ctx.fillText('⚔', this.screenWidth - 78 - eWarW, 38);
+        ctx.textAlign = 'right';
+      }
+      ctx.fillText(eWar, this.screenWidth - 55, 38);
     }
 
     // 设置按钮(右上角，打开设置窗口；暂停按钮已移除)
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(this.screenWidth - 95, 5, 40, 35);
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(this.screenWidth - 95, 5, 40, 35);
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('⚙', this.screenWidth - 75, 22);
+    // 命中矩形不变，只把深蓝裸块换成云白圆角底 + 正式设置图标。
+    const setRect = { x: this.screenWidth - 95, y: 5, w: 40, h: 35, r: 9 };
+    this._cardBg(setRect, {
+      tint: 'rgba(234,248,255,0.94)',
+      border: 'rgba(43,74,111,0.30)',
+    });
+    if (!this._artIcon(ART_PREFIXES.hud, 'setting', setRect.x + setRect.w / 2, setRect.y + setRect.h / 2, 20, 1)) {
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚙', setRect.x + setRect.w / 2, setRect.y + setRect.h / 2 + 1);
+    }
 
     // 羁绊面板(左侧)
     let synergyY = 60;
@@ -2190,7 +2256,7 @@ export class RenderSystem {
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('点击相邻格子翻转占领 | 拖动平移 | 滚轮缩放 | ⚙设置', this.screenWidth / 2, this.screenHeight - 14);
+    ctx.fillText('点击相邻格子翻转占领 | 拖动平移 | 滚轮缩放 | 右上角设置', this.screenWidth / 2, this.screenHeight - 14);
   }
 
   /**
@@ -2350,8 +2416,9 @@ export class RenderSystem {
     const bldSlotY = L.building.y;
     const buildings = summary?.buildings || {};
     const bldKeys = ['barracks', 'arrow_tower', 'gold_mine'];
-    const bldIcons = { barracks: '🏰', arrow_tower: '🏹', gold_mine: '💰' };
     const bldNames = { barracks: '兵营', arrow_tower: '箭塔', gold_mine: '金矿' };
+    const bldArtKeys = ['barracks', 'tower', 'mine'];
+    const bldFallback = ['▣', '➶', '◆'];
     for (let i = 0; i < 3; i++) {
       const bldType = bldKeys[i];
       const bldData = buildings[bldType] || { level: 1, maxLevel: 1 };
@@ -2362,10 +2429,12 @@ export class RenderSystem {
         edge: UI_THEME.orange,
         edgeSide: 'left',
       });
-      ctx.fillStyle = UI_THEME.orangeDeep;
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(bldIcons[bldType] || '?', sx + bldSlotW / 2, bldSlotY + 18);
+      if (!this._artIcon(ART_PREFIXES.buildingUp, bldArtKeys[i], sx + bldSlotW / 2, bldSlotY + 18, 18, 1)) {
+        ctx.fillStyle = UI_THEME.orangeDeep;
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(bldFallback[i], sx + bldSlotW / 2, bldSlotY + 18);
+      }
       ctx.fillStyle = UI_THEME.ink;
       ctx.font = 'bold 9px sans-serif';
       ctx.fillText(bldNames[bldType] || bldType, sx + bldSlotW / 2, bldSlotY + 34);
@@ -2409,7 +2478,7 @@ export class RenderSystem {
       this._emptyState(w / 2, _gy, '兵种还不够多', {
         card: true,
         iconPrefix: ART_PREFIXES.nav, iconName: 'gacha',
-        icon: '🎲',
+        icon: '✦',
         hint: '去「招募」收服更多兵种，壮大你的军团',
       });
     }
@@ -2519,12 +2588,12 @@ export class RenderSystem {
     ctx.restore(); // 恢复 clip（滚动区仅兵种卡列表）
 
     // === 底部提示（开战入口在大厅「⚔ 开战」按钮，本界面仅布阵） ===
-    this._drawTextPillBg(this.screenWidth / 2, L.tipY1, '💡 点击卡片查看详情  |  长按拖动兵种卡上阵', '9px sans-serif', { padX: 10, padY: 4, border: 'rgba(43,74,111,0.22)' });
+    this._drawTextPillBg(this.screenWidth / 2, L.tipY1, '点击卡片查看详情  |  长按拖动兵种卡上阵', '9px sans-serif', { padX: 10, padY: 4, border: 'rgba(43,74,111,0.22)' });
     ctx.fillStyle = UI_THEME.navy;
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('💡 点击卡片查看详情  |  长按拖动兵种卡上阵', this.screenWidth / 2, L.tipY1);
+    ctx.fillText('点击卡片查看详情  |  长按拖动兵种卡上阵', this.screenWidth / 2, L.tipY1);
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = ON_DARK.body;
     ctx.fillText('布阵完成后回大厅点「⚔ 开战」出战', this.screenWidth / 2, L.tipY2);
@@ -3432,8 +3501,8 @@ export class RenderSystem {
       ctx.fillStyle = UI_THEME.goldDeep;
       ctx.font = 'bold 15px sans-serif';
       let rewardText = '';
-      if (rewards.gold) rewardText += '💰' + rewards.gold + ' ';
-      if (rewards.stardust) rewardText += '✨' + rewards.stardust;
+      if (rewards.gold) rewardText += '◆' + rewards.gold + ' ';
+      if (rewards.stardust) rewardText += '✦' + rewards.stardust;
       ctx.fillText('奖励: ' + rewardText, cx, cy - 26);
     }
 
@@ -3443,7 +3512,7 @@ export class RenderSystem {
       ctx.fillStyle = up ? UI_THEME.green : '#C0394B';
       ctx.font = 'bold 14px sans-serif';
       const arrow = up ? '▲+' : '▼';
-      ctx.fillText(`🏆 ${arrow}${rewards.trophyDelta}  →  ${rewards.trophies}杯`, cx, cy - 10);
+      ctx.fillText(`奖杯 ${arrow}${rewards.trophyDelta}  →  ${rewards.trophies}杯`, cx, cy - 10);
       // 段位变动标记
       if (rewards.tierUp) {
         ctx.fillStyle = UI_THEME.goldDeep;
@@ -3489,7 +3558,11 @@ export class RenderSystem {
         ctx.font = 'bold 13px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('📤 炫耀战绩', s.x + s.w / 2, s.y + s.h / 2);
+        const shareCx = s.x + s.w / 2;
+        if (!this._artIcon(ART_PREFIXES.lobby, 'share', shareCx - 48, s.y + s.h / 2, 14, 1)) {
+          ctx.fillText('↗', shareCx - 48, s.y + s.h / 2 + 1);
+        }
+        ctx.fillText('炫耀战绩', shareCx + 8, s.y + s.h / 2);
       });
     }
 
@@ -3505,7 +3578,7 @@ export class RenderSystem {
         ctx.font = 'bold 17px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🏠 返回大厅', b.x + b.w / 2, b.y + b.h / 2);
+        ctx.fillText('返回大厅', b.x + b.w / 2, b.y + b.h / 2);
       });
     }
   }
@@ -3579,27 +3652,28 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillText(L.arrowChar, L.arrowX, L.arrowY);
 
-    // 4. 文案卡（自适应：高亮区下方放得下就放下方，否则翻到上方，绝不压住高亮区）
+    // 4. 文案卡：接入云白内容卡语言（原深蓝裸块在浅色界面上过于突兀）
+    //    几何仍取自 tutorialLayout（与点击命中同源），这里只换容器与文字色阶。
     const cardX = L.cardX;
     const cardY = L.cardY;
     const cardW = L.cardW;
     const cardH = L.cardH;
-    this._roundRectPath(cardX, cardY, cardW, cardH, 12);
-    ctx.fillStyle = 'rgba(15,23,42,0.94)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(251,191,36,0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    this._cardBg({ x: cardX, y: cardY, w: cardW, h: cardH, r: 12 }, {
+      tint: 'rgba(255,255,255,0.97)',
+      border: 'rgba(255,210,63,0.72)',
+      edge: UI_THEME.gold,
+      edgeSide: 'top',
+    });
 
     // 步骤标题
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = UI_THEME.navy;
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`\u65b0\u624b\u5f15\u5bfc ${tut.step + 1}/4`, w / 2, cardY + 20);
 
     // 正文（按字符宽度自动换行，最多3行）
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = '12px sans-serif';
     const maxW = cardW - 32;
     const lines = [];
@@ -3619,7 +3693,7 @@ export class RenderSystem {
     }
 
     // 底部提示
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = UI_THEME.navySoft;
     ctx.font = '10px sans-serif';
     ctx.fillText('\u70b9\u51fb\u9ad8\u4eae\u7684\u533a\u57df\u7ee7\u7eed\u5f15\u5bfc', w / 2, cardY + cardH - 12);
   }
@@ -3856,19 +3930,16 @@ export class RenderSystem {
     // 大厅不再居中式横排。ladderTier 仍在此读取，供下方徽章/进度条使用。
     const ladderTier = gameState.ladderTier;
 
-    // 设置按钮（右上角小图标，打开设置窗口）——晴空乐园圆角卡片
-    this._drawRaisedCard({ x: w - 45, y: 10, w: 35, h: 30, r: 9 }, () => {
-      ctx.fillStyle = tintOf(UI_THEME.navySoft, 0.12);
-      ctx.fillRect(w - 45, 10, 35, 30);
-      ctx.strokeStyle = UI_THEME.navySoft;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(w - 45, 10, 35, 30);
-    });
-    ctx.fillStyle = UI_THEME.navy;
-    ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('⚙', w - 27, 25);
+    // 设置按钮（右上角小图标，打开设置窗口）——晴空乐园圆角卡片 + 正式设置图标
+    const lobbySet = { x: w - 45, y: 10, w: 35, h: 30, r: 9 };
+    this._cardBg(lobbySet, { tint: 'rgba(234,248,255,0.95)', border: 'rgba(43,74,111,0.25)' });
+    if (!this._artIcon(ART_PREFIXES.hud, 'setting', lobbySet.x + lobbySet.w / 2, lobbySet.y + lobbySet.h / 2, 18, 1)) {
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚙', lobbySet.x + lobbySet.w / 2, lobbySet.y + lobbySet.h / 2 + 1);
+    }
 
     // v2 布局：已移除「占地之王」大标题与副标题，页面重心交给玩家卡 / 赛季区 / 上阵区。
 
@@ -3898,7 +3969,7 @@ export class RenderSystem {
       const ai = gameState.accountInfo;
       ctx.font = 'bold 11px sans-serif';
       ctx.fillStyle = UI_THEME.ink;
-      ctx.fillText(fitCardText('👤 ' + ai.nickname + ' ▾', cardInnerW), card.x + cardPadX, card.y + 14);
+      ctx.fillText(fitCardText(ai.nickname + ' ▾', cardInnerW), card.x + cardPadX, card.y + 14);
       // 行2：账号尾号（uid 后 6 位）
       if (ai.uid) {
         ctx.font = '9px sans-serif';
@@ -4631,7 +4702,7 @@ export class RenderSystem {
       });
 
       // ============ P37 免费栏位 ============
-      // 云白卡上文字改深色三级（深底浅字在白卡不可读）；按钮蓝色语义原样保留（P37 依赖）。
+      // 云白卡上文字改深色三级（深底浅字在白卡不可读）；按钮沿用云白次级体系。
       if (item.isFree) {
         ctx.fillStyle = item.exhausted ? UI_THEME.navySoft : UI_THEME.ink;
         ctx.font = 'bold 13px sans-serif';
@@ -4639,7 +4710,7 @@ export class RenderSystem {
 
         // 单次奖励
         const rwText = Object.entries(item.reward || {}).map(([k, v]) => {
-          const icons = { diamond: '💎', gold: '💰', stardust: '⭐' };
+          const icons = { diamond: '✧', gold: '◆', stardust: '✦' };
           return `${icons[k] || k}+${v}`;
         }).join(' ');
         ctx.fillStyle = UI_THEME.goldDeep;
@@ -4662,20 +4733,22 @@ export class RenderSystem {
         ctx.fillText(`已领 ${item.dailyClaimed}/${item.dailyLimit}`, cardX + itemW - btnW - 20, iy + 8);
         ctx.textAlign = 'left';
 
-        // 免费按钮（蓝色；非首次加广告播放图标）
+        // 免费按钮：并入云白/深蓝的次级按钮体系；非首次用正式广告图标提示需看广告
         if (!item.exhausted) {
           const bx = cardX + itemW - btnW - 10;
           const by = iy + 10;
-          ctx.fillStyle = '#3b82f644';
-          ctx.fillRect(bx, by, btnW, btnH);
-          ctx.strokeStyle = '#3b82f6';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(bx, by, btnW, btnH);
-          ctx.fillStyle = '#3b82f6';
+          this._cardBg({ x: bx, y: by, w: btnW, h: btnH, r: 8 }, {
+            tint: 'rgba(214,238,251,0.96)',
+            border: 'rgba(43,74,111,0.32)',
+          });
+          ctx.fillStyle = UI_THEME.navy;
           ctx.font = 'bold 11px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(item.needAd ? '📺免费' : '免费', bx + btnW / 2, by + btnH / 2);
+          if (item.needAd && !this._artIcon(ART_PREFIXES.state, 'ad', bx + 13, by + btnH / 2, 13, 1)) {
+            ctx.fillText('▶', bx + 13, by + btnH / 2 + 1);
+          }
+          ctx.fillText('免费', bx + btnW / 2 + (item.needAd ? 7 : 0), by + btnH / 2 + 1);
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
         }
@@ -4697,7 +4770,7 @@ export class RenderSystem {
 
       // 价格
       const costText = Object.entries(item.cost).map(([k, v]) => {
-        const icons = { diamond: '💎', gold: '💰', stardust: '⭐', realMoney: '¥' };
+        const icons = { diamond: '✧', gold: '◆', stardust: '✦', realMoney: '¥' };
         return `${icons[k] || k}${v}`;
       }).join(' ');
       ctx.fillStyle = item.canAfford ? UI_THEME.goldDeep : UI_THEME.navySoft;
@@ -4961,7 +5034,7 @@ export class RenderSystem {
 
     // 奖励
     const rewardText = Object.entries(item.reward || {}).map(([k, v]) => {
-      const icons = { gold: '💰', diamond: '💎', stardust: '⭐' };
+      const icons = { gold: '◆', diamond: '✧', stardust: '✦' };
       return `${icons[k] || k}+${v}`;
     }).join(' ');
     ctx.fillStyle = UI_THEME.goldDeep;
@@ -5081,7 +5154,7 @@ export class RenderSystem {
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText('🏆 成就', 20, layout.headerY);
+    ctx.fillText('成就', 20, layout.headerY);
 
     (gameState.achievements || []).forEach((a, i) => {
       const { y } = layout.rects[i];
@@ -5198,7 +5271,7 @@ export class RenderSystem {
     }
 
     const rewardText = Object.entries(reward.reward || {}).map(([k, v]) => {
-      const icons = { gold: '💰', diamond: '💎', stardust: '⭐' };
+      const icons = { gold: '◆', diamond: '✧', stardust: '✦' };
       return `${icons[k] || k}+${v}`;
     }).join(' ');
     ctx.fillStyle = claimable ? UI_THEME.ink : UI_THEME.navySoft;
@@ -5506,7 +5579,12 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillStyle = adCan ? UI_THEME.skyDeep : 'rgba(43,74,111,0.40)';
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(adCan ? '📺 看广告免费抽 ×1' : `📺 今日已用完 (${adWatched}/${adLimit})`, L.adBtnX + L.adBtnW / 2, L.adBtnY + L.adBtnH / 2 - 6);
+    const adLabel = adCan ? '看广告免费抽 ×1' : `今日已用完 (${adWatched}/${adLimit})`;
+    const adCy = L.adBtnY + L.adBtnH / 2 - 6;
+    if (!this._artIcon(ART_PREFIXES.state, 'ad', L.adBtnX + 30, adCy, 16, adCan ? 1 : 0.5)) {
+      ctx.fillText('▶', L.adBtnX + 30, adCy + 1);
+    }
+    ctx.fillText(adLabel, L.adBtnX + L.adBtnW / 2 + 12, adCy);
     ctx.fillStyle = 'rgba(22,48,79,0.55)';
     ctx.font = '9px sans-serif';
     ctx.fillText(adCan ? '观看完整视频可获得一次免费单抽' : '明天再来', L.adBtnX + L.adBtnW / 2, L.adBtnY + L.adBtnH - 9);
@@ -5672,21 +5750,33 @@ export class RenderSystem {
     ctx.font = 'bold 18px sans-serif';
     ctx.fillText(current.name, w / 2, cardY + 140);
 
-    // 新获得 / 重复
+    // 新获得 / 重复（emoji 换正式状态图标，无贴图时退化为纯符号）
     if (current.isNew) {
+      const badgeX = w / 2 - 46;
       ctx.fillStyle = UI_THEME.green;
       ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('✨ 新兵种解锁！', w / 2, cardY + 165);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (!this._artIcon(ART_PREFIXES.state, 'skill', badgeX, cardY + 165, 13, 1)) {
+        ctx.fillText('✦', badgeX, cardY + 165);
+      }
+      ctx.fillText('新兵种解锁！', w / 2 + 8, cardY + 165);
     } else {
       // 重复转化奖励
       const dr = current.duplicateReward;
       if (dr) {
+        const badgeX = w / 2 - 46;
         ctx.fillStyle = UI_THEME.orangeDeep;
         ctx.font = '12px sans-serif';
-        ctx.fillText('🔄 重复转化', w / 2, cardY + 160);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (!this._artIcon(ART_PREFIXES.state, 'stardust', badgeX, cardY + 160, 13, 1)) {
+          ctx.fillText('↻', badgeX, cardY + 160);
+        }
+        ctx.fillText('重复转化', w / 2 + 8, cardY + 160);
         ctx.fillStyle = UI_THEME.navy;
         ctx.font = '11px sans-serif';
-        ctx.fillText(`招募进度 +${dr.recruit}  ⭐+${dr.stardust}`, w / 2, cardY + 178);
+        ctx.fillText(`招募进度 +${dr.recruit}  ✦+${dr.stardust}`, w / 2, cardY + 178);
       }
     }
 
@@ -5718,6 +5808,58 @@ export class RenderSystem {
   }
 
   /**
+   * 异步对战匹配等待弹窗：接入 ModalShell 云白皮肤，几何由 matchOverlayLayout 单一真相源提供。
+   * 只画视觉；取消命中由 Game 端读取同一份 layout，二者永不漂移。
+   */
+  drawMatchOverlay() {
+    const { ctx } = this;
+    const { panel, cancelBtn } = RenderSystem.matchOverlayLayout(this.screenWidth, this.screenHeight);
+
+    ctx.fillStyle = 'rgba(6,14,28,0.62)';
+    ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
+    this._modalShell(panel, null, '异步对战匹配', { showClose: false });
+
+    // 检索动效：明黄旋转环 + 正式战斗图标（无贴图环境退化为 ⚔ 字符）
+    const cx = this.screenWidth / 2;
+    const cy = panel.y + 82;
+    const a0 = (Date.now() / 520) % (Math.PI * 2);
+    if (typeof ctx.arc === 'function') {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(43,74,111,0.16)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = UI_THEME.gold;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 22, a0, a0 + Math.PI * 0.75);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (!this._artIcon(ART_PREFIXES.hud, 'battle', cx, cy, 26, 1)) {
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚔', cx, cy + 1);
+    }
+
+    // 检索状态（不显示倒计时/等待秒数/超时信息；超时降级由 Game._fallbackToAI 自动处理）
+    const dots = '.'.repeat(1 + Math.floor((Date.now() / 400) % 3));
+    ctx.fillStyle = UI_THEME.ink;
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`正在检索实力相近的对手${dots}`, cx, panel.y + 121);
+    ctx.fillStyle = UI_THEME.navySoft;
+    ctx.font = '12px sans-serif';
+    ctx.fillText('通常几秒内即可开战', cx, panel.y + 148);
+    ctx.textBaseline = 'alphabetic';
+
+    this._secondaryButton(cancelBtn, '取消');
+  }
+
+  /**
    * 统一覆盖层皮肤 ModalShell（P9）：云白厚底面板 + 顶部明黄强调条 + 标题 + 圆形关闭钮。
    * 只画「容器 + 标题 + 关闭钮」，行/按钮仍由各覆盖层按原几何自绘；几何一律由调用方
    * 从 Game 的同源 Layout 常量传入，因此点击命中完全不变（改造红线：只换视觉容器）。
@@ -5725,7 +5867,7 @@ export class RenderSystem {
    * @param {{x:number,y:number,w:number,h:number}} panel 面板矩形
    * @param {{x:number,y:number,w:number,h:number}} closeRect 关闭按钮矩形
    * @param {string} title 标题文字
-   * @param {{iconPrefix?:string, iconName?:string, accent?:string}} [opts]
+   * @param {{iconPrefix?:string, iconName?:string, accent?:string, showClose?:boolean}} [opts]
    */
   _modalShell(panel, closeRect, title, opts) {
     const { ctx } = this;
@@ -5769,29 +5911,32 @@ export class RenderSystem {
     }
 
     // 圆形关闭钮：云白底 + 海军蓝描边 + 深蓝 ✕（不用红方块）
-    const cx = closeRect.x + closeRect.w / 2;
-    const cy = closeRect.y + closeRect.h / 2;
-    const cr = Math.min(closeRect.w, closeRect.h) / 2;
-    if (typeof ctx.arc === 'function') {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, cr, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(214,238,251,0.95)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(43,74,111,0.35)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.restore();
-    } else {
-      ctx.fillStyle = 'rgba(214,238,251,0.95)';
-      ctx.fillRect(closeRect.x, closeRect.y, closeRect.w, closeRect.h);
+    // 无关闭语义的模态（如匹配等待）可传 showClose:false，避免画出一个不可点的假按钮。
+    if (closeRect && o.showClose !== false) {
+      const cx = closeRect.x + closeRect.w / 2;
+      const cy = closeRect.y + closeRect.h / 2;
+      const cr = Math.min(closeRect.w, closeRect.h) / 2;
+      if (typeof ctx.arc === 'function') {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(214,238,251,0.95)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(43,74,111,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        ctx.fillStyle = 'rgba(214,238,251,0.95)';
+        ctx.fillRect(closeRect.x, closeRect.y, closeRect.w, closeRect.h);
+      }
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✕', cx, cy + 1);
+      ctx.textBaseline = 'alphabetic';
     }
-    ctx.fillStyle = UI_THEME.navy;
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('✕', cx, cy + 1);
-    ctx.textBaseline = 'alphabetic';
   }
 
   /**

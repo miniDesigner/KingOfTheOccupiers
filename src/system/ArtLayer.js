@@ -487,16 +487,20 @@ export function drawArtLayer(rs, gameState) {
   const slots = SLOTS(w, h);
   const screen = (gameState && gameState.screenState) || 'playing';
   let n = 0;
-  // 占位特效装饰层：effects/* 与 units/* 前缀是带粉紫框/文字的占位图，
-  // 战斗态叠在棋盘中央会漏水印。开关默认（未显式 true）时跳过这些前缀，
-  // 保留 icons/hud_* 等正式图标；待 FX 全系/行动帧出正式图后设 artEffectDecor=true 恢复。
+  // 占位特效装饰层：effects/*、units/*、ui/* 前缀都是带粉紫框/PLACEHOLDER 文案的占位图，
+  // 战斗态叠在棋盘中央会漏水印（ui/tutorial_card 等九宫格尤其明显）。
+  // 开关默认（未显式 true）时跳过这些前缀，保留 icons/hud_* 等正式图标；
+  // 待 FX / UI 九宫格 / 行动帧全部替换为正式素材后设 artEffectDecor=true 恢复。
   const dropPlaceholderFx = rs._artEffectDecor !== true;
+  const isPlaceholder = (key) => key.indexOf('effects/') === 0
+    || key.indexOf('units/') === 0
+    || key.indexOf('ui/') === 0;
   const emit = (list) => {
     if (!list) return;
     for (let i = 0; i < list.length; i++) {
       const [key, slot, alpha] = list[i];
       if (!ART_INDEX[key]) continue;
-      if (dropPlaceholderFx && (key.indexOf('effects/') === 0 || key.indexOf('units/') === 0)) continue;
+      if (dropPlaceholderFx && isPlaceholder(key)) continue;
       const [x, y, bw, bh] = rectOf(slots, slot, i, w, h);
       if (bw <= 0 || bh <= 0) continue;
       rs._art(key, x, y, bw, bh, { alpha: alpha * scale });

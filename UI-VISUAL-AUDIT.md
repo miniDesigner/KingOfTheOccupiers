@@ -101,3 +101,22 @@
 
 ## 附：本次截图清单
 `shop / tech_panel / battle_pass / quest / leaderboard / deploy_select / gacha / battle-hud / overlay-settings / overlay-account / gameover-win`（共 11 张，430×932）
+
+---
+
+## 2026-11-19 收尾轮（V4/V5）· 已修复项
+
+| # | 问题 | 处理 | 验收截图 |
+| --- | --- | --- | --- |
+| V4-1 | 异步对战匹配弹窗仍是深蓝 #1f2937 + 蓝框 + 灰按钮（用户截图反馈） | 接入 `ModalShell` 云白皮肤；标题去 emoji；明黄旋转检索环 + 正式 `hud_battle` 图标；取消按钮改云白次级按钮。命中几何抽到 `RenderSystem.matchOverlayLayout()`，渲染/点击同源 | `.workbuddy/art-staging/ui-audit/V4-match-overlay-2.png` |
+| V4-2 | 新手引导文案卡为深蓝裸块 + 金边，与云白体系割裂 | 改 `_cardBg` 云白卡 + 明黄顶条，文字三级色阶；几何仍取 `tutorialLayout`（命中不变） | `V4-tutorial.png` |
+| V4-3 | 战斗 HUD 金币/战士数用 💰/⚔ emoji，设置按钮深蓝裸块 + ⚙ | 金币/战士数改正式 `currency_coin` / `hud_battle` 图标 + 数值；设置按钮改云白圆角 + `hud_setting` 图标；底部提示去 emoji。命中矩形不变 | `V5-battle-clean.png` |
+| V4-4 | 商店免费页按钮为蓝色 #3b82f6 + 📺 emoji | 改云白/浅蓝次级按钮 + 海军蓝文字；需看广告时用正式 `state_ad` 图标。同步更新 P37 测试口径 | `V4-shop-free.png` |
+| V4-5 | 战斗棋盘中央仍叠出 `ui/tutorial_card`/`ui/tutorial_dots` 等九宫格占位图（`PLACEHOLDER` 水印） | `ArtLayer` 占位过滤从 `effects/`、`units/` 扩到 `ui/`；默认关闭时全部跳过，正式 `icons/` 保留 | `V5-battle-clean.png` |
+| V4-6 | 招募结果 / 结算 / 奖励行残留 ✨🔄📤🏠💰💎⭐ emoji | 换正式状态图标或统一符号（◆ 金币 / ✦ 星尘 / ✧ 钻石），无贴图环境退化字符 | 回归 73 条全绿 |
+
+### 仍需独立排期（不属本轮代码收口）
+- **兵种大立绘**：用户已明确不出。
+- **棋盘 `tiles/hex_*` 场景素材**：低对比山形仍偏占位感，属第 6 批场景美术；按项目出图铁律需先给方案并确认后生成。
+- **商店免费页下半屏留白**：内容区偏空，属内容策划取舍（加新商品 vs 保留夜景舞台底），未擅自新增商品。
+

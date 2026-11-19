@@ -460,64 +460,18 @@ export class Game {
 
   /** 匹配中 overlay 点击（取消按钮；遮罩点击不关闭，避免误触） */
   _handleMatchOverlayClick(screenX, screenY) {
-    const w = this.screenWidth, h = this.screenHeight;
-    const panelW = 300, panelH = 240;
-    const panelY = (h - panelH) / 2;
-    const btnW = 220, btnH = 44;
-    const btnX = (w - btnW) / 2;
-    const cancelBtnY = panelY + panelH - btnH - 20;
-    if (screenX >= btnX && screenX <= btnX + btnW &&
-        screenY >= cancelBtnY && screenY <= cancelBtnY + btnH) {
+    const { cancelBtn } = RenderSystem.matchOverlayLayout(this.screenWidth, this.screenHeight);
+    if (screenX >= cancelBtn.x && screenX <= cancelBtn.x + cancelBtn.w &&
+        screenY >= cancelBtn.y && screenY <= cancelBtn.y + cancelBtn.h) {
       this.audioManager.playButtonClick();
       this._cancelAsyncMatch();
       this.showToast('已取消匹配', 1.5);
     }
   }
 
-  /** 绘制异步匹配等待 overlay（匹配成功后自动消失） */
+  /** 绘制异步匹配等待 overlay（匹配成功后自动消失；视觉统一由 RenderSystem 承载） */
   _drawMatchOverlay() {
-    const ctx = this.ctx;
-    const w = this.screenWidth, h = this.screenHeight;
-
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(0, 0, w, h);
-
-    const panelW = 300, panelH = 240;
-    const panelX = (w - panelW) / 2, panelY = (h - panelH) / 2;
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(panelX, panelY, panelW, panelH);
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(panelX, panelY, panelW, panelH);
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.fillText('🎯 异步对战匹配', w / 2, panelY + 40);
-
-    // 检索状态提示（不显示倒计时/等待秒数/超时信息；超时降级由 _fallbackToAI 自动处理）
-    const dots = '.'.repeat(1 + Math.floor((Date.now() / 400) % 3));
-    ctx.fillStyle = '#60a5fa';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText(`正在检索实力相近的对手${dots}`, w / 2, panelY + 95);
-    ctx.fillStyle = '#9ca3af';
-    ctx.font = '12px sans-serif';
-    ctx.fillText('通常几秒内即可开战', w / 2, panelY + 130);
-
-    // 取消按钮
-    const btnW = 220, btnH = 44;
-    const btnX = (w - btnW) / 2;
-    const cancelBtnY = panelY + panelH - btnH - 20;
-    ctx.fillStyle = '#4b5563';
-    ctx.fillRect(btnX, cancelBtnY, btnW, btnH);
-    ctx.strokeStyle = '#9ca3af';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(btnX, cancelBtnY, btnW, btnH);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('取消', w / 2, cancelBtnY + btnH / 2);
+    this.renderSystem.drawMatchOverlay();
   }
 
   /**

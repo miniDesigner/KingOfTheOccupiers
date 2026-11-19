@@ -1,7 +1,7 @@
 // 测试 P37 商店改造：
 //   1) 「货币兑换」→「星尘兑换」
 //   2) 新增「免费」分页并默认展示（排第 1）
-//   3) 免费分页含每日免费钻石 / 免费金币栏位，按钮文案「免费」+ 蓝色
+//   3) 免费分页含每日免费钻石 / 免费金币栏位，按钮文案「免费」+ 云白次级按钮
 //   4) 每日上限 5 次、界面显示已领/可领、首次直领、之后需看完广告
 const noop = () => {};
 
@@ -223,7 +223,7 @@ console.log('=== 测试9: 分页布局自适应（5 个分页窄屏不溢出）=
   }
 }
 
-console.log('=== 测试10: 免费卡片渲染 —— 蓝色「免费」按钮 + 广告图标 + 次数文案 ===');
+console.log('=== 测试10: 免费卡片渲染 —— 云白「免费」按钮 + 正式广告图标 + 次数文案 ===');
 {
   resetFreeClaims();
   const items = ShopSystem.getShopItems();
@@ -237,15 +237,15 @@ console.log('=== 测试10: 免费卡片渲染 —— 蓝色「免费」按钮 + 
   };
   const texts = (calls) => calls.filter(c => c.op === 'fillText').map(c => String(c.args[0]));
 
-  // 10a 首次：按钮文案「免费」，蓝色，无广告图标
+  // 10a 首次：按钮文案「免费」，云白底/深蓝描边，无广告图标
   let calls = drawAndCapture();
   let ts = texts(calls);
   assert(ts.includes('免费'), '首次：按钮文案含「免费」');
-  assert(!ts.some(t => t.includes('\u{1F4FA}')), '首次：按钮无广告播放图标');
-  const blueBtn = calls.some(c => c.op === 'strokeRect' && c.strokeStyle === '#3b82f6');
-  assert(blueBtn, '按钮描边为蓝色 #3b82f6');
-  const blueText = calls.some(c => c.op === 'fillText' && c.fillStyle === '#3b82f6' && String(c.args[0]) === '免费');
-  assert(blueText, '「免费」文字为蓝色 #3b82f6');
+  assert(!ts.some(t => t.includes('\u{1F4FA}')), '首次：按钮无广告播放 emoji');
+  const secondaryBtn = calls.some(c => c.op === 'fillRect' && c.fillStyle === 'rgba(214,238,251,0.96)');
+  assert(secondaryBtn, '按钮底色为云白体系浅蓝 rgba(214,238,251,0.96)');
+  const navyText = calls.some(c => c.op === 'fillText' && c.fillStyle === '#2B4A6F' && String(c.args[0]) === '免费');
+  assert(navyText, '「免费」文字为海军蓝 #2B4A6F');
   assert(ts.some(t => t === '已领 0/5'), '显示「已领 0/5」');
   assert(ts.some(t => t.includes('还可领 5 次')), '显示「还可领 5 次」');
   assert(ts.some(t => t.includes('首次直接领取')), '提示首次无需广告');
@@ -254,7 +254,7 @@ console.log('=== 测试10: 免费卡片渲染 —— 蓝色「免费」按钮 + 
   ShopSystem.purchase('free_diamond');
   calls = drawAndCapture();
   ts = texts(calls);
-  assert(ts.some(t => t.includes('\u{1F4FA}') && t.includes('免费')), '非首次：按钮含广告播放图标 📺');
+  assert(!ts.some(t => t.includes('\u{1F4FA}')), '非首次：按钮不含广告播放 emoji（改用正式图标）');
   assert(ts.some(t => t === '已领 1/5'), '显示「已领 1/5」');
   assert(ts.some(t => t.includes('还可领 4 次')), '显示「还可领 4 次」');
   assert(ts.some(t => t.includes('观看广告后领取')), '提示需观看广告');
@@ -266,12 +266,12 @@ console.log('=== 测试10: 免费卡片渲染 —— 蓝色「免费」按钮 + 
   calls = drawAndCapture();
   ts = texts(calls);
   assert(ts.some(t => t.includes('今日已领完')), '耗尽：提示今日已领完');
-  // 只数「按钮文案」：'免费' 或 '📺免费'（排除分页标签「免费」与卡片名「免费钻石/免费金币」）
-  const btnTexts = ts.filter(t => t === '免费' || t === '\u{1F4FA}免费');
+  // 只数「按钮文案」：'免费'（排除分页标签「免费」与卡片名「免费钻石/免费金币」）
+  const btnTexts = ts.filter(t => t === '免费');
   // 只剩 1 个 = 顶部「免费」分页标签本身（两张卡都没有按钮了）
   assert(btnTexts.length === 1, `耗尽后不再绘制任何免费按钮（含「免费」文案 ${btnTexts.length} 处 = 仅分页标签）`);
-  const blueBtns = calls.filter(c => c.op === 'strokeRect' && c.strokeStyle === '#3b82f6');
-  assert(blueBtns.length === 0, `耗尽后无蓝色按钮描边（实际 ${blueBtns.length} 个）`);
+  const oldBtns = calls.filter(c => c.op === 'strokeRect' && c.strokeStyle === '#3b82f6');
+  assert(oldBtns.length === 0, `耗尽后无旧蓝色按钮描边（实际 ${oldBtns.length} 个）`);
   assert(L.itemH === 70 && L.btnW === 60, '卡片/按钮尺寸与 Game 命中区一致（itemH=70, btnW=60）');
 }
 
