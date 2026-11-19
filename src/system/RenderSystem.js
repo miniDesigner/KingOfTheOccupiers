@@ -5042,7 +5042,7 @@ export class RenderSystem {
 
     // 赛季卡：标题 + Lv 胶囊 + EXP 进度条（几何避开右侧一键领取按钮）
     const claimX = w - 120, claimY = 50;
-    this._statStrip({ x: 16, y: 52, w: w - 32 - 8, h: 58 }, {
+    this._statStrip({ x: 16, y: 52, w: w - 32 - 8, h: 48 }, {
       title: status.seasonName || '赛季',
       level: `Lv${status.level || 0}/${status.maxLevel || 50}`,
       ratio: (status.exp || 0) / (status.expPerLevel || 100),
@@ -5073,10 +5073,11 @@ export class RenderSystem {
     // 列头在夜景底上（不在云白格内），用 ON_DARK 浅色保证对比
     ctx.textBaseline = 'top';
     ctx.font = 'bold 10px sans-serif';
+    // 列头下移到赛季卡（底 100）下方，避免浅色字压在白卡下沿发虚
     ctx.fillStyle = '#22D3EE';
-    ctx.fillText('免费轨道', colFreeX + cellW / 2, startY - 18);
+    ctx.fillText('免费轨道', colFreeX + cellW / 2, startY - 10);
     ctx.fillStyle = UI_THEME.gold;
-    ctx.fillText('高级轨道', colPremX + cellW / 2, startY - 18);
+    ctx.fillText('高级轨道', colPremX + cellW / 2, startY - 10);
 
     for (let i = 0; i < rewards.length; i++) {
       const r = rewards[i];
@@ -5224,8 +5225,10 @@ export class RenderSystem {
 
     // 玩家排名提示：吸底云白胶囊
     if (data.playerRank > 0) {
-      const tipW = Math.min(w - 40, 240);
-      const tipX = (w - tipW) / 2, tipY = h - 66;
+      // 胶囊放到返回按钮右侧，避开左下角返回（16..96）：窄屏下也绝不与返回重叠
+      const backRight = 16 + 80;
+      const tipW = Math.min(240, w - backRight - 24);
+      const tipX = backRight + 8 + (w - backRight - 8 - tipW) / 2, tipY = h - 66;
       this._cardBg({ x: tipX, y: tipY, w: tipW, h: 34, r: 17 }, {
         tint: 'rgba(255,255,255,0.96)', border: '#A855F7', flat: true,
       });
@@ -5233,7 +5236,7 @@ export class RenderSystem {
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`你的排名: 第${data.playerRank}名`, w / 2, tipY + 17);
+      ctx.fillText(`你的排名: 第${data.playerRank}名`, tipX + tipW / 2, tipY + 17);
       ctx.textBaseline = 'alphabetic';
     }
 
