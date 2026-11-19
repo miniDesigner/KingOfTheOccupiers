@@ -569,11 +569,18 @@ export class RenderSystem {
       }
       ctx.fillRect(x, y, bw, bh);
     });
+    // 白描边：老基础库无 arcTo 时退化为直角描边，绝不抛错（覆盖层 also 复用本组件）
     ctx.save();
-    this._roundRectPath(x, y, bw, bh, Math.max(2, Math.min(r, bw / 2, bh / 2)));
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    if (typeof ctx.arcTo === 'function') {
+      this._roundRectPath(x, y, bw, bh, Math.max(2, Math.min(r, bw / 2, bh / 2)));
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, bw, bh);
+    }
     ctx.restore();
     ctx.fillStyle = '#4A2A00';
     ctx.font = 'bold 16px sans-serif';
@@ -2552,40 +2559,33 @@ export class RenderSystem {
     const panelX = (w - panelW) / 2;
     const panelY = 50;
 
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(panelX, panelY, panelW, panelH);
-    ctx.strokeStyle = '#7c3aed';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(panelX, panelY, panelW, panelH);
-    // 招募面板：兵种详情底板 + 6 种族×4 阶立绘 + 概率/保底/图鉴条
-    this._art(pick_unitDetail(), panelX, panelY, panelW, panelH, { alpha: 0.10 });
-    for (let i = 0; i < RACE_KEYS_ALL.length; i++) {
-      this._art(RACE_KEYS_ALL[i], panelX + 8 + (i % 6) * 26,
-        panelY + 8 + Math.floor(i / 6) * 26, 22, 22, { alpha: 0.16 });
-    }
-    this._art(pick_gachaUi('rate'), panelX + 10, panelY + panelH - 60, panelW - 20, 16, { alpha: 0.14 });
-    this._art(pick_gachaUi('pity'), panelX + 10, panelY + panelH - 40, panelW - 20, 16, { alpha: 0.14 });
-    this._art(pick_gachaUi('collection'), panelX + 10, panelY + panelH - 20, panelW - 20, 16, { alpha: 0.14 });
+    // 云白面板 + 紫色强调条（招募题材色，几何不变）
+    this._cardBg({ x: panelX, y: panelY, w: panelW, h: panelH }, {
+      r: 18, tint: 'rgba(255,255,255,0.98)', border: 'rgba(43,74,111,0.28)',
+      edge: '#A855F7', edgeSide: 'left',
+    });
 
-    // 标题
-    ctx.fillStyle = '#c084fc';
+    // 标题（深色文字 + 正式图标）
+    this._artIcon(ART_PREFIXES.nav, 'gacha', panelX + 36, panelY + 20, 18, 0.95);
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('📋 招募兵种', panelX + panelW / 2, panelY + 20);
+    ctx.fillText('招募兵种', panelX + panelW / 2, panelY + 20);
 
-    // 货币显示
-    ctx.fillStyle = '#94a3b8';
+    // 货币显示（深色文字）
+    ctx.fillStyle = UI_THEME.navySoft;
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`💰${profile?.gold || 0}  ⭐${profile?.stardust || 0}`, panelX + 10, panelY + 38);
+    ctx.fillText(`◆ ${profile?.gold || 0}   ✦ ${profile?.stardust || 0}`, panelX + 10, panelY + 38);
 
-    // 关闭按钮
+    // 关闭按钮（几何不变）
     const closeX = panelX + panelW - 35;
     const closeY = panelY + 5;
-    ctx.fillStyle = '#dc2626';
-    ctx.fillRect(closeX, closeY, 30, 30);
-    ctx.fillStyle = '#ffffff';
+    this._cardBg({ x: closeX, y: closeY, w: 30, h: 30, r: 15 }, {
+      r: 15, tint: 'rgba(214,238,251,0.95)', border: 'rgba(43,74,111,0.3)', flat: true,
+    });
+    ctx.fillStyle = UI_THEME.navy;
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('×', closeX + 15, closeY + 15);
@@ -2597,7 +2597,7 @@ export class RenderSystem {
     const styleNames = { melee: '近战', ranged: '远程', defense: '防御', magic: '法术' };
 
     if (recruitable.length === 0) {
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '13px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('所有兵种已招募完毕！', panelX + panelW / 2, listStartY + 40);
@@ -2611,50 +2611,52 @@ export class RenderSystem {
       const cy = listStartY + row * (cardH + cardGap);
       const unit = recruitable[i];
 
-      // 卡片背景
-      ctx.fillStyle = unit.affordable ? '#1e293b' : '#1a2332';
-      ctx.fillRect(cx, cy, cardW, cardH);
-      ctx.strokeStyle = unit.affordable ? '#3b82f6' : '#334155';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cx, cy, cardW, cardH);
+      // 卡片背景（云白卡，可招募=明黄描边，资源不足=弱面，几何不变）
+      this._cardBg({ x: cx, y: cy, w: cardW, h: cardH, r: 10 }, {
+        r: 10,
+        tint: unit.affordable ? 'rgba(255,255,255,0.98)' : 'rgba(226,238,247,0.85)',
+        border: unit.affordable ? UI_THEME.goldDeep : 'rgba(43,74,111,0.2)',
+      });
 
       // 图标
-      ctx.fillStyle = unit.affordable ? '#60a5fa' : '#475569';
+      ctx.fillStyle = unit.affordable ? UI_THEME.skyDeep : UI_THEME.navySoft;
       ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(unit.icon || '?', cx + 25, cy + 25);
 
       // 名称
-      ctx.fillStyle = unit.affordable ? '#e2e8f0' : '#64748b';
+      ctx.fillStyle = unit.affordable ? UI_THEME.ink : UI_THEME.navySoft;
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(unit.name || '?', cx + 48, cy + 18);
 
       // 战斗风格
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '9px sans-serif';
       const styles = (unit.combatStyles || []).map(s => styleNames[s] || s).join('/');
       ctx.fillText(styles, cx + 48, cy + 32);
 
       // 特殊能力
       if (unit.special) {
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = UI_THEME.navySoft;
         ctx.font = '8px sans-serif';
         ctx.fillText('特: ' + (unit.special.desc || unit.special.type || '未知'), cx + 48, cy + 45);
       }
 
       // 费用
-      ctx.fillStyle = unit.affordable ? '#fbbf24' : '#ef4444';
+      ctx.fillStyle = unit.affordable ? UI_THEME.orangeDeep : '#C0392B';
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'left';
-      const costText = `⭐${unit.cost.starDust} 💰${unit.cost.gold}`;
+      const costText = `✦ ${unit.cost.starDust}  ◆ ${unit.cost.gold}`;
       ctx.fillText(costText, cx + 8, cy + 68);
 
       // 招募提示
-      ctx.fillStyle = unit.affordable ? '#4ade80' : '#ef4444';
+      ctx.fillStyle = unit.affordable ? UI_THEME.green : '#C0392B';
       ctx.font = '9px sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(unit.affordable ? '点击招募' : '资源不足', cx + cardW - 8, cy + 68);
+      ctx.textBaseline = 'alphabetic';
     }
   }
 
@@ -2765,29 +2767,30 @@ export class RenderSystem {
     const { panelW, panelH, panelX, panelY } = RenderSystem.synergyDetailPanelLayout(w, h);
     const styleColor = { melee: '#ef4444', ranged: '#22c55e', defense: '#3b82f6', magic: '#a855f7' }[d.style] || '#a855f7';
 
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(panelX, panelY, panelW, panelH);
-    this._artPanel(panelX, panelY, panelW, panelH, 'panel');
-    this._artIcon(ART_PREFIXES.synergy, d.style, panelX + 20, panelY + 20, 18, 0.6);
-    ctx.strokeStyle = styleColor;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(panelX, panelY, panelW, panelH);
+    // 云白面板 + 功能色左侧竖条（沿用羁绊风格色，几何不变）
+    this._cardBg({ x: panelX, y: panelY, w: panelW, h: panelH }, {
+      r: 18, tint: 'rgba(255,255,255,0.98)', border: 'rgba(43,74,111,0.28)',
+      edge: styleColor, edgeSide: 'left',
+    });
+    this._artIcon(ART_PREFIXES.synergy, d.style, panelX + 20, panelY + 20, 18, 0.95);
 
     ctx.textBaseline = 'middle';
 
-    // 关闭按钮
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = 'bold 18px sans-serif';
+    // 关闭按钮（几何不变，圆形云白底 + 深蓝 ✕）
+    const synClose = { x: panelX + panelW - 36, y: panelY + 10, w: 26, h: 26 };
+    this._cardBg(synClose, { r: 13, tint: 'rgba(214,238,251,0.95)', border: 'rgba(43,74,111,0.3)', flat: true });
+    ctx.fillStyle = UI_THEME.navy;
+    ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('×', panelX + panelW - 20, panelY + 20);
+    ctx.fillText('✕', panelX + panelW - 20, panelY + 20);
 
-    // 标题：图标 + 羁绊名 + 当前等级
+    // 标题：图标 + 羁绊名 + 当前等级（深色文字，功能色仅用于未激活弱字）
     ctx.textAlign = 'left';
-    ctx.fillStyle = styleColor;
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 16px sans-serif';
     ctx.fillText(`${d.icon || '?'} ${d.name}`, panelX + 18, panelY + 26);
     ctx.textAlign = 'right';
-    ctx.fillStyle = d.active ? '#fbbf24' : '#94a3b8';
+    ctx.fillStyle = d.active ? UI_THEME.orangeDeep : UI_THEME.navySoft;
     ctx.font = 'bold 12px sans-serif';
     ctx.fillText(d.active ? `Lv.${d.level}/${d.maxLevel}` : '未激活', panelX + panelW - 38, panelY + 26);
 
@@ -2796,19 +2799,19 @@ export class RenderSystem {
 
     // ---- 如何激活 ----
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#c084fc';
+    ctx.fillStyle = UI_THEME.skyDeep;
     ctx.font = 'bold 11px sans-serif';
     ctx.fillText('如何激活', leftX, y);
     y += 17;
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = UI_THEME.navy;
     ctx.font = '11px sans-serif';
     ctx.fillText(d.activateDesc, leftX + 8, y);
     y += 16;
-    ctx.fillStyle = d.active ? '#4ade80' : '#94a3b8';
+    ctx.fillStyle = d.active ? UI_THEME.green : UI_THEME.navySoft;
     ctx.fillText(d.currentDesc, leftX + 8, y);
     y += 16;
     if (d.sourceUnits && d.sourceUnits.length > 0) {
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '10px sans-serif';
       const names = d.sourceUnits.map((u) => `${u.icon}${u.name}`).join(' ');
       ctx.fillText('贡献兵种: ' + names, leftX + 8, y);
@@ -2817,25 +2820,25 @@ export class RenderSystem {
 
     // ---- 等级效果表 ----
     y += 6;
-    ctx.fillStyle = '#c084fc';
+    ctx.fillStyle = UI_THEME.skyDeep;
     ctx.font = 'bold 11px sans-serif';
     ctx.fillText('等级效果', leftX, y);
     y += 17;
     for (const lv of d.levels || []) {
       if (y > panelY + panelH - 30) break;
       ctx.font = 'bold 10px sans-serif';
-      ctx.fillStyle = lv.isCurrent ? '#fbbf24' : (lv.active ? '#4ade80' : '#64748b');
+      ctx.fillStyle = lv.isCurrent ? UI_THEME.orangeDeep : (lv.active ? UI_THEME.green : UI_THEME.navySoft);
       ctx.textAlign = 'left';
       ctx.fillText(`Lv.${lv.level}`, leftX + 8, y);
       ctx.font = '10px sans-serif';
-      ctx.fillStyle = lv.isCurrent ? '#fde68a' : (lv.active ? '#cbd5e1' : '#64748b');
+      ctx.fillStyle = lv.isCurrent ? UI_THEME.orangeDeep : (lv.active ? UI_THEME.navy : UI_THEME.navySoft);
       ctx.fillText((lv.effects || []).join('  '), leftX + 58, y);
       y += 15;
     }
 
     // 底部提示
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = 'rgba(43,74,111,0.5)';
     ctx.font = '9px sans-serif';
     ctx.fillText(d.tip || '', panelX + panelW / 2, panelY + panelH - 14);
   }
@@ -2906,27 +2909,27 @@ export class RenderSystem {
     // 布局（与 Game._handleBuildingDetailTap 共享，含升级按钮命中区）
     const L = RenderSystem.buildingDetailPanelLayout(w, h);
 
-    // 面板背景
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(L.panelX, L.panelY, L.panelW, L.panelH);
-    this._artPanel(L.panelX, L.panelY, L.panelW, L.panelH, 'panel');
+    // 云白面板 + 明黄左侧竖条（几何来自 buildingDetailPanelLayout，不变）
+    this._cardBg({ x: L.panelX, y: L.panelY, w: L.panelW, h: L.panelH }, {
+      r: 18, tint: 'rgba(255,255,255,0.98)', border: 'rgba(43,74,111,0.28)',
+      edge: UI_THEME.gold, edgeSide: 'left',
+    });
     const _buKey = ({ barracks: 'barracks', arrow_tower: 'tower', gold_mine: 'mine' })[bld.type];
-    this._artIcon(ART_PREFIXES.buildingUp, _buKey, L.panelX + 20, L.panelY + 20, 18, 0.6);
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(L.panelX, L.panelY, L.panelW, L.panelH);
+    this._artIcon(ART_PREFIXES.buildingUp, _buKey, L.panelX + 20, L.panelY + 20, 18, 0.95);
 
     ctx.textBaseline = 'middle';
 
-    // 关闭按钮
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = 'bold 18px sans-serif';
+    // 关闭按钮（几何不变）
+    const bldClose = { x: L.panelX + L.panelW - 36, y: L.panelY + 10, w: 26, h: 26 };
+    this._cardBg(bldClose, { r: 13, tint: 'rgba(214,238,251,0.95)', border: 'rgba(43,74,111,0.3)', flat: true });
+    ctx.fillStyle = UI_THEME.navy;
+    ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('×', L.panelX + L.panelW - 20, L.panelY + 20);
+    ctx.fillText('✕', L.panelX + L.panelW - 20, L.panelY + 20);
 
-    // 标题: 建筑名 + 等级（maxLevel 取自 upgradeCost 同源数据）
+    // 标题: 建筑名 + 等级（深色文字）
     const maxLv = bld.maxLevel || (bld.upgradeCost && bld.upgradeCost.maxLevel) || bld.level || 1;
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 17px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`${bld.icon || '?'} ${bld.name || bld.type} Lv.${bld.level}/${maxLv}`, L.panelX + 18, L.panelY + 26);
@@ -2935,11 +2938,11 @@ export class RenderSystem {
     let y = L.panelY + 50;
 
     // ---- 当前效果 ----
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = UI_THEME.skyDeep;
     ctx.font = 'bold 11px sans-serif';
     ctx.fillText(`当前效果 (Lv.${bld.level})`, leftX, y);
     y += 17;
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = UI_THEME.navy;
     ctx.font = '11px sans-serif';
     for (const line of RenderSystem.buildingEffectLines(bld.type, bld.stats)) {
       ctx.fillText(line, leftX + 8, y);
@@ -2951,15 +2954,15 @@ export class RenderSystem {
     const maxed = !cost || cost.maxed || !bld.nextStats;
     y += 6;
     if (maxed) {
-      ctx.fillStyle = '#4ade80';
+      ctx.fillStyle = UI_THEME.green;
       ctx.font = 'bold 11px sans-serif';
       ctx.fillText('已满级，无法继续强化', leftX, y);
     } else {
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = UI_THEME.skyDeep;
       ctx.font = 'bold 11px sans-serif';
       ctx.fillText(`升级至 Lv.${bld.level + 1}`, leftX, y);
       y += 17;
-      ctx.fillStyle = '#cbd5e1';
+      ctx.fillStyle = UI_THEME.navy;
       ctx.font = '11px sans-serif';
       for (const line of RenderSystem.buildingDiffLines(bld.type, bld.stats, bld.nextStats)) {
         ctx.fillText(line, leftX + 8, y);
@@ -2970,21 +2973,28 @@ export class RenderSystem {
       const okStar = cur.stardust >= cost.starDust;
       const okGold = cur.gold >= cost.gold;
       y += 5;
-      ctx.fillStyle = okStar ? '#c4b5fd' : '#f87171';
-      ctx.fillText(`⭐ 星尘 ${cost.starDust}（拥有 ${cur.stardust}）${okStar ? '✓' : '✕'}`, leftX + 8, y);
+      ctx.fillStyle = okStar ? UI_THEME.skyDeep : '#C0392B';
+      ctx.fillText(`✦ 星尘 ${cost.starDust}（拥有 ${cur.stardust}）${okStar ? '✓' : '✕'}`, leftX + 8, y);
       y += 15;
-      ctx.fillStyle = okGold ? '#fbbf24' : '#f87171';
-      ctx.fillText(`💰 金币 ${cost.gold}（拥有 ${cur.gold}）${okGold ? '✓' : '✕'}`, leftX + 8, y);
+      ctx.fillStyle = okGold ? UI_THEME.orangeDeep : '#C0392B';
+      ctx.fillText(`◆ 金币 ${cost.gold}（拥有 ${cur.gold}）${okGold ? '✓' : '✕'}`, leftX + 8, y);
     }
 
-    // ---- 升级按钮（命中区由 buildingDetailPanelLayout 统一给出）----
+    // ---- 升级按钮（命中区由 buildingDetailPanelLayout 统一给出，几何不变）----
     const canUpgrade = !maxed && !!bld.canAfford;
-    ctx.fillStyle = canUpgrade ? '#f59e0b' : '#475569';
-    ctx.fillRect(L.btnX, L.btnY, L.btnW, L.btnH);
-    ctx.fillStyle = canUpgrade ? '#0f172a' : '#94a3b8';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(maxed ? '已满级' : (canUpgrade ? '升 级' : '资源不足'), L.btnX + L.btnW / 2, L.btnY + L.btnH / 2);
+    if (canUpgrade) {
+      this._primaryButton({ x: L.btnX, y: L.btnY, w: L.btnW, h: L.btnH, r: 10 }, maxed ? '已满级' : '升 级');
+    } else {
+      this._cardBg({ x: L.btnX, y: L.btnY, w: L.btnW, h: L.btnH, r: 10 }, {
+        r: 10, tint: 'rgba(214,238,251,0.9)', border: 'rgba(43,74,111,0.25)',
+      });
+      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(maxed ? '已满级' : '资源不足', L.btnX + L.btnW / 2, L.btnY + L.btnH / 2);
+      ctx.textBaseline = 'alphabetic';
+    }
   }
 
   /**
@@ -3010,78 +3020,65 @@ export class RenderSystem {
     const qColor = qColors[(unit.quality || 1) - 1] || '#9ca3af';
     const qName = qNames[(unit.quality || 1) - 1] || '?';
 
-    // 面板背景
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(panelX, panelY, panelW, panelH);
-    ctx.strokeStyle = qColor;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(panelX, panelY, panelW, panelH);
-    // 兵种详情：专属底板 + 建筑详情对比区 + 品质光晕 + 状态图标族
-    this._art(pick_unitDetail(), panelX, panelY, panelW, panelH, { alpha: 0.10 });
-    this._art(pick_buildingDetail(), panelX, panelY + panelH - 120, panelW, 110, { alpha: 0.08 });
-    this._art(pick_qualityGlow(unit.quality || 1), panelX + panelW / 2 - 60,
-      panelY - 20, 120, 120, { alpha: 0.20 });
-    const _st = ['lock', 'skill', 'stardust', 'ad', 'close', 'upgrade', 'delete'];
-    for (let i = 0; i < _st.length; i++) {
-      const k = iconKey('state', _st[i]);
-      if (k) this._art(k, panelX + 8 + i * 24, panelY + panelH - 28, 20, 20, { alpha: 0.20 });
-    }
+    // 云白面板 + 品质色左侧竖条（几何来自 unitDetailPanelLayout，不变）
+    this._cardBg({ x: panelX, y: panelY, w: panelW, h: panelH }, {
+      r: 18, tint: 'rgba(255,255,255,0.98)', border: 'rgba(43,74,111,0.28)',
+      edge: qColor, edgeSide: 'left',
+    });
 
-    // 标题栏
-    ctx.fillStyle = qColor;
-    ctx.globalAlpha = 0.2;
-    ctx.fillRect(panelX, panelY, panelW, 35);
-    ctx.globalAlpha = 1;
-
-    ctx.fillStyle = '#e2e8f0';
+    // 标题栏：云白偏蓝软底 + 深色文字
+    this._cardBg({ x: panelX + 2, y: panelY + 2, w: panelW - 4, h: 35, r: 12 }, {
+      r: 12, tint: 'rgba(214,238,251,0.9)', flat: true,
+    });
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('兵种详情', panelX + panelW / 2, panelY + 18);
 
-    // 关闭按钮
+    // 关闭按钮（几何不变，圆形云白底 + 深蓝 ✕）
     const closeX = panelX + panelW - 35;
     const closeY = panelY + 5;
-    ctx.fillStyle = '#dc2626';
-    ctx.fillRect(closeX, closeY, 30, 30);
-    ctx.fillStyle = '#ffffff';
+    this._cardBg({ x: closeX, y: closeY, w: 30, h: 30, r: 15 }, {
+      r: 15, tint: 'rgba(214,238,251,0.95)', border: 'rgba(43,74,111,0.3)', flat: true,
+    });
+    ctx.fillStyle = UI_THEME.navy;
     ctx.font = 'bold 16px sans-serif';
     ctx.fillText('×', closeX + 15, closeY + 15);
 
-    // === 单位图标 + 名称 ===
+    // === 单位图标 + 名称（兵种立绘本轮不出，保留 emoji 文字兜底，仅转深色）===
     const iconY = panelY + 65;
     ctx.font = 'bold 36px sans-serif';
+    ctx.fillStyle = UI_THEME.navy;
     ctx.fillText(unit.icon || '?', panelX + 50, iconY);
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 16px sans-serif';
     ctx.fillText(unit.name || '?', panelX + 90, panelY + 55);
 
-    // 品质标签
+    // 品质标签（功能色保留）
     ctx.fillStyle = qColor;
     ctx.font = 'bold 11px sans-serif';
     ctx.fillText(`[${qName}]`, panelX + 90, panelY + 72);
 
     // 等级
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = UI_THEME.orangeDeep;
     ctx.font = 'bold 13px sans-serif';
     ctx.fillText(`Lv.${unit.level}`, panelX + 90, panelY + 88);
 
     // 战斗风格
     const styleNames = { melee: '近战', ranged: '远程', defense: '防御', magic: '法术' };
     const styles = (unit.combatStyles || []).map(s => styleNames[s] || s).join('/');
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = UI_THEME.navySoft;
     ctx.font = '10px sans-serif';
     ctx.fillText(styles, panelX + 130, panelY + 88);
 
-    // === 属性区 ===
+    // === 属性区（云白卡 + 深色文字，几何不变）===
     const statsY = panelY + 110;
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(panelX + 10, statsY, panelW - 20, 70);
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(panelX + 10, statsY, panelW - 20, 70);
+    this._cardBg({ x: panelX + 10, y: statsY, w: panelW - 20, h: 70, r: 10 }, {
+      r: 10, tint: 'rgba(234,248,255,0.92)', border: 'rgba(43,74,111,0.18)', flat: true,
+    });
 
     ctx.textAlign = 'left';
     ctx.font = '11px sans-serif';
@@ -3089,14 +3086,14 @@ export class RenderSystem {
     const colX2 = panelX + panelW / 2 + 5;
     const rowH = 16;
 
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = UI_THEME.navySoft;
     ctx.fillText('攻击', colX1, statsY + 15);
     ctx.fillText('生命', colX2, statsY + 15);
     ctx.fillText('速度', colX1, statsY + 15 + rowH);
     ctx.fillText('射程', colX2, statsY + 15 + rowH);
     ctx.fillText('生产', colX1, statsY + 15 + rowH * 2);
 
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(unit.attackCoeff.toFixed(2), colX1 + 60, statsY + 15);
@@ -3109,10 +3106,10 @@ export class RenderSystem {
     let nextY = statsY + 80;
     if (unit.special && unit.special.desc) {
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '10px sans-serif';
       ctx.fillText('特殊:', panelX + 15, nextY);
-      ctx.fillStyle = '#c084fc';
+      ctx.fillStyle = UI_THEME.skyDeep;
       ctx.fillText(unit.special.desc, panelX + 50, nextY);
       nextY += 20;
     }
@@ -3129,12 +3126,12 @@ export class RenderSystem {
 
       // 区块标题行
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = UI_THEME.skyDeep;
       ctx.font = 'bold 10px sans-serif';
       ctx.fillText(`技能 (${unlockedCount}/${skills.length})`, panelX + 15, nextY);
       ctx.textAlign = 'right';
       ctx.font = '9px sans-serif';
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.fillText('紫6/12级 · 橙18级解锁', panelX + panelW - 15, nextY);
       nextY += 5;
 
@@ -3174,36 +3171,36 @@ export class RenderSystem {
         nextY += 14;
         const unlocked = isSkillUnlocked(sk);
 
-        // 品质色点
+        // 品质色点（功能色保留）
         ctx.beginPath();
         ctx.arc(panelX + 19, nextY - 3, 3, 0, Math.PI * 2);
-        ctx.fillStyle = unlocked ? (skQColors[sk.quality] || '#94a3b8') : '#475569';
+        ctx.fillStyle = unlocked ? (skQColors[sk.quality] || UI_THEME.navySoft) : 'rgba(43,74,111,0.3)';
         ctx.fill();
 
         // 技能名（锁定置灰）
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = unlocked ? '#e2e8f0' : '#64748b';
+        ctx.fillStyle = unlocked ? UI_THEME.ink : UI_THEME.navySoft;
         ctx.font = 'bold 10px sans-serif';
         ctx.fillText(sk.name, panelX + 27, nextY - 3);
 
         // 被动/主动 + 数值标签
-        ctx.fillStyle = unlocked ? '#94a3b8' : '#475569';
+        ctx.fillStyle = unlocked ? UI_THEME.navySoft : 'rgba(43,74,111,0.4)';
         ctx.font = '9px sans-serif';
         ctx.fillText(`${sk.kind === 'active' ? '主动' : '被动'}·${skLabel(sk)}`, panelX + 92, nextY - 3);
 
         // 右侧解锁状态
         ctx.textAlign = 'right';
         if (!unlocked) {
-          ctx.fillStyle = '#f87171';
+          ctx.fillStyle = '#C0392B';
           ctx.font = '9px sans-serif';
-          ctx.fillText('🔒Lv.' + sk.unlockLevel, panelX + panelW - 15, nextY - 3);
+          ctx.fillText('锁 Lv.' + sk.unlockLevel, panelX + panelW - 15, nextY - 3);
         } else if (sk.kind === 'active') {
-          ctx.fillStyle = '#fbbf24';
+          ctx.fillStyle = UI_THEME.orangeDeep;
           ctx.font = 'bold 9px sans-serif';
-          ctx.fillText('⚡主动', panelX + panelW - 15, nextY - 3);
+          ctx.fillText('主动', panelX + panelW - 15, nextY - 3);
         } else {
-          ctx.fillStyle = '#4ade80';
+          ctx.fillStyle = UI_THEME.green;
           ctx.font = '9px sans-serif';
           ctx.fillText('✓', panelX + panelW - 15, nextY - 3);
         }
@@ -3218,11 +3215,11 @@ export class RenderSystem {
     const isMaxLevel = unit.level >= MAX_UNIT_LEVEL;
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = UI_THEME.navySoft;
     ctx.font = '10px sans-serif';
     ctx.fillText('招募进度:', panelX + 15, nextY);
 
-    ctx.fillStyle = isMaxLevel ? '#fbbf24' : (recruitReady ? '#4ade80' : '#94a3b8');
+    ctx.fillStyle = isMaxLevel ? UI_THEME.orangeDeep : (recruitReady ? UI_THEME.green : UI_THEME.navySoft);
     ctx.textAlign = 'right';
     ctx.font = 'bold 10px sans-serif';
     if (isMaxLevel) {
@@ -3232,16 +3229,14 @@ export class RenderSystem {
     }
     nextY += 8;
 
-    // 进度条
+    // 进度条（云白槽底 + 明黄/功能色填充，几何不变）
     if (!isMaxLevel && recruitNeeded > 0) {
       const barX = panelX + 15;
       const barW = panelW - 30;
       const barH = 6;
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(barX, nextY, barW, barH);
-      const progress = Math.min(1, recruitCurrent / recruitNeeded);
-      ctx.fillStyle = recruitReady ? '#4ade80' : '#3b82f6';
-      ctx.fillRect(barX, nextY, barW * progress, barH);
+      this._progressBar({ x: barX, y: nextY, w: barW, h: barH },
+        Math.min(1, recruitCurrent / recruitNeeded),
+        { color: recruitReady ? UI_THEME.green : UI_THEME.skyDeep });
     }
     nextY += 20;
 
@@ -3256,16 +3251,16 @@ export class RenderSystem {
       canUpgrade = recruitReady && hasStarDust && hasGold;
 
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '10px sans-serif';
       ctx.fillText('升级消耗:', panelX + 15, nextY);
 
       ctx.textAlign = 'right';
       ctx.font = 'bold 10px sans-serif';
-      ctx.fillStyle = hasStarDust ? '#4ade80' : '#ef4444';
-      ctx.fillText(`✨${scaledStarDust}`, panelX + panelW / 2, nextY);
-      ctx.fillStyle = hasGold ? '#4ade80' : '#ef4444';
-      ctx.fillText(`💰${scaledGold}`, panelX + panelW - 15, nextY);
+      ctx.fillStyle = hasStarDust ? UI_THEME.green : '#C0392B';
+      ctx.fillText(`✦ ${scaledStarDust}`, panelX + panelW / 2, nextY);
+      ctx.fillStyle = hasGold ? UI_THEME.green : '#C0392B';
+      ctx.fillText(`◆ ${scaledGold}`, panelX + panelW - 15, nextY);
       nextY += 15;
     }
 
@@ -3279,36 +3274,47 @@ export class RenderSystem {
     const deployBtnX = panelX + 20;
     const upgradeBtnX = deployBtnX + btnW + btnGap;
 
-    // 上阵按钮
+    // 上阵按钮（几何不变：已上阵=云白弱面，可上阵=明黄主 CTA，槽满=灰弱面）
     const slotsFull = !isDeployed && deployedUnits.filter(Boolean).length >= 6;
     const canDeploy = !isDeployed && !slotsFull;
-    ctx.fillStyle = isDeployed ? '#14532d' : (canDeploy ? '#16a34a' : '#334155');
-    ctx.fillRect(deployBtnX, btnY, btnW, btnH);
-    ctx.strokeStyle = isDeployed ? '#4ade80' : (canDeploy ? '#86efac' : '#475569');
-    ctx.lineWidth = 1;
-    ctx.strokeRect(deployBtnX, btnY, btnW, btnH);
-    ctx.fillStyle = isDeployed ? '#4ade80' : (canDeploy ? '#ffffff' : '#64748b');
-    ctx.font = 'bold 13px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(isDeployed ? '✓ 已上阵' : '⚔ 上阵', deployBtnX + btnW / 2, btnY + btnH / 2);
-
-    // 升级按钮 / 已满级
-    if (!isMaxLevel) {
-      ctx.fillStyle = canUpgrade ? '#2563eb' : '#334155';
-      ctx.fillRect(upgradeBtnX, btnY, btnW, btnH);
-      ctx.strokeStyle = canUpgrade ? '#60a5fa' : '#475569';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(upgradeBtnX, btnY, btnW, btnH);
-
-      ctx.fillStyle = canUpgrade ? '#ffffff' : '#64748b';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillText(canUpgrade ? '⬆ 升级' : '条件不足', upgradeBtnX + btnW / 2, btnY + btnH / 2);
+    const deployRect = { x: deployBtnX, y: btnY, w: btnW, h: btnH, r: 10 };
+    if (canDeploy) {
+      this._primaryButton(deployRect, '上 阵');
     } else {
-      ctx.fillStyle = '#fbbf24';
+      this._cardBg(deployRect, {
+        r: 10,
+        tint: isDeployed ? 'rgba(198,239,214,0.92)' : 'rgba(214,238,251,0.9)',
+        border: isDeployed ? 'rgba(22,138,74,0.45)' : 'rgba(43,74,111,0.25)',
+      });
+      ctx.fillStyle = isDeployed ? UI_THEME.green : UI_THEME.navySoft;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isDeployed ? '✓ 已上阵' : '槽位已满', deployBtnX + btnW / 2, btnY + btnH / 2);
+    }
+
+    // 升级按钮 / 已满级（几何不变）
+    const upgradeRect = { x: upgradeBtnX, y: btnY, w: btnW, h: btnH, r: 10 };
+    if (!isMaxLevel) {
+      if (canUpgrade) {
+        this._primaryButton(upgradeRect, '升 级');
+      } else {
+        this._cardBg(upgradeRect, { r: 10, tint: 'rgba(214,238,251,0.9)', border: 'rgba(43,74,111,0.25)' });
+        ctx.fillStyle = UI_THEME.navySoft;
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('条件不足', upgradeBtnX + btnW / 2, btnY + btnH / 2);
+      }
+    } else {
+      this._cardBg(upgradeRect, { r: 10, tint: 'rgba(255,237,213,0.95)', border: 'rgba(232,168,56,0.5)' });
+      ctx.fillStyle = UI_THEME.orangeDeep;
       ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText('★ 已满级 ★', upgradeBtnX + btnW / 2, btnY + btnH / 2);
     }
+    ctx.textBaseline = 'alphabetic';
   }
 
   /**
@@ -5632,6 +5638,129 @@ export class RenderSystem {
     }
   }
 
+  /**
+   * 统一覆盖层皮肤 ModalShell（P9）：云白厚底面板 + 顶部明黄强调条 + 标题 + 圆形关闭钮。
+   * 只画「容器 + 标题 + 关闭钮」，行/按钮仍由各覆盖层按原几何自绘；几何一律由调用方
+   * 从 Game 的同源 Layout 常量传入，因此点击命中完全不变（改造红线：只换视觉容器）。
+   * 在老基础库（无 arcTo）上会退化为直角面板 + 方钮，绝不抛错。
+   * @param {{x:number,y:number,w:number,h:number}} panel 面板矩形
+   * @param {{x:number,y:number,w:number,h:number}} closeRect 关闭按钮矩形
+   * @param {string} title 标题文字
+   * @param {{iconPrefix?:string, iconName?:string, accent?:string}} [opts]
+   */
+  _modalShell(panel, closeRect, title, opts) {
+    const { ctx } = this;
+    const o = opts || {};
+    const accent = o.accent || UI_THEME.gold;
+
+    // 云白厚底面板（复用主内容卡语言：厚底 + 柔光 + 描边）
+    this._cardBg(panel, {
+      r: 18,
+      tint: 'rgba(255,255,255,0.98)',
+      border: 'rgba(43,74,111,0.28)',
+    });
+
+    // 顶部强调条（面板宽度内的圆角明黄短条，居左上）
+    if (typeof ctx.arcTo === 'function') {
+      ctx.save();
+      ctx.fillStyle = accent;
+      this._roundRectPath(panel.x + 18, panel.y + 0, Math.min(64, panel.w - 72), 4, 2);
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.fillStyle = accent;
+      ctx.fillRect(panel.x + 18, panel.y, Math.min(64, panel.w - 72), 4);
+    }
+
+    // 标题：可选正式图标 + 深色文字（不再用 emoji）
+    const titleY = panel.y + 28;
+    if (o.iconPrefix && o.iconName) {
+      this._artIcon(o.iconPrefix, o.iconName, panel.x + 32, titleY, 18, 0.95);
+      ctx.fillStyle = UI_THEME.ink;
+      ctx.font = 'bold 17px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(title, panel.x + 46, titleY);
+    } else {
+      ctx.fillStyle = UI_THEME.ink;
+      ctx.font = 'bold 17px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(title, panel.x + panel.w / 2, titleY);
+    }
+
+    // 圆形关闭钮：云白底 + 海军蓝描边 + 深蓝 ✕（不用红方块）
+    const cx = closeRect.x + closeRect.w / 2;
+    const cy = closeRect.y + closeRect.h / 2;
+    const cr = Math.min(closeRect.w, closeRect.h) / 2;
+    if (typeof ctx.arc === 'function') {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(214,238,251,0.95)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(43,74,111,0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.fillStyle = 'rgba(214,238,251,0.95)';
+      ctx.fillRect(closeRect.x, closeRect.y, closeRect.w, closeRect.h);
+    }
+    ctx.fillStyle = UI_THEME.navy;
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✕', cx, cy + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  /**
+   * 覆盖层开关行：云白卡底 + 左侧图标/文字 + 右侧胶囊 toggle。几何由调用方传入。
+   * @param {{x,y,w,h}} rect 行矩形（Game.settingsRowRect）
+   * @param {string} label 标签文字
+   * @param {boolean} on 开关状态
+   * @param {{iconPrefix?:string,iconName?:string}} [opts]
+   */
+  _modalToggleRow(rect, label, on, opts) {
+    const { ctx } = this;
+    const o = opts || {};
+    this._cardBg(rect, { r: 12, tint: 'rgba(234,248,255,0.96)', border: 'rgba(43,74,111,0.2)' });
+
+    const iconSize = 18;
+    const textX = rect.x + (o.iconPrefix && o.iconName ? 42 : 16);
+    if (o.iconPrefix && o.iconName) {
+      this._artIcon(o.iconPrefix, o.iconName, rect.x + 24, rect.y + rect.h / 2, iconSize, 0.95);
+    }
+    ctx.fillStyle = UI_THEME.ink;
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, textX, rect.y + rect.h / 2);
+
+    // 右侧胶囊 toggle：开=明黄填充+深棕字，关=灰蓝描边+弱字
+    const pillW = 56;
+    const pill = { x: rect.x + rect.w - pillW - 14, y: rect.y + (rect.h - 26) / 2, w: pillW, h: 26 };
+    if (typeof ctx.arcTo === 'function') {
+      ctx.save();
+      this._roundRectPath(pill.x, pill.y, pill.w, pill.h, 13);
+      ctx.fillStyle = on ? UI_THEME.gold : 'rgba(214,238,251,0.9)';
+      ctx.fill();
+      ctx.strokeStyle = on ? UI_THEME.orangeDeep : 'rgba(43,74,111,0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.fillStyle = on ? UI_THEME.gold : 'rgba(214,238,251,0.9)';
+      ctx.fillRect(pill.x, pill.y, pill.w, pill.h);
+    }
+    ctx.fillStyle = on ? '#4A2A00' : UI_THEME.navySoft;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(on ? '开启' : '关闭', pill.x + pill.w / 2, pill.y + pill.h / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+
   _drawBackButton(ctx) {
     // 返回按钮统一放左下角（距左 16、距底 16），便于单手操作；顶部留给资源栏（左上角）
     const h = this.screenHeight;
@@ -5744,34 +5873,21 @@ export class RenderSystem {
       const ax = (w - aW) / 2;
       const ay = (h - aH) / 2;
 
-      // 面板
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(ax, ay, aW, aH);
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(ax, ay, aW, aH);
-
-      // 标题
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 17px sans-serif';
-      ctx.fillText('📢 公告', w / 2, ay + 26);
-
-      // 关闭按钮
+      // 面板：统一 ModalShell 云白皮肤（几何 ax/ay/aW/aH 不变，只换容器）
       const acb = { x: ax + aW - L.closeSize - 8, y: ay + 8, w: L.closeSize, h: L.closeSize };
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(acb.x, acb.y, acb.w, acb.h);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('✕', acb.x + acb.w / 2, acb.y + acb.h / 2);
+      this._modalShell({ x: ax, y: ay, w: aW, h: aH }, acb, '公告', {
+        iconPrefix: ART_PREFIXES.quest, iconName: 'daily',
+      });
 
-      // 公告条目
+      // 公告条目（深色三级文字，替代原浅字压深底）
+      ctx.textAlign = 'center';
       let iy = ay + 56;
       for (const item of list) {
         ctx.textAlign = 'left';
-        ctx.fillStyle = '#fbbf24';
+        ctx.fillStyle = UI_THEME.navy;
         ctx.font = 'bold 13px sans-serif';
         ctx.fillText(`${item.date}  ${item.title}`, ax + 14, iy);
-        ctx.fillStyle = '#cbd5e1';
+        ctx.fillStyle = UI_THEME.navySoft;
         ctx.font = '11px sans-serif';
         let ly = iy + 18;
         for (const line of (item.lines || [])) {
@@ -5787,74 +5903,41 @@ export class RenderSystem {
     // === 设置窗口 ===
     const p = { x: (w - L.panelW) / 2, y: (h - L.panelH) / 2, w: L.panelW, h: L.panelH };
 
-    // 面板
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(p.x, p.y, p.w, p.h);
-
-    // 标题
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 17px sans-serif';
-    ctx.fillText('⚙ 设置', w / 2, p.y + 28);
-
-    // 关闭按钮（面板右上角）
+    // 面板 + 标题 + 关闭钮：统一 ModalShell 云白皮肤（几何来自 Game.SETTINGS_LAYOUT，不变）
     const cb = { x: p.x + p.w - L.closeSize - 8, y: p.y + 8, w: L.closeSize, h: L.closeSize };
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(cb.x, cb.y, cb.w, cb.h);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('✕', cb.x + cb.w / 2, cb.y + cb.h / 2);
+    this._modalShell(p, cb, '设置', {
+      iconPrefix: ART_PREFIXES.setting, iconName: 'music',
+    });
 
-    // 行按钮：0=音效 1=音乐 2=震动 3=公告
+    // 行按钮：0=音效 1=音乐 2=震动 3=公告（标签去掉 emoji，图标走正式素材）
     const rows = [
-      { label: '🔔 音效', on: gameState.audioSfxEnabled !== false, onText: '开启', offText: '关闭' },
-      { label: '🎵 背景音乐', on: gameState.audioBgmEnabled !== false, onText: '开启', offText: '关闭' },
-      { label: '📳 震动', on: gameState.audioHapticEnabled !== false, onText: '开启', offText: '关闭' },
+      { label: '音效', on: gameState.audioSfxEnabled !== false, icon: 'music' },
+      { label: '背景音乐', on: gameState.audioBgmEnabled !== false, icon: 'notify' },
+      { label: '震动', on: gameState.audioHapticEnabled !== false, icon: 'vibrate' },
     ];
     for (let i = 0; i < 4; i++) {
       const r = { x: (w - L.rowW) / 2, y: p.y + L.rowStartOffset + i * (L.rowH + L.rowGap), w: L.rowW, h: L.rowH };
 
       if (i < 3) {
-        // 开关行：开启=绿色，关闭=灰色
-        const on = rows[i].on;
-        ctx.fillStyle = on ? '#065f46' : '#374151';
-        ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.strokeStyle = on ? '#34d399' : '#6b7280';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(r.x, r.y, r.w, r.h);
-
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText(rows[i].label, r.x + 16, r.y + r.h / 2);
-
-        // 右侧开关状态胶囊
-        const pillW = 56;
-        const pill = { x: r.x + r.w - pillW - 14, y: r.y + (r.h - 26) / 2, w: pillW, h: 26 };
-        ctx.fillStyle = on ? '#10b981' : '#4b5563';
-        ctx.fillRect(pill.x, pill.y, pill.w, pill.h);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(on ? rows[i].onText : rows[i].offText, pill.x + pillW / 2, pill.y + 13);
+        // 开关行：云白卡 + 明黄/灰蓝胶囊 toggle（几何不变）
+        this._modalToggleRow(r, rows[i].label, rows[i].on, {
+          iconPrefix: ART_PREFIXES.setting, iconName: rows[i].icon,
+        });
       } else {
-        // 公告按钮
-        ctx.fillStyle = '#1d4ed8';
-        ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.strokeStyle = '#60a5fa';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = '#ffffff';
+        // 公告按钮：云白次按钮 + 正式图标
+        this._cardBg(r, { r: 12, tint: 'rgba(214,238,251,0.96)', border: 'rgba(43,74,111,0.3)' });
+        this._artIcon(ART_PREFIXES.quest, 'daily', r.x + 30, r.y + r.h / 2, 18, 0.95);
+        ctx.fillStyle = UI_THEME.ink;
         ctx.font = 'bold 15px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('📢 公告', r.x + r.w / 2, r.y + r.h / 2);
+        ctx.textBaseline = 'middle';
+        ctx.fillText('公告', r.x + r.w / 2, r.y + r.h / 2);
+        ctx.textBaseline = 'alphabetic';
       }
     }
 
-    // 底部版本信息
-    ctx.fillStyle = '#64748b';
+    // 底部版本信息（弱提示色）
+    ctx.fillStyle = 'rgba(43,74,111,0.5)';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('占地之王 v1.7 · 设置自动保存', w / 2, p.y + p.h - 16);
@@ -5880,25 +5963,11 @@ export class RenderSystem {
 
     const p = { x: (w - L.panelW) / 2, y: (h - L.panelH) / 2, w: L.panelW, h: L.panelH };
 
-    // 面板
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(p.x, p.y, p.w, p.h);
-
-    // 标题
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 17px sans-serif';
-    ctx.fillText('👤 账号', w / 2, p.y + 26);
-
-    // 关闭按钮（右上角）
+    // 面板 + 标题 + 关闭钮：统一 ModalShell 云白皮肤（几何来自 Game.ACCOUNT_LAYOUT，不变）
     const cb = { x: p.x + p.w - L.closeSize - 8, y: p.y + 8, w: L.closeSize, h: L.closeSize };
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(cb.x, cb.y, cb.w, cb.h);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('✕', cb.x + cb.w / 2, cb.y + cb.h / 2);
+    this._modalShell(p, cb, '账号', {
+      iconPrefix: ART_PREFIXES.account, iconName: 'switch',
+    });
 
     // 账号列表
     const list = gameState.accountList || [];
@@ -5909,42 +5978,42 @@ export class RenderSystem {
       const r = { x: p.x + 12, y: p.y + L.rowStartOffset + i * (L.rowH + L.rowGap), w: p.w - 24, h: L.rowH };
       const isCurrent = acc.id === curId;
 
-      ctx.fillStyle = isCurrent ? '#064e3b' : '#334155';
-      ctx.fillRect(r.x, r.y, r.w, r.h);
-      ctx.strokeStyle = isCurrent ? '#34d399' : '#64748b';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(r.x, r.y, r.w, r.h);
+      // 云白卡底：当前账号用明黄左侧竖条高亮，其余平面弱面（几何不变）
+      this._cardBg(r, {
+        r: 12,
+        tint: isCurrent ? 'rgba(255,255,255,0.98)' : 'rgba(234,248,255,0.9)',
+        border: isCurrent ? UI_THEME.goldDeep : 'rgba(43,74,111,0.2)',
+        ...(isCurrent ? { edge: UI_THEME.gold } : {}),
+      });
 
-      // 昵称 + 账号尾号
+      // 昵称 + 账号尾号（深色三级文字，去掉 emoji）
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = UI_THEME.ink;
       ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('👤 ' + acc.nickname, r.x + 14, r.y + 16);
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(acc.nickname, r.x + 14, r.y + 16);
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '11px sans-serif';
       ctx.fillText('账号尾号 ' + (acc.uid ? acc.uid.slice(-6) : '—'), r.x + 14, r.y + 32);
 
       // 右侧操作区
       if (isCurrent) {
         ctx.textAlign = 'right';
-        ctx.fillStyle = '#34d399';
+        ctx.fillStyle = UI_THEME.green;
         ctx.font = 'bold 13px sans-serif';
         ctx.fillText('✓ 当前', r.x + r.w - 14, r.y + r.h / 2);
       } else {
-        // 删除按钮
+        // 删除按钮：云白底 + 珊瑚红 ✕（不用 emoji 🗑，几何 del 不变）
         const del = { x: r.x + r.w - 32, y: r.y + (r.h - 28) / 2, w: 28, h: 28 };
-        ctx.fillStyle = '#7f1d1d';
-        ctx.fillRect(del.x, del.y, del.w, del.h);
-        ctx.strokeStyle = '#f87171';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(del.x, del.y, del.w, del.h);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 13px sans-serif';
+        this._cardBg(del, { r: 8, tint: 'rgba(254,226,226,0.95)', border: 'rgba(239,68,68,0.5)', flat: true });
+        ctx.fillStyle = '#C0392B';
+        ctx.font = 'bold 15px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('🗑', del.x + del.w / 2, del.y + del.h / 2);
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✕', del.x + del.w / 2, del.y + del.h / 2 + 1);
+        ctx.textBaseline = 'alphabetic';
         // 切换提示
         ctx.textAlign = 'right';
-        ctx.fillStyle = '#60a5fa';
+        ctx.fillStyle = UI_THEME.skyDeep;
         ctx.font = 'bold 12px sans-serif';
         ctx.fillText('⇄ 切换', r.x + r.w - 42, r.y + r.h / 2);
       }
@@ -5953,32 +6022,21 @@ export class RenderSystem {
 
     // 账号数超出 maxRows 提示
     if (list.length > L.maxRows) {
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = 'rgba(43,74,111,0.5)';
       ctx.font = '10px sans-serif';
       ctx.fillText(`…共 ${list.length} 个账号，仅显示前 ${L.maxRows} 个`, w / 2, p.y + L.rowStartOffset + L.maxRows * (L.rowH + L.rowGap) - 2);
     }
 
-    // 「登录新账号」按钮
+    // 「登录新账号」按钮：主 CTA 明黄（几何不变）
     const loginRect = { x: p.x + 16, y: p.y + L.rowStartOffset + L.maxRows * (L.rowH + L.rowGap) + L.btnGap, w: p.w - 32, h: L.btnH };
-    ctx.fillStyle = '#1d4ed8';
-    ctx.fillRect(loginRect.x, loginRect.y, loginRect.w, loginRect.h);
-    ctx.strokeStyle = '#60a5fa';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(loginRect.x, loginRect.y, loginRect.w, loginRect.h);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('➕ 登录新账号', w / 2, loginRect.y + loginRect.h / 2);
+    this._primaryButton(loginRect, '登录新账号');
 
-    // 「注销当前账号」按钮
+    // 「注销当前账号」按钮：云白次按钮 + 珊瑚红描边（几何不变）
     const logoutRect = { x: p.x + 16, y: loginRect.y + L.btnH + L.btnGap, w: p.w - 32, h: L.btnH };
-    ctx.fillStyle = '#7f1d1d';
-    ctx.fillRect(logoutRect.x, logoutRect.y, logoutRect.w, logoutRect.h);
-    ctx.strokeStyle = '#f87171';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(logoutRect.x, logoutRect.y, logoutRect.w, logoutRect.h);
-    ctx.fillStyle = '#ffffff';
+    this._cardBg(logoutRect, { r: 12, tint: 'rgba(254,226,226,0.92)', border: 'rgba(239,68,68,0.5)' });
+    ctx.fillStyle = '#A93226';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('🚪 注销当前账号', w / 2, logoutRect.y + logoutRect.h / 2);
+    ctx.fillText('注销当前账号', w / 2, logoutRect.y + logoutRect.h / 2);
   }
 
   /**
