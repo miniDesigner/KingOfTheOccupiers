@@ -32,6 +32,26 @@ export { SAFE_AREA_MAX } from './SafeArea.js';
 // 左下角返回按钮几何（与 Game.BACK_BUTTON 同源）：距左 16、距底 16、宽 80、高 35
 const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 
+// 水印占位图总闸（P0 收口）：effects/*、ui/*、tiles/*、buildings/* 前缀的素材均为
+// 带「特效/界面/地块/建筑 + 编号参数表」的粉紫水印占位图，无正式美术。它们通过
+// _artHex/_artBuilding/_artFx 等直连通道绕过装饰层过滤，把水印贴到棋盘/建筑/引导层。
+// 正式素材同名覆盖后把这些设 true（config artEffectDecor）即可恢复叠加；在此之前，
+// _art() 统一在此拦下，露出底层本就完整的程序化绘制。兵种 units/* 按需求保留占位，不在名单内。
+const WATERMARK_PREFIXES = ['effects/', 'ui/', 'tiles/', 'buildings/'];
+// bg/ 前缀不能一刀切：lobby/battle/result/battle_tone/loading_art 是正式夜景图，
+// 只有下列氛围叠层是带水印占位图（拼版逐一确认）。
+const WATERMARK_BG_KEYS = new Set([
+  'bg/lobby_fg', 'bg/gacha_circle', 'bg/bp_banner', 'bg/match_panel',
+  'bg/panel_bg', 'bg/subpage_bg',
+]);
+function isWatermarkArtKey(key) {
+  if (typeof key !== 'string') return false;
+  for (let i = 0; i < WATERMARK_PREFIXES.length; i++) {
+    if (key.indexOf(WATERMARK_PREFIXES[i]) === 0) return true;
+  }
+  return WATERMARK_BG_KEYS.has(key);
+}
+
 // 已接入 ScreenShell（晴空乐园浅色骨架）的界面集合：逐个界面接入时往这里加一项。
 // 用途：跳过 ArtLayer 的深色占位装饰层，避免水印/脏底透过云白卡。
 const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel', 'battle_pass', 'quest', 'achievement', 'leaderboard']);
@@ -1176,6 +1196,10 @@ export class RenderSystem {
   /** 画一张贴图，返回是否真的用图片绘制了 */
   _art(key, x, y, w, h, opts) {
     if (!this._artEnabled) return false;
+    // 水印占位图总闸：artEffectDecor 未显式开启时，拦截带水印的占位图前缀，
+    // 让调用方的程序化兜底绘制接管（六边形/建筑汉字/粒子/云白卡等本就完整）。
+    // 正式素材同名覆盖后设 artEffectDecor=true 即恢复，几何/命中全程不变。
+    if (this._artEffectDecor !== true && isWatermarkArtKey(key)) return false;
     return ArtSystem.draw(this.ctx, key, x, y, w, h, opts);
   }
 

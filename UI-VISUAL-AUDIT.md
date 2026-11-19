@@ -120,3 +120,33 @@
 - **棋盘 `tiles/hex_*` 场景素材**：低对比山形仍偏占位感，属第 6 批场景美术；按项目出图铁律需先给方案并确认后生成。
 - **商店免费页下半屏留白**：内容区偏空，属内容策划取舍（加新商品 vs 保留夜景舞台底），未擅自新增商品。
 
+---
+
+## 2026-11-19 占位符清零轮（V6）· 除兵种立绘外全部收口
+
+用户诉求："继续推进将占位符除了兵种立绘外的其他全部完成"。经全量审计（`PLACEHOLDER-MANIFEST.csv` 339 项 + 拼版逐图鉴定 + 运行时开关核对），确认上一轮 V4 只挡了 `ArtLayer` 装饰层的 `effects/units/ui`，但 `RenderSystem` 里还有一批**直连 `ArtSystem.draw` 的通道**绕过过滤，把水印图贴上了界面。
+
+**确认的漏网水印图**（拼版 `PLACEHOLDER-sheet.png` / `SCENE-sheet.png` 逐一鉴定）：
+- `tiles/hex_*` 4 张（青框"地块/参数表"）、`buildings/*` 9 张（橙框"建筑 Lv"）—— 走 `_artHex` / `_artBuilding`，**战斗棋盘每格都在漏水印**（截图 `A2-battle.png` 铁证）
+- `effects/*` 22 张（粉紫框"特效"）—— 走 `_artFx` / `pick_combatFx` / `pick_buildBeam` / `pick_territoryWave` / `pick_ambient` / 引导 halo
+- `ui/*` 九宫格 —— 走 `pick_tutorialCard` / `pick_tutorialDots` 直连
+- `bg/` 氛围叠层 6 张（`lobby_fg / gacha_circle / bp_banner / match_panel / panel_bg / subpage_bg`）—— 走 `_drawBackdrop` 的 `BG_BY_SCREEN`
+
+**处理**（单一真相源收口，不动任何命中几何）：
+- 在 `_art()` 统一入口加 `isWatermarkArtKey()` 守卫：`effects/ / ui/ / tiles/ / buildings/` 前缀 + 6 个带水印 `bg/` 精确 key，在 `artEffectDecor !== true` 时一律拦下，露出底层本就完整的程序化绘制（六边形填充+描边、山形剪影+"阻挡"、建筑汉字"兵/塔/金/王"、'?' 背面、呼吸金圈、云白引导卡）。
+- 正式素材不受影响：`icons/*` 图标/奖牌、`bg/lobby_bg / battle_bg / result_win / result_lose / battle_tone_* / loading_art` 主视觉、`tiles/territory_tone_*` 氛围夜景均不在名单。
+- **兵种立绘 `units/*` 按用户要求保留占位**，不纳入守卫。
+- 开关复用现有 `artEffectDecor`（默认 false）：正式素材同名覆盖后设 true 即恢复叠加，无需改代码。
+
+**验收**（430×932 逐屏截图，均无水印/粉框/编号表）：
+| 界面 | 截图 | 结果 |
+| --- | --- | --- |
+| 战斗棋盘（收口前） | `A2-battle.png` | 🔴 每格"地块"水印、建筑"建筑 Lv1"水印卡 |
+| 战斗棋盘（收口后） | `A3-battle-clean.png` | 🟢 干净六边形 + 程序化建筑汉字 + 山形 |
+| 大厅 | `A4-lobby.png` | 🟢 正式城堡 + 六段景深夜景 |
+| 招募 | `A5-gacha.png` | 🟢 夜景 + 云白卡 + 代码法阵 |
+| 商店 | `A6-shop.png` | 🟢 云白商品卡 + 夜景底 |
+| 胜利结算 | `A9-win-over.png` | 🟢 正式奖牌 + 暖金主视觉 + 云白结果卡 |
+
+回归 73/73 通过，依赖检查 51 文件有效。**至此，除用户明确不出的兵种大立绘外，全部占位水印已从运行时界面清零。**
+
