@@ -34,7 +34,7 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 
 // 已接入 ScreenShell（晴空乐园浅色骨架）的界面集合：逐个界面接入时往这里加一项。
 // 用途：跳过 ArtLayer 的深色占位装饰层，避免水印/脏底透过云白卡。
-const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop']);
+const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel']);
 
 // 子界面兜底底色：底图未加载时用它顶上，避免露白底。
 // 底图本身走 SCREEN_BG（当前全部子界面已统一为 bg/lobby_bg），保持单一真相源。
@@ -4225,17 +4225,12 @@ export class RenderSystem {
     const h = this.screenHeight;
     const profile = gameState.profile;
 
-    // 背景
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, h);
-    this._drawBackdrop(this.screenWidth, this.screenHeight);
-
-    // 顶部标题
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('科技树', w / 2, 25);
+    // 背景：接入统一夜景舞台底（P5，与大厅/商店同一套语言，去占位水印）
+    this._screenBg();
+    const tp = profile || {};
+    const techLeftLimit = RenderSystem.headerLeftLimit(
+      [tp.gold, tp.diamond, tp.stardust, tp.trophies], w);
+    this._screenHeader('科技树', { cy: 25, accent: UI_THEME.gold, leftLimit: techLeftLimit });
 
     // 星尘等资源已由统一顶部资源栏显示（renderScreen 尾部叠加）
 
@@ -4244,7 +4239,7 @@ export class RenderSystem {
     try { techConfig = ConfigLoader.getSafe('techTree'); } catch(e) {}
 
     if (!techConfig) {
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = ON_DARK.hint;
       ctx.textAlign = 'center';
       ctx.fillText('配置加载中...', w / 2, h / 2);
       return;
@@ -4262,18 +4257,15 @@ export class RenderSystem {
       const x = tabStartX + i * (tabW + tabGap);
       const isSelected = key === selectedBranch;
 
-      ctx.fillStyle = isSelected ? branch.color + '44' : '#1e293b';
-      ctx.fillRect(x, tabY, tabW, tabH);
-      ctx.strokeStyle = isSelected ? branch.color : '#334155';
-      ctx.lineWidth = isSelected ? 2 : 1;
-      ctx.strokeRect(x, tabY, tabW, tabH);
-      // 美术资源层：分支图标（key 与 branch 标识 military/economy/tech/buff 完全同名）
-      this._art(pick_techNode(i === 0 ? 'locked' : i === 1 ? 'upgradeable' : 'max'),
-        x, tabY, tabW, tabH, { alpha: 0.10 });
-      this._art(pick_techLine(), x, tabY + tabH - 3, tabW, 3, { alpha: 0.18 });
-      this._artIcon(ART_PREFIXES.techBranch, key, x + 12, tabY + tabH / 2, 14, 0.55);
+      // 分支页签：云白卡语言 + 分支色强调；x/tabW/tabY/tabH 几何不动（命中同源）
+      this._cardBg({ x, y: tabY, w: tabW, h: tabH, r: 9 }, {
+        tint: isSelected ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.82)',
+        border: isSelected ? branch.color : 'rgba(43,74,111,0.18)',
+        edge: isSelected ? branch.color : null,
+        edgeSide: 'top',
+      });
 
-      ctx.fillStyle = isSelected ? branch.color : '#64748b';
+      ctx.fillStyle = isSelected ? UI_THEME.ink : UI_THEME.navySoft;
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -4306,28 +4298,24 @@ export class RenderSystem {
       const nextCost = level < node.maxLevel ? node.costPerLevel[level] : 0;
       const canAfford = profile && profile.stardust >= nextCost;
 
-      // 节点背景
-      let bgColor = '#1e293b';
-      let borderColor = '#334155';
-      if (level > 0) { bgColor = branch.color + '22'; borderColor = branch.color + '88'; }
-      if (isMax) { bgColor = branch.color + '44'; borderColor = branch.color; }
-      if (!hasPrereq) { bgColor = '#0f172a'; borderColor = '#1e293b'; }
-
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(x, y, nodeW, nodeH);
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = level > 0 ? 1.5 : 1;
-      ctx.strokeRect(x, y, nodeW, nodeH);
+      // 节点背景：云白卡语言；未解锁用更淡的弱面（对比度修复，深底浅字在白卡不可读）。
+      // 分支色作为边框/等级条强调保留，几何（x/y/nodeW/nodeH）与命中同源不变。
+      this._cardBg({ x, y, w: nodeW, h: nodeH, r: 10 }, {
+        tint: !hasPrereq ? 'rgba(234,242,250,0.72)' : (isMax ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.94)'),
+        border: !hasPrereq ? 'rgba(43,74,111,0.12)' : (level > 0 || isMax ? branch.color : 'rgba(43,74,111,0.22)'),
+        edge: isMax ? UI_THEME.green : (level > 0 ? branch.color : null),
+        edgeSide: 'left',
+      });
 
       // 节点名
-      ctx.fillStyle = hasPrereq ? (isMax ? branch.color : '#e2e8f0') : '#334155';
+      ctx.fillStyle = !hasPrereq ? UI_THEME.navySoft : (isMax ? UI_THEME.green : UI_THEME.ink);
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       ctx.fillText(node.name, x + 5, y + 5);
 
       // 描述
-      ctx.fillStyle = hasPrereq ? '#94a3b8' : '#1e293b';
+      ctx.fillStyle = !hasPrereq ? 'rgba(43,74,111,0.42)' : UI_THEME.navy;
       ctx.font = '9px sans-serif';
       ctx.fillText(node.description, x + 5, y + 22);
 
@@ -4335,31 +4323,31 @@ export class RenderSystem {
       const barY = y + 38;
       const barW = nodeW - 10;
       const barH2 = 6;
-      ctx.fillStyle = '#0f172a';
+      ctx.fillStyle = 'rgba(43,74,111,0.12)';
       ctx.fillRect(x + 5, barY, barW, barH2);
-      ctx.fillStyle = isMax ? '#4ade80' : branch.color;
+      ctx.fillStyle = isMax ? UI_THEME.green : branch.color;
       ctx.fillRect(x + 5, barY, barW * (level / node.maxLevel), barH2);
 
       // 等级文字
-      ctx.fillStyle = isMax ? '#4ade80' : (level > 0 ? '#e2e8f0' : '#64748b');
+      ctx.fillStyle = isMax ? UI_THEME.green : (level > 0 ? UI_THEME.navy : UI_THEME.navySoft);
       ctx.font = '9px sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('Lv.' + level + '/' + node.maxLevel, x + 5, y + 48);
 
       // 消耗
       if (!isMax && hasPrereq) {
-        ctx.fillStyle = canAfford ? '#fbbf24' : '#f87171';
+        ctx.fillStyle = canAfford ? UI_THEME.goldDeep : '#C0394B';
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText('⭐' + nextCost, x + nodeW - 5, y + 48);
       } else if (!hasPrereq) {
         const prereqNode = branch.nodes.find(n => n.id === node.prerequisite.node);
-        ctx.fillStyle = '#475569';
+        ctx.fillStyle = 'rgba(43,74,111,0.55)';
         ctx.font = '8px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText('需' + (prereqNode?.name || '?') + node.prerequisite.level + '级', x + nodeW - 5, y + 48);
       } else {
-        ctx.fillStyle = '#4ade80';
+        ctx.fillStyle = UI_THEME.green;
         ctx.font = 'bold 9px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText('MAX', x + nodeW - 5, y + 48);
@@ -4367,7 +4355,7 @@ export class RenderSystem {
 
       // 可升级标记
       if (hasPrereq && !isMax && canAfford) {
-        ctx.fillStyle = '#4ade80';
+        ctx.fillStyle = UI_THEME.green;
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText('↑', x + nodeW - 5, y + 5);
