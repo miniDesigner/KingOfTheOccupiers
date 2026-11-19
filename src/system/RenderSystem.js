@@ -306,8 +306,44 @@ export class RenderSystem {
     });
   }
 
+  // ===================== 统一纵向栅格 L-SCALE（方案 M1）=====================
+  // 子界面没有底部导航（大厅独有），用独立一套三段栅格，所有屏共用同一基线：
+  //   状态带 8→60 / 内容区 72→h-80 / 操作带 h-80→h-16，安全底 16。
+  // 设计稿见 design/layout-grid.html，规格见 UI-LAYOUT-PLAN.md §1。
+  // 纯计算、不依赖 ctx，渲染与命中两侧都可读，杜绝各屏自填 88/90/95 三套顶边。
+  static L_SCALE(w, h) {
+    const sw = Number(w) || 375;
+    const sh = Number(h) || 667;
+    const STATUS_Y = 8;
+    const STATUS_H = 52;
+    const CONTENT_TOP = 72;
+    const FOOTER_H = 56;
+    const FOOTER_GAP = 16;
+    const CONTENT_BOTTOM = sh - 80; // = h - FOOTER_GAP - FOOTER_H - 8
+    const SIDE = 16;
+    const tier = (sw <= 360 || sh <= 640) ? 'S' : (sw <= 400 ? 'M' : 'L');
+    // 主 CTA：返回按钮右侧起步（BACK_BTN.x + w + 12），右留 SIDE
+    const ctaX = BACK_BTN.x + BACK_BTN.w + 12;
+    const ctaW = Math.max(80, sw - ctaX - SIDE);
+    const ctaY = sh - FOOTER_GAP - 48;
+    return {
+      w: sw, h: sh, tier,
+      STATUS_Y, STATUS_H, CONTENT_TOP, FOOTER_H, FOOTER_GAP, CONTENT_BOTTOM, SIDE,
+      statusRect: { x: SIDE, y: STATUS_Y, w: sw - SIDE * 2, h: STATUS_H },
+      contentRect: { x: SIDE, y: CONTENT_TOP, w: sw - SIDE * 2, h: Math.max(0, CONTENT_BOTTOM - CONTENT_TOP) },
+      footerRect: { x: SIDE, y: sh - FOOTER_GAP - FOOTER_H, w: sw - SIDE * 2, h: FOOTER_H },
+      ctaRect: { x: ctaX, y: ctaY, w: ctaW, h: 48 },
+    };
+  }
+
+  /** 标题胶囊左限：资源栏簇右缘 + 8 呼吸位。渲染侧算好传给 _screenHeader，保证命中/绘制同源。 */
+  static headerLeftLimit(values, w) {
+    const layout = resourceBarLayout(values || [], w, w - 103);
+    return BACK_BTN.x + layout.clusterW + 8;
+  }
+
   // ===================== 子界面统一骨架 ScreenShell =====================
-  // 规格见 UI-SCREENS.md §3：天蓝→云白渐变 + 云白厚底卡 + 海军蓝文字三级。
+  // 规格见 UI-SCREENS.md §3：夜景舞台底 + 云白厚底卡 + 海军蓝文字三级。
   // 全部为纯绘制，不改 Layout 几何、不改点击命中；各界面按制作顺序逐个接入。
 
   /**
@@ -370,7 +406,7 @@ export class RenderSystem {
     const o = opts || {};
     const w = this.screenWidth;
     const text = String(title || '');
-    const fontSize = 17;
+    const fontSize = o.fontSize || 17;
     const font = `bold ${fontSize}px sans-serif`;
     let tw = fontSize * text.length * 0.9;
     if (typeof ctx.measureText === 'function') {
@@ -381,15 +417,19 @@ export class RenderSystem {
       ctx.restore();
     }
     const padX = o.accent ? 16 : 18;
-    // 窄屏（<=380）左上角资源簇占约 100px，标题若仍居中会与货币格叠在一起
-    const narrow = w < 380;
-    const leftLimit = narrow ? 104 : 0;
-    const rightLimit = 12;
+    // 标题在「资源栏簇右缘 → 右安全边」区间居中，不再全屏居中（方案 M1，关闭 G1）。
+    // leftLimit 由调用方按 resourceBarLayout 真实结果传入；未传时用最窄簇(120)估算，
+    // 保证即使漏传也不会压到货币格。删掉原 w<380→104 硬编码，三档共用同一算法。
+    const leftLimit = o.leftLimit === undefined
+      ? (BACK_BTN.x + Math.min(120, w - BACK_BTN.x - 95) + 8)
+      : o.leftLimit;
+    const rightLimit = o.rightLimit === undefined ? BACK_BTN.x : o.rightLimit;
     const availW = Math.max(80, w - leftLimit - rightLimit);
     const pillW = Math.min(availW, tw + padX * 2);
     const pillH = 34;
-    const cy = o.cy === undefined ? 25 : o.cy;
-    const cx = narrow ? leftLimit + availW / 2 : w / 2;
+    const S = RenderSystem.L_SCALE(w, this.screenHeight);
+    const cy = o.cy === undefined ? S.STATUS_Y + S.STATUS_H / 2 - 4 : o.cy;
+    const cx = leftLimit + availW / 2;
     const x = cx - pillW / 2;
     const y = cy - pillH / 2;
 
@@ -1760,8 +1800,10 @@ export class RenderSystem {
     const unitListY = L.unit.listY;
 
     // 背景 / 标题：接入晴空乐园统一骨架（天蓝→云白 + 底图占位期仅作纹理）
+    const leftLimit = RenderSystem.headerLeftLimit(
+      [profile?.gold, profile?.diamond, profile?.stardust, profile?.trophies], w);
     this._screenBg();
-    this._screenHeader('对战准备', { cy: L.titleY, accent: UI_THEME.orange });
+    this._screenHeader('对战准备', { cy: L.titleY, accent: UI_THEME.orange, leftLimit });
 
     // 品质色（Q1-Q6: 白/绿/蓝/紫/橙/红）—— 槽位与卡片共用
     const QUALITY_COLORS = ['#9ca3af', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ef4444'];
@@ -4907,7 +4949,10 @@ export class RenderSystem {
 
     // 背景 / 标题：晴空乐园统一骨架
     this._screenBg();
-    this._screenHeader('兵种招募', { cy: L.titleY, accent: '#A855F7' });
+    const gProfile = gameState.profile || {};
+    const gachaLeftLimit = RenderSystem.headerLeftLimit(
+      [gProfile.gold, gProfile.diamond, gProfile.stardust, gProfile.trophies], w);
+    this._screenHeader('兵种招募', { cy: L.titleY, accent: '#A855F7', leftLimit: gachaLeftLimit });
 
     if (!info) {
       ctx.fillStyle = '#64748b';
@@ -5318,6 +5363,36 @@ export class RenderSystem {
 
   _endScrollClip(ctx) {
     ctx.restore();
+  }
+
+  /**
+   * 标准底部操作带（方案 M1）：左返回 + 右主 CTA，二者几何都来自 L_SCALE。
+   * 只画主 CTA 的底板与文案；返回仍由 _drawBackButton 统一绘制（命中在 Game 层，
+   * 保持 BACK_BTN 不变），本方法不碰任何命中。无主 CTA 的浏览屏不调用即可。
+   * @param {string} label 主 CTA 文案
+   * @param {{disabled?:boolean, accent?:string}} [opts]
+   * @returns {{x:number,y:number,w:number,h:number}} 主 CTA 几何，供需要命中的屏对齐
+   */
+  _footerBar(label, opts) {
+    const o = opts || {};
+    const w = this.screenWidth;
+    const h = this.screenHeight;
+    const S = RenderSystem.L_SCALE(w, h);
+    const r = Object.assign({}, S.ctaRect);
+    if (o.accent) {
+      // 自定义强调色时用平面卡底，保持与夜景舞台的关系；默认走明黄主 CTA。
+      this._cardBg(r, { tint: o.accent, border: 'rgba(234,248,255,0.22)', flat: true });
+      const { ctx } = this;
+      ctx.fillStyle = ON_DARK.title;
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 1);
+      ctx.textBaseline = 'alphabetic';
+    } else {
+      this._primaryButton(r, label, { disabled: !!o.disabled });
+    }
+    return r;
   }
 
   /**

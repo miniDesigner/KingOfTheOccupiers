@@ -231,3 +231,66 @@ test('_sectionLabel / _emptyState：深底默认浅色，onLight 才用深色字
   assert.doesNotThrow(() => rs2._sectionLabel('标题', 15, 60, { onLight: true }));
   assert.doesNotThrow(() => rs2._emptyState(215, 400, '暂无数据', { onLight: true }));
 });
+
+// ===== 方案 M1：统一纵向栅格 L-SCALE =====
+
+test('L_SCALE：三档 tier 与三段常量的几何关系自洽（430 / 396 / 320）', () => {
+  for (const [w, h, tier] of [[430, 932, 'L'], [396, 833, 'M'], [320, 568, 'S']]) {
+    const S = RenderSystem.L_SCALE(w, h);
+    assert.equal(S.tier, tier, `${w}×${h} 应判为 ${tier} 档`);
+    assert.equal(S.STATUS_Y, 8);
+    assert.equal(S.STATUS_H, 52);
+    assert.equal(S.CONTENT_TOP, 72);
+    assert.equal(S.STATUS_Y + S.STATUS_H + 12, S.CONTENT_TOP, '状态带底 + 呼吸位 = 内容区顶');
+    assert.equal(S.CONTENT_BOTTOM, h - 80, '内容区底 = h-80');
+    assert.ok(S.CONTENT_BOTTOM > S.CONTENT_TOP, '内容区高度必须为正');
+    assert.equal(S.footerRect.y + S.footerRect.h, h - S.FOOTER_GAP, '操作带底 = h - 距底');
+    // 主 CTA 在返回按钮右侧起步，右留安全边，不越界
+    assert.ok(S.ctaRect.x >= 16 + 80, 'CTA 左缘须在返回按钮右侧');
+    assert.ok(S.ctaRect.x + S.ctaRect.w <= w - 16 + 0.01, 'CTA 右缘不越出安全边');
+    assert.ok(S.ctaRect.h === 48);
+  }
+});
+
+test('L_SCALE：矮屏(320)与高屏(430)的内容区高度单调，且 tier 边界正确', () => {
+  const s320 = RenderSystem.L_SCALE(320, 568);
+  const s396 = RenderSystem.L_SCALE(396, 833);
+  const s430 = RenderSystem.L_SCALE(430, 932);
+  assert.ok(s320.contentRect.h < s396.contentRect.h && s396.contentRect.h < s430.contentRect.h);
+  // 边界：361 宽但矮屏仍为 S；401 宽高屏为 L
+  assert.equal(RenderSystem.L_SCALE(361, 600).tier, 'S', 'h<=640 无论宽度均为 S');
+  assert.equal(RenderSystem.L_SCALE(401, 700).tier, 'L', 'w>400 且 h>640 为 L');
+});
+
+test('headerLeftLimit：随资源栏簇宽变化，窄簇(120)与宽簇(160)都在屏内且留呼吸位', () => {
+  const w = 430;
+  const narrow = RenderSystem.headerLeftLimit([1234, 567, 89, 1000], w);   // ≤5 字符 → 120
+  const wide = RenderSystem.headerLeftLimit([123456, 789012, 34567, 89012], w); // >5 字符 → 160
+  assert.ok(wide > narrow, '数值变长时标题左限应右移');
+  assert.ok(narrow >= 8 + 120 + 8 - 0.01, '窄簇左限 = 8 + 120 + 8');
+  assert.ok(wide < w - 80, '左限不能吃掉整屏，标题仍需可用宽');
+});
+
+test('_screenHeader：传入 leftLimit 后胶囊中心落在「资源栏右缘→右安全边」区间，不抛错', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  const leftLimit = RenderSystem.headerLeftLimit([1234, 567, 89, 1000], 430);
+  assert.doesNotThrow(() => rs._screenHeader('对战准备', { cy: 25, accent: '#FF8C42', leftLimit }));
+  // 胶囊底板是一条 fill 路径；标题文字中心应落在 leftLimit → w-right 之间
+  const title = ctx.rec.texts.find(t => t.t === '对战准备');
+  assert.ok(title, '标题文字必须绘制');
+  assert.ok(title.x >= leftLimit - 1 && title.x <= 430 - 16 + 1,
+    `标题中心 ${title.x} 应在 [${leftLimit}, ${430 - 16}] 区间`);
+});
+
+test('_footerBar：主 CTA 几何来自 L_SCALE，普通态/禁用态/自定义色均不抛错', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  const S = RenderSystem.L_SCALE(430, 932);
+  const r = rs._footerBar('开战');
+  assert.deepEqual(r, S.ctaRect, '返回的主 CTA 几何应与 L_SCALE 完全一致');
+  const label = ctx.rec.texts.find(t => t.t === '开战');
+  assert.ok(label, 'CTA 文案必须绘制');
+  assert.doesNotThrow(() => rs._footerBar('返回大厅', { disabled: true }));
+  assert.doesNotThrow(() => rs._footerBar('炫耀战绩', { accent: 'rgba(255,255,255,0.14)' }));
+});
