@@ -34,7 +34,7 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 
 // 已接入 ScreenShell（晴空乐园浅色骨架）的界面集合：逐个界面接入时往这里加一项。
 // 用途：跳过 ArtLayer 的深色占位装饰层，避免水印/脏底透过云白卡。
-const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel', 'battle_pass']);
+const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel', 'battle_pass', 'quest', 'achievement']);
 
 // 子界面兜底底色：底图未加载时用它顶上，避免露白底。
 // 底图本身走 SCREEN_BG（当前全部子界面已统一为 bg/lobby_bg），保持单一真相源。
@@ -4796,7 +4796,8 @@ export class RenderSystem {
    */
   static questLayout(dailyQuests, weeklyQuests, seasonQuests, scrollY, screenWidth) {
     const itemW = Math.min(340, screenWidth - 40), itemH = 55, gap = 6;
-    const dailyHeaderY = 60 - scrollY;
+    // 起点 68：首行 y=90 ≥ 裁剪 topY=88，避免云白卡顶边与文字被裁（P7 修复）
+    const dailyHeaderY = 68 - scrollY;
     let y = dailyHeaderY + 22; // "📋 每日任务" 标题占位
     const dailyRects = dailyQuests.map((q) => {
       const r = { id: q.id, x: 20, y, w: itemW, h: itemH };
@@ -4834,7 +4835,8 @@ export class RenderSystem {
    */
   static achievementLayout(achievements, scrollY, screenWidth) {
     const itemW = Math.min(340, screenWidth - 40), itemH = 55, gap = 6;
-    const headerY = 60 - scrollY;
+    // 起点 68：与任务屏一致，首行 y=90 ≥ 裁剪 topY=88（P7 修复）
+    const headerY = 68 - scrollY;
     let y = headerY + 22; // "🏆 成就" 标题占位
     const rects = achievements.map((a) => {
       const r = { id: a.id, x: 20, y, w: itemW, h: itemH };
@@ -4851,20 +4853,15 @@ export class RenderSystem {
    * 绘制一键领取按钮（任务/成就界面共用）
    */
   _drawClaimAllButton(ctx, rect) {
-    // 一键领取按钮：悬停态底图 + 领取图标
-    this._art(pick_btnHover(), rect.x, rect.y, rect.w, rect.h, { alpha: 0.18 });
-    const _claimIcon = iconKey('quest', 'claimall');
-    if (_claimIcon) this._art(_claimIcon, rect.x + 6, rect.y + rect.h / 2 - 8, 16, 16, { alpha: 0.5 });
-    ctx.fillStyle = '#f59e0b33';
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
-    ctx.fillStyle = '#fbbf24';
+    // 一键领取：明黄主按钮（几何 rect 由 layout 给出，与 Game 命中同源，不动）
+    this._cardBg({ x: rect.x, y: rect.y, w: rect.w, h: rect.h, r: 10 }, {
+      tint: UI_THEME.gold, border: UI_THEME.goldDeep, flat: true,
+    });
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('⚡ 一键领取', rect.x + rect.w / 2, rect.y + rect.h / 2);
+    ctx.fillText('一键领取', rect.x + rect.w / 2, rect.y + rect.h / 2);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
   }
@@ -4874,27 +4871,24 @@ export class RenderSystem {
    * @param {string} accent 主题色（边框/领取按钮）
    */
   _drawQuestItem(ctx, item, y, itemW, itemH, accent) {
-    // 任务条目三态底图 + 任务类型/奖励图标（贴在条目下沿，避开文字）
-    this._art(pick_questItem(!!item.complete, !!item.claimed), 20, y, itemW, itemH, { alpha: 0.16 });
-    const _qi = ['weekly', 'season', 'locked', 'pay', 'reward_coin', 'reward_item'];
-    for (let i = 0; i < _qi.length; i++) {
-      const k = iconKey('quest', _qi[i]);
-      if (k) this._art(k, 28 + i * 20, y + itemH - 18, 16, 16, { alpha: 0.20 });
-    }
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(20, y, itemW, itemH);
-    ctx.strokeStyle = item.complete ? accent : '#334155';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(20, y, itemW, itemH);
+    // 任务/成就条目：云白卡 + 深色三级文字；可领取态左侧亮条。
+    // 行几何（20/y/itemW/itemH）与领取按钮（右下 60×30）均与 Game 命中同源，绝不改动。
+    const canClaim = item.complete && !item.claimed;
+    this._cardBg({ x: 20, y, w: itemW, h: itemH, r: 10 }, {
+      tint: item.claimed ? 'rgba(234,242,250,0.78)' : 'rgba(255,255,255,0.94)',
+      border: canClaim ? accent : 'rgba(43,74,111,0.16)',
+      edge: canClaim ? accent : null,
+      edgeSide: 'left',
+    });
 
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = item.claimed ? UI_THEME.navySoft : UI_THEME.ink;
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(item.desc, 28, y + 6);
+    this._fitText(String(item.desc || ''), 28, y + 6, itemW - 84, 12);
 
     // 进度
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = UI_THEME.navy;
     ctx.font = '10px sans-serif';
     ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, 28, y + 24);
 
@@ -4903,18 +4897,16 @@ export class RenderSystem {
       const icons = { gold: '💰', diamond: '💎', stardust: '⭐' };
       return `${icons[k] || k}+${v}`;
     }).join(' ');
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = UI_THEME.goldDeep;
     ctx.font = '10px sans-serif';
     ctx.fillText(rewardText, 28, y + 40);
 
-    // 领取按钮 / 已领
-    if (item.complete && !item.claimed) {
-      ctx.fillStyle = accent + '44';
-      ctx.fillRect(20 + itemW - 70, y + 10, 60, 30);
-      ctx.strokeStyle = accent;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(20 + itemW - 70, y + 10, 60, 30);
-      ctx.fillStyle = accent;
+    // 领取按钮 / 已领（几何不变，视觉改云白按钮 + 深色字，accent 作描边）
+    if (canClaim) {
+      this._cardBg({ x: 20 + itemW - 70, y: y + 10, w: 60, h: 30, r: 8 }, {
+        tint: 'rgba(255,255,255,0.96)', border: accent, flat: true,
+      });
+      ctx.fillStyle = UI_THEME.ink;
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -4922,7 +4914,7 @@ export class RenderSystem {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
     } else if (item.claimed) {
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -4937,17 +4929,12 @@ export class RenderSystem {
     const w = this.screenWidth;
     const h = this.screenHeight;
 
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, h);
-    this._drawBackdrop(this.screenWidth, this.screenHeight);
-
-    ctx.fillStyle = '#06b6d4';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('任务', w / 2, 25);
-    this._artIcon(ART_PREFIXES.quest, 'daily', w / 2 - 48, 25, 20, 0.6);
-    this._artIcon(ART_PREFIXES.state, 'done', w - 24, 25, 18, 0.6);
+    // 背景：接入统一夜景舞台底（P7，去占位水印）
+    this._screenBg();
+    const qp = gameState.profile || {};
+    const qLeftLimit = RenderSystem.headerLeftLimit(
+      [qp.gold, qp.diamond, qp.stardust, qp.trophies], w);
+    this._screenHeader('任务', { cy: 25, accent: '#06B6D4', leftLimit: qLeftLimit });
 
     const layout = RenderSystem.questLayout(
       gameState.dailyQuests || [], gameState.weeklyQuests || [], gameState.seasonQuests || [],
@@ -4961,8 +4948,8 @@ export class RenderSystem {
     // 裁剪：任务列表只在返回按钮/一键领取以下区域显示
     this._beginScrollClip(ctx, w, h, 88);
 
-    // 每日任务
-    ctx.fillStyle = '#06b6d4';
+    // 每日任务（分类标题在夜景底上，用提亮强调色）
+    ctx.fillStyle = '#22D3EE';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -4975,7 +4962,7 @@ export class RenderSystem {
     });
 
     // 每周任务
-    ctx.fillStyle = '#10b981';
+    ctx.fillStyle = ON_DARK.green;
     ctx.font = 'bold 14px sans-serif';
     ctx.fillText('📅 每周任务', 20, layout.weeklyHeaderY);
 
@@ -4986,7 +4973,7 @@ export class RenderSystem {
     });
 
     // 赛季任务
-    ctx.fillStyle = '#a78bfa';
+    ctx.fillStyle = '#C4B5FD';
     ctx.font = 'bold 14px sans-serif';
     ctx.fillText('🌟 赛季任务', 20, layout.seasonHeaderY);
 
@@ -5005,18 +4992,12 @@ export class RenderSystem {
     const w = this.screenWidth;
     const h = this.screenHeight;
 
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, h);
-    this._drawBackdrop(this.screenWidth, this.screenHeight);
-
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('成就', w / 2, 25);
-    this._artIcon(ART_PREFIXES.achieve, 'firstwin', w / 2 - 48, 25, 20, 0.6);
-    this._artIcon(ART_PREFIXES.medal, 'gold', w - 24, 25, 18, 0.6);
-    this._artFx('achieveStamp', w - 62, 12, 34, 34, 0.5);
+    // 背景：接入统一夜景舞台底（P7，去占位水印）
+    this._screenBg();
+    const ap = gameState.profile || {};
+    const aLeftLimit = RenderSystem.headerLeftLimit(
+      [ap.gold, ap.diamond, ap.stardust, ap.trophies], w);
+    this._screenHeader('成就', { cy: 25, accent: UI_THEME.gold, leftLimit: aLeftLimit });
 
     const layout = RenderSystem.achievementLayout(
       gameState.achievements || [], gameState.metaScrollY || 0, w
@@ -5029,7 +5010,7 @@ export class RenderSystem {
     // 裁剪：成就列表只在返回按钮/一键领取以下区域显示
     this._beginScrollClip(ctx, w, h, 88);
 
-    ctx.fillStyle = '#f59e0b';
+    ctx.fillStyle = UI_THEME.gold;
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
