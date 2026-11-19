@@ -34,7 +34,7 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 
 // 已接入 ScreenShell（晴空乐园浅色骨架）的界面集合：逐个界面接入时往这里加一项。
 // 用途：跳过 ArtLayer 的深色占位装饰层，避免水印/脏底透过云白卡。
-const SHELL_SCREENS = new Set(['deploy_select', 'gacha']);
+const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop']);
 
 // 子界面兜底底色：底图未加载时用它顶上，避免露白底。
 // 底图本身走 SCREEN_BG（当前全部子界面已统一为 bg/lobby_bg），保持单一真相源。
@@ -4543,43 +4543,22 @@ export class RenderSystem {
     const w = this.screenWidth;
     const h = this.screenHeight;
 
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, h);
-    this._drawBackdrop(this.screenWidth, this.screenHeight);
-
-    // 标题
-    ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('商店', w / 2, 25);
+    // 背景：接入统一夜景舞台底（P3 去占位水印，与大厅/布阵/招募同一套语言）
+    this._screenBg();
+    const gp = gameState.profile || {};
+    const shopLeftLimit = RenderSystem.headerLeftLimit(
+      [gp.gold, gp.diamond, gp.stardust, gp.trophies], w);
+    this._screenHeader('商店', { cy: 25, accent: UI_THEME.gold, leftLimit: shopLeftLimit });
 
     // 货币已由统一顶部资源栏显示（renderScreen 尾部叠加）
 
     // 分类标签（P37：含「免费」分页，宽度自适应）
+    // 视觉改用统一页签（明黄选中 + 云白未选），但 tx/tabW/tabY/tabH 几何与 Game 命中保持同源不变。
     const items = gameState.shopItems || [];
     const L = RenderSystem.shopLayout(w, items.length);
-    for (let i = 0; i < items.length; i++) {
-      const tx = L.tabStartX + i * (L.tabW + L.tabGap);
-      const isActive = (gameState.shopTab === i);
-      ctx.fillStyle = isActive ? '#10b98144' : '#1e293b';
-      ctx.fillRect(tx, L.tabY, L.tabW, L.tabH);
-      ctx.strokeStyle = isActive ? '#10b981' : '#334155';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(tx, L.tabY, L.tabW, L.tabH);
-      // 美术资源层：选中/常态按钮 + 分类图标
-      this._artButton(tx, L.tabY, L.tabW, L.tabH, isActive ? 'selected' : 'normal');
-      this._art(pick_tab(!!isActive), tx, L.tabY, L.tabW, L.tabH, { alpha: 0.14 });
-      if (isActive) {
-        this._art(pick_tabIndicator(), tx, L.tabY + L.tabH - 4, L.tabW, 4, { alpha: 0.30 });
-        this._art(pick_shopCard(SHOP_CAT_KEYS[i] === 'ad'), 20, L.tabY + L.tabH + 6,
-          this.screenWidth - 40, 30, { alpha: 0.08 });
-      }
-      this._artIcon(ART_PREFIXES.shopCat, SHOP_CAT_KEYS[i], tx + 12, L.tabY + L.tabH / 2, 14, 0.5);
-      ctx.fillStyle = isActive ? '#10b981' : '#64748b';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(items[i].categoryName, tx + L.tabW / 2, L.tabY + L.tabH / 2);
+    const tabRect = { x: L.tabStartX, y: L.tabY, w: L.tabW * items.length + L.tabGap * (items.length - 1), h: L.tabH };
+    if (items.length > 0) {
+      this._tabs(tabRect, items.map(it => it.categoryName), gameState.shopTab || 0, { accent: UI_THEME.gold });
     }
 
     // 商品列表
@@ -4598,17 +4577,20 @@ export class RenderSystem {
       const iy = startY + i * (itemH + gap);
       if (iy + itemH < 90 || iy > h) continue;
 
-      // 卡片背景（免费栏位用蓝色描边区分）
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(cardX, iy, itemW, itemH);
+      // 卡片背景：统一云白厚底（P3）；免费栏顶部加明黄亮条区分。
+      // 注意：描边文案颜色不进行任何改动——P37 测试守护免费按钮的蓝色 #3b82f6 语义。
       const active = item.canAfford && item.remaining !== 0;
-      ctx.strokeStyle = active ? (item.isFree ? '#3b82f6' : '#10b981') : '#334155';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cardX, iy, itemW, itemH);
+      this._cardBg({ x: cardX, y: iy, w: itemW, h: itemH, r: 10 }, {
+        tint: item.isFree ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.92)',
+        border: active ? 'rgba(255,210,63,0.45)' : 'rgba(43,74,111,0.16)',
+        edge: item.isFree && active ? UI_THEME.gold : null,
+        edgeSide: 'top',
+      });
 
       // ============ P37 免费栏位 ============
+      // 云白卡上文字改深色三级（深底浅字在白卡不可读）；按钮蓝色语义原样保留（P37 依赖）。
       if (item.isFree) {
-        ctx.fillStyle = item.exhausted ? '#64748b' : '#e2e8f0';
+        ctx.fillStyle = item.exhausted ? UI_THEME.navySoft : UI_THEME.ink;
         ctx.font = 'bold 13px sans-serif';
         ctx.fillText(item.name, cardX + 8, iy + 8);
 
@@ -4617,12 +4599,12 @@ export class RenderSystem {
           const icons = { diamond: '💎', gold: '💰', stardust: '⭐' };
           return `${icons[k] || k}+${v}`;
         }).join(' ');
-        ctx.fillStyle = '#fbbf24';
+        ctx.fillStyle = UI_THEME.goldDeep;
         ctx.font = 'bold 12px sans-serif';
         ctx.fillText(`每次 ${rwText}`, cardX + 8, iy + 28);
 
         // 可领次数 + 领取规则
-        ctx.fillStyle = item.exhausted ? '#64748b' : '#94a3b8';
+        ctx.fillStyle = item.exhausted ? UI_THEME.navySoft : UI_THEME.navy;
         ctx.font = '10px sans-serif';
         const ruleText = item.exhausted
           ? '今日已领完，明日再来'
@@ -4630,10 +4612,11 @@ export class RenderSystem {
         ctx.fillText(`还可领 ${item.dailyRemaining} 次 · ${ruleText}`, cardX + 8, iy + 48);
 
         // 右上：已领 / 上限
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = UI_THEME.navySoft;
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText(`已领 ${item.dailyClaimed}/${item.dailyLimit}`, cardX + itemW - 10, iy + 8);
+        // 计数挪到按钮左缘外侧：原右对齐到卡片右缘会压在领取按钮上（白卡下暴露）
+        ctx.fillText(`已领 ${item.dailyClaimed}/${item.dailyLimit}`, cardX + itemW - btnW - 20, iy + 8);
         ctx.textAlign = 'left';
 
         // 免费按钮（蓝色；非首次加广告播放图标）
@@ -4658,13 +4641,13 @@ export class RenderSystem {
 
       // ============ 普通商品 ============
       // 名称
-      ctx.fillStyle = item.canAfford ? '#e2e8f0' : '#64748b';
+      ctx.fillStyle = item.canAfford ? UI_THEME.ink : UI_THEME.navySoft;
       ctx.font = 'bold 13px sans-serif';
       ctx.fillText(item.name, cardX + 8, iy + 8);
 
       // 描述
       if (item.desc) {
-        ctx.fillStyle = '#94a3b8';
+        ctx.fillStyle = UI_THEME.navySoft;
         ctx.font = '10px sans-serif';
         ctx.fillText(item.desc, cardX + 8, iy + 28);
       }
@@ -4674,16 +4657,16 @@ export class RenderSystem {
         const icons = { diamond: '💎', gold: '💰', stardust: '⭐', realMoney: '¥' };
         return `${icons[k] || k}${v}`;
       }).join(' ');
-      ctx.fillStyle = item.canAfford ? '#fbbf24' : '#64748b';
+      ctx.fillStyle = item.canAfford ? UI_THEME.goldDeep : UI_THEME.navySoft;
       ctx.font = 'bold 12px sans-serif';
       ctx.fillText(costText, cardX + 8, iy + 48);
 
       // 限购
       if (item.limit > 0) {
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = UI_THEME.navySoft;
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText(`${item.remaining >= 0 ? item.remaining : '∞'}/${item.limit}`, cardX + itemW - 10, iy + 8);
+        ctx.fillText(`${item.remaining >= 0 ? item.remaining : '∞'}/${item.limit}`, cardX + itemW - btnW - 20, iy + 8);
         ctx.textAlign = 'left';
       }
 

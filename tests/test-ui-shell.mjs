@@ -165,7 +165,12 @@ test('已接入骨架的界面，返回按钮不走 UI-08 占位贴图', () => {
   assert.equal(artCalled, 0, '骨架界面不应调用占位返回按钮贴图');
 
   artCalled = 0;
-  rs._curScreen = 'shop';            // 尚未接入骨架
+  rs._curScreen = 'shop';            // P3 已接入骨架
+  rs._drawBackButton(ctx);
+  assert.equal(artCalled, 0, 'shop 接入骨架后也不应调用占位返回按钮贴图');
+
+  artCalled = 0;
+  rs._curScreen = 'quest';           // 仍未接入骨架的占位屏
   rs._drawBackButton(ctx);
   assert.equal(artCalled, 1, '未接入骨架的界面仍应保持原贴图优先行为');
 });
