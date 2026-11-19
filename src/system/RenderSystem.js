@@ -34,7 +34,7 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 
 // 已接入 ScreenShell（晴空乐园浅色骨架）的界面集合：逐个界面接入时往这里加一项。
 // 用途：跳过 ArtLayer 的深色占位装饰层，避免水印/脏底透过云白卡。
-const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel']);
+const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel', 'battle_pass']);
 
 // 子界面兜底底色：底图未加载时用它顶上，避免露白底。
 // 底图本身走 SCREEN_BG（当前全部子界面已统一为 bg/lobby_bg），保持单一真相源。
@@ -5052,45 +5052,28 @@ export class RenderSystem {
     const status = gameState.battlePassStatus || {};
     const rewards = gameState.battlePassRewards || [];
 
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, h);
-    this._drawBackdrop(this.screenWidth, this.screenHeight);
+    // 背景：接入统一夜景舞台底（P6，去占位水印）
+    this._screenBg();
+    const bp = gameState.profile || {};
+    const bpLeftLimit = RenderSystem.headerLeftLimit(
+      [bp.gold, bp.diamond, bp.stardust, bp.trophies], w);
+    this._screenHeader('通行证', { cy: 25, accent: '#EC4899', leftLimit: bpLeftLimit });
 
-    ctx.fillStyle = '#ec4899';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('通行证', w / 2, 25);
-
-    // 状态信息
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`赛季: ${status.seasonName || ''}`, 20, 55);
-    ctx.fillStyle = status.premium ? '#fbbf24' : '#94a3b8';
-    ctx.fillText(`等级: ${status.level || 0}/${status.maxLevel || 50}  ${status.premium ? '⭐ 高级' : '免费版'}`, 20, 72);
-
-    // 进度条
-    const barX = 20, barY = 90, barW = w - 140, barH = 8;
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(barX, barY, barW, barH);
-    const progress = status.exp / (status.expPerLevel || 100);
-    ctx.fillStyle = '#ec4899';
-    ctx.fillRect(barX, barY, barW * Math.min(1, progress), barH);
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '9px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(`EXP: ${status.exp || 0}/${status.expPerLevel || 100}`, barX, barY + 12);
-
-    // 一键领取按钮
+    // 赛季卡：标题 + Lv 胶囊 + EXP 进度条（几何避开右侧一键领取按钮）
     const claimX = w - 120, claimY = 50;
-    ctx.fillStyle = '#ec489944';
-    ctx.fillRect(claimX, claimY, 100, 32);
-    ctx.strokeStyle = '#ec4899';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(claimX, claimY, 100, 32);
-    ctx.fillStyle = '#ec4899';
+    this._statStrip({ x: 16, y: 52, w: w - 32 - 8, h: 58 }, {
+      title: status.seasonName || '赛季',
+      level: `Lv${status.level || 0}/${status.maxLevel || 50}`,
+      ratio: (status.exp || 0) / (status.expPerLevel || 100),
+      ratioText: `EXP ${status.exp || 0}/${status.expPerLevel || 100}${status.premium ? ' · 高级' : ''}`,
+      color: '#EC4899',
+    });
+
+    // 一键领取按钮：几何 claimX/claimY/100×32 与 Game 命中同源，不动；视觉改明黄主按钮
+    this._cardBg({ x: claimX, y: claimY, w: 100, h: 32, r: 10 }, {
+      tint: UI_THEME.gold, border: UI_THEME.goldDeep, flat: true,
+    });
+    ctx.fillStyle = UI_THEME.ink;
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -5106,11 +5089,12 @@ export class RenderSystem {
     this._beginScrollClip(ctx, w, h, 100);
 
     ctx.textAlign = 'center';
+    // 列头在夜景底上（不在云白格内），用 ON_DARK 浅色保证对比
     ctx.textBaseline = 'top';
     ctx.font = 'bold 10px sans-serif';
-    ctx.fillStyle = '#06b6d4';
+    ctx.fillStyle = '#22D3EE';
     ctx.fillText('免费轨道', colFreeX + cellW / 2, startY - 18);
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = UI_THEME.gold;
     ctx.fillText('高级轨道', colPremX + cellW / 2, startY - 18);
 
     for (let i = 0; i < rewards.length; i++) {
@@ -5118,8 +5102,8 @@ export class RenderSystem {
       const ry = startY + i * (rowH + rowGap);
       if (ry + rowH < 100 || ry > h) continue;
 
-      // 等级标签
-      ctx.fillStyle = r.unlocked ? '#ec4899' : '#334155';
+      // 等级标签：右对齐避免被左缘裁切；夜景底上用 ON_DARK 浅色
+      ctx.fillStyle = r.unlocked ? '#F472B6' : ON_DARK.hint;
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(`Lv${r.level}`, 35, ry + 18);
@@ -5139,48 +5123,38 @@ export class RenderSystem {
   }
 
   _drawRewardCell(ctx, x, y, w, h, reward, color, locked) {
-    // 奖励格 4 态底图（锁定 / 已领 / 可领 / 需高级）
-    this._art(pick_rewardCell(!!locked, !!reward.claimed, !!reward.claimable),
-      x, y, w, h, { alpha: 0.18 });
-    ctx.fillStyle = locked ? '#1a1a2e' : '#1e293b';
-    ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = reward.claimed ? '#334155' : (reward.claimable ? color : '#334155');
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, w, h);
+    // 奖励格 4 态：云白卡语言 + 深色文字；四态语义靠描边/顶条/弱面区分。
+    // 几何（x/y/w/h）与 Game 领取命中同源，绝不改动。
+    const claimable = !!reward.claimable;
+    this._cardBg({ x, y, w, h, r: 8 }, {
+      tint: locked ? 'rgba(226,236,246,0.72)' : (claimable ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.88)'),
+      border: claimable ? color : (reward.claimed ? 'rgba(43,74,111,0.10)' : 'rgba(43,74,111,0.18)'),
+      edge: claimable ? color : null,
+      edgeSide: 'top',
+      flat: true,
+    });
 
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '10px sans-serif';
     if (locked) {
-      ctx.fillStyle = '#475569';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🔒 需高级', x + w / 2, y + h / 2);
+      ctx.fillStyle = 'rgba(43,74,111,0.5)';
+      ctx.fillText('需高级', x + w / 2, y + h / 2);
       return;
     }
-
     if (reward.claimed) {
-      ctx.fillStyle = '#64748b';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.fillText('✓ 已领取', x + w / 2, y + h / 2);
       return;
     }
 
-    // 奖励内容
     const rewardText = Object.entries(reward.reward || {}).map(([k, v]) => {
       const icons = { gold: '💰', diamond: '💎', stardust: '⭐' };
       return `${icons[k] || k}+${v}`;
     }).join(' ');
-    ctx.fillStyle = reward.claimable ? color : '#64748b';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.fillStyle = claimable ? UI_THEME.ink : UI_THEME.navySoft;
+    ctx.font = claimable ? 'bold 10px sans-serif' : '10px sans-serif';
     ctx.fillText(rewardText, x + w / 2, y + h / 2);
-
-    if (reward.claimable) {
-      ctx.fillStyle = color + '22';
-      ctx.fillRect(x, y, w, 3);
-    }
   }
 
   // ==================== 排行榜面板（Phase 5） ====================
