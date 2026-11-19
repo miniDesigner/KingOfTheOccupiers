@@ -34,7 +34,7 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 
 // 已接入 ScreenShell（晴空乐园浅色骨架）的界面集合：逐个界面接入时往这里加一项。
 // 用途：跳过 ArtLayer 的深色占位装饰层，避免水印/脏底透过云白卡。
-const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel', 'battle_pass', 'quest', 'achievement']);
+const SHELL_SCREENS = new Set(['deploy_select', 'gacha', 'shop', 'tech_panel', 'battle_pass', 'quest', 'achievement', 'leaderboard']);
 
 // 子界面兜底底色：底图未加载时用它顶上，避免露白底。
 // 底图本身走 SCREEN_BG（当前全部子界面已统一为 bg/lobby_bg），保持单一真相源。
@@ -5144,19 +5144,14 @@ export class RenderSystem {
     const w = this.screenWidth;
     const h = this.screenHeight;
 
-    // 背景
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, h);
-    this._drawBackdrop(this.screenWidth, this.screenHeight);
+    // 背景：接入统一夜景舞台底（P8，去占位水印）
+    this._screenBg();
+    const lp = gameState.profile || {};
+    const lbLeftLimit = RenderSystem.headerLeftLimit(
+      [lp.gold, lp.diamond, lp.stardust, lp.trophies], w);
+    this._screenHeader('排行榜', { cy: 25, accent: UI_THEME.gold, leftLimit: lbLeftLimit });
 
-    // 标题
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🏅 排行榜', w / 2, 28);
-
-    // 榜单标签（与 handleLeaderboardClick 命中框一致；tab数随榜单定义）
+    // 榜单标签（与 handleLeaderboardClick 命中框一致；tabW/tabH/tabGap/tabY/tabStartX 几何不动）
     const boards = gameState.leaderboardBoards || [];
     const tabCount = Math.min(boards.length, 4);
     const tabW = 80, tabH = 30, tabGap = 8;
@@ -5165,21 +5160,26 @@ export class RenderSystem {
     for (let i = 0; i < tabCount; i++) {
       const x = tabStartX + i * (tabW + tabGap);
       const active = gameState.leaderboardTab === i;
-      ctx.fillStyle = active ? '#7c3aed' : '#1e293b';
-      ctx.fillRect(x, tabY, tabW, tabH);
-      ctx.strokeStyle = active ? '#a78bfa' : '#475569';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x, tabY, tabW, tabH);
-      ctx.fillStyle = active ? '#ffffff' : '#94a3b8';
+      this._cardBg({ x, y: tabY, w: tabW, h: tabH, r: 9 }, {
+        tint: active ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.78)',
+        border: active ? '#A855F7' : 'rgba(43,74,111,0.16)',
+        edge: active ? '#A855F7' : null,
+        edgeSide: 'top',
+        flat: true,
+      });
+      ctx.fillStyle = active ? UI_THEME.ink : UI_THEME.navySoft;
       ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(boards[i].label, x + tabW / 2, tabY + tabH / 2);
     }
 
     // 榜单数据
     const data = gameState.leaderboardData;
     if (!data || data.entries.length === 0) {
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = ON_DARK.hint;
       ctx.font = '13px sans-serif';
+      ctx.textAlign = 'center';
       ctx.fillText('暂无数据', w / 2, h / 2);
       return;
     }
@@ -5195,44 +5195,52 @@ export class RenderSystem {
       const y = listStartY + i * rowH;
       if (y > h - 90) break;
 
-      // 玩家行高亮
-      if (e.isPlayer) {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.15)';
-        ctx.fillRect(20, y - rowH / 2, w - 40, rowH);
-      }
-
+      // 榜单行：云白卡 + 深色文字；前三金银铜、自己行明黄竖条
+      const rankColor = i === 0 ? '#D4A017' : (i === 1 ? '#64748B' : (i === 2 ? '#B45309' : UI_THEME.navySoft));
+      this._cardBg({ x: 16, y: y - rowH / 2 + 1, w: w - 32, h: rowH - 2, r: 8 }, {
+        tint: e.isPlayer ? 'rgba(255,244,214,0.98)' : 'rgba(255,255,255,0.92)',
+        border: e.isPlayer ? UI_THEME.gold : 'rgba(43,74,111,0.12)',
+        edge: e.isPlayer ? UI_THEME.gold : null,
+        edgeSide: 'left',
+        flat: true,
+      });
       // 名次
-      const rankColor = i === 0 ? '#fbbf24' : (i === 1 ? '#cbd5e1' : (i === 2 ? '#d97706' : '#64748b'));
       ctx.fillStyle = rankColor;
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
-      this._art(pick_rankRow(false, !!e.isPlayer),
-        20, y - 10, this.screenWidth - 40, 30, { alpha: 0.12 });
-      this._art(pick_rankShine(), 14, y - 12, 24, 24, { alpha: 0.18 });
-      this._artBadge(ART_PREFIXES.rank, String(i + 1).padStart(2, '0'), 28, y, 9);
+      ctx.textBaseline = 'middle';
       ctx.fillText(`${i + 1}`, 28, y);
       // 名字
-      ctx.fillStyle = e.isPlayer ? '#fbbf24' : '#e2e8f0';
+      ctx.fillStyle = e.isPlayer ? UI_THEME.ink : UI_THEME.navy;
       ctx.font = e.isPlayer ? 'bold 12px sans-serif' : '12px sans-serif';
-      ctx.fillText(e.isPlayer ? e.name + '（你）' : e.name, 55, y);
+      this._fitText(e.isPlayer ? e.name + '（你）' : e.name, 55, y, w - 55 - 90, 12);
       // 数值
-      ctx.fillStyle = e.isPlayer ? '#fbbf24' : '#94a3b8';
+      ctx.fillStyle = e.isPlayer ? UI_THEME.goldDeep : UI_THEME.navySoft;
       ctx.textAlign = 'right';
       ctx.fillText(String(e[metric]) + unit, w - 28, y);
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
     }
 
-    // 玩家排名提示
+    // 玩家排名提示：吸底云白胶囊
     if (data.playerRank > 0) {
-      ctx.fillStyle = '#a78bfa';
+      const tipW = Math.min(w - 40, 240);
+      const tipX = (w - tipW) / 2, tipY = h - 66;
+      this._cardBg({ x: tipX, y: tipY, w: tipW, h: 34, r: 17 }, {
+        tint: 'rgba(255,255,255,0.96)', border: '#A855F7', flat: true,
+      });
+      ctx.fillStyle = '#7C3AED';
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`你的排名: 第${data.playerRank}名`, w / 2, h - 40);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`你的排名: 第${data.playerRank}名`, w / 2, tipY + 17);
+      ctx.textBaseline = 'alphabetic';
     }
 
     // 底部说明
-    ctx.fillStyle = '#475569';
+    ctx.fillStyle = ON_DARK.hint;
     ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
     ctx.fillText('微信好友排行榜将在小游戏版接入', w / 2, h - 20);
   }
 
