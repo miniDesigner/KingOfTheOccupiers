@@ -1311,7 +1311,10 @@ export class RenderSystem {
     // 由 Game.start() 从 features.artExtendedLayer 注入开关；图片失败静默兜底。
     // 已接入晴空乐园骨架的界面不再叠加占位装饰层：装饰层是深色面板/卡片占位图，
     // 压在云白卡上会显出水印与脏底；正式素材到位后若需要氛围层再单独按界面开。
-    if (!SHELL_SCREENS.has(gameState.screenState)) drawArtLayer(this, gameState);
+    // 结算态：drawGameOver 已画在战斗画面之上，ArtLayer 的占位背景会盖住结算内容，
+    // 故结算期间跳过装饰层；战斗进行中仍保留氛围层。
+    const isGameOver = gameState.screenState === 'playing' && gameState.gameStatus !== 'playing';
+    if (!SHELL_SCREENS.has(gameState.screenState) && !isGameOver) drawArtLayer(this, gameState);
 
     // P8：最上层覆盖层同样纳入安全区包裹（画在 inner 之后保证盖在最上，
     // 但坐标系与 Scene 一致，面板顶部不会被刘海遮挡、底部不会落进 indicator 区）
@@ -3357,45 +3360,54 @@ export class RenderSystem {
       this._artFx('medalGold', cx - 22, cy - 148, 44, 44, 0.65);
     }
 
-    // 标题：自定义标题字体（assets/fonts/title.ttf），未加载则回退 sans-serif
-    ctx.fillStyle = isWin ? '#4ade80' : '#f87171';
-    ctx.font = FontSystem.font(36, 'bold', 'title');
+    // ===== 云白结果卡：散落文字收进卡片，深色三级文字（夜景舞台底 + 云白卡语言） =====
+    const L = RenderSystem.gameOverLayout(this.screenWidth, this.screenHeight);
+    const cardW = Math.min(this.screenWidth - 40, 360);
+    const cardX = cx - cardW / 2;
+    const cardTop = cy - 100;
+    this._cardBg({ x: cardX, y: cardTop, w: cardW, h: 152, r: 16 }, {
+      tint: 'rgba(255,255,255,0.96)',
+    });
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(isWin ? '胜 利!' : '失 败', cx, cy - 80);
+
+    // 标题：胜负语义色，但压在云白卡上必须用深色系（浅绿/浅红在白卡上看不清）
+    ctx.fillStyle = isWin ? UI_THEME.green : '#C0394B';
+    ctx.font = FontSystem.font(34, 'bold', 'title');
+    ctx.fillText(isWin ? '胜 利!' : '失 败', cx, cy - 76);
 
     // 对手信息
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '13px sans-serif';
-    ctx.fillText('对手: ' + (gameState.enemyName || 'AI'), cx, cy - 50);
+    ctx.fillStyle = UI_THEME.navy;
+    ctx.font = '12px sans-serif';
+    ctx.fillText('对手: ' + (gameState.enemyName || 'AI'), cx, cy - 48);
 
     // 奖励信息（金币 + 星尘）
     const rewards = gameState.lastRewards || {};
     if (rewards.gold || rewards.stardust) {
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 16px sans-serif';
+      ctx.fillStyle = UI_THEME.goldDeep;
+      ctx.font = 'bold 15px sans-serif';
       let rewardText = '';
       if (rewards.gold) rewardText += '💰' + rewards.gold + ' ';
       if (rewards.stardust) rewardText += '✨' + rewards.stardust;
-      ctx.fillText('奖励: ' + rewardText, cx, cy - 22);
+      ctx.fillText('奖励: ' + rewardText, cx, cy - 26);
     }
 
     // 天梯奖杯变化（胜利 ▲ 绿 / 失败 ▼ 红，附当前段位）
     if (rewards.trophyDelta !== undefined && rewards.tier) {
       const up = rewards.trophyDelta >= 0;
-      ctx.fillStyle = up ? '#4ade80' : '#f87171';
-      ctx.font = 'bold 15px sans-serif';
+      ctx.fillStyle = up ? UI_THEME.green : '#C0394B';
+      ctx.font = 'bold 14px sans-serif';
       const arrow = up ? '▲+' : '▼';
-      ctx.fillText(`🏆 ${arrow}${rewards.trophyDelta}  →  ${rewards.trophies}杯`, cx, cy - 4);
+      ctx.fillText(`🏆 ${arrow}${rewards.trophyDelta}  →  ${rewards.trophies}杯`, cx, cy - 10);
       // 段位变动标记
       if (rewards.tierUp) {
-        ctx.fillStyle = '#fbbf24';
+        ctx.fillStyle = UI_THEME.goldDeep;
         ctx.font = 'bold 12px sans-serif';
-        ctx.fillText(`⬆ 晋升【${rewards.tier.icon}${rewards.tier.label}】！`, cx, cy + 12);
+        ctx.fillText(`⬆ 晋升【${rewards.tier.icon}${rewards.tier.label}】！`, cx, cy + 8);
       } else {
-        ctx.fillStyle = '#94a3b8';
+        ctx.fillStyle = UI_THEME.navySoft;
         ctx.font = '11px sans-serif';
-        ctx.fillText(`${rewards.tier.icon}${rewards.tier.label}段位`, cx, cy + 12);
+        ctx.fillText(`${rewards.tier.icon}${rewards.tier.label}段位`, cx, cy + 8);
       }
     }
 
@@ -3403,37 +3415,35 @@ export class RenderSystem {
     const recruitSummary = gameState.recruitSummary || [];
     if (recruitSummary.length > 0) {
       const recruitText = recruitSummary.slice(0, 4).map(r => `${r.icon}×${r.count}`).join('  ');
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = UI_THEME.navySoft;
       ctx.font = '11px sans-serif';
-      ctx.fillText('本局招募: ' + recruitText + (recruitSummary.length > 4 ? ' ...' : ''), cx, cy + 30);
+      ctx.fillText('本局招募: ' + recruitText + (recruitSummary.length > 4 ? ' ...' : ''), cx, cy + 24);
 
       // 胜利时显示招募进度减半提示
       if (isWin) {
-        ctx.fillStyle = '#a78bfa';
+        ctx.fillStyle = '#7C3AED';
         ctx.font = '10px sans-serif';
-        ctx.fillText('（胜利招募进度×0.5，通过抽卡获取更多兵种）', cx, cy + 46);
+        ctx.fillText('（胜利招募进度×0.5，通过抽卡获取更多兵种）', cx, cy + 40);
       }
     }
 
-    const L = RenderSystem.gameOverLayout(this.screenWidth, this.screenHeight);
-
     if (!isWin) {
-      ctx.fillStyle = '#fff';
-      ctx.font = '15px sans-serif';
-      ctx.fillText('你的大本营被摧毁了', cx, cy + 70);
+      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('你的大本营被摧毁了', cx, cy + 24);
     }
 
     // 战绩分享按钮（Phase 5，仅胜利时显示；置于主按钮上方）
     if (isWin) {
       const s = L.share;
       this._drawPressed(s, gameState.press, () => {
-        ctx.fillStyle = '#0891b2';
-        ctx.fillRect(s.x, s.y, s.w, s.h);
-        ctx.strokeStyle = '#22d3ee';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(s.x, s.y, s.w, s.h);
-        ctx.fillStyle = '#ffffff';
+        this._cardBg({ x: s.x, y: s.y, w: s.w, h: s.h, r: 12 }, {
+          tint: 'rgba(255,255,255,0.94)', border: 'rgba(8,145,178,0.5)', flat: true,
+        });
+        ctx.fillStyle = '#0E7490';
         ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText('📤 炫耀战绩', s.x + s.w / 2, s.y + s.h / 2);
       });
     }
@@ -3443,13 +3453,13 @@ export class RenderSystem {
     {
       const b = L.back;
       this._drawPressed(b, gameState.press, () => {
-        ctx.fillStyle = '#1d4ed8';
-        ctx.fillRect(b.x, b.y, b.w, b.h);
-        ctx.strokeStyle = '#60a5fa';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(b.x, b.y, b.w, b.h);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px sans-serif';
+        this._cardBg({ x: b.x, y: b.y, w: b.w, h: b.h, r: 14 }, {
+          tint: UI_THEME.gold, border: UI_THEME.goldDeep, edge: UI_THEME.orangeDeep, flat: true,
+        });
+        ctx.fillStyle = UI_THEME.ink;
+        ctx.font = 'bold 17px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText('🏠 返回大厅', b.x + b.w / 2, b.y + b.h / 2);
       });
     }
