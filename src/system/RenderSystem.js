@@ -903,8 +903,8 @@ export class RenderSystem {
     const claimed = state === 'claimed';
     const claimable = state === 'claimable';
     this._cardBg(rect, {
-      tint: premium ? 'rgba(43,74,111,0.16)' : (claimable ? 'rgba(255,255,255,0.97)' : 'rgba(234,248,255,0.80)'),
-      border: claimable ? 'rgba(255,210,63,0.55)' : 'rgba(43,74,111,0.14)',
+      tint: premium ? 'rgba(226,238,247,0.9)' : (claimable ? 'rgba(255,255,255,0.97)' : 'rgba(234,248,255,0.80)'),
+      border: claimable ? 'rgba(255,210,63,0.55)' : (premium ? 'rgba(43,74,111,0.1)' : 'rgba(43,74,111,0.14)'),
       flat: true,
       r: 8,
     });
@@ -912,12 +912,26 @@ export class RenderSystem {
       ctx.fillStyle = UI_THEME.gold;
       ctx.fillRect(x, y, cw, 3);
     }
+    // premium 态：加明黄小锁图标 + 深色文字，替代原来整列发虚的浅灰块（文案不变）
+    if (premium && typeof ctx.arc === 'function') {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x + 16, y + ch / 2, 8, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,210,63,0.85)';
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = '#4A2A00';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('锁', x + 16, y + ch / 2 + 1);
+    }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = premium ? 'rgba(234,248,255,0.50)' : (claimed ? UI_THEME.navySoft : (claimable ? UI_THEME.ink : UI_THEME.navy));
+    ctx.fillStyle = premium ? UI_THEME.navySoft : (claimed ? UI_THEME.navySoft : (claimable ? UI_THEME.ink : UI_THEME.navy));
     ctx.font = `${claimable ? 'bold ' : ''}10px sans-serif`;
     const text = premium ? '需高级' : (claimed ? '已领取' : (claimable ? `${d.label || ''} · 领` : String(d.label || '')));
-    this._fitText(text, x + cw / 2, y + ch / 2, cw - 6, 10, 'center');
+    this._fitText(text, x + cw / 2 + (premium ? 6 : 0), y + ch / 2, cw - (premium ? 18 : 6), 10, 'center');
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
   }
@@ -1081,16 +1095,28 @@ export class RenderSystem {
     const { ctx } = this;
     const o = opts || {};
     const onLight = !!o.onLight;
+    // card:true 时先垫一张云白卡，避免空态裸文字浮在夜景上显得悬空（非交互，不碰命中）
+    if (o.card) {
+      const ew = Math.min(280, this.screenWidth - 48), eh = 116;
+      this._cardBg({ x: cx - ew / 2, y: cy - 46, w: ew, h: eh, r: 14 }, {
+        r: 14, tint: 'rgba(255,255,255,0.9)', border: 'rgba(43,74,111,0.16)',
+      });
+    }
+    const iconDrawn = o.iconPrefix && o.iconName
+      ? this._artIcon(o.iconPrefix, o.iconName, cx, cy - 4, 30, 0.9)
+      : false;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = onLight ? 'rgba(43,74,111,0.26)' : 'rgba(234,248,255,0.24)';
-    ctx.font = 'bold 34px sans-serif';
-    ctx.fillText(o.icon || '🗒', cx, cy);
-    ctx.fillStyle = onLight ? 'rgba(22,48,79,0.58)' : ON_DARK.body;
+    if (!iconDrawn) {
+      ctx.fillStyle = onLight ? 'rgba(43,74,111,0.26)' : (o.card ? UI_THEME.skyDeep : 'rgba(234,248,255,0.24)');
+      ctx.font = 'bold 34px sans-serif';
+      ctx.fillText(o.icon || '🗒', cx, cy);
+    }
+    ctx.fillStyle = onLight ? 'rgba(22,48,79,0.58)' : (o.card ? UI_THEME.ink : ON_DARK.body);
     ctx.font = 'bold 12px sans-serif';
     ctx.fillText(text, cx, cy + 34);
     if (o.hint) {
-      ctx.fillStyle = onLight ? 'rgba(22,48,79,0.40)' : ON_DARK.hint;
+      ctx.fillStyle = onLight ? 'rgba(22,48,79,0.40)' : (o.card ? UI_THEME.navySoft : ON_DARK.hint);
       ctx.font = '10px sans-serif';
       ctx.fillText(o.hint, cx, cy + 52);
     }
@@ -2375,6 +2401,8 @@ export class RenderSystem {
     if (L.scrollAreaBottom - _guideTop > 90) {
       const _gy = (_guideTop + L.scrollAreaBottom) / 2 - 10;
       this._emptyState(w / 2, _gy, '兵种还不够多', {
+        card: true,
+        iconPrefix: ART_PREFIXES.nav, iconName: 'gacha',
         icon: '🎲',
         hint: '去「招募」收服更多兵种，壮大你的军团',
       });
@@ -4348,7 +4376,7 @@ export class RenderSystem {
         ctx.fillText('⭐' + nextCost, x + nodeW - 5, y + 48);
       } else if (!hasPrereq) {
         const prereqNode = branch.nodes.find(n => n.id === node.prerequisite.node);
-        ctx.fillStyle = 'rgba(43,74,111,0.55)';
+        ctx.fillStyle = 'rgba(43,74,111,0.7)';
         ctx.font = '8px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText('需' + (prereqNode?.name || '?') + node.prerequisite.level + '级', x + nodeW - 5, y + 48);
@@ -4693,6 +4721,28 @@ export class RenderSystem {
       }
     }
 
+    // 商品较少时（如免费页仅 2 件），下方补非交互说明卡填充空区，避免下半屏纯空夜景。
+    // 只画提示不影响任何命中（不占商品索引、不响应点击）。
+    if (cat.items.length > 0 && cat.items.length <= 3) {
+      const emptyY = startY + cat.items.length * (itemH + gap) + 8;
+      if (emptyY < h - 90) {
+        const eh = 96;
+        this._cardBg({ x: cardX, y: emptyY, w: itemW, h: eh, r: 12 }, {
+          r: 12, tint: 'rgba(234,248,255,0.82)', border: 'rgba(43,74,111,0.16)', flat: true,
+        });
+        this._artIcon(ART_PREFIXES.shopCat, 'item', cardX + itemW / 2, emptyY + 30, 24, 0.85);
+        ctx.fillStyle = UI_THEME.navy;
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('更多商品陆续上架', cardX + itemW / 2, emptyY + 58);
+        ctx.fillStyle = UI_THEME.navySoft;
+        ctx.font = '10px sans-serif';
+        ctx.fillText('每日免费福利记得领取', cardX + itemW / 2, emptyY + 76);
+        ctx.textBaseline = 'alphabetic';
+      }
+    }
+
     this._endScrollClip(ctx);
   }
 
@@ -4954,12 +5004,16 @@ export class RenderSystem {
     // 裁剪：任务列表只在返回按钮/一键领取以下区域显示
     this._beginScrollClip(ctx, w, h, 88);
 
-    // 每日任务（分类标题在夜景底上，用提亮强调色）
-    ctx.fillStyle = '#22D3EE';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText('📋 每日任务', 20, layout.dailyHeaderY);
+    // 每日任务（分类标题在夜景底上：正式图标 + ON_DARK 浅色文字，几何不变）
+    const drawCatTitle = (iconName, label, y, color) => {
+      this._artIcon(ART_PREFIXES.quest, iconName, 27, y + 9, 16, 0.95);
+      ctx.fillStyle = color;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(label, 40, y);
+    };
+    drawCatTitle('daily', '每日任务', layout.dailyHeaderY, '#67E8F9');
 
     (gameState.dailyQuests || []).forEach((q, i) => {
       const { y } = layout.dailyRects[i];
@@ -4968,9 +5022,7 @@ export class RenderSystem {
     });
 
     // 每周任务
-    ctx.fillStyle = ON_DARK.green;
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('📅 每周任务', 20, layout.weeklyHeaderY);
+    drawCatTitle('weekly', '每周任务', layout.weeklyHeaderY, ON_DARK.green);
 
     (gameState.weeklyQuests || []).forEach((q, i) => {
       const { y } = layout.weeklyRects[i];
@@ -4979,9 +5031,7 @@ export class RenderSystem {
     });
 
     // 赛季任务
-    ctx.fillStyle = '#C4B5FD';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('🌟 赛季任务', 20, layout.seasonHeaderY);
+    drawCatTitle('season', '赛季任务', layout.seasonHeaderY, '#DDD6FE');
 
     (gameState.seasonQuests || []).forEach((q, i) => {
       const { y } = layout.seasonRects[i];
@@ -5168,9 +5218,9 @@ export class RenderSystem {
       const x = tabStartX + i * (tabW + tabGap);
       const active = gameState.leaderboardTab === i;
       this._cardBg({ x, y: tabY, w: tabW, h: tabH, r: 9 }, {
-        tint: active ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.78)',
-        border: active ? '#A855F7' : 'rgba(43,74,111,0.16)',
-        edge: active ? '#A855F7' : null,
+        tint: active ? 'rgba(255,244,214,0.98)' : 'rgba(255,255,255,0.78)',
+        border: active ? UI_THEME.gold : 'rgba(43,74,111,0.16)',
+        edge: active ? UI_THEME.gold : null,
         edgeSide: 'top',
         flat: true,
       });
@@ -5202,8 +5252,9 @@ export class RenderSystem {
       const y = listStartY + i * rowH;
       if (y > h - 90) break;
 
-      // 榜单行：云白卡 + 深色文字；前三金银铜、自己行明黄竖条
-      const rankColor = i === 0 ? '#D4A017' : (i === 1 ? '#64748B' : (i === 2 ? '#B45309' : UI_THEME.navySoft));
+      // 榜单行：云白卡 + 深色文字；前三金银铜章、自己行明黄竖条
+      const medalFill = i === 0 ? '#FFD23F' : (i === 1 ? '#C0C8D0' : (i === 2 ? '#D9884A' : null));
+      const rankColor = i < 3 ? '#5A3E00' : UI_THEME.navySoft;
       this._cardBg({ x: 16, y: y - rowH / 2 + 1, w: w - 32, h: rowH - 2, r: 8 }, {
         tint: e.isPlayer ? 'rgba(255,244,214,0.98)' : 'rgba(255,255,255,0.92)',
         border: e.isPlayer ? UI_THEME.gold : 'rgba(43,74,111,0.12)',
@@ -5211,7 +5262,24 @@ export class RenderSystem {
         edgeSide: 'left',
         flat: true,
       });
-      // 名次
+      // 名次：前三加金银铜圆章（名次数字位置不变，只加承载底）
+      if (medalFill) {
+        const mc = 26, mx = 20, my = y - mc / 2;
+        if (typeof ctx.arc === 'function') {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(mx + mc / 2, y, mc / 2, 0, Math.PI * 2);
+          ctx.fillStyle = medalFill;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = medalFill;
+          ctx.fillRect(mx, my, mc, mc);
+        }
+      }
       ctx.fillStyle = rankColor;
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
@@ -5236,9 +5304,9 @@ export class RenderSystem {
       const tipW = Math.min(240, w - backRight - 24);
       const tipX = backRight + 8 + (w - backRight - 8 - tipW) / 2, tipY = h - 66;
       this._cardBg({ x: tipX, y: tipY, w: tipW, h: 34, r: 17 }, {
-        tint: 'rgba(255,255,255,0.96)', border: '#A855F7', flat: true,
+        tint: 'rgba(255,244,214,0.98)', border: UI_THEME.gold, flat: true,
       });
-      ctx.fillStyle = '#7C3AED';
+      ctx.fillStyle = UI_THEME.orangeDeep;
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -5381,20 +5449,20 @@ export class RenderSystem {
     ctx.textBaseline = 'alphabetic';
 
     // === 抽卡按钮 ===
-    // 单抽：云白次按钮（紫描边）；十连：明黄→橙主 CTA（付费/消耗主动作）
+    // 单抽：云白次按钮（海军蓝描边）；十连：明黄→橙主 CTA（付费/消耗主动作）
     const canSingle = info.gold >= info.singleCost;
     this._cardBg({ x: L.singleX, y: L.btnY, w: L.btnW, h: L.btnH, r: 13 }, {
       tint: canSingle ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.55)',
-      border: canSingle ? '#A855F7' : 'rgba(43,74,111,0.20)',
+      border: canSingle ? UI_THEME.navy : 'rgba(43,74,111,0.20)',
     });
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = canSingle ? '#7C3AED' : 'rgba(43,74,111,0.40)';
+    ctx.fillStyle = canSingle ? UI_THEME.ink : 'rgba(43,74,111,0.40)';
     ctx.font = 'bold 14px sans-serif';
     ctx.fillText('单抽 ×1', L.singleX + L.btnW / 2, L.btnY + 17);
     ctx.fillStyle = canSingle ? UI_THEME.orangeDeep : 'rgba(43,74,111,0.35)';
     ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('💰' + info.singleCost, L.singleX + L.btnW / 2, L.btnY + 36);
+    ctx.fillText('◆ ' + info.singleCost, L.singleX + L.btnW / 2, L.btnY + 36);
 
     const canMulti = info.gold >= info.multiCost;
     this._primaryButton(
@@ -5405,11 +5473,11 @@ export class RenderSystem {
     if (canMulti) {
       ctx.fillStyle = '#4A2A00';
       ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('💰' + info.multiCost, L.multiX + L.btnW / 2, L.btnY + 34);
+      ctx.fillText('◆ ' + info.multiCost, L.multiX + L.btnW / 2, L.btnY + 34);
     }
 
     // 十连优惠提示（按钮下方，与广告按钮保持间隙）
-    ctx.fillStyle = ON_DARK.green;
+    ctx.fillStyle = UI_THEME.gold;
     ctx.font = 'bold 10px sans-serif';
     ctx.fillText('9 折优惠 · 保底史诗+', L.multiX + L.btnW / 2, L.discountY);
 
@@ -5421,11 +5489,11 @@ export class RenderSystem {
 
     this._cardBg({ x: L.adBtnX, y: L.adBtnY, w: L.adBtnW, h: L.adBtnH, r: 12 }, {
       tint: adCan ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.55)',
-      border: adCan ? UI_THEME.green : 'rgba(43,74,111,0.20)',
+      border: adCan ? UI_THEME.skyDeep : 'rgba(43,74,111,0.20)',
     });
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = adCan ? UI_THEME.green : 'rgba(43,74,111,0.40)';
+    ctx.fillStyle = adCan ? UI_THEME.skyDeep : 'rgba(43,74,111,0.40)';
     ctx.font = 'bold 13px sans-serif';
     ctx.fillText(adCan ? '📺 看广告免费抽 ×1' : `📺 今日已用完 (${adWatched}/${adLimit})`, L.adBtnX + L.adBtnW / 2, L.adBtnY + L.adBtnH / 2 - 6);
     ctx.fillStyle = 'rgba(22,48,79,0.55)';
