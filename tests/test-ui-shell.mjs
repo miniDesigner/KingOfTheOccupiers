@@ -294,3 +294,72 @@ test('_footerBar：主 CTA 几何来自 L_SCALE，普通态/禁用态/自定义�
   assert.doesNotThrow(() => rs._footerBar('返回大厅', { disabled: true }));
   assert.doesNotThrow(() => rs._footerBar('炫耀战绩', { accent: 'rgba(255,255,255,0.14)' }));
 });
+
+// ===== 方案 M2：6 个新组件 =====
+
+test('M2 组件：_goodsCard/_nodeCard/_rewardCell/_rankRow/_statStrip 正常 ctx 下均绘制且不抛错', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  const r = { x: 10, y: 10, w: 194, h: 92 };
+  assert.doesNotThrow(() => rs._goodsCard(r, { name: '金币×500', desc: '限购 3/5', price: '60钻' }));
+  assert.doesNotThrow(() => rs._goodsCard(r, { name: '看广告领', button: '领取', free: true }));
+  assert.doesNotThrow(() => rs._nodeCard({ x: 10, y: 110, w: 187, h: 96 },
+    { name: '锋利武器', state: 'available', level: 3, cost: '星尘120' }));
+  assert.doesNotThrow(() => rs._nodeCard({ x: 205, y: 110, w: 187, h: 96 },
+    { name: '城防加固', state: 'max' }));
+  assert.doesNotThrow(() => rs._nodeCard({ x: 10, y: 214, w: 187, h: 96 },
+    { name: '未解锁', state: 'locked' }));
+  for (const state of ['locked', 'claimable', 'claimed', 'premiumLock']) {
+    assert.doesNotThrow(() => rs._rewardCell({ x: 10, y: 320, w: 120, h: 50 }, { label: '金币+100', state }), state);
+  }
+  assert.doesNotThrow(() => rs._rankRow({ x: 10, y: 380, w: 398, h: 56 },
+    { rank: 1, name: '玩家A', sub: '段位·王者', value: '1840杯' }));
+  assert.doesNotThrow(() => rs._rankRow({ x: 10, y: 444, w: 398, h: 48 },
+    { rank: 12, name: '玩家B', value: '900杯', self: true }));
+  assert.doesNotThrow(() => rs._statStrip({ x: 10, y: 510, w: 400, h: 76 },
+    { title: '赛季 S1', level: 'Lv5', ratio: 0.6, ratioText: '60/100' }));
+});
+
+test('M2 组件：无 arcTo 老基础库下 6 个组件全部降级不抛错', () => {
+  const ctx = fakeCtx(true);
+  const rs = makeRS(ctx);
+  assert.doesNotThrow(() => rs._goodsCard({ x: 0, y: 0, w: 194, h: 92 }, { name: 'X', button: '领', free: true }));
+  assert.doesNotThrow(() => rs._nodeCard({ x: 0, y: 0, w: 187, h: 96 }, { name: 'Y', state: 'available', cost: 'Z' }));
+  assert.doesNotThrow(() => rs._rewardCell({ x: 0, y: 0, w: 120, h: 50 }, { label: 'A', state: 'claimable' }));
+  assert.doesNotThrow(() => rs._rankRow({ x: 0, y: 0, w: 398, h: 56 }, { rank: 2, name: 'N', value: '1' }));
+  assert.doesNotThrow(() => rs._statStrip({ x: 0, y: 0, w: 400, h: 76 }, { title: 'T', ratio: 0.5 }));
+});
+
+test('M2 组件：_nodeCard 三态文字正确（MAX / 前置未解锁 / 花费），不出现英文 state 字面量', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  rs._nodeCard({ x: 0, y: 0, w: 187, h: 96 }, { name: 'A', state: 'max' });
+  rs._nodeCard({ x: 0, y: 0, w: 187, h: 96 }, { name: 'B', state: 'locked' });
+  rs._nodeCard({ x: 0, y: 0, w: 187, h: 96 }, { name: 'C', state: 'available', cost: '星尘120' });
+  const texts = ctx.rec.texts.map(t => t.t);
+  assert.ok(texts.includes('MAX'), '满级节点应显示 MAX');
+  assert.ok(texts.includes('前置未解锁'), '锁定节点应显示前置未解锁');
+  assert.ok(texts.includes('星尘120'), '可升节点应显示花费');
+  for (const t of texts) assert.ok(!['locked', 'available', 'max', 'claimable'].includes(t), '不应泄漏 state 字面量');
+});
+
+test('M2 组件：_rewardCell 四态文案正确（需高级/已领取），_rankRow 自己行显示「我」', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  rs._rewardCell({ x: 0, y: 0, w: 120, h: 50 }, { label: 'A', state: 'premiumLock' });
+  rs._rewardCell({ x: 0, y: 0, w: 120, h: 50 }, { label: 'B', state: 'claimed' });
+  rs._rankRow({ x: 0, y: 60, w: 398, h: 56 }, { rank: 5, name: '别人', value: '100', self: true });
+  const texts = ctx.rec.texts.map(t => t.t);
+  assert.ok(texts.includes('需高级'));
+  assert.ok(texts.includes('已领取'));
+  assert.ok(texts.includes('我'), '自己行名字应显示「我」');
+});
+
+test('_listRow compact 双档：h=32 用 8px 圆角，只画名次不抛错', () => {
+  const ctx = fakeCtx();
+  const rs = makeRS(ctx);
+  assert.doesNotThrow(() => rs._listRow({ x: 0, y: 0, w: 398, h: 32 }, { compact: true, leadingText: '12' }));
+  assert.doesNotThrow(() => rs._listRow({ x: 0, y: 0, w: 398, h: 64 }, { leadingText: '3' }));
+  const texts = ctx.rec.texts.map(t => t.t);
+  assert.ok(texts.includes('12') && texts.includes('3'), '紧凑档与非紧凑档名次都应绘制');
+});

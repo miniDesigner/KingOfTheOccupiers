@@ -687,8 +687,381 @@ export class RenderSystem {
       border: o.border || null,
       edge: o.edge || null,
       edgeSide: o.edgeSide || 'left',
-      r: o.r === undefined ? 12 : o.r,
+      r: o.r === undefined ? 12 : (rect.h <= 32 ? 8 : o.r),
     });
+    // leading 名次槽：方案 M2 要求 _listRow 支持 leading:'rank'。名次文字在两档都画，
+    // compact 只额外把圆角收到 8px、字号调到 11px。行内其他内容仍由调用方按原几何绘制。
+    if (o.leadingText !== undefined || o.compact) {
+      const { ctx } = this;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.font = `${o.compact ? 11 : 13}px sans-serif`;
+      if (o.leadingText !== undefined) ctx.fillText(String(o.leadingText), rect.x + 10, rect.y + rect.h / 2);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    }
+  }
+
+  /**
+   * 商品卡（方案 M2）：云白卡 + 图标位 + 名称/副文 + 价格或购买按钮 + 可选「免费」角标。
+   * 全部文字与孔洞按 rect 相对定位，调用方只需给卡几何与商品数据，不改点击命中。
+   * @param {{x,y,w,h}} rect
+   * @param {{icon?:string,name:string,desc?:string,price?:string,button?:string,
+   *          free?:boolean,disabled?:boolean,iconKey?:string}} item
+   */
+  _goodsCard(rect, item) {
+    const { ctx } = this;
+    const d = item || {};
+    const x = rect.x, y = rect.y, cw = rect.w, ch = rect.h;
+    this._cardBg(rect, {
+      tint: 'rgba(255,255,255,0.95)',
+      border: d.disabled ? 'rgba(43,74,111,0.16)' : 'rgba(255,210,63,0.30)',
+      r: 12,
+    });
+    const iconS = Math.min(48, ch - 20);
+    const iconX = x + 10, iconY = y + 10;
+    // 图标位：贴图优先，未加载画云白凹槽占位，绝不出现裸 emoji
+    const drawn = d.iconKey ? this._artIcon(d.iconKey.icon, d.iconKey.name, iconX + iconS / 2, iconY + iconS / 2, iconS * 0.8) : false;
+    if (!drawn) {
+      this._cardBg({ x: iconX, y: iconY, w: iconS, h: iconS, r: 8 },
+        { tint: 'rgba(43,74,111,0.06)', flat: true });
+      if (d.icon) {
+        ctx.fillStyle = UI_THEME.navySoft;
+        ctx.font = `${Math.round(iconS * 0.42)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d.icon, iconX + iconS / 2, iconY + iconS / 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+      }
+    }
+    const tx = x + 68;
+    const tw = Math.max(20, cw - 78);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = d.disabled ? UI_THEME.navySoft : UI_THEME.ink;
+    ctx.font = 'bold 12px sans-serif';
+    this._fitText(String(d.name || ''), tx, y + 16, tw, 12);
+    if (d.desc) {
+      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.font = '9px sans-serif';
+      this._fitText(String(d.desc), tx, y + 33, tw, 9);
+    }
+    // 价格文案或购买按钮
+    const btnW = Math.min(76, tw);
+    const btnH = 26;
+    const bx = tx, by = y + ch - btnH - 10;
+    if (d.button) {
+      if (d.disabled) {
+        this._cardBg({ x: bx, y: by, w: btnW, h: btnH, r: 8 },
+          { tint: 'rgba(43,74,111,0.14)', flat: true, border: 'rgba(43,74,111,0.18)' });
+        ctx.fillStyle = UI_THEME.navySoft;
+      } else {
+        this._cardBg({ x: bx, y: by, w: btnW, h: btnH, r: 8 },
+          { tint: d.free ? UI_THEME.gold : UI_THEME.skyDeep, flat: true });
+        ctx.fillStyle = d.free ? '#4A2A00' : '#FFFFFF';
+      }
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(d.button), bx + btnW / 2, by + btnH / 2 + 1);
+      ctx.textAlign = 'left';
+    } else if (d.price) {
+      ctx.fillStyle = UI_THEME.goldDeep;
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(String(d.price), bx, by + btnH / 2);
+    }
+    // 免费角标：左上明黄小旗，盖在卡边角
+    if (d.free) {
+      const tagW = 52, tagH = 20;
+      if (typeof ctx.arcTo === 'function') {
+        ctx.save();
+        this._roundRectPath(x, y, tagW, tagH, Math.min(10, tagW / 2));
+        ctx.fillStyle = UI_THEME.gold;
+        ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.fillStyle = UI_THEME.gold;
+        ctx.fillRect(x, y, tagW, tagH);
+      }
+      ctx.fillStyle = '#4A2A00';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('免费', x + tagW / 2, y + tagH / 2 + 1);
+      ctx.textAlign = 'left';
+    }
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  /**
+   * 科技节点卡（方案 M2）：品质竖条 + 图标位 + 名称 + Lv/MAX 角标 + 花费条。
+   * state: 'locked' | 'available' | 'max'；三态只改描边/文字明度，几何不变。
+   * @param {{x,y,w,h}} rect
+   * @param {{name:string,state?:string,quality?:string,level?:number,cost?:string,icon?:string,iconKey?:object}} d
+   */
+  _nodeCard(rect, d) {
+    const { ctx } = this;
+    d = d || {};
+    const x = rect.x, y = rect.y, cw = rect.w, ch = rect.h;
+    const state = d.state || 'available';
+    const locked = state === 'locked';
+    const max = state === 'max';
+    this._cardBg(rect, {
+      tint: locked ? 'rgba(234,248,255,0.72)' : 'rgba(255,255,255,0.95)',
+      border: locked ? 'rgba(43,74,111,0.18)' : (max ? 'rgba(74,222,128,0.45)' : 'rgba(255,210,63,0.42)'),
+      r: 12,
+    });
+    // 左侧 4px 品质竖条
+    ctx.fillStyle = d.quality || UI_THEME.skyDeep;
+    ctx.fillRect(x, y, 4, ch);
+    const iconS = Math.min(40, ch - 40);
+    const ix = x + 12, iy = y + 12;
+    const drawn = d.iconKey ? this._artIcon(d.iconKey.icon, d.iconKey.name, ix + iconS / 2, iy + iconS / 2, iconS * 0.8) : false;
+    if (!drawn) {
+      this._cardBg({ x: ix, y: iy, w: iconS, h: iconS, r: 8 },
+        { tint: 'rgba(43,74,111,0.06)', flat: true });
+      if (d.icon) {
+        ctx.fillStyle = locked ? UI_THEME.navySoft : UI_THEME.navy;
+        ctx.font = `${Math.round(iconS * 0.42)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d.icon, ix + iconS / 2, iy + iconS / 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+      }
+    }
+    const tx = x + 60;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = locked ? UI_THEME.navySoft : UI_THEME.ink;
+    ctx.font = 'bold 12px sans-serif';
+    this._fitText(String(d.name || ''), tx, y + 22, Math.max(20, cw - 130), 12);
+    // 右上 Lv / MAX 角标
+    const badgeW = 30, badgeH = 16;
+    const bgx = x + cw - badgeW - 8, bgy = y + 8;
+    ctx.fillStyle = max ? 'rgba(74,222,128,0.22)' : 'rgba(43,74,111,0.10)';
+    if (typeof ctx.arcTo === 'function') {
+      ctx.save();
+      this._roundRectPath(bgx, bgy, badgeW, badgeH, 6);
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.fillRect(bgx, bgy, badgeW, badgeH);
+    }
+    ctx.fillStyle = max ? '#15803D' : UI_THEME.navy;
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(max ? 'MAX' : `Lv${d.level || 1}`, bgx + badgeW / 2, bgy + badgeH / 2 + 1);
+    ctx.textAlign = 'left';
+    // 底部花费条
+    const barW = cw - 24, barH = 22, barX = x + 12, barY = y + ch - barH - 10;
+    if (locked) {
+      this._cardBg({ x: barX, y: barY, w: barW, h: barH, r: 7 },
+        { tint: 'rgba(43,74,111,0.12)', flat: true });
+      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('前置未解锁', barX + barW / 2, barY + barH / 2 + 1);
+    } else if (max) {
+      this._cardBg({ x: barX, y: barY, w: barW, h: barH, r: 7 },
+        { tint: 'rgba(74,222,128,0.16)', flat: true });
+      ctx.fillStyle = '#15803D';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('已满级', barX + barW / 2, barY + barH / 2 + 1);
+    } else {
+      this._cardBg({ x: barX, y: barY, w: barW, h: barH, r: 7 },
+        { tint: UI_THEME.gold, flat: true });
+      ctx.fillStyle = '#4A2A00';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(d.cost || ''), barX + barW / 2, barY + barH / 2 + 1);
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  /**
+   * 通行证奖励格（方案 M2）：四态（locked/claimable/claimed/premiumLock），
+   * 可领态顶部 3px 明黄亮条，已领压暗显示「已领取」，高级锁走暗底 + 小锁文案。
+   * @param {{x,y,w,h}} rect
+   * @param {{label:string,state?:string}} d
+   */
+  _rewardCell(rect, d) {
+    const { ctx } = this;
+    d = d || {};
+    const x = rect.x, y = rect.y, cw = rect.w, ch = rect.h;
+    const state = d.state || 'locked';
+    const premium = state === 'premiumLock';
+    const claimed = state === 'claimed';
+    const claimable = state === 'claimable';
+    this._cardBg(rect, {
+      tint: premium ? 'rgba(43,74,111,0.16)' : (claimable ? 'rgba(255,255,255,0.97)' : 'rgba(234,248,255,0.80)'),
+      border: claimable ? 'rgba(255,210,63,0.55)' : 'rgba(43,74,111,0.14)',
+      flat: true,
+      r: 8,
+    });
+    if (claimable) {
+      ctx.fillStyle = UI_THEME.gold;
+      ctx.fillRect(x, y, cw, 3);
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = premium ? 'rgba(234,248,255,0.50)' : (claimed ? UI_THEME.navySoft : (claimable ? UI_THEME.ink : UI_THEME.navy));
+    ctx.font = `${claimable ? 'bold ' : ''}10px sans-serif`;
+    const text = premium ? '需高级' : (claimed ? '已领取' : (claimable ? `${d.label || ''} · 领` : String(d.label || '')));
+    this._fitText(text, x + cw / 2, y + ch / 2, cw - 6, 10, 'center');
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  /**
+   * 排行榜行（方案 M2）：名次槽 + 头像位 + 名称/副文 + 数值，前三名升格高亮。
+   * @param {{x,y,w,h}} rect
+   * @param {{rank:number,name:string,sub?:string,value:string,self?:boolean}} d
+   */
+  _rankRow(rect, d) {
+    const { ctx } = this;
+    d = d || {};
+    const x = rect.x, y = rect.y, cw = rect.w, ch = rect.h;
+    const rank = Math.max(1, Number(d.rank) || 1);
+    const self = !!d.self;
+    const top3 = rank <= 3;
+    this._cardBg(rect, {
+      tint: self ? 'rgba(255,210,63,0.14)' : 'rgba(255,255,255,0.92)',
+      border: self ? 'rgba(255,210,63,0.45)' : 'rgba(43,74,111,0.10)',
+      edge: self ? UI_THEME.gold : null,
+      edgeSide: 'left',
+      flat: true,
+      r: 10,
+    });
+    // 名次槽 32：前三金银铜圆角底，4 名后纯数字
+    const rankX = x + 8, rankW = 32, rankY = y + (ch - 26) / 2;
+    if (top3) {
+      const medal = ['#FFD23F', '#C7D2E0', '#E8A838'][rank - 1];
+      ctx.fillStyle = medal;
+      if (typeof ctx.arcTo === 'function') {
+        ctx.save();
+        this._roundRectPath(rankX, rankY, rankW, 26, 8);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.fillRect(rankX, rankY, rankW, 26);
+      }
+      ctx.fillStyle = '#4A2A00';
+    } else {
+      ctx.fillStyle = UI_THEME.navy;
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(String(rank), rankX + rankW / 2, rankY + 13);
+    // 头像位 36
+    const avS = Math.min(36, ch - 12);
+    const avX = x + 48, avY = y + (ch - avS) / 2;
+    ctx.fillStyle = 'rgba(43,74,111,0.08)';
+    if (typeof ctx.arcTo === 'function') {
+      ctx.save();
+      this._roundRectPath(avX, avY, avS, avS, 8);
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.fillRect(avX, avY, avS, avS);
+    }
+    const tx = avX + avS + 8;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = UI_THEME.ink;
+    ctx.font = 'bold 12px sans-serif';
+    this._fitText(self ? '我' : String(d.name || ''), tx, y + ch / 2 - 7, Math.max(20, cw - (tx - x) - 90), 12);
+    if (d.sub) {
+      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.font = '9px sans-serif';
+      this._fitText(String(d.sub), tx, y + ch / 2 + 9, Math.max(20, cw - (tx - x) - 90), 9);
+    }
+    ctx.textAlign = 'right';
+    ctx.fillStyle = UI_THEME.goldDeep;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(String(d.value || ''), x + cw - 12, y + ch / 2);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  /**
+   * 顶部数据条（方案 M2）：赛季名/标题 + 等级胶囊 + EXP 进度条，通行证与招募图鉴共用。
+   * @param {{x,y,w,h}} rect
+   * @param {{title:string,level?:string,ratio?:number,ratioText?:string,color?:string,onDark?:boolean}} d
+   */
+  _statStrip(rect, d) {
+    const { ctx } = this;
+    d = d || {};
+    const x = rect.x, y = rect.y, cw = rect.w, ch = rect.h;
+    this._cardBg(rect, { tint: 'rgba(255,255,255,0.94)', border: 'rgba(255,210,63,0.30)', r: 12 });
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = UI_THEME.ink;
+    ctx.font = 'bold 14px sans-serif';
+    this._fitText(String(d.title || ''), x + 16, y + ch / 2 - 8, cw - 120, 14);
+    if (d.level) {
+      const lx = x + cw - 76;
+      ctx.fillStyle = UI_THEME.gold;
+      if (typeof ctx.arcTo === 'function') {
+        ctx.save();
+        this._roundRectPath(lx, y + 10, 60, 22, 8);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.fillRect(lx, y + 10, 60, 22);
+      }
+      ctx.fillStyle = '#4A2A00';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(d.level), lx + 30, y + 21);
+      ctx.textAlign = 'left';
+    }
+    this._progressBar({ x: x + 16, y: y + ch - 22, w: cw - 32, h: 10 }, d.ratio || 0,
+      { color: d.color || UI_THEME.skyDeep });
+    if (d.ratioText) {
+      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(d.ratioText), x + cw / 2, y + ch - 17);
+      ctx.textAlign = 'left';
+    }
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  /**
+   * 文本按可用宽自动缩放字号，超出则截断（部件页「行内文字不溢出」硬规则的落地）。
+   * 只画文字，返回实际使用字号；measureText 不可用时按字宽估算。
+   */
+  _fitText(text, x, y, maxW, size, align) {
+    const { ctx } = this;
+    if (!text) return size;
+    let fs = size;
+    const measure = (t) => {
+      if (typeof ctx.measureText === 'function') {
+        ctx.save(); ctx.font = `${fs}px sans-serif`;
+        const mw = ctx.measureText(t); ctx.restore();
+        return mw && mw.width ? mw.width : String(t).length * fs;
+      }
+      return String(t).length * fs * 0.9;
+    };
+    while (fs > 8 && measure(text) > maxW) fs -= 1;
+    ctx.save();
+    ctx.font = `bold ${fs}px sans-serif`;
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'middle';
+    // 仍超宽则逐字截断加省略号
+    let out = String(text);
+    if (measure(out) > maxW && typeof ctx.measureText === 'function') {
+      while (out.length > 1 && measure(out + '…') > maxW) out = out.slice(0, -1);
+      out += '…';
+    }
+    ctx.fillText(out, x, y);
+    ctx.restore();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    return fs;
   }
 
   /**
