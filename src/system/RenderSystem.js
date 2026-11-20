@@ -244,6 +244,28 @@ export class RenderSystem {
   }
 
   /**
+   * 已占格阵营染色层：叠在石砖贴图之上，让敌我一眼可辨。
+   * 之前只把淡色画在贴图底下、被 alpha=0.92 的 hex_bright 盖住，蓝/红几乎看不出。
+   * 这里在贴图之上叠一层半透明饱和色（保留石砖纹理与侧面厚度）+ 加粗描边强化边界。
+   * @param {number} x 中心 x
+   * @param {number} y 中心 y
+   * @param {string} color 阵营色
+   */
+  _drawTileOwnerTint(x, y, color) {
+    const { ctx } = this;
+    ctx.save();
+    this.drawHexShape(x, y, HEX_SIZE);
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /**
    * 按钮按压缩放反馈：按下位置在按钮矩形内且 250ms 内 → 整体 0.95 缩放（松手回弹）
    * @param {{x:number,y:number,w:number,h:number}} rect - 按钮矩形
    * @param {{x:number,y:number,t:number}|null} press - gameState.press（按下位置与时间）
@@ -1868,6 +1890,8 @@ export class RenderSystem {
     ctx.lineWidth = 2;
     ctx.stroke();
     this._artHex(ART_HOOKS.hexBright, x, y);
+    // 贴图之上叠阵营染色：让蓝/红一眼可辨（贴图 alpha=0.92 会盖住底下的淡色）
+    this._drawTileOwnerTint(x, y, color);
 
     if (tile.building) {
       const building = tile.building;
@@ -1960,6 +1984,8 @@ export class RenderSystem {
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.stroke();
+      // 翻转后半段同步叠阵营染色，翻开瞬间蓝/红即清晰
+      this._drawTileOwnerTint(0, 0, color);
 
       // 翻转后半段（正面）：与未翻格同一套剪影语言，翻完在 drawFlippedTile 换成精细大图。
       // 随机格中途 roll 出结果时用结果剪影提前揭晓，未出结果保持问号。
