@@ -4598,14 +4598,14 @@ export class RenderSystem {
   }
 
   /**
-   * 统一风格的建筑类型剪影（未翻格的"预告"图标）。
-   * 视觉语言：圆润单色轮廓 + 底部落地投影 + 类型色点缀，风格统一、远小于翻开后的精细大图。
-   * 只表达"翻开会出什么类型"，不泄露随机格结果（随机格由调用方传 '?'）。
+   * 统一风格的建筑剪影（未翻格的"预告"图标）。
+   * 极简纯色单轮廓：只表达"翻开会出什么类型"，不带门/窗/旗等内部细节，
+   * 远小于翻开后的精细大图。随机结果由调用方传 '?'，绝不提前泄露。
    * @param {string} type 建筑类型 barracks/arrow_tower/gold_mine/headquarters/empty/?
    * @param {number} x 中心 x
    * @param {number} y 中心 y
    * @param {number} s 外框尺寸（正方形边长）
-   * @param {string} color 类型强调色
+   * @param {string} color 类型色（剪影唯一填充色）
    */
   _drawBuildingSilhouette(type, x, y, s, color) {
     const { ctx } = this;
@@ -4614,71 +4614,49 @@ export class RenderSystem {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(k, k);
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
 
-    // 统一落地投影（消除贴纸感）
-    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    // 极淡落地影：不增加细节，只让剪影不飘
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
     ctx.beginPath();
-    ctx.ellipse(0, 15, 13, 3.4, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 14, 11, 2.6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 统一主体：云白填充 + 类型色描边
-    ctx.fillStyle = '#EAF8FF';
-    ctx.strokeStyle = c;
-    ctx.lineWidth = 2;
-    const shape = (draw) => { ctx.beginPath(); draw(); ctx.fill(); ctx.stroke(); };
-
+    // 纯色单轮廓剪影
+    ctx.fillStyle = c;
+    ctx.beginPath();
     if (type === 'barracks') {
-      // 兵营：斜顶营房 + 小旗（不做尖塔城堡）
-      shape(() => {
-        ctx.moveTo(-13, -2); ctx.lineTo(0, -12); ctx.lineTo(13, -2);
-        ctx.lineTo(13, 13); ctx.lineTo(-13, 13); ctx.closePath();
-      });
-      ctx.fillStyle = c;
-      ctx.fillRect(-2.5, 3, 5, 10); // 门
-      ctx.beginPath(); ctx.moveTo(8, -6); ctx.lineTo(8, -14); ctx.lineTo(15, -11); ctx.closePath(); ctx.fill(); // 旗
+      // 兵营：斜顶小屋
+      ctx.moveTo(-12, -1); ctx.lineTo(0, -12); ctx.lineTo(12, -1);
+      ctx.lineTo(12, 13); ctx.lineTo(-12, 13);
     } else if (type === 'arrow_tower') {
-      // 箭塔：收分塔身 + 顶部垛口
-      shape(() => {
-        ctx.moveTo(-9, 13); ctx.lineTo(-7, -6); ctx.lineTo(7, -6); ctx.lineTo(9, 13); ctx.closePath();
-      });
-      ctx.fillStyle = c;
-      for (let i = -1; i <= 1; i++) ctx.fillRect(i * 6 - 2.2, -11, 4.4, 5);
-      ctx.fillRect(-2, 0, 4, 6); // 箭窗
+      // 箭塔：尖顶收分塔
+      ctx.moveTo(-8, 13); ctx.lineTo(-6, -3); ctx.lineTo(0, -12);
+      ctx.lineTo(6, -3); ctx.lineTo(8, 13);
     } else if (type === 'gold_mine') {
-      // 金矿：矿洞拱门 + 金块
-      shape(() => {
-        ctx.moveTo(-13, 13); ctx.lineTo(-13, -1);
-        ctx.arc(0, -1, 13, Math.PI, 0);
-        ctx.lineTo(13, 13); ctx.closePath();
-      });
-      ctx.fillStyle = '#2b3646';
-      ctx.beginPath();
-      ctx.moveTo(-8, 13); ctx.lineTo(-8, 1);
-      ctx.arc(0, 1, 8, Math.PI, 0);
-      ctx.lineTo(8, 13); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = c;
-      ctx.beginPath(); ctx.moveTo(0, 3); ctx.lineTo(5, 11); ctx.lineTo(-5, 11); ctx.closePath(); ctx.fill();
+      // 金矿：拱形矿洞
+      ctx.moveTo(-12, 13); ctx.lineTo(-12, 2);
+      ctx.arc(0, 2, 12, Math.PI, 0);
+      ctx.lineTo(12, 13);
     } else if (type === 'headquarters') {
-      // 主城：中央高塔 + 两侧翼楼 + 王旗（城堡仅用于 HQ）
-      shape(() => {
-        ctx.moveTo(-7, -5); ctx.lineTo(0, -12); ctx.lineTo(7, -5);
-        ctx.lineTo(7, 13); ctx.lineTo(-7, 13); ctx.closePath();
-      });
-      shape(() => { ctx.fillRect(-15, 2, 8, 11); });
-      shape(() => { ctx.fillRect(7, 2, 8, 11); });
-      ctx.fillStyle = c;
-      ctx.fillRect(-2.5, 6, 5, 7); // 城门
-      ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(0, -18); ctx.lineTo(8, -15); ctx.lineTo(0, -12); ctx.fill();
+      // 主城：三峰城堡轮廓
+      ctx.moveTo(-13, 13); ctx.lineTo(-13, -1); ctx.lineTo(-7, -1);
+      ctx.lineTo(-7, -7); ctx.lineTo(0, -13); ctx.lineTo(7, -7);
+      ctx.lineTo(7, -1); ctx.lineTo(13, -1); ctx.lineTo(13, 13);
     } else {
-      // 随机 / 空地：通用问号徽章
+      ctx.restore();
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(k, k);
       ctx.fillStyle = c;
       ctx.font = 'bold 27px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(type === 'empty' ? '·' : '?', 0, 0);
+      ctx.restore();
+      return;
     }
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
   }
 
