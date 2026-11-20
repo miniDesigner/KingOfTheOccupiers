@@ -48,9 +48,20 @@ const WATERMARK_BG_KEYS = new Set([
 // 必须绕过 WATERMARK_PREFIXES 拦截。每出一版正式图并覆盖 assets/ 就往这里加一项。
 // 注意：这些是「立体石砖」——自带六边形轮廓 + 厚度侧面，_artHex/_art 需走整图不裁剪 + 尺寸标定。
 const SOLID_BOARD_KEYS = new Set(['tiles/hex_bright']);
-// 立体石砖顶面占图比例（紧裁后实测 306/312 ≈ 0.98）：绘制尺寸 = 2×HEX_SIZE/该值，顶面正好填满格子。
-// 图片预处理（tools/remove-board-bg.py）已把石砖紧裁到近满幅，故此值接近 1，溢出极小。
-const SOLID_BOARD_BODY_RATIO = 0.98;
+// 立体石砖顶面在 312×312 图内的实测占比（OLD 饱满石砖）：
+//   顶面 x≈30..280（宽 250 → 0.802）、y≈30..180（高 150 → 0.481）、中心 y≈105（0.337）。
+// 形状铁律：顶面是横扁六边形(≈1.67)，格子是竖长尖顶六边形(≈0.87)，
+//   若按 X/Y 分别拉到格子宽高，Y 向拉伸是 X 的 1.97 倍 → 石砖被拽成竖长盾牌形（变形）。
+//   因此必须【等比】缩放：只按顶面宽度标定单一 draw，高度自然跟随，绝不单独拉伸 Y。
+// 取顶面宽 = √3×HEX_SIZE × 1.08（略微过宽，让相邻石砖横向自然咬合、侧面/投影向下溢出格子）。
+const SOLID_BOARD_FACE_W_RATIO = 0.802;
+const SOLID_BOARD_FACE_CY_RATIO = 0.337;
+const SOLID_BOARD_FACE_OVERSCAN = 1.08;
+/** 立体石砖等比绘制矩形：draw 单一值，顶面横向≈格子宽、侧面/投影溢出格子下方 */
+function solidBoardPlacement(x, y) {
+  const draw = (Math.sqrt(3) * HEX_SIZE * SOLID_BOARD_FACE_OVERSCAN) / SOLID_BOARD_FACE_W_RATIO;
+  return { drawW: draw, drawH: draw, ox: x - draw / 2, oy: y - draw * SOLID_BOARD_FACE_CY_RATIO };
+}
 function isWatermarkArtKey(key) {
   if (typeof key !== 'string') return false;
   if (SOLID_BOARD_KEYS.has(key)) return false;
@@ -1251,11 +1262,11 @@ export class RenderSystem {
   _artHex(key, x, y, alpha) {
     const { ctx } = this;
     if (!this._artEnabled || !ArtSystem.available) return false;
-    // 正式立体石砖（如 hex_bright）：自带六边形轮廓 + 厚度侧面，不能再裁剪，
-    // 否则立体侧面被切掉退回平面。整图居中贴 + 尺寸按主体占比放大，顶面正好填满格子。
+    // 正式立体石砖（如 hex_bright）：自带六边形轮廓 + 厚度侧面，不能再裁剪。
+    // 等比缩放贴入格子（solidBoardPlacement），保持顶面横扁比例不形变。
     if (SOLID_BOARD_KEYS.has(key)) {
-      const draw = (HEX_SIZE * 2) / SOLID_BOARD_BODY_RATIO;
-      return this._art(key, x - draw / 2, y - draw / 2, draw, draw,
+      const p = solidBoardPlacement(x, y);
+      return this._art(key, p.ox, p.oy, p.drawW, p.drawH,
         { alpha: alpha === undefined ? 0.92 : alpha });
     }
     ctx.save();
@@ -1914,8 +1925,12 @@ export class RenderSystem {
     // 翻格过渡帧：正面亮格 / 背面可翻格贴图，跟随同一 scaleY 变换
     // 正式立体石砖需按主体占比放大（同 _artHex），否则翻格瞬间石砖缩水。
     const flipKey = showFront ? 'tiles/hex_bright' : 'tiles/hex_flippable';
-    const flipDraw = SOLID_BOARD_KEYS.has(flipKey) ? (HEX_SIZE * 2) / SOLID_BOARD_BODY_RATIO : HEX_SIZE * 2;
-    this._art(flipKey, -flipDraw / 2, -flipDraw / 2, flipDraw, flipDraw, { alpha: 0.22 });
+    if (SOLID_BOARD_KEYS.has(flipKey)) {
+      const p = solidBoardPlacement(0, 0);
+      this._art(flipKey, p.ox, p.oy, p.drawW, p.drawH, { alpha: 0.22 });
+    } else {
+      this._art(flipKey, -HEX_SIZE, -HEX_SIZE, HEX_SIZE * 2, HEX_SIZE * 2, { alpha: 0.22 });
+    }
 
     this.drawHexShape(0, 0, HEX_SIZE);
 
