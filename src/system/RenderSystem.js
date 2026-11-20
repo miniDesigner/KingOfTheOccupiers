@@ -1755,52 +1755,50 @@ export class RenderSystem {
   }
 
   /**
-   * 绘制障碍格(山脉/河流)：深色岩石风格，始终可见、不可翻转、不可通行
+   * 绘制障碍格(山脉/河流)：与已翻格共用 45° 立体石砖管线，但用无阵营的冷板岩灰
+   * 表达"不可占据/不可通行"；中心是极简纯色双峰山剪影（与建筑剪影同一视觉语言）。
    */
   drawObstacleTile(tile, x, y) {
     const { ctx } = this;
-    // 障碍格也铺石砖底（压暗 + 冷灰），保持整盘地块统一；山形剪影叠在其上
-    this._drawBrickCell(x, y, '#202a38', 0.34);
+    const OBSTACLE_COLOR = '#64748b'; // 冷板岩灰：既非玩家蓝，也非敌人红
+    // 与已翻格一致的石砖管线：深色兜底 → 立体石砖 → 顶面染色 + 粗描边
     this.drawHexShape(x, y, HEX_SIZE);
-    ctx.strokeStyle = '#5a6b7f';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    this._artHex(ART_HOOKS.mountain, x, y);
-    // 障碍氛围：按格坐标稳定分配河流 / 废墟贴图（此前只登记未实贴）
-    const _terr = Math.abs((tile.q || 0) * 3 + (tile.r || 0)) % 3;
-    if (_terr === 1) this._artFx('river', x - 20, y - 20, 40, 40, 0.22);
-    else if (_terr === 2) this._artFx('ruin', x - 20, y - 20, 40, 40, 0.22);
+    ctx.fillStyle = '#334155';
+    ctx.fill();
+    this._artHex(ART_HOOKS.hexBright, x, y);
+    // 复用染色层（内部 globalAlpha=0.45 + 3px 描边），让障碍与已占格同一套顶面表现
+    this._drawTileOwnerTint(x, y, OBSTACLE_COLOR);
+    // 极简双峰山剪影：单 path 纯色，无雪顶/纹理等内部细节
+    this._drawObstacleSilhouette(x, y - 4, 40, '#e2e8f0');
+  }
 
-    // 岩石纹理：双峰剪影
-    ctx.fillStyle = '#4a5a6e';
+  /**
+   * 障碍山形剪影：极简纯色单轮廓（与建筑剪影同语言），落地影消除贴纸感。
+   * @param {number} x 中心 x
+   * @param {number} y 中心 y
+   * @param {number} s 外框尺寸（正方形边长）
+   * @param {string} color 剪影色
+   */
+  _drawObstacleSilhouette(x, y, s, color) {
+    const { ctx } = this;
+    const k = s / 40; // 与建筑剪影同基准 40×40
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(k, k);
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
     ctx.beginPath();
-    ctx.moveTo(x - HEX_SIZE * 0.55, y + HEX_SIZE * 0.38);
-    ctx.lineTo(x - HEX_SIZE * 0.18, y - HEX_SIZE * 0.32);
-    ctx.lineTo(x + HEX_SIZE * 0.2, y + HEX_SIZE * 0.38);
+    ctx.ellipse(0, 13, 15, 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(-17, 12);
+    ctx.lineTo(-7, -11);
+    ctx.lineTo(0, -1);
+    ctx.lineTo(8, -15);
+    ctx.lineTo(17, 12);
     ctx.closePath();
     ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x - HEX_SIZE * 0.02, y + HEX_SIZE * 0.38);
-    ctx.lineTo(x + HEX_SIZE * 0.34, y - HEX_SIZE * 0.16);
-    ctx.lineTo(x + HEX_SIZE * 0.58, y + HEX_SIZE * 0.38);
-    ctx.closePath();
-    ctx.fill();
-
-    // 雪顶高光
-    ctx.fillStyle = '#94a3b8';
-    ctx.beginPath();
-    ctx.moveTo(x - HEX_SIZE * 0.18, y - HEX_SIZE * 0.32);
-    ctx.lineTo(x - HEX_SIZE * 0.08, y - HEX_SIZE * 0.14);
-    ctx.lineTo(x - HEX_SIZE * 0.28, y - HEX_SIZE * 0.14);
-    ctx.closePath();
-    ctx.fill();
-
-    // 「不可通行」小字
-    ctx.fillStyle = '#8b9bb0';
-    ctx.font = '9px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('阻挡', x, y + HEX_SIZE * 0.62);
+    ctx.restore();
   }
 
   /**
