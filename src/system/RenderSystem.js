@@ -44,8 +44,16 @@ const WATERMARK_BG_KEYS = new Set([
   'bg/lobby_fg', 'bg/gacha_circle', 'bg/bp_banner', 'bg/match_panel',
   'bg/panel_bg', 'bg/subpage_bg',
 ]);
+// 已替换为正式美术的棋盘素材：这些 key 虽属 tiles/ 前缀，但不再是带水印占位图，
+// 必须绕过 WATERMARK_PREFIXES 拦截。每出一版正式图并覆盖 assets/ 就往这里加一项。
+// 注意：这些是「立体石砖」——自带六边形轮廓 + 厚度侧面，_artHex/_art 需走整图不裁剪 + 尺寸标定。
+const SOLID_BOARD_KEYS = new Set(['tiles/hex_bright']);
+// 立体石砖顶面占图比例（紧裁后实测 306/312 ≈ 0.98）：绘制尺寸 = 2×HEX_SIZE/该值，顶面正好填满格子。
+// 图片预处理（tools/remove-board-bg.py）已把石砖紧裁到近满幅，故此值接近 1，溢出极小。
+const SOLID_BOARD_BODY_RATIO = 0.98;
 function isWatermarkArtKey(key) {
   if (typeof key !== 'string') return false;
+  if (SOLID_BOARD_KEYS.has(key)) return false;
   for (let i = 0; i < WATERMARK_PREFIXES.length; i++) {
     if (key.indexOf(WATERMARK_PREFIXES[i]) === 0) return true;
   }
@@ -1243,6 +1251,13 @@ export class RenderSystem {
   _artHex(key, x, y, alpha) {
     const { ctx } = this;
     if (!this._artEnabled || !ArtSystem.available) return false;
+    // 正式立体石砖（如 hex_bright）：自带六边形轮廓 + 厚度侧面，不能再裁剪，
+    // 否则立体侧面被切掉退回平面。整图居中贴 + 尺寸按主体占比放大，顶面正好填满格子。
+    if (SOLID_BOARD_KEYS.has(key)) {
+      const draw = (HEX_SIZE * 2) / SOLID_BOARD_BODY_RATIO;
+      return this._art(key, x - draw / 2, y - draw / 2, draw, draw,
+        { alpha: alpha === undefined ? 0.92 : alpha });
+    }
     ctx.save();
     this.drawHexShape(x, y, HEX_SIZE);
     ctx.clip();
@@ -1897,8 +1912,10 @@ export class RenderSystem {
     ctx.scale(1, Math.max(0.05, scaleY));
 
     // 翻格过渡帧：正面亮格 / 背面可翻格贴图，跟随同一 scaleY 变换
-    this._art(showFront ? 'tiles/hex_bright' : 'tiles/hex_flippable',
-      -HEX_SIZE, -HEX_SIZE, HEX_SIZE * 2, HEX_SIZE * 2, { alpha: 0.22 });
+    // 正式立体石砖需按主体占比放大（同 _artHex），否则翻格瞬间石砖缩水。
+    const flipKey = showFront ? 'tiles/hex_bright' : 'tiles/hex_flippable';
+    const flipDraw = SOLID_BOARD_KEYS.has(flipKey) ? (HEX_SIZE * 2) / SOLID_BOARD_BODY_RATIO : HEX_SIZE * 2;
+    this._art(flipKey, -flipDraw / 2, -flipDraw / 2, flipDraw, flipDraw, { alpha: 0.22 });
 
     this.drawHexShape(0, 0, HEX_SIZE);
 
