@@ -34,6 +34,7 @@ await ConfigLoader.init();
 syncConfigToStatics();
 const { HexMap } = await import('../src/world/HexMap.js');
 const { BOARD_LAYOUTS } = await import('../src/data/levels.js');
+const { HEX_FLATTEN } = await import('../src/world/HexMath.js');
 
 // ============ 1. 格子尺寸 ============
 console.log('=== 测试1: hex.size = 52 ===');
@@ -49,9 +50,10 @@ console.log('=== 测试2: 11×7 棋盘像素尺寸 ===');
   assert(layout.rows === 11 && layout.cols === 7, `全部布局行列 = 11×7（77 格，改造前 20×11=220 格）`);
   const b = map.getBounds();
   console.log(`  棋盘: ${b.width.toFixed(0)} × ${b.height.toFixed(0)} px（@size=${map.size}）`);
-  // 理论值: 宽 (7-0.5)·√3·52 + 2·52 ≈ 689；高 (11-1)·1.5·52 + 2·52 ≈ 884
+  // 理论值(2.5D 纵向压缩 HEX_FLATTEN)：宽不变 ≈689；高 (11-1)·1.5·52·k + 2·52 ≈ 514
   assert(Math.abs(b.width - 689) < 12, `棋盘宽 ≈ 689（实际 ${b.width.toFixed(0)}）`);
-  assert(Math.abs(b.height - 884) < 12, `棋盘高 ≈ 884（实际 ${b.height.toFixed(0)}）`);
+  const expectH = (layout.rows - 1) * 1.5 * HEX_SIZE * HEX_FLATTEN + 2 * HEX_SIZE;
+  assert(Math.abs(b.height - expectH) < 12, `棋盘高 ≈ ${expectH.toFixed(0)}（2.5D 压缩，实际 ${b.height.toFixed(0)}）`);
   assert(map.getAllTiles().length === 77, `总格数 = 77（实际 ${map.getAllTiles().length}）`);
 }
 

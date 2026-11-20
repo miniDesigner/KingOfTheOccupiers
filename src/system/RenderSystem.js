@@ -6,7 +6,7 @@
 
 import { HEX_SIZE, PLAYER_COLORS, TILE_BACK_COLOR, TILE_BACK_BORDER,
   BUILDING_CONFIG, getFlipCost, FLIP_ANIMATION_DURATION, RANDOM_REVEAL_DURATION } from '../config.js';
-import { hexToPixel, pixelToHex } from '../world/HexMath.js';
+import { hexToPixel, pixelToHex, HEX_FLATTEN } from '../world/HexMath.js';
 import { RACES } from '../data/races.js';
 import ConfigLoader from '../data/ConfigLoader.js';
 import DeploymentSystem, { UPGRADE_COST_GROWTH, MAX_UNIT_LEVEL } from '../meta/DeploymentSystem.js';
@@ -49,18 +49,21 @@ const WATERMARK_BG_KEYS = new Set([
 // 注意：这些是「立体石砖」——自带六边形轮廓 + 厚度侧面，_artHex/_art 需走整图不裁剪 + 尺寸标定。
 const SOLID_BOARD_KEYS = new Set(['tiles/hex_bright']);
 // 立体石砖顶面在 312×312 图内的实测占比（OLD 饱满石砖）：
-//   顶面 x≈30..280（宽 250 → 0.802）、y≈30..180（高 150 → 0.481）、中心 y≈105（0.337）。
-// 形状铁律：顶面是横扁六边形(≈1.67)，格子是竖长尖顶六边形(≈0.87)，
-//   若按 X/Y 分别拉到格子宽高，Y 向拉伸是 X 的 1.97 倍 → 石砖被拽成竖长盾牌形（变形）。
-//   因此必须【等比】缩放：只按顶面宽度标定单一 draw，高度自然跟随，绝不单独拉伸 Y。
-// 取顶面宽 = √3×HEX_SIZE × 1.08（略微过宽，让相邻石砖横向自然咬合、侧面/投影向下溢出格子）。
+//   顶面 x≈30..280（宽 250 → 0.802）、y≈28..180（高 152 → 0.487）、中心 y≈104（0.333）。
+// 2026-11-20：顶面是「尖顶六边形被压扁」(宽高比 1.645)，网格已用 HEX_FLATTEN=0.526
+//   把尖顶格子压成同样横扁(宽 √3·size≈90、高 2·size·k≈54.7、比 1.647)。
+//   两者比例一致 → 按宽/按高标定得到同一 draw，等比、不变形、严丝合缝，侧面/投影向下溢出格子。
 const SOLID_BOARD_FACE_W_RATIO = 0.802;
-const SOLID_BOARD_FACE_CY_RATIO = 0.337;
-const SOLID_BOARD_FACE_OVERSCAN = 1.08;
-/** 立体石砖等比绘制矩形：draw 单一值，顶面横向≈格子宽、侧面/投影溢出格子下方 */
+const SOLID_BOARD_FACE_H_RATIO = 0.487;
+const SOLID_BOARD_FACE_CY_RATIO = 0.333;
+const SOLID_BOARD_FACE_OVERSCAN = 1.02; // 轻微过扫，消除六边形描边抗锯齿缝
+/** 立体石砖绘制矩形：顶面精确填满格子，侧面/投影溢出格子下方（文明7式叠压） */
 function solidBoardPlacement(x, y) {
-  const draw = (Math.sqrt(3) * HEX_SIZE * SOLID_BOARD_FACE_OVERSCAN) / SOLID_BOARD_FACE_W_RATIO;
-  return { drawW: draw, drawH: draw, ox: x - draw / 2, oy: y - draw * SOLID_BOARD_FACE_CY_RATIO };
+  const cellW = Math.sqrt(3) * HEX_SIZE;
+  const cellH = 2 * HEX_SIZE * HEX_FLATTEN;
+  const drawW = (cellW / SOLID_BOARD_FACE_W_RATIO) * SOLID_BOARD_FACE_OVERSCAN;
+  const drawH = (cellH / SOLID_BOARD_FACE_H_RATIO) * SOLID_BOARD_FACE_OVERSCAN;
+  return { drawW, drawH, ox: x - drawW / 2, oy: y - drawH * SOLID_BOARD_FACE_CY_RATIO };
 }
 function isWatermarkArtKey(key) {
   if (typeof key !== 'string') return false;
@@ -1718,9 +1721,9 @@ export class RenderSystem {
    */
   drawObstacleTile(tile, x, y) {
     const { ctx } = this;
+    // 障碍格也铺石砖底（压暗 + 冷灰），保持整盘地块统一；山形剪影叠在其上
+    this._drawBrickCell(x, y, '#202a38', 0.34);
     this.drawHexShape(x, y, HEX_SIZE);
-    ctx.fillStyle = '#2f3b4a';
-    ctx.fill();
     ctx.strokeStyle = '#5a6b7f';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -1765,21 +1768,32 @@ export class RenderSystem {
   /**
    * 绘制暗色背面格子
    */
-  drawHiddenTile(x, y) {
+  /**
+   * 立体石砖底：整盘统一用 OLD 石砖，靠底色/透明度区分状态（文明7式满屏地块）。
+   * @param {number} x 世界坐标
+   * @param {number} y 世界坐标
+   * @param {string} baseColor 暗底色（未探索更深、可翻更亮）
+   * @param {number} brickAlpha 石砖叠加透明度（越小越暗）
+   */
+  _drawBrickCell(x, y, baseColor, brickAlpha) {
     const { ctx } = this;
     this.drawHexShape(x, y, HEX_SIZE);
-    ctx.fillStyle = TILE_BACK_COLOR;
+    ctx.fillStyle = baseColor;
     ctx.fill();
+    this._artHex(ART_HOOKS.hexBright, x, y, brickAlpha);
+  }
+
+  drawHiddenTile(x, y) {
+    const { ctx } = this;
+    // 未探索格：深色石砖（满铺但压暗），保留暗格线框与问号，一眼可辨未翻状态
+    this._drawBrickCell(x, y, '#1c2431', 0.42);
+    this.drawHexShape(x, y, HEX_SIZE);
     ctx.strokeStyle = TILE_BACK_BORDER;
     ctx.lineWidth = 1;
     ctx.stroke();
-    this._artHex(ART_HOOKS.hexDark, x, y);
-    // 空格底纹（hexEmpty hook，此前只登记未实贴）
-    this._artFx('hexEmpty', x - 18, y - 18, 36, 36, 0.16);
-
-    // 背面图案
-    ctx.fillStyle = '#4a5568';
-    ctx.font = '12px sans-serif';
+    // 背面图案（石砖压暗后原 #4a5568 与底同色不可见，提亮到可读的冷灰）
+    ctx.fillStyle = '#8b9bb0';
+    ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('?', x, y);
@@ -1792,13 +1806,12 @@ export class RenderSystem {
     const { ctx } = this;
     const preset = tile.presetBuilding;
 
+    // 可翻格：中亮石砖（满铺但比已占领暗），保留建筑/消耗信息
+    this._drawBrickCell(x, y, '#2b3646', 0.72);
     this.drawHexShape(x, y, HEX_SIZE);
-    ctx.fillStyle = '#3a4556';
-    ctx.fill();
     ctx.strokeStyle = '#718096';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    this._artHex(ART_HOOKS.hexFlippable, x, y);
 
     // 显示预设建筑信息
     ctx.textAlign = 'center';
@@ -4630,7 +4643,8 @@ export class RenderSystem {
     for (let i = 0; i < 6; i++) {
       const angle = Math.PI / 3 * i + Math.PI / 6;
       const x = cx + size * Math.cos(angle);
-      const y = cy + size * Math.sin(angle);
+      // 2.5D 微俯视：与 HexMath.hexToPixel 共用 HEX_FLATTEN 压缩 Y，轮廓与命中网格严格一致。
+      const y = cy + size * HEX_FLATTEN * Math.sin(angle);
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }

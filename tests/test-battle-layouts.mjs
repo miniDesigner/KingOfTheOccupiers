@@ -66,7 +66,7 @@ const { BOARD_LAYOUTS, buildBattleConfig, getRandomBattleConfig, baseCoords } = 
 const { HexMap } = await import('../src/world/HexMap.js');
 const { PathfindingSystem } = await import('../src/system/PathfindingSystem.js');
 const { BuildSystem } = await import('../src/system/BuildSystem.js');
-const { colRowToAxial, axialToColRow, generateRectArea, tileKey } = await import('../src/world/HexMath.js');
+const { colRowToAxial, axialToColRow, generateRectArea, tileKey, HEX_FLATTEN } = await import('../src/world/HexMath.js');
 
 // 初始化配置（PRESET_DISTRIBUTION 等静态量依赖 ConfigLoader.init + sync）
 const ConfigLoader = (await import('../src/data/ConfigLoader.js')).default;
@@ -131,7 +131,7 @@ console.log('=== 测试2: 行列矩形生成 + 六边形交错 ===');
   const y3 = map.hexToPixel(...Object.values(colRowToAxial(0, 3))).y;
   assert(Math.abs(x0 - 0) < 1e-9 && Math.abs(x2 - 0) < 1e-9, '偶数行首列 x=0（无错位）');
   assert(Math.abs(x1 - Math.sqrt(3) / 2 * s) < 1e-9, '奇数行首列 x=√3/2·size（右错半格，交错排列）');
-  assert(Math.abs(y3 - 4.5 * s) < 1e-9 && y0 === 0, '行间距 1.5·size，row0 在最上');
+  assert(Math.abs(y3 - 4.5 * s * HEX_FLATTEN) < 1e-9 && y0 === 0, '行间距 1.5·size·HEX_FLATTEN（2.5D 压缩），row0 在最上');
   assert(map.getAllTiles().length === cols * rows, `HexMap.generate(cols, rows) 总格数一致`);
 }
 

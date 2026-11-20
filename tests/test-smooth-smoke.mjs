@@ -25,7 +25,7 @@ syncConfigToStatics();
 const { HexMap } = await import('../src/world/HexMap.js');
 const { MarchGroup } = await import('../src/entity/MarchGroup.js');
 const { PathfindingSystem } = await import('../src/system/PathfindingSystem.js');
-const { hexToPixel } = await import('../src/world/HexMath.js');
+const { hexToPixel, HEX_FLATTEN } = await import('../src/world/HexMath.js');
 
 let pass = 0, fail = 0;
 function check(name, cond, detail = '') {
@@ -65,8 +65,12 @@ function runScenario(name, map, start, goal, expectCornered) {
 
   if (obstacleCenters.length > 0) {
     const minClear = minClearance(smooth, obstacleCenters);
-    const inradius = map.size * Math.sqrt(3) / 2; // 障碍六边形内切圆半径
-    console.log(`  最小净空: ${minClear.toFixed(1)}px (内切圆半径 ${inradius.toFixed(1)}px, size=${map.size})`);
+    // 2.5D 纵向压缩后，尖顶六边形最窄的是斜边：inradius = (√3/2)·size·k / √(0.75+0.25k²)
+    //    (k=1 时退化为正六边形 √3/2·size)。水平竖边距离 √3/2·size 不变，取较小者作保守阈值。
+    const k = HEX_FLATTEN;
+    const slantInradius = (Math.sqrt(3) / 2) * map.size * k / Math.sqrt(0.75 + 0.25 * k * k);
+    const inradius = Math.min(map.size * Math.sqrt(3) / 2, slantInradius);
+    console.log(`  最小净空: ${minClear.toFixed(1)}px (压缩后内切半径 ${inradius.toFixed(1)}px, HEX_FLATTEN=${k}, size=${map.size})`);
     check('路径不压进障碍图形', minClear >= inradius - 0.5, `minClear=${minClear.toFixed(2)}`);
   }
 

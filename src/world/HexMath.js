@@ -1,7 +1,15 @@
 /**
  * 六边形数学工具
  * 尖顶六边形 (pointy-top hex)，轴向坐标 (q, r) 系统
+ *
+ * 2026-11-20：OLD 立体石砖顶面是「尖顶六边形被压扁」——顶部尖、中部最宽，
+ *   宽高比 250:150≈1.667；而正尖顶格子宽高比 √3:2≈0.866（竖长）。
+ *   要让顶面精确填满格子且等比不变形，只把网格 Y 方向压缩 k 倍，使格子宽高比变 1.667：
+ *   k = √3·FACE_H /(2·FACE_W) ≈ 0.526。这是文明7式 2.5D 微俯视投影。
+ *   轴向(q,r)、六邻居、行列映射、寻路/占领全部不变，仅坐标投影与绘制轮廓共用 HEX_FLATTEN，
+ *   命中(逆变换)自动严格一致。
  */
+export const HEX_FLATTEN = 0.526;
 
 // 六个邻居方向
 export const HEX_DIRECTIONS = [
@@ -18,16 +26,17 @@ export const HEX_DIRECTIONS = [
  */
 export function hexToPixel(q, r, size) {
   const x = size * Math.sqrt(3) * (q + r / 2);
-  const y = size * 1.5 * r;
+  const y = size * 1.5 * r * HEX_FLATTEN;
   return { x, y };
 }
 
 /**
- * 像素坐标 → 轴向坐标
+ * 像素坐标 → 轴向坐标（尖顶 + 纵向压缩逆变换，与 hexToPixel 严格互逆）
  */
 export function pixelToHex(x, y, size) {
-  const q = (Math.sqrt(3) / 3 * x - 1 / 3 * y) / size;
-  const r = (2 / 3 * y) / size;
+  const yUn = y / HEX_FLATTEN;
+  const q = (Math.sqrt(3) / 3 * x - 1 / 3 * yUn) / size;
+  const r = (2 / 3 * yUn) / size;
   return hexRound(q, r);
 }
 
