@@ -12,7 +12,7 @@
   python3 tools/remove-board-bg.py <输入图> <输出图> <目标边长>
 """
 import sys
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageFilter
 
 
 def remove_board_bg(img, size):
@@ -45,92 +45,13 @@ def remove_board_bg(img, size):
             if cyan or dark_gray:
                 dst[x, y] = (r, g, b, 255)
 
-    # 色相阈值会在石砖暗侧面留下大量针孔（青度不足的像素被误判为背景），
-    # 且针孔常与外轮廓相连，flood fill 区分不了。石砖主体是凸六边形，
-    # 改为对主体像素求凸包并填充，得到干净实心的轮廓；下方投影单独保留半透明。
-    raw_a = out.getchannel('A')
-    a = ImageChops.lighter(raw_a, raw_a.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.MinFilter(7)))
-    ap = a.load()
+    # 轻微羽化边缘（保实心，只柔化最外 1px 抗锯齿）
+    a = out.getchannel('A').filter(ImageFilter.GaussianBlur(0.6))
+    out.putalpha(a)
 
-    def avg_color(xa, xb, ya, yb, fallback):
-        sr = sg = sb = n = 0
-        for yy in range(max(0, ya), min(h, yb)):
-            for xx in range(max(0, xa), min(w, xb)):
-                if ap[xx, yy] > 200:
-                    r, g, b, _ = dst[xx, yy]
-                    sr += r; sg += g; sb += b; n += 1
-        return (sr // n, sg // n, sb // n) if n else fallback
-
-    side = avg_color(x0, x1 + 1, max(0, y1 - 40), min(h, y1 + 10), (70, 100, 115))
-    face = avg_color(x0 + 40, x1 - 40, y0 + 40, max(y0 + 41, y1 - 80), (118, 140, 152))
-    side_line = max(0, y1 - 60)
-
-    def convex_hull(points):
-        pts = sorted(set(points))
-        if len(pts) < 3:
-            return pts
-        def cross(o, a, b):
-            return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
-        lower = []
-        for p in pts:
-            while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
-                lower.pop()
-            lower.append(p)
-        upper = []
-        for p in reversed(pts):
-            while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
-                upper.pop()
-            upper.append(p)
-        return lower[:-1] + upper[:-1]
-
-    # 主体：青色 bbox 上沿到 y1+8，排除下方独立投影
-    body_pts = [(x, y) for y in range(y0, min(h, y1 + 9), 3)
-                for x in range(x0, x1 + 1, 3) if ap[x, y] > 0]
-    hull = convex_hull(body_pts)
-    hull_mask = Image.new('L', (w, h), 0)
-    ImageDraw.Draw(hull_mask).polygon(hull, fill=255)
-    hm = hull_mask.load()
-    side_line = max(0, y1 - 60)
-    for y in range(h):
-        for x in range(w):
-            inside = hm[x, y] > 0
-            opacity = ap[x, y]
-            if inside and opacity == 0:
-                # 轮廓内的针孔：补成对应区域材质色，保留原有纹理像素不动
-                fill = side if y >= side_line else face
-                dst[x, y] = (fill[0], fill[1], fill[2], 255)
-            elif inside and y >= side_line:
-                # 侧面上残留的浅灰/白色背景像素（阈值误判为不透明）：换成侧面暗青灰
-                r, g, b, _ = dst[x, y]
-                if r > 125 and abs(b - r) < 18 and abs(g - r) < 18:
-                    dst[x, y] = (side[0], side[1], side[2], 255)
-            elif not inside and opacity > 0 and y < y1 + 9:
-                # 轮廓外的零散噪点：直接剔除
-                dst[x, y] = (0, 0, 0, 0)
-
-    # 侧面的半透明白边在深底棋盘上会变成灰白噪点：轮廓内统一实心，轮廓外统一清空
-    for y in range(side_line, h):
-        for x in range(x0, x1 + 1):
-            r, g, b, _ = dst[x, y]
-            if hm[x, y]:
-                dst[x, y] = (r, g, b, 255)
-            else:
-                dst[x, y] = (r, g, b, 0)
-    a = out.getchannel('A')
-
-    # 投影：独立连通域下移一点、降低 alpha，避免贴纸感
-    shadow_pts = [(x, y) for y in range(min(h, y1 + 10), min(h, y1 + 100), 3)
-                  for x in range(x0, x1 + 1, 3) if ap[x, y] > 0]
-    if len(shadow_pts) >= 3:
-        sh = convex_hull(shadow_pts)
-        sd = ImageDraw.Draw(out)
-        sd.polygon([(x, min(h - 1, y + 6)) for x, y in sh], fill=(*side, 96))
-        a = out.getchannel('A')
-
-    out.putalpha(a.filter(ImageFilter.GaussianBlur(0.6)))
-
-    # 内容 bbox 紧裁：保持与已落地渲染标定（顶面宽 98.5% / 高 80% / 中心 y=40%）一致，
-    # 不改动裁切与等比缩放逻辑，只修 alpha 空洞。
+    # 内容 bbox 紧裁：立体石砖要按 1:1 尺寸(2×HEX_SIZE)贴合格子，
+    # 不能留大边距（否则渲染时放大溢出到相邻格，侧面被切碎）。
+    # 保留极小 padding 容纳厚度侧面的抗锯齿，缩放后主体占画布约 94%。
     bbox = out.getbbox()
     if bbox:
         p = max(2, size // 150)

@@ -48,16 +48,9 @@ const WATERMARK_BG_KEYS = new Set([
 // 必须绕过 WATERMARK_PREFIXES 拦截。每出一版正式图并覆盖 assets/ 就往这里加一项。
 // 注意：这些是「立体石砖」——自带六边形轮廓 + 厚度侧面，_artHex/_art 需走整图不裁剪 + 尺寸标定。
 const SOLID_BOARD_KEYS = new Set(['tiles/hex_bright']);
-// 立体石砖是 2.5D 微俯视素材：顶面被纵向压缩，不能用正方形 1:1 贴到 2D 尖顶六边形格子上。
-// 顶面在 312×312 图中的实测范围：x≈2..309（宽 98.5%）、y≈0..250（高 80%），中心 y≈40%。
-// 因此按 X/Y 分别标定，让「顶面」而不是整张图精确填满 HEX_SIZE 对应的格位；
-// 厚度侧面与投影自然向格位下方溢出，形成 Civ 式立体叠压。
-const SOLID_BOARD_FACE_W_RATIO = 0.985;
-const SOLID_BOARD_FACE_H_RATIO = 0.80;
-const SOLID_BOARD_FACE_CY_RATIO = 0.40;
-// 石砖顶面在素材边缘有一圈斜切高光，按理论格位贴仍会露出暗底缝；
-// 轻微过扫让相邻石砖外缘自然咬合（内容层已在两遍绘制中置顶，不会盖住单位/文字）。
-const SOLID_BOARD_OVERSCAN = 1.06;
+// 立体石砖顶面占图比例（紧裁后实测 306/312 ≈ 0.98）：绘制尺寸 = 2×HEX_SIZE/该值，顶面正好填满格子。
+// 图片预处理（tools/remove-board-bg.py）已把石砖紧裁到近满幅，故此值接近 1，溢出极小。
+const SOLID_BOARD_BODY_RATIO = 0.98;
 function isWatermarkArtKey(key) {
   if (typeof key !== 'string') return false;
   if (SOLID_BOARD_KEYS.has(key)) return false;
@@ -1258,12 +1251,11 @@ export class RenderSystem {
   _artHex(key, x, y, alpha) {
     const { ctx } = this;
     if (!this._artEnabled || !ArtSystem.available) return false;
-    // 正式立体石砖（如 hex_bright）：自带六边形轮廓 + 厚度侧面，不能再裁剪。
-    // 2.5D 顶面纵向压缩，按 X/Y 分别标定到 2D 格位；侧面/投影自然向下溢出。
+    // 正式立体石砖（如 hex_bright）：自带六边形轮廓 + 厚度侧面，不能再裁剪，
+    // 否则立体侧面被切掉退回平面。整图居中贴 + 尺寸按主体占比放大，顶面正好填满格子。
     if (SOLID_BOARD_KEYS.has(key)) {
-      const drawW = (Math.sqrt(3) * HEX_SIZE * SOLID_BOARD_OVERSCAN) / SOLID_BOARD_FACE_W_RATIO;
-      const drawH = (2 * HEX_SIZE * SOLID_BOARD_OVERSCAN) / SOLID_BOARD_FACE_H_RATIO;
-      return this._art(key, x - drawW / 2, y - drawH * SOLID_BOARD_FACE_CY_RATIO, drawW, drawH,
+      const draw = (HEX_SIZE * 2) / SOLID_BOARD_BODY_RATIO;
+      return this._art(key, x - draw / 2, y - draw / 2, draw, draw,
         { alpha: alpha === undefined ? 0.92 : alpha });
     }
     ctx.save();
@@ -1649,62 +1641,42 @@ export class RenderSystem {
   }
 
   /**
-   * 单格分层绘制：phase='body' 画底图/石砖，phase='content' 画内容。
-   * 供 drawMap 两遍扫描复用；默认 'all' 保持旧调用（含测试）一次画完的行为。
-   */
-  _drawTilePhase(item, map, gameState, phase) {
-    const { tile, x, y, isAdjacent } = item;
-    const doBody = phase === 'body' || phase === 'all';
-    const doContent = phase === 'content' || phase === 'all';
-    if (tile.isObstacle) {
-      this.drawObstacleTile(tile, x, y, phase);
-    } else if (tile.isFlipping > 0 && tile.isFlipping < 1) {
-      this.drawFlippingTile(tile, x, y, map, gameState, phase);
-    } else if (tile.isFlipped) {
-      this.drawFlippedTile(tile, x, y, map, gameState, phase);
-    } else if (isAdjacent) {
-      this.drawAdjacentTile(tile, x, y, map, phase);
-    } else if (doBody) {
-      this.drawHiddenTile(x, y);
-    }
-    // 未翻转暗格的 '?' 属于内容层，在 pass2 单独画（避免被相邻石砖侧面压住）
-    if (doContent && !tile.isObstacle && !(tile.isFlipping > 0 && tile.isFlipping < 1)
-      && !tile.isFlipped && !isAdjacent) {
-      const { ctx } = this;
-      ctx.fillStyle = '#4a5568';
-      ctx.font = '12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', x, y);
-    }
-  }
-
-  /**
    * 绘制地图
    */
   drawMap(map, players, gameState) {
     const { ctx } = this;
     const player = players.find(p => p.id === gameState.localPlayerId); // 本地玩家
 
-    // 图层规则（2026-11-20）：立体石砖的厚度侧面会向下溢出到相邻格。
-    // 若沿用「逐格画完底图+内容」的顺序，后画的石砖会盖住上一格的单位/建筑/数字。
-    // 改为两遍绘制：先画完所有格子底图（含石砖），再统一画所有格子内容，
-    // 行军队伍/特效在 drawMap 之后绘制，始终位于石砖之上。
-    const visible = [];
     for (const tile of map.getAllTiles()) {
       const { x, y: worldY } = map.hexToPixel(tile.q, tile.r);
-      if (!this.isVisible(x, worldY)) continue;
-      const isAdjacent = player && tile.isAdjacentTo(map, player.id);
-      visible.push({ tile, x, y: worldY, isAdjacent });
-    }
+      const y = worldY;
 
-    // Pass 1 — 所有格子底图（暗格 / 可翻格 / 石砖 / 障碍 / 翻转动画底）
-    for (const item of visible) {
-      this._drawTilePhase(item, map, gameState, 'body');
-    }
-    // Pass 2 — 所有格子内容（建筑、Lv、HP、进度、问号、阻挡字）
-    for (const item of visible) {
-      this._drawTilePhase(item, map, gameState, 'content');
+      // 视口裁剪
+      if (!this.isVisible(x, y)) continue;
+
+      // 障碍格(山脉/河流)：始终可见，不参与翻转
+      if (tile.isObstacle) {
+        this.drawObstacleTile(tile, x, y);
+        continue;
+      }
+
+      // 判断格子可见性
+      const isAdjacent = player && tile.isAdjacentTo(map, player.id);
+      const isOwned = tile.owner > 0 && tile.isFlipped;
+
+      if (tile.isFlipping > 0 && tile.isFlipping < 1) {
+        // 翻转动画中
+        this.drawFlippingTile(tile, x, y, map, gameState);
+      } else if (tile.isFlipped) {
+        // 已翻转格子
+        this.drawFlippedTile(tile, x, y, map, gameState);
+      } else if (isAdjacent) {
+        // 相邻可见的未翻转格子
+        this.drawAdjacentTile(tile, x, y, map);
+      } else {
+        // 不可见的未翻转格子(暗色背面)
+        this.drawHiddenTile(x, y);
+      }
     }
 
     // 进攻方向指示：敌方大本营目标标记（玩家永远在下方向上进攻）
@@ -1733,55 +1705,50 @@ export class RenderSystem {
   /**
    * 绘制障碍格(山脉/河流)：深色岩石风格，始终可见、不可翻转、不可通行
    */
-  drawObstacleTile(tile, x, y, phase = 'all') {
+  drawObstacleTile(tile, x, y) {
     const { ctx } = this;
-    const doBody = phase === 'body' || phase === 'all';
-    if (doBody) {
-      this.drawHexShape(x, y, HEX_SIZE);
-      ctx.fillStyle = '#2f3b4a';
-      ctx.fill();
-      ctx.strokeStyle = '#5a6b7f';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      this._artHex(ART_HOOKS.mountain, x, y);
-      // 障碍氛围：按格坐标稳定分配河流 / 废墟贴图（此前只登记未实贴）
-      const _terr = Math.abs((tile.q || 0) * 3 + (tile.r || 0)) % 3;
-      if (_terr === 1) this._artFx('river', x - 20, y - 20, 40, 40, 0.22);
-      else if (_terr === 2) this._artFx('ruin', x - 20, y - 20, 40, 40, 0.22);
+    this.drawHexShape(x, y, HEX_SIZE);
+    ctx.fillStyle = '#2f3b4a';
+    ctx.fill();
+    ctx.strokeStyle = '#5a6b7f';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    this._artHex(ART_HOOKS.mountain, x, y);
+    // 障碍氛围：按格坐标稳定分配河流 / 废墟贴图（此前只登记未实贴）
+    const _terr = Math.abs((tile.q || 0) * 3 + (tile.r || 0)) % 3;
+    if (_terr === 1) this._artFx('river', x - 20, y - 20, 40, 40, 0.22);
+    else if (_terr === 2) this._artFx('ruin', x - 20, y - 20, 40, 40, 0.22);
 
-      // 岩石纹理：双峰剪影
-      ctx.fillStyle = '#4a5a6e';
-      ctx.beginPath();
-      ctx.moveTo(x - HEX_SIZE * 0.55, y + HEX_SIZE * 0.38);
-      ctx.lineTo(x - HEX_SIZE * 0.18, y - HEX_SIZE * 0.32);
-      ctx.lineTo(x + HEX_SIZE * 0.2, y + HEX_SIZE * 0.38);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(x - HEX_SIZE * 0.02, y + HEX_SIZE * 0.38);
-      ctx.lineTo(x + HEX_SIZE * 0.34, y - HEX_SIZE * 0.16);
-      ctx.lineTo(x + HEX_SIZE * 0.58, y + HEX_SIZE * 0.38);
-      ctx.closePath();
-      ctx.fill();
+    // 岩石纹理：双峰剪影
+    ctx.fillStyle = '#4a5a6e';
+    ctx.beginPath();
+    ctx.moveTo(x - HEX_SIZE * 0.55, y + HEX_SIZE * 0.38);
+    ctx.lineTo(x - HEX_SIZE * 0.18, y - HEX_SIZE * 0.32);
+    ctx.lineTo(x + HEX_SIZE * 0.2, y + HEX_SIZE * 0.38);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - HEX_SIZE * 0.02, y + HEX_SIZE * 0.38);
+    ctx.lineTo(x + HEX_SIZE * 0.34, y - HEX_SIZE * 0.16);
+    ctx.lineTo(x + HEX_SIZE * 0.58, y + HEX_SIZE * 0.38);
+    ctx.closePath();
+    ctx.fill();
 
-      // 雪顶高光
-      ctx.fillStyle = '#94a3b8';
-      ctx.beginPath();
-      ctx.moveTo(x - HEX_SIZE * 0.18, y - HEX_SIZE * 0.32);
-      ctx.lineTo(x - HEX_SIZE * 0.08, y - HEX_SIZE * 0.14);
-      ctx.lineTo(x - HEX_SIZE * 0.28, y - HEX_SIZE * 0.14);
-      ctx.closePath();
-      ctx.fill();
-    }
+    // 雪顶高光
+    ctx.fillStyle = '#94a3b8';
+    ctx.beginPath();
+    ctx.moveTo(x - HEX_SIZE * 0.18, y - HEX_SIZE * 0.32);
+    ctx.lineTo(x - HEX_SIZE * 0.08, y - HEX_SIZE * 0.14);
+    ctx.lineTo(x - HEX_SIZE * 0.28, y - HEX_SIZE * 0.14);
+    ctx.closePath();
+    ctx.fill();
 
-    if (phase === 'content' || phase === 'all') {
-      // 「不可通行」小字
-      ctx.fillStyle = '#8b9bb0';
-      ctx.font = '9px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('阻挡', x, y + HEX_SIZE * 0.62);
-    }
+    // 「不可通行」小字
+    ctx.fillStyle = '#8b9bb0';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('阻挡', x, y + HEX_SIZE * 0.62);
   }
 
   /**
@@ -1798,59 +1765,61 @@ export class RenderSystem {
     this._artHex(ART_HOOKS.hexDark, x, y);
     // 空格底纹（hexEmpty hook，此前只登记未实贴）
     this._artFx('hexEmpty', x - 18, y - 18, 36, 36, 0.16);
-    // '?' 由 drawMap 的内容层统一绘制，避免被相邻石砖侧面覆盖。
+
+    // 背面图案
+    ctx.fillStyle = '#4a5568';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', x, y);
   }
 
   /**
    * 绘制相邻可见格子(显示预设建筑和消耗)
    */
-  drawAdjacentTile(tile, x, y, map, phase = 'all') {
+  drawAdjacentTile(tile, x, y, map) {
     const { ctx } = this;
     const preset = tile.presetBuilding;
 
-    if (phase === 'body' || phase === 'all') {
-      this.drawHexShape(x, y, HEX_SIZE);
-      ctx.fillStyle = '#3a4556';
-      ctx.fill();
-      ctx.strokeStyle = '#718096';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      this._artHex(ART_HOOKS.hexFlippable, x, y);
-    }
+    this.drawHexShape(x, y, HEX_SIZE);
+    ctx.fillStyle = '#3a4556';
+    ctx.fill();
+    ctx.strokeStyle = '#718096';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    this._artHex(ART_HOOKS.hexFlippable, x, y);
 
-    if (phase === 'content' || phase === 'all') {
-      // 显示预设建筑信息
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+    // 显示预设建筑信息
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-      if (preset) {
-        if (preset.type === 'random') {
-          // 随机格
-          ctx.fillStyle = '#fbbf24';
-          ctx.font = 'bold 14px sans-serif';
-          ctx.fillText('?', x, y - 6);
-          ctx.fillStyle = '#fbbf24';
-          ctx.font = '10px sans-serif';
-          ctx.fillText('5金', x, y + 10);
-        } else {
-          const config = BUILDING_CONFIG[preset.type];
-          const levelConfig = config ? (config[preset.level || 1] || config[1]) : null;
+    if (preset) {
+      if (preset.type === 'random') {
+        // 随机格
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText('?', x, y - 6);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('5金', x, y + 10);
+      } else {
+        const config = BUILDING_CONFIG[preset.type];
+        const levelConfig = config ? (config[preset.level || 1] || config[1]) : null;
 
-          // 建筑图标(文字)
-          const icon = this.getBuildingIcon(preset.type, preset.level);
-          ctx.fillStyle = levelConfig ? levelConfig.color : '#888';
-          ctx.font = 'bold 15px sans-serif';
-          // 贴图优先：BL-01/02 建筑图标（312×312 @3x → 104×104 逻辑）
-          if (!this._artBuilding(preset.type, preset.level, false, x, y - 6, 34)) {
-            ctx.fillText(icon, x, y - 6);
-          }
-
-          // 消耗
-          const cost = getFlipCost(preset);
-          ctx.fillStyle = cost <= 30 ? '#4ade80' : cost <= 60 ? '#fbbf24' : '#f87171';
-          ctx.font = '10px sans-serif';
-          ctx.fillText(cost + '金', x, y + 10);
+        // 建筑图标(文字)
+        const icon = this.getBuildingIcon(preset.type, preset.level);
+        ctx.fillStyle = levelConfig ? levelConfig.color : '#888';
+        ctx.font = 'bold 15px sans-serif';
+        // 贴图优先：BL-01/02 建筑图标（312×312 @3x → 104×104 逻辑）
+        if (!this._artBuilding(preset.type, preset.level, false, x, y - 6, 34)) {
+          ctx.fillText(icon, x, y - 6);
         }
+
+        // 消耗
+        const cost = getFlipCost(preset);
+        ctx.fillStyle = cost <= 30 ? '#4ade80' : cost <= 60 ? '#fbbf24' : '#f87171';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(cost + '金', x, y + 10);
       }
     }
   }
@@ -1858,36 +1827,19 @@ export class RenderSystem {
   /**
    * 绘制已翻转格子
    */
-  drawFlippedTile(tile, x, y, map, gameState, phase = 'all') {
+  drawFlippedTile(tile, x, y, map, gameState) {
     const { ctx } = this;
     const color = this._ownerColor(tile.owner, gameState);
 
-    if (phase === 'body' || phase === 'all') {
-      // 底色只做兜底：正式石砖贴图自带轮廓，不能再在下方描 owner 边，
-      // 否则描边会从石砖厚度侧面下缘漏出红/蓝锯齿光边。
-      this.drawHexShape(x, y, HEX_SIZE);
-      ctx.fillStyle = this.lightenColor(color, 0.15);
-      ctx.fill();
-      const stoneDrawn = this._artHex(ART_HOOKS.hexBright, x, y);
-      if (stoneDrawn) {
-        // 归属色只做顶面中心柔光：渐变在到达斜边前就归零，杜绝硬边描线从石砖边缘漏出。
-        const grad = ctx.createRadialGradient(x, y, HEX_SIZE * 0.12, x, y, HEX_SIZE * 0.70);
-        grad.addColorStop(0, hexToRgba(color, 0.26));
-        grad.addColorStop(1, hexToRgba(color, 0));
-        ctx.save();
-        this.drawHexShape(x, y, HEX_SIZE * 0.94);
-        ctx.clip();
-        ctx.fillStyle = grad;
-        ctx.fillRect(x - HEX_SIZE, y - HEX_SIZE, HEX_SIZE * 2, HEX_SIZE * 2);
-        ctx.restore();
-      } else {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    }
+    // 格子底色
+    this.drawHexShape(x, y, HEX_SIZE);
+    ctx.fillStyle = this.lightenColor(color, 0.15);
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    this._artHex(ART_HOOKS.hexBright, x, y);
 
-    if (phase === 'content' || phase === 'all') {
     if (tile.building) {
       const building = tile.building;
 
@@ -1942,81 +1894,71 @@ export class RenderSystem {
       ctx.textBaseline = 'middle';
       ctx.fillText('~', x, y);
     }
-    }
   }
 
   /**
    * 绘制翻转动画中的格子
    */
-  drawFlippingTile(tile, x, y, map, gameState, phase = 'all') {
+  drawFlippingTile(tile, x, y, map, gameState) {
     const { ctx } = this;
     const progress = tile.isFlipping;
 
     // 简单的Y轴压缩翻转效果
     const scaleY = Math.abs(Math.cos(progress * Math.PI));
     const showFront = progress > 0.5;
-    const doBody = phase === 'body' || phase === 'all';
-    const doContent = phase === 'content' || phase === 'all';
-    if (!doBody && !doContent) return;
 
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(1, Math.max(0.05, scaleY));
 
-    if (doBody) {
-      // 翻格过渡帧：正面亮格 / 背面可翻格贴图，跟随同一 scaleY 变换。
-      // 立体石砖顶面按 X/Y 分别标定，与静止格完全同一锚点，避免翻格瞬间跳位/缩水。
-      const flipKey = showFront ? 'tiles/hex_bright' : 'tiles/hex_flippable';
-      let flipW = HEX_SIZE * 2;
-      let flipH = HEX_SIZE * 2;
-      let flipY = -HEX_SIZE;
-      if (SOLID_BOARD_KEYS.has(flipKey)) {
-        flipW = (Math.sqrt(3) * HEX_SIZE * SOLID_BOARD_OVERSCAN) / SOLID_BOARD_FACE_W_RATIO;
-        flipH = (2 * HEX_SIZE * SOLID_BOARD_OVERSCAN) / SOLID_BOARD_FACE_H_RATIO;
-        flipY = -flipH * SOLID_BOARD_FACE_CY_RATIO;
-      }
-      this._art(flipKey, -flipW / 2, flipY, flipW, flipH, { alpha: 0.22 });
+    // 翻格过渡帧：正面亮格 / 背面可翻格贴图，跟随同一 scaleY 变换
+    // 正式立体石砖需按主体占比放大（同 _artHex），否则翻格瞬间石砖缩水。
+    const flipKey = showFront ? 'tiles/hex_bright' : 'tiles/hex_flippable';
+    const flipDraw = SOLID_BOARD_KEYS.has(flipKey) ? (HEX_SIZE * 2) / SOLID_BOARD_BODY_RATIO : HEX_SIZE * 2;
+    this._art(flipKey, -flipDraw / 2, -flipDraw / 2, flipDraw, flipDraw, { alpha: 0.22 });
 
-      this.drawHexShape(0, 0, HEX_SIZE);
-      if (showFront) {
-        const color = this._ownerColor(tile.owner, gameState);
-        ctx.fillStyle = this.lightenColor(color, 0.15);
-        ctx.fill();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = TILE_BACK_COLOR;
-        ctx.fill();
-        ctx.strokeStyle = TILE_BACK_BORDER;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
+    this.drawHexShape(0, 0, HEX_SIZE);
 
-    if (doContent && showFront && tile.presetBuilding) {
+    if (showFront) {
+      // 翻转后半段：显示正面
+      const color = this._ownerColor(tile.owner, gameState);
+      ctx.fillStyle = this.lightenColor(color, 0.15);
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
       // 显示建筑图标(如果是随机格，显示"?")
-      if (tile.presetBuilding.type === 'random' && !tile.isRandomResult) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('?', 0, 0);
-      } else if (tile.isRandomResult) {
-        const icon = this.getBuildingIcon(tile.isRandomResult.type, tile.isRandomResult.level);
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 15px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(icon, 0, 0);
-      } else {
-        const icon = this.getBuildingIcon(tile.presetBuilding.type, tile.presetBuilding.level);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 15px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(icon, 0, 0);
+      if (tile.presetBuilding) {
+        if (tile.presetBuilding.type === 'random' && !tile.isRandomResult) {
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('?', 0, 0);
+        } else if (tile.isRandomResult) {
+          const icon = this.getBuildingIcon(tile.isRandomResult.type, tile.isRandomResult.level);
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 15px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(icon, 0, 0);
+        } else {
+          const icon = this.getBuildingIcon(tile.presetBuilding.type, tile.presetBuilding.level);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 15px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(icon, 0, 0);
+        }
       }
+    } else {
+      // 翻转前半段：显示背面
+      ctx.fillStyle = TILE_BACK_COLOR;
+      ctx.fill();
+      ctx.strokeStyle = TILE_BACK_BORDER;
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
 
     ctx.restore();
