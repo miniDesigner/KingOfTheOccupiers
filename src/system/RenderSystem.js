@@ -1825,33 +1825,22 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
 
     if (preset) {
+      // 未翻格：统一风格剪影"预告"翻开后的建筑类型；精细大图只在翻开后(drawFlippedTile)出现。
+      // 随机格翻前不知结果 → 用通用问号，保持惊喜感。
       if (preset.type === 'random') {
-        // 随机格
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('?', x, y - 6);
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = '10px sans-serif';
-        ctx.fillText('5金', x, y + 10);
+        this._drawBuildingSilhouette('?', x, y - 8, 34, '#fbbf24');
       } else {
         const config = BUILDING_CONFIG[preset.type];
         const levelConfig = config ? (config[preset.level || 1] || config[1]) : null;
-
-        // 建筑图标(文字)
-        const icon = this.getBuildingIcon(preset.type, preset.level);
-        ctx.fillStyle = levelConfig ? levelConfig.color : '#888';
-        ctx.font = 'bold 15px sans-serif';
-        // 贴图优先：BL-01/02 建筑图标（312×312 @3x → 104×104 逻辑）
-        if (!this._artBuilding(preset.type, preset.level, false, x, y - 6, 34)) {
-          ctx.fillText(icon, x, y - 6);
-        }
-
-        // 消耗
-        const cost = getFlipCost(preset);
-        ctx.fillStyle = cost <= 30 ? '#4ade80' : cost <= 60 ? '#fbbf24' : '#f87171';
-        ctx.font = '10px sans-serif';
-        ctx.fillText(cost + '金', x, y + 10);
+        const typeColor = levelConfig ? this.lightenColor(levelConfig.color, 0.42) : '#cbd5e1';
+        this._drawBuildingSilhouette(preset.type, x, y - 8, 36, typeColor);
       }
+
+      // 消耗（沿用原口径：随机格固定 5 金，其余按配置）
+      const cost = preset.type === 'random' ? 5 : getFlipCost(preset);
+      ctx.fillStyle = cost <= 30 ? '#4ade80' : cost <= 60 ? '#fbbf24' : '#f87171';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(cost + '金', x, y + 12);
     }
   }
 
@@ -1963,29 +1952,23 @@ export class RenderSystem {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // 显示建筑图标(如果是随机格，显示"?")
+      // 翻转后半段（正面）：与未翻格同一套剪影语言，翻完在 drawFlippedTile 换成精细大图。
+      // 随机格中途 roll 出结果时用结果剪影提前揭晓，未出结果保持问号。
       if (tile.presetBuilding) {
-        if (tile.presetBuilding.type === 'random' && !tile.isRandomResult) {
-          ctx.fillStyle = '#fbbf24';
-          ctx.font = 'bold 16px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('?', 0, 0);
-        } else if (tile.isRandomResult) {
-          const icon = this.getBuildingIcon(tile.isRandomResult.type, tile.isRandomResult.level);
-          ctx.fillStyle = '#fbbf24';
-          ctx.font = 'bold 15px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(icon, 0, 0);
-        } else {
-          const icon = this.getBuildingIcon(tile.presetBuilding.type, tile.presetBuilding.level);
-          ctx.fillStyle = '#fff';
-          ctx.font = 'bold 15px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(icon, 0, 0);
+        let silType = '?';
+        let silColor = '#fbbf24';
+        if (tile.presetBuilding.type !== 'random' && tile.presetBuilding.type !== 'empty') {
+          silType = tile.presetBuilding.type;
+          const cfg = BUILDING_CONFIG[silType];
+          const lc = cfg ? (cfg[tile.presetBuilding.level || 1] || cfg[1]) : null;
+          silColor = lc ? this.lightenColor(lc.color, 0.42) : '#cbd5e1';
+        } else if (tile.isRandomResult && tile.isRandomResult.type !== 'empty') {
+          silType = tile.isRandomResult.type;
+          const cfg = BUILDING_CONFIG[silType];
+          const lc = cfg ? (cfg[tile.isRandomResult.level || 1] || cfg[1]) : null;
+          silColor = lc ? this.lightenColor(lc.color, 0.42) : '#cbd5e1';
         }
+        this._drawBuildingSilhouette(silType, 0, -6, 36, silColor);
       }
     } else {
       // 翻转前半段：显示背面
@@ -4612,6 +4595,91 @@ export class RenderSystem {
       else ctx.lineTo(x, y);
     }
     ctx.closePath();
+  }
+
+  /**
+   * 统一风格的建筑类型剪影（未翻格的"预告"图标）。
+   * 视觉语言：圆润单色轮廓 + 底部落地投影 + 类型色点缀，风格统一、远小于翻开后的精细大图。
+   * 只表达"翻开会出什么类型"，不泄露随机格结果（随机格由调用方传 '?'）。
+   * @param {string} type 建筑类型 barracks/arrow_tower/gold_mine/headquarters/empty/?
+   * @param {number} x 中心 x
+   * @param {number} y 中心 y
+   * @param {number} s 外框尺寸（正方形边长）
+   * @param {string} color 类型强调色
+   */
+  _drawBuildingSilhouette(type, x, y, s, color) {
+    const { ctx } = this;
+    const c = color || '#cbd5e1';
+    const k = s / 40; // 设计基准 40×40
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(k, k);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    // 统一落地投影（消除贴纸感）
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(0, 15, 13, 3.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 统一主体：云白填充 + 类型色描边
+    ctx.fillStyle = '#EAF8FF';
+    ctx.strokeStyle = c;
+    ctx.lineWidth = 2;
+    const shape = (draw) => { ctx.beginPath(); draw(); ctx.fill(); ctx.stroke(); };
+
+    if (type === 'barracks') {
+      // 兵营：斜顶营房 + 小旗（不做尖塔城堡）
+      shape(() => {
+        ctx.moveTo(-13, -2); ctx.lineTo(0, -12); ctx.lineTo(13, -2);
+        ctx.lineTo(13, 13); ctx.lineTo(-13, 13); ctx.closePath();
+      });
+      ctx.fillStyle = c;
+      ctx.fillRect(-2.5, 3, 5, 10); // 门
+      ctx.beginPath(); ctx.moveTo(8, -6); ctx.lineTo(8, -14); ctx.lineTo(15, -11); ctx.closePath(); ctx.fill(); // 旗
+    } else if (type === 'arrow_tower') {
+      // 箭塔：收分塔身 + 顶部垛口
+      shape(() => {
+        ctx.moveTo(-9, 13); ctx.lineTo(-7, -6); ctx.lineTo(7, -6); ctx.lineTo(9, 13); ctx.closePath();
+      });
+      ctx.fillStyle = c;
+      for (let i = -1; i <= 1; i++) ctx.fillRect(i * 6 - 2.2, -11, 4.4, 5);
+      ctx.fillRect(-2, 0, 4, 6); // 箭窗
+    } else if (type === 'gold_mine') {
+      // 金矿：矿洞拱门 + 金块
+      shape(() => {
+        ctx.moveTo(-13, 13); ctx.lineTo(-13, -1);
+        ctx.arc(0, -1, 13, Math.PI, 0);
+        ctx.lineTo(13, 13); ctx.closePath();
+      });
+      ctx.fillStyle = '#2b3646';
+      ctx.beginPath();
+      ctx.moveTo(-8, 13); ctx.lineTo(-8, 1);
+      ctx.arc(0, 1, 8, Math.PI, 0);
+      ctx.lineTo(8, 13); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = c;
+      ctx.beginPath(); ctx.moveTo(0, 3); ctx.lineTo(5, 11); ctx.lineTo(-5, 11); ctx.closePath(); ctx.fill();
+    } else if (type === 'headquarters') {
+      // 主城：中央高塔 + 两侧翼楼 + 王旗（城堡仅用于 HQ）
+      shape(() => {
+        ctx.moveTo(-7, -5); ctx.lineTo(0, -12); ctx.lineTo(7, -5);
+        ctx.lineTo(7, 13); ctx.lineTo(-7, 13); ctx.closePath();
+      });
+      shape(() => { ctx.fillRect(-15, 2, 8, 11); });
+      shape(() => { ctx.fillRect(7, 2, 8, 11); });
+      ctx.fillStyle = c;
+      ctx.fillRect(-2.5, 6, 5, 7); // 城门
+      ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(0, -18); ctx.lineTo(8, -15); ctx.lineTo(0, -12); ctx.fill();
+    } else {
+      // 随机 / 空地：通用问号徽章
+      ctx.fillStyle = c;
+      ctx.font = 'bold 27px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(type === 'empty' ? '·' : '?', 0, 0);
+    }
+    ctx.restore();
   }
 
   getBuildingIcon(type, level) {
