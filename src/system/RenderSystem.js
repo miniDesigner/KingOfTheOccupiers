@@ -235,6 +235,15 @@ export class RenderSystem {
   }
 
   /**
+   * 格子阵营色（敌我二值）：本地玩家=蓝，其余敌人=红。
+   * 与 _ownerColor 区分——后者保留各玩家自身颜色，用于行军队伍等单位；
+   * 棋盘格只按敌我读，避免多人对战出现橙/紫格破坏辨识。
+   */
+  _tileOwnerColor(ownerId, gameState) {
+    return ownerId === (gameState ? gameState.localPlayerId : null) ? '#3b82f6' : '#ef4444';
+  }
+
+  /**
    * 按钮按压缩放反馈：按下位置在按钮矩形内且 250ms 内 → 整体 0.95 缩放（松手回弹）
    * @param {{x:number,y:number,w:number,h:number}} rect - 按钮矩形
    * @param {{x:number,y:number,t:number}|null} press - gameState.press（按下位置与时间）
@@ -1849,7 +1858,7 @@ export class RenderSystem {
    */
   drawFlippedTile(tile, x, y, map, gameState) {
     const { ctx } = this;
-    const color = this._ownerColor(tile.owner, gameState);
+    const color = this._tileOwnerColor(tile.owner, gameState);
 
     // 格子底色
     this.drawHexShape(x, y, HEX_SIZE);
@@ -1945,7 +1954,7 @@ export class RenderSystem {
 
     if (showFront) {
       // 翻转后半段：显示正面
-      const color = this._ownerColor(tile.owner, gameState);
+      const color = this._tileOwnerColor(tile.owner, gameState);
       ctx.fillStyle = this.lightenColor(color, 0.15);
       ctx.fill();
       ctx.strokeStyle = color;
@@ -5896,7 +5905,7 @@ export class RenderSystem {
 
     ctx.fillStyle = 'rgba(6,14,28,0.62)';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
-    this._modalShell(panel, null, '异步对战匹配', { showClose: false });
+    this._modalShell(panel, null, '对战匹配', { showClose: false });
 
     // 检索动效：明黄旋转环 + 正式战斗图标（无贴图环境退化为 ⚔ 字符）
     const cx = this.screenWidth / 2;
