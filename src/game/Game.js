@@ -1617,15 +1617,8 @@ export class Game {
       return;
     }
 
-    // 设置按钮(右上角) → 打开设置窗口（仅战斗中；暂停按钮已移除，⚙ 独占右上角）
-    const muteBtnX = this.screenWidth - 95;
-    const muteBtnY = 5;
-    if (screenX >= muteBtnX && screenX <= muteBtnX + 40 &&
-        screenY >= muteBtnY && screenY <= muteBtnY + 35) {
-      this.audioManager.playButtonClick();
-      this._settingsOpen = true;
-      return;
-    }
+    // 战斗界面无设置按钮（2026-11-20 用户要求移除）；设置入口仅保留在大厅右上角。
+    // 本区域点击直接落到地图翻译逻辑，不再吞掉。
 
     // 屏幕坐标 → 世界坐标 → 六边形坐标
     const world = this.inputSystem.screenToWorld(screenX, screenY);
@@ -3023,17 +3016,9 @@ export class Game {
     const L = this._tutorialLayout();
     if (!L) return false;
     if (this._isInTutorialHole(x, y)) return false;
-    // 战斗第 4 步：文案是「相邻的格子都可以翻转」，地图是多点容错的，
-    // 只拦右上角 ⚙ 设置按钮（与 handlePlayingClick 同源坐标），地图点击全部放行。
-    if (L.step === 3) {
-      const mX = this.screenWidth - 95;
-      const mY = 5;
-      if (x >= mX && x <= mX + 40 && y >= mY && y <= mY + 35) {
-        this.showToast('\u5f15\u5bfc\u4e2d\uff1a\u5148\u70b9\u51fb\u9ad8\u4eae\u7684\u683c\u5b50', 1.2);
-        return true;
-      }
-      return false;
-    }
+    // 战斗第 4 步：文案是「相邻的格子都可以翻转」，地图是多点容错的，点击全部放行。
+    // 原右上设置按钮拦截随按钮一并移除（2026-11-20）。
+    if (L.step === 3) return false;
     this.showToast('\u8bf7\u70b9\u51fb\u9ad8\u4eae\u7684\u533a\u57df\u7ee7\u7eed\u5f15\u5bfc', 1.2);
     return true;
   }

@@ -165,12 +165,11 @@ check('检索成功 → playing', game.screenState === 'playing', `实际=${game
 check('gameStatus=playing', game.gameStatus === 'playing');
 for (let i = 0; i < 6; i++) await renderFrame(game, `战斗帧${i}`);
 
-// ========== T6 战斗内右上角设置（暂停按钮已移除，⚙ 独占右上角） ==========
-console.log('\n[6] 战斗内右上角设置');
-click(game, W - 75, 22); // 右上角 ⚙ 设置
-check('点击右上角 → 打开设置窗口', game._settingsOpen === true);
-game._settingsOpen = false;
-await renderFrame(game, '设置窗口关闭后');
+// ========== T6 战斗内右上角已无设置按钮（2026-11-20 移除） ==========
+console.log('\n[6] 战斗内右上角无设置按钮');
+click(game, W - 75, 22); // 原 ⚙ 位置
+check('点击右上角 → 不再打开设置窗口', game._settingsOpen !== true);
+await renderFrame(game, '右上角点击后');
 
 // ========== T7 战斗翻格 ==========
 console.log('\n[7] 战斗中翻格');

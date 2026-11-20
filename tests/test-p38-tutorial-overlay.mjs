@@ -247,13 +247,13 @@ console.log('=== 测试6: 布阵界面引导点击不可穿透（deploy 独立�
     '点击高亮的返回按钮 → 正常返回大厅并推进引导');
 }
 
-console.log('=== 测试7: 战斗中 step3 地图放行、设置按钮拦截 ===');
+console.log('=== 测试7: 战斗中 step3 地图放行、右上角已无设置按钮 ===');
 {
   resetTutorial(3, 'playing');
   game.gameStatus = 'playing';
-  // 右上角设置按钮 → 拦截
+  // 右上角原设置按钮位置 → 已无按钮，不再打开设置窗口
   game.handleScreenClick(w - 75, 20);
-  assert(!game._settingsOpen, 'step3 点击右上角设置被拦截');
+  assert(!game._settingsOpen, 'step3 点击右上角不再打开设置（战斗设置按钮已移除）');
   // 高亮格 → 翻格成功，引导完成
   const L = game._tutorialLayout();
   const before = P().gold;

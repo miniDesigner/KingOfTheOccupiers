@@ -7,7 +7,6 @@
 import { HEX_SIZE, PLAYER_COLORS, TILE_BACK_COLOR, TILE_BACK_BORDER,
   BUILDING_CONFIG, getFlipCost, FLIP_ANIMATION_DURATION, RANDOM_REVEAL_DURATION } from '../config.js';
 import { hexToPixel, pixelToHex, HEX_FLATTEN } from '../world/HexMath.js';
-import { RACES } from '../data/races.js';
 import ConfigLoader from '../data/ConfigLoader.js';
 import DeploymentSystem, { UPGRADE_COST_GROWTH, MAX_UNIT_LEVEL } from '../meta/DeploymentSystem.js';
 import { clampSafeArea } from './SafeArea.js';
@@ -48,14 +47,21 @@ const WATERMARK_BG_KEYS = new Set([
 // 必须绕过 WATERMARK_PREFIXES 拦截。每出一版正式图并覆盖 assets/ 就往这里加一项。
 // 注意：这些是「立体石砖」——自带六边形轮廓 + 厚度侧面，_artHex/_art 需走整图不裁剪 + 尺寸标定。
 const SOLID_BOARD_KEYS = new Set(['tiles/hex_bright']);
-// 立体石砖顶面在 312×312 图内的实测占比（OLD 饱满石砖）：
-//   顶面 x≈30..280（宽 250 → 0.802）、y≈28..180（高 152 → 0.487）、中心 y≈104（0.333）。
-// 2026-11-20：顶面是「尖顶六边形被压扁」(宽高比 1.645)，网格已用 HEX_FLATTEN=0.526
-//   把尖顶格子压成同样横扁(宽 √3·size≈90、高 2·size·k≈54.7、比 1.647)。
+// 已替换为正式美术的建筑素材（奇幻Q版 · 兵营4级/箭塔/金矿/双HQ/废墟，312² RGBA）：
+// 同名覆盖 assets/buildings/ 后逐 key 放行，绕开 buildings/ 前缀水印拦截。
+// 其余 buildings/*（若有未出图项）继续拦水印；程序化「兵/塔/金/王」兜底保留在其下。
+const FORMAL_BUILDING_KEYS = new Set([
+  'buildings/barracks_1', 'buildings/barracks_2', 'buildings/barracks_3', 'buildings/barracks_4',
+  'buildings/tower', 'buildings/mine', 'buildings/hq_ally', 'buildings/hq_enemy', 'buildings/ruin',
+]);
+// 立体石砖顶面在 312×312 图内的实测占比（45° 俯视 OLD 石砖 / OLD-angle45-transparent.png）：
+//   顶面 x≈35..277（宽 242 → 0.776）、y≈8..206（高 198 → 0.635）、中心 y≈107（0.343）。
+// 2026-11-20：棋盘切到 45° 俯视。顶面宽高比 242/198≈1.222；网格用 HEX_FLATTEN=0.707(=sin45°)
+//   把尖顶格子压成同样横扁(宽 √3·size、高 2·size·k，比≈1.225)。
 //   两者比例一致 → 按宽/按高标定得到同一 draw，等比、不变形、严丝合缝，侧面/投影向下溢出格子。
-const SOLID_BOARD_FACE_W_RATIO = 0.802;
-const SOLID_BOARD_FACE_H_RATIO = 0.487;
-const SOLID_BOARD_FACE_CY_RATIO = 0.333;
+const SOLID_BOARD_FACE_W_RATIO = 0.776;
+const SOLID_BOARD_FACE_H_RATIO = 0.635;
+const SOLID_BOARD_FACE_CY_RATIO = 0.343;
 const SOLID_BOARD_FACE_OVERSCAN = 1.02; // 轻微过扫，消除六边形描边抗锯齿缝
 /** 立体石砖绘制矩形：顶面精确填满格子，侧面/投影溢出格子下方（文明7式叠压） */
 function solidBoardPlacement(x, y) {
@@ -67,7 +73,7 @@ function solidBoardPlacement(x, y) {
 }
 function isWatermarkArtKey(key) {
   if (typeof key !== 'string') return false;
-  if (SOLID_BOARD_KEYS.has(key)) return false;
+  if (SOLID_BOARD_KEYS.has(key) || FORMAL_BUILDING_KEYS.has(key)) return false;
   for (let i = 0; i < WATERMARK_PREFIXES.length; i++) {
     if (key.indexOf(WATERMARK_PREFIXES[i]) === 0) return true;
   }
@@ -1619,7 +1625,8 @@ export class RenderSystem {
       { icon: '★', value: profile ? (profile.trophies || 0) : 0, color: tier ? tier.color : UI_THEME.goldDeep },
     ];
 
-    // safeRight：右上角设置按钮范围 [w-95, w-55] 之前留 8px 间隙
+    // safeRight：右上角预留区（大厅设置按钮在 [w-45, w-10]，此处取更保守的 w-103 留间隙；
+    // 战斗界面设置按钮已于 2026-11-20 移除，不再占用右上角）
     const layout = resourceBarLayout(cells.map(c => c.value), w, w - 103);
     const cellW = layout.cellW;
     const cellH = layout.cellH;
@@ -2129,6 +2136,8 @@ export class RenderSystem {
    */
   drawHUD(gameState) {
     const { ctx } = this;
+    const w = this.screenWidth;
+    const h = this.screenHeight;
     const player = gameState.players.find(p => p.id === gameState.localPlayerId);
     const enemies = gameState.players.filter(p => p.id !== gameState.localPlayerId);
 
@@ -2138,80 +2147,58 @@ export class RenderSystem {
       return name.length > max ? name.slice(0, max) + '…' : name;
     };
 
-    // 顶部HUD背景（程序化黑底兜底，始终绘制）
-    ctx.fillStyle = 'rgba(0,0,0,0.75)';
-    ctx.fillRect(0, 0, this.screenWidth, 55);
-    // 贴图装饰：UI-30 HUD 顶栏/底栏/HP 条/羁绊面板均为带水印占位图，
-    // 由 artEffectDecor 开关控制；默认关闭时跳过，程序化黑底 + 语义图标已足够。
-    // 待这些 .9 图同名替换为正式素材后设 artEffectDecor=true 恢复。
+    // ===== B-SCALE 战斗界面栅格（430×932 基准，见 design/battle-grid.html）=====
+    // 状态带A 0–55 / 对战态势带 55–112 / 棋盘视口 120–h-96 / 手势提示带 h-96–h-16 / 安全底 h-16–h
+    // ⚠ 本作是 realtime 210s 制，无「回合」；领地数取 player.tiles.length（与超时裁定同源）。
+
+    // --- 状态带 A 底（深色）---
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.fillRect(0, 0, w, 55);
     const _hudDecor = this._artEffectDecor === true;
     if (_hudDecor) {
-      this._art(ART_HOOKS.hudTop, 0, 0, this.screenWidth, 55, { alpha: 0.8 });
+      this._art(ART_HOOKS.hudTop, 0, 0, w, 55, { alpha: 0.8 });
+      this._artFx('hudBottom', 0, h - 96, w, 96, 0.28);
+      this._art(pick_hudHp(), 0, 0, w, 50, { alpha: 0.10 });
     }
-    this._artIcon(ART_PREFIXES.hud, 'timer', this.screenWidth - 18, 27, 16, 0.6);
-    if (_hudDecor) {
-      this._artFx('hudBottom', 0, this.screenHeight - 66, this.screenWidth, 66, 0.28);
-      this._art(pick_hudHp(), 0, 0, this.screenWidth, 50, { alpha: 0.10 });
-      this._art(pick_hudSynergy(), 0, 55, 106, 90, { alpha: 0.10 });
-    }
-    const _hudIcons = ['setting', 'battle', 'enemy_hq', 'layout', 'synergy'];
-    for (let i = 0; i < _hudIcons.length; i++) {
-      const k = iconKey('hud', _hudIcons[i]);
-      if (k) this._art(k, 8 + i * 26, 30, 22, 22, { alpha: 0.22 });
-    }
+    // 计时已在状态带 A 中部以文字呈现（「0:04 · ⬆布局」），移除右上角孤立 timer 图标，
+    // 避免与敌方资源/设置按钮在右上角挤成一团（HUD 复查 2026-11-20）。
 
-    // 对手信息 + 计时器
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 13px sans-serif';
+    // 状态带 A 中：PvP 标题 + 计时·布局名（⬆向上进攻为方向指示，非按钮）
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const battleText = 'PvP对战 vs ' + (gameState.enemyName || 'AI');
-    ctx.fillText(battleText, this.screenWidth / 2, 12);
-
-    // 计时器 + 本局棋盘布局名（上下对战：⬆向上进攻）
+    ctx.fillStyle = '#e2e8f0';
+    // 标题自适应：居中绘制，右端不得越过右侧敌资源(enemyRight=w-109)左缘留出的安全区，
+    // 否则长昵称（如「PvP对战 vs 荣耀守护者」）会与敌金币贴边重叠（HUD 复查 2026-11-20）。
+    // 用 measureText 逐字收缩昵称，保留完整前缀「PvP对战 vs」。
+    ctx.font = 'bold 13px sans-serif';
+    const prefix = 'PvP对战 vs ';
+    const enemyName = String(gameState.enemyName || 'AI');
+    // 居中标题右端 = w/2 + textW/2，须 ≤ 敌资源左缘(enemyRight-8)。→ textW ≤ 2×(w/2 -117) = w-234
+    const titleMaxW = Math.max(96, w - 234);
+    let titleText = prefix + enemyName;
+    if (ctx.measureText && ctx.measureText(titleText).width > titleMaxW) {
+      let name = enemyName;
+      while (name.length > 1 && ctx.measureText(prefix + name + '…').width > titleMaxW) {
+        name = name.slice(0, -1);
+      }
+      titleText = prefix + name + '…';
+    }
+    ctx.fillText(titleText, w / 2, 13);
     const minutes = Math.floor(gameState.elapsedTime / 60);
     const seconds = Math.floor(gameState.elapsedTime % 60);
     const timeStr = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
     ctx.fillStyle = '#a0aec0';
     ctx.font = '11px sans-serif';
-    const layoutTag = gameState.layoutName ? ` ⬆${gameState.layoutName}` : ' ⬆向上进攻';
-    ctx.fillText(timeStr + ' ·' + layoutTag, this.screenWidth / 2, 28);
+    const layoutTag = gameState.layoutName ? ' ⬆' + gameState.layoutName : ' ⬆向上进攻';
+    ctx.fillText(timeStr + ' ·' + layoutTag, w / 2, 32);
 
-    // 大本营HP条(居中)
-    if (player.base && player.base.building) {
-      const hpRatio = player.base.building.currentHp / player.base.building.maxHp;
-      ctx.fillStyle = '#4ade80';
-      ctx.font = '9px sans-serif';
-      ctx.fillText(truncateName(player.name) || '我方', this.screenWidth / 2 - 50, 44);
-      this.drawHPBar(this.screenWidth / 2 - 50, 48, hpRatio, 60);
-    }
-
-    if (enemies.length > 0) {
-      // 显示第一个敌人HP(多敌人时显示总计)
-      const aliveEnemies = enemies.filter(e => e.isAlive());
-      if (aliveEnemies.length > 0) {
-        const firstEnemy = aliveEnemies[0];
-        if (firstEnemy.base && firstEnemy.base.building) {
-          const hpRatio = firstEnemy.base.building.currentHp / firstEnemy.base.building.maxHp;
-          ctx.fillStyle = '#f87171';
-          ctx.font = '9px sans-serif';
-          const enemyLabel = truncateName(firstEnemy.name)
-            || (aliveEnemies.length > 1 ? '敌方(' + aliveEnemies.length + ')' : '敌方');
-          ctx.fillText(enemyLabel, this.screenWidth / 2 + 50, 44);
-          this.drawHPBar(this.screenWidth / 2 + 50, 48, hpRatio, 60);
-        }
-      }
-    }
-
-    // 金币(左上)：正式货币图标 + 数值，不再用 emoji
+    // 状态带 A 左：金币 / 战士数（正式货币图标，不再用 emoji）
+    ctx.textAlign = 'left';
     const goldText = String(Math.floor(player.gold));
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'left';
     if (!this._artIcon(ART_PREFIXES.currency, 'coin', 15, 17, 14, 1)) ctx.fillText('◆', 8, 18);
     ctx.fillText(goldText, 24, 18);
-
-    // 战士数（P36：warriorBuffer 按 rate*dt 累积为浮点，战斗表现统一取整）
     const marchingWarriors = player.getTotalMarchingWarriors(gameState.marchGroups);
     const bufferedWarriors = player.getBufferedWarriors();
     const warText = String(Math.floor(marchingWarriors + bufferedWarriors));
@@ -2220,112 +2207,88 @@ export class RenderSystem {
     if (!this._artIcon(ART_PREFIXES.hud, 'battle', 15, 37, 14, 1)) ctx.fillText('⚔', 8, 38);
     ctx.fillText(warText, 24, 38);
 
-    // 敌方信息(右上)
+    // 状态带 A 右：敌方金币 / 战士数（右对齐到 enemyRight，与设置按钮左缘保持 ≥14px 呼吸位）
+    const enemyRight = w - 109;
     if (enemies.length > 0) {
       const firstEnemy = enemies[0];
+      ctx.textAlign = 'right';
       const eGold = String(Math.floor(firstEnemy.gold));
       ctx.fillStyle = '#FCA5A5';
       ctx.font = 'bold 13px sans-serif';
-      ctx.textAlign = 'right';
-      const eGoldW = ctx.measureText(eGold).width;
-      if (!this._artIcon(ART_PREFIXES.currency, 'coin', this.screenWidth - 66 - eGoldW, 17, 13, 1)) {
-        ctx.textAlign = 'left';
-        ctx.fillText('◆', this.screenWidth - 78 - eGoldW, 18);
-        ctx.textAlign = 'right';
-      }
-      ctx.fillText(eGold, this.screenWidth - 55, 18);
-      const enemyWarriors = firstEnemy.getTotalMarchingWarriors(gameState.marchGroups) + firstEnemy.getBufferedWarriors();
-      const eWar = String(Math.floor(enemyWarriors));
-      const eWarW = ctx.measureText(eWar).width;
-      if (!this._artIcon(ART_PREFIXES.hud, 'battle', this.screenWidth - 66 - eWarW, 37, 13, 1)) {
-        ctx.textAlign = 'left';
-        ctx.fillText('⚔', this.screenWidth - 78 - eWarW, 38);
-        ctx.textAlign = 'right';
-      }
-      ctx.fillText(eWar, this.screenWidth - 55, 38);
+      ctx.fillText(eGold, enemyRight, 18);
+      const eWar = String(Math.floor(firstEnemy.getTotalMarchingWarriors(gameState.marchGroups) + firstEnemy.getBufferedWarriors()));
+      ctx.fillText(eWar, enemyRight, 38);
+      this._artIcon(ART_PREFIXES.currency, 'coin', enemyRight - ctx.measureText(eGold).width - 10, 18, 12, 0.9);
+      this._artIcon(ART_PREFIXES.hud, 'battle', enemyRight - ctx.measureText(eWar).width - 10, 38, 12, 0.9);
     }
 
-    // 设置按钮(右上角，打开设置窗口；暂停按钮已移除)
-    // 命中矩形不变，只把深蓝裸块换成云白圆角底 + 正式设置图标。
-    const setRect = { x: this.screenWidth - 95, y: 5, w: 40, h: 35, r: 9 };
-    this._cardBg(setRect, {
-      tint: 'rgba(234,248,255,0.94)',
-      border: 'rgba(43,74,111,0.30)',
-    });
-    if (!this._artIcon(ART_PREFIXES.hud, 'setting', setRect.x + setRect.w / 2, setRect.y + setRect.h / 2, 20, 1)) {
-      ctx.fillStyle = UI_THEME.navy;
-      ctx.font = 'bold 15px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚙', setRect.x + setRect.w / 2, setRect.y + setRect.h / 2 + 1);
-    }
-
-    // 羁绊面板(左侧)
-    let synergyY = 60;
-    ctx.textAlign = 'left';
-    ctx.font = '10px sans-serif';
-
-    if (player.raceCount && Object.keys(player.raceCount).length > 0) {
-      // 羁绊面板背景
-      const panelH = Object.keys(player.raceCount).length * 14 + (player.synergyBonuses ? 30 : 10);
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(5, synergyY - 5, 100, panelH);
-
-      for (const [race, count] of Object.entries(player.raceCount)) {
-        const raceData = RACES[race];
-        if (raceData) {
-          // 种族颜色点
-          ctx.fillStyle = raceData.color || '#a78bfa';
-          ctx.beginPath();
-          ctx.arc(12, synergyY, 3, 0, Math.PI * 2);
-          ctx.fill();
-
-          // 种族名 + 数量
-          ctx.fillStyle = '#c4b5fd';
-          ctx.font = '10px sans-serif';
-          ctx.fillText(raceData.name + ': ' + count, 20, synergyY + 1);
-
-          // 羁绊进度条
-          const thresholds = [2, 4, 6];
-          let nextThreshold = thresholds.find(t => t > count);
-          if (nextThreshold) {
-            const progress = count / nextThreshold;
-            this.drawProgressBar(55, synergyY + 5, progress, 45, '#8b5cf6');
-          } else {
-            // 已满羁绊
-            ctx.fillStyle = '#4ade80';
-            ctx.font = '8px sans-serif';
-            ctx.fillText('MAX', 75, synergyY + 6);
-          }
-          synergyY += 14;
-        }
-      }
-
-      // 羁绊加成汇总
-      if (player.synergyBonuses) {
-        const bonuses = player.synergyBonuses;
-        let bonusText = '';
-        if (bonuses.attack > 0) bonusText += '攻+' + Math.round(bonuses.attack * 100) + '% ';
-        if (bonuses.defense > 0) bonusText += '防+' + Math.round(bonuses.defense * 100) + '% ';
-        if (bonuses.speed > 0) bonusText += '速+' + Math.round(bonuses.speed * 100) + '% ';
-        if (bonuses.critRate > 0) bonusText += '暴+' + Math.round(bonuses.critRate * 100) + '% ';
-        if (bonuses.allStats > 0) bonusText += '全+' + Math.round(bonuses.allStats * 100) + '% ';
-        if (bonusText) {
-          ctx.fillStyle = '#4ade80';
-          ctx.font = 'bold 9px sans-serif';
-          ctx.fillText(bonusText.trim(), 8, synergyY + 2);
-        }
-      }
-    }
-
-    // 底部提示
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(0, this.screenHeight - 28, this.screenWidth, 28);
-    ctx.fillStyle = '#a0aec0';
-    ctx.font = '11px sans-serif';
+    // ===== 对战态势带 55–112：双方大本营 HP 加宽 + VS 徽章 =====
+    ctx.fillStyle = 'rgba(0,0,0,0.62)';
+    ctx.fillRect(0, 55, w, 57);
+    const barW = Math.min(150, Math.max(88, w * 0.33));
+    const leftCX = w * 0.25;
+    const rightCX = w * 0.75;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('点击相邻格子翻转占领 | 拖动平移 | 滚轮缩放 | 右上角设置', this.screenWidth / 2, this.screenHeight - 14);
+    if (player.base && player.base.building) {
+      const hpRatio = player.base.building.currentHp / player.base.building.maxHp;
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(truncateName(player.name) || '我方', leftCX, 69);
+      this.drawHPBar(leftCX, 81, hpRatio, barW);
+    }
+    if (enemies.length > 0) {
+      const aliveEnemies = enemies.filter(e => e.isAlive());
+      if (aliveEnemies.length > 0 && aliveEnemies[0].base && aliveEnemies[0].base.building) {
+        const firstEnemy = aliveEnemies[0];
+        const hpRatio = firstEnemy.base.building.currentHp / firstEnemy.base.building.maxHp;
+        ctx.fillStyle = '#f87171';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(truncateName(firstEnemy.name) || '敌方', rightCX, 69);
+        this.drawHPBar(rightCX, 81, hpRatio, barW);
+      }
+    }
+    // VS 徽章（纯文字装饰，标记对战关系，非按钮）
+    ctx.fillStyle = '#FFD23F';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('VS', w / 2, 79);
+
+    // ===== 棋盘视口内浮层胶囊（栅格图 design/battle-grid.html：right 2%，top 13.6% ≈ y124）=====
+    // 2026-11-20：羁绊胶囊按用户要求移除，仅保留领地 chip。尺寸常量沿用，避免牵动右侧布局。
+    const chipY = 124;
+    const chipH = 22;
+    const chipW = 104;
+    const chipR = 9;
+
+    // --- 领地 chip（真实数据 tiles.length，与超时裁定同源）---
+    if (player.tiles) {
+      const myTiles = player.tiles.length;
+      const foeTiles = enemies.length > 0 && enemies[0].tiles ? enemies[0].tiles.length : 0;
+      const terrPillX = w - 8 - chipW;
+      ctx.fillStyle = 'rgba(6,14,28,0.66)';
+      this._roundRectPath(terrPillX, chipY, chipW, chipH, chipR);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(234,248,255,0.22)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#EAF8FF';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('领地 ' + myTiles + ' : ' + foeTiles, terrPillX + chipW / 2, chipY + chipH / 2 + 1);
+    }
+
+    // ===== 手势提示带 h-96–h-16（纯提示，非按钮；战斗操作全靠手势）=====
+    const hintY = h - 96;
+    ctx.fillStyle = 'rgba(6,14,28,0.70)';
+    ctx.fillRect(0, hintY, w, 80);
+    const hints = ['点击 · 翻转', '拖动 · 平移', '双指 · 缩放'];
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = '#a0aec0';
+    for (let i = 0; i < hints.length; i++) {
+      ctx.fillText(hints[i], w * (i + 0.5) / 3, hintY + 40);
+    }
   }
 
   /**

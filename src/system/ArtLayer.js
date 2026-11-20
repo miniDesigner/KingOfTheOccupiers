@@ -173,13 +173,9 @@ const BIND_PLAYING = [
   ['effects/combat_hit', 'center', 0.18],
   ['effects/combat_knockback', 'center', 0.18],
   ['effects/territory_wave', 'center', 0.18],
-  ['icons/hud_battle', 'icon', 0.26],
-  ['icons/hud_enemy_hq', 'icon', 0.26],
-  ['icons/hud_layout', 'icon', 0.26],
-  ['icons/hud_setting', 'icon', 0.26],
-  ['icons/hud_synergy', 'icon', 0.26],
-  ['icons/tutorial_arrow', 'icon', 0.26],
-  ['icons/tutorial_hand', 'icon', 0.26],
+  // 原 icons/hud_* + icons/tutorial_* 装饰叠层已移除（2026-11-20 HUD 复查）：
+  // 它们以 α0.26 横排在状态带左侧，与金币/战士数重叠且功能重复——真实 HUD 图标由
+  // RenderSystem.drawHUD 用正式图标绘制。下方 ui/* + units/* 均为占位层，默认被跳过。
   ['ui/hud_hp', 'icon', 0.22],
   ['ui/hud_synergy', 'icon', 0.22],
   ['ui/tutorial_card', 'card', 0.14],

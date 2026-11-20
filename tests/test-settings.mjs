@@ -205,11 +205,11 @@ console.log('=== 测试9: 关闭后底层界面恢复可点 ===');
   game.screenState = 'lobby';
 }
 
-console.log('=== 测试10: 对战中 ⚙ 按钮也能打开设置 ===');
+console.log('=== 测试10: 对战中已无 ⚙ 按钮，点击不再打开设置 ===');
 {
-  game.handlePlayingClick(w - 75, 22); // 对战界面右上 ⚙
-  assert(game._settingsOpen === true, '对战界面打开设置窗口');
-  // 对战中底层点击被屏蔽（原暂停按钮位置已无任何功能）
+  game.handlePlayingClick(w - 75, 22); // 原对战界面右上 ⚙（2026-11-20 已移除）
+  assert(game._settingsOpen !== true, '对战界面不再打开设置窗口');
+  // 底层点击不再被设置窗口吞掉（原暂停按钮位置已无任何功能）
   game.handleScreenClick(w - 30, 22);
   assert(game.paused === false, '原暂停按钮位置无效果（暂停已移除）');
   game._settingsOpen = false;
