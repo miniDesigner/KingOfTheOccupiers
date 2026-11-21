@@ -25,7 +25,7 @@ import { InputSystem } from '../system/InputSystem.js';
 import { RenderSystem } from '../system/RenderSystem.js';
 import { ArtSystem } from '../system/ArtSystem.js';
 import { FontSystem } from '../system/FontSystem.js';
-import { SCREEN_BG, LOADING_BG, LOADING_LOGO, RESULT_BG,
+import { SCREEN_BG, LOADING_BG, RESULT_BG,
   ART_HOOKS, ART_PREFIXES, ART_ENTRIES } from '../system/ArtManifest.js';
 import { APP_ASSETS, FONT_CARDS, RACE_KEYS_ALL, UNIT_SMALL_KEYS_ALL,
   BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE } from '../system/ArtLayer.js';
@@ -2516,65 +2516,23 @@ export class Game {
       ctx.closePath();
     };
 
-    // 1) 主视觉：晴空乐园 Q版城堡插画，全亮度铺满（之前的 0.45 把这张图压废了）
+    // 1) 主视觉：晴空乐园竖屏插画全亮度铺满。
+    //    2026-11-21：游戏名称/副标题已直接绘制进 assets/bg/loading_art.jpg（飞龙下方云海区），
+    //    界面层不再叠 Logo 徽章与标题文字——避免 UI 层文字与插画主体打架，且名称随图缩放永不错位。
     ctx.fillStyle = '#5BB8E8'; // 图片未就绪时的兜底天蓝
     ctx.fillRect(0, 0, w, h);
     ArtSystem.draw(ctx, LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 1 });
 
-    // 2) 顶部深色蒙层：承托 Logo 与标题，避免明快插画冲淡文字（也不再压在幼龙脸上）
-    const top = ctx.createLinearGradient(0, 0, 0, h * 0.52);
-    top.addColorStop(0, 'rgba(14,26,46,0.86)');
-    top.addColorStop(0.62, 'rgba(14,26,46,0.42)');
-    top.addColorStop(1, 'rgba(14,26,46,0)');
-    ctx.fillStyle = top;
-    ctx.fillRect(0, 0, w, h * 0.52);
-
-    // 3) 底部蒙层：承托进度卡
+    // 2) 底部蒙层：仅承托进度卡（顶部不再有 UI 文字，撤掉顶部蒙层让插画保持明快）
     const bot = ctx.createLinearGradient(0, h * 0.52, 0, h);
     bot.addColorStop(0, 'rgba(14,26,46,0)');
     bot.addColorStop(1, 'rgba(14,26,46,0.55)');
     ctx.fillStyle = bot;
     ctx.fillRect(0, h * 0.52, w, h * 0.48);
 
-    // 4) Logo 徽章卡：云白圆角卡 + 内贴 logo + 金边 + 投影（替代突兀的裸贴蓝方块）
-    const badge = Math.min(132, w * 0.32);
-    const bx = (w - badge) / 2;
-    const by = h * 0.12;
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.32)';
-    ctx.shadowBlur = 18;
-    ctx.shadowOffsetY = 8;
-    roundRectPath(bx, by, badge, badge, badge * 0.22);
-    ctx.fillStyle = '#EAF8FF';
-    ctx.fill();
-    ctx.restore();
-    ctx.save();
-    roundRectPath(bx + 5, by + 5, badge - 10, badge - 10, badge * 0.18);
-    ctx.clip();
-    ArtSystem.draw(ctx, LOADING_LOGO, bx + 5, by + 5, badge - 10, badge - 10, { fit: 'cover', alpha: 1 });
-    ctx.restore();
-    roundRectPath(bx, by, badge, badge, badge * 0.22);
-    ctx.strokeStyle = '#FFD23F';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
+    // 3) 进度卡：云白半透明圆角卡 + 金黄→活力橙渐变胶囊进度条
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-
-    // 5) 标题：金色 + 深色描边，移到蒙层区（自定义字体未就绪时回退系统 sans-serif）
-    const titleY = by + badge + Math.min(46, h * 0.05);
-    ctx.font = FontSystem.font(Math.min(30, w * 0.075), 'bold', 'title');
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = 'rgba(15,23,42,0.85)';
-    ctx.strokeText('⚔ 占地之王', w / 2, titleY);
-    ctx.fillStyle = '#FFD23F';
-    ctx.fillText('⚔ 占地之王', w / 2, titleY);
-
-    ctx.font = Math.min(14, w * 0.033) + 'px sans-serif';
-    ctx.fillStyle = '#EAF8FF';
-    ctx.fillText('六边形领地争夺战', w / 2, titleY + 30);
-
-    // 6) 进度卡：云白半透明圆角卡 + 金黄→活力橙渐变胶囊进度条
     const cardW = Math.min(260, w * 0.72);
     const cardH = 84;
     const cx = (w - cardW) / 2;
@@ -2624,7 +2582,10 @@ export class Game {
     const LOADING_MIN_MS = 3000;
     const startTs = Date.now();
 
-    // 0. 先绘制启动加载画面（避免配置加载期间白屏）
+    // 0. 先发起加载页素材预载，再绘制首帧。
+    //    必须在首帧之前 preload：加载页期间主循环尚未启动（见 2815 行 requestAnimationFrame(loop)），
+    //    若等到配置加载完才预载，图片异步完成时就再没有重绘机会 → 背景/名称永远看不到。
+    ArtSystem.preload([LOADING_BG]);
     this.renderLoadingScreen(0);
 
     // 1. 加载 JSON 配置（带进度回调，每加载一个文件刷新加载画面）
@@ -2632,11 +2593,18 @@ export class Game {
       this.renderLoadingScreen(done / total);
     });
 
-    // 1.1 强制加载页展示满 3 秒：配置加载完先显示 100%，再补齐剩余等待时长
+    // 1.1 强制加载页展示满 3 秒：期间持续重绘，让异步完成的背景图真正显示出来
     this.renderLoadingScreen(1);
     const elapsed = Date.now() - startTs;
     if (elapsed < LOADING_MIN_MS) {
-      await new Promise(res => setTimeout(res, LOADING_MIN_MS - elapsed));
+      // 旁挂重绘定时器：加载页期间主循环尚未启动，靠它让异步加载完成的背景真正显示。
+      // 与等待 Promise 解耦——Node 测试环境即使不驱动定时器，setTimeout 仍会正常结束。
+      const repaint = setInterval(() => this.renderLoadingScreen(1), 60);
+      try {
+        await new Promise(res => setTimeout(res, LOADING_MIN_MS - elapsed));
+      } finally {
+        clearInterval(repaint);
+      }
     }
 
     // 2. 同步配置到静态导出变量
@@ -2667,7 +2635,6 @@ export class Game {
 
       if (_on) {
         ArtSystem.preload(Object.values(SCREEN_BG));
-        ArtSystem.preload([LOADING_BG, LOADING_LOGO]);
         // 全量可达：34 个元素钩子 + 10 个杂项特效 + 21 个图标族首项一并预加载，
         // 保证 ART_HOOKS / ART_PREFIXES 全部有运行时图片通道；失败静默不影响渲染。
         ArtSystem.preload(Object.values(ART_HOOKS));
