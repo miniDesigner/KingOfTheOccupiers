@@ -241,6 +241,7 @@ import { AnimationManager } from &#x27;../system/AnimationManager.js&#x27;;
 import AudioManager from &#x27;../system/AudioManager.js&#x27;;
 import AdManager from &#x27;../system/AdManager.js&#x27;;
 import ComplianceSystem from &#x27;../system/ComplianceSystem.js&#x27;;
+import { drawHealthAdvice } from &#x27;../system/HealthAdvice.js&#x27;;
 
 import { FLIP_ANIMATION_DURATION, PLAYER_COLORS, getFlipCost,
   getHexSize, syncConfigToStatics } from &#x27;../config.js&#x27;;
@@ -283,12 +284,12 @@ export class Game {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
 
-    // ===== 安全区适配（iPhone 刘海 / Android 状态栏 / home indicator） =====
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 6 / 60 页</span></div>
 <pre><code>
+    // ===== 安全区适配（iPhone 刘海 / Android 状态栏 / home indicator） =====
     // Phase 7 P7：微信小游戏渲染全屏 Canvas，但部分设备顶部有刘海、底部有 home indicator。
     // 解决方案：RenderSystem 用 ctx.translate(0, top) + ctx.scale(1, scaleY) 把 inner 坐标系
     //          [0, h] 线性映射到屏幕 [top, h-bottom]，所有 Scene 按全屏 h 设计的锚点
@@ -338,12 +339,12 @@ export class Game {
     CombatSystem.audioManager = this.audioManager;
 
     // 连接 SynergySystem → AnimationManager + AudioManager
-    SynergySystem.animManager = this.animManager;
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 7 / 60 页</span></div>
 <pre><code>
+    SynergySystem.animManager = this.animManager;
     SynergySystem.audioManager = this.audioManager;
 
     // 连接 RenderSystem → AnimationManager + AudioManager
@@ -393,12 +394,12 @@ export class Game {
     this.shopTab = 0;   // P37：商店默认停在「免费」分页（config/shop.json 中 free 排第一）
 
     // 当前BonusBundle（每局开始时重新计算）
-    this.currentBonusBundle = null;
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 8 / 60 页</span></div>
 <pre><code>
+    this.currentBonusBundle = null;
 
     // Toast 提示（屏幕浮动文字）
     this._toastText = &#x27;&#x27;;
@@ -448,12 +449,12 @@ export class Game {
    * @param {number} [seed] - 对局随机种子（测试复现用；日常对局不传，battleRandom() 回退 Math.random）
    * @param {object|null} [session] - 对局会话：
    *   - null → 快速 AI 对战（「开战」按钮 / 新手引导 / 离线练习）
-   *   - { mode: &#x27;snapshot&#x27;, snapshot } → 异步快照 PvP（SnapshotPlayer 对手 + Elo 结算）
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 9 / 60 页</span></div>
 <pre><code>
+   *   - { mode: &#x27;snapshot&#x27;, snapshot } → 异步快照 PvP（SnapshotPlayer 对手 + Elo 结算）
    */
   initBattle(seed, session = null) {
     // 确定性随机源：注入种子后本局所有随机决策（地图/AI/兵种/暴击/复活）走同一随机流
@@ -503,12 +504,12 @@ export class Game {
     // 清除上一局的所有特效
     this.animManager.clear();
 
-    // 播放BGM
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 10 / 60 页</span></div>
 <pre><code>
+    // 播放BGM
     this.audioManager.playBGM();
 
     // 生成地图（行列制矩形棋盘 + 随机布局的障碍格：山脉/河流，切分进攻战线）
@@ -558,12 +559,12 @@ export class Game {
       sp.race = &#x27;custom&#x27;;
       sp.raceLineup = [&#x27;custom&#x27;];
       // 战力规则匹配：段位产兵乘数（快照对手用其奖杯分段的天梯曲线值）
-      if (typeof snap.warriorRateMult === &#x27;number&#x27;) {
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 11 / 60 页</span></div>
 <pre><code>
+      if (typeof snap.warriorRateMult === &#x27;number&#x27;) {
         sp.warriorRateMult = snap.warriorRateMult;
       } else if (typeof remoteCfg.warriorRateMult === &#x27;number&#x27;) {
         sp.warriorRateMult = remoteCfg.warriorRateMult;
@@ -613,12 +614,12 @@ export class Game {
         enemyBaseTile.owner = enemy.id;
         enemyBaseTile.isFlipped = true;
         enemyBaseTile.building = new Building(&#x27;headquarters&#x27;, 1, enemy.race, enemy.id, enemy.deploymentBundle);
-        enemy.setBase(enemyBaseTile);
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 12 / 60 页</span></div>
 <pre><code>
+        enemy.setBase(enemyBaseTile);
       }
     }
 
@@ -668,12 +669,12 @@ export class Game {
       &#x27;| Enemy Units:&#x27;, aiUnits);
   }
 
-  // === 异步对战匹配（PvP 快照对手 + 10s 超时降级 AI） ===
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 13 / 60 页</span></div>
 <pre><code>
+  // === 异步对战匹配（PvP 快照对手 + 10s 超时降级 AI） ===
 
   /**
    * 启动异步对战匹配：
@@ -723,12 +724,12 @@ export class Game {
   _handleMatchOverlayClick(screenX, screenY) {
     const { cancelBtn } = RenderSystem.matchOverlayLayout(this.screenWidth, this.screenHeight);
     if (screenX &gt;= cancelBtn.x &amp;&amp; screenX &lt;= cancelBtn.x + cancelBtn.w &amp;&amp;
-        screenY &gt;= cancelBtn.y &amp;&amp; screenY &lt;= cancelBtn.y + cancelBtn.h) {
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 14 / 60 页</span></div>
 <pre><code>
+        screenY &gt;= cancelBtn.y &amp;&amp; screenY &lt;= cancelBtn.y + cancelBtn.h) {
       this.audioManager.playButtonClick();
       this._cancelAsyncMatch();
       this.showToast(&#x27;已取消匹配&#x27;, 1.5);
@@ -778,12 +779,12 @@ export class Game {
 
       const preset = tile.presetBuilding;
       let buildingType = &#x27;barracks&#x27;;
-      let buildingLevel = 1;
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 15 / 60 页</span></div>
 <pre><code>
+      let buildingLevel = 1;
       if (preset &amp;&amp; preset.type !== &#x27;random&#x27;) {
         buildingType = preset.type;
         buildingLevel = preset.level || 1;
@@ -833,12 +834,12 @@ export class Game {
     if (this._settingsOpen) {
       this._settingsOpen = false;
       this.audioManager.playButtonClick();
-      return &#x27;consumed&#x27;;
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 16 / 60 页</span></div>
 <pre><code>
+      return &#x27;consumed&#x27;;
     }
     if (this._announceOpen) {
       this._announceOpen = false;
@@ -888,12 +889,12 @@ export class Game {
       case &#x27;tech_panel&#x27;:
       case &#x27;leaderboard&#x27;:
       case &#x27;quest&#x27;:
-      case &#x27;achievement&#x27;:
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 17 / 60 页</span></div>
 <pre><code>
+      case &#x27;achievement&#x27;:
       case &#x27;battle_pass&#x27;:
         this.audioManager.playButtonClick();
         this.screenState = &#x27;lobby&#x27;;
@@ -943,12 +944,12 @@ export class Game {
     if (this._asyncState === &#x27;searching&#x27;) {
       this._handleMatchOverlayClick(screenX, screenY);
       return;
-    }
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 18 / 60 页</span></div>
 <pre><code>
+    }
     // 账号面板打开时优先处理并屏蔽底层界面点击
     if (this._accountOpen) {
       this._handleAccountTap(screenX, screenY);
@@ -998,12 +999,12 @@ export class Game {
   /** 长按激活拖拽的时长（ms），从按下起持续超过该时长即拿起 */
   static get DEPLOY_LONG_PRESS_MS() { return 200; }
 
-  // === 上阵界面布局 ===
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 19 / 60 页</span></div>
 <pre><code>
+  // === 上阵界面布局 ===
   // P36：垂直锚点（slot/synergy/building/unit 的 y 与 labelY）与横排宽度全部由
   // RenderSystem.deployLayout(w, h) 统一算出，渲染与命中共用同一份，禁止各自硬编码
   // （P33 曾因两边硬编码不同步导致点击错位）。下面两个静态方法仅为兼容旧调用保留。
@@ -1053,12 +1054,12 @@ export class Game {
   static lobbyNavItemW(screenW) {
     return rowItemWidth(5, 6, screenW, 8, LAYOUT_MIN.lobbyNav, LAYOUT_DESIGN_MAX.lobbyNav);
   }
-  /** 开战按钮自适应宽（padX=16 表示左右各 16，屏宽够大时维持设计稿 220） */
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 20 / 60 页</span></div>
 <pre><code>
+  /** 开战按钮自适应宽（padX=16 表示左右各 16，屏宽够大时维持设计稿 220） */
   static battleBtnW(screenW) {
     return rowItemWidth(1, 0, screenW, 16, LAYOUT_MIN.battle, LAYOUT_DESIGN_MAX.battle);
   }
@@ -1108,12 +1109,12 @@ export class Game {
   static lobbyLadderBarWidth(screenW) {
     return ladderBarWidth(screenW);
   }
-
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 21 / 60 页</span></div>
 <pre><code>
+
   // === 大厅 v2 布局（与 RenderSystem.drawLobby 共用 Layout.js 单一真相源）===
   /** 功能按钮纵列：第 i 个按钮 rect（分享/任务/成就/通行证，右上角纵向） */
   static lobbyFuncBtnRect(i, screenW) {
@@ -1163,12 +1164,12 @@ export class Game {
     return screenH - b.bottomOffset - b.h - 8;
   }
 
-  // === 设置窗口布局常量（_handleSettingsTap 与 RenderSystem._drawSettingsOverlay 同源使用） ===
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 22 / 60 页</span></div>
 <pre><code>
+  // === 设置窗口布局常量（_handleSettingsTap 与 RenderSystem._drawSettingsOverlay 同源使用） ===
   static get SETTINGS_LAYOUT() {
     return {
       panelW: 290,
@@ -1218,12 +1219,12 @@ export class Game {
       panelH: 340,
       rowH: 46,
       rowGap: 8,
-      rowStartOffset: 54, // 面板顶到第一行账号的距离（含标题）
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 23 / 60 页</span></div>
 <pre><code>
+      rowStartOffset: 54, // 面板顶到第一行账号的距离（含标题）
       maxRows: 3,         // 账号列表最多显示行数（超出截断，提示见绘制）
       btnH: 46,
       btnGap: 8,
@@ -1273,12 +1274,12 @@ export class Game {
     return { x: p.x + p.w - L.closeSize - 8, y: p.y + 8, w: L.closeSize, h: L.closeSize };
   }
 
-  /** 公告内容（设置窗口 → 公告按钮查看） */
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 24 / 60 页</span></div>
 <pre><code>
+  /** 公告内容（设置窗口 → 公告按钮查看） */
   static get ANNOUNCEMENTS() {
     return [
       {
@@ -1328,12 +1329,12 @@ export class Game {
    * - 已上阵兵种卡：不可拖拽（轻点仍可查看详情，换位请用详情内「上阵」按钮）
    */
   _handleDeployDragStart(x, y) {
-    // P38：引导激活时遮罩不可穿透 —— 除高亮区外禁止长按/拖拽拿起卡片
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 25 / 60 页</span></div>
 <pre><code>
+    // P38：引导激活时遮罩不可穿透 —— 除高亮区外禁止长按/拖拽拿起卡片
     if (this._interceptTutorialClick(x, y)) {
       this._cancelDeployPress();
       this._deployDrag.active = false;
@@ -1383,12 +1384,12 @@ export class Game {
   /**
    * 启动长按候选：按住 DEPLOY_LONG_PRESS_MS 后激活拖拽；
    * 期间松手取消候选；按住并移动超过阈值 → 立即激活拖拽（按住拖拽也可拿起）
-   */
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 26 / 60 页</span></div>
 <pre><code>
+   */
   _startDeployPress(press) {
     this._deployPress = press;
     this._deployPressTimer = setTimeout(() =&gt; {
@@ -1438,12 +1439,12 @@ export class Game {
       const dy = Math.abs(y - this._deployPress.y);
       if (dx &gt; 10 || dy &gt; 10) {
         if (this._deployPressTimer) {
-          clearTimeout(this._deployPressTimer);
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 27 / 60 页</span></div>
 <pre><code>
+          clearTimeout(this._deployPressTimer);
           this._deployPressTimer = null;
         }
         this._activateDeployDrag();
@@ -1493,12 +1494,12 @@ export class Game {
     // 招募面板打开时，所有点击交给招募面板处理
     // 注意：不检查 isDrag，因为触摸屏上手指轻触很容易超过3px阈值被误判为拖拽，
     // 导致招募面板内的所有点击（兵种卡片、关闭按钮）永远无法触发
-    if (this._showRecruitPanel) {
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 28 / 60 页</span></div>
 <pre><code>
+    if (this._showRecruitPanel) {
       this._handleRecruitPanelTap(x, y);
       return;
     }
@@ -1548,12 +1549,12 @@ export class Game {
     // 点击意味着没有进行中的拖拽，复位拖拽状态（避免虚影残留）
     this._deployDrag.active = false;
 
-    // 返回按钮
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 29 / 60 页</span></div>
 <pre><code>
+    // 返回按钮
     if (Game.isBackButtonHit(x, y, h)) {
       this.audioManager.playButtonClick();
       this.screenState = &#x27;lobby&#x27;;
@@ -1603,12 +1604,12 @@ export class Game {
     const bldKeysArr = [&#x27;barracks&#x27;, &#x27;arrow_tower&#x27;, &#x27;gold_mine&#x27;];
     for (let i = 0; i &lt; 3; i++) {
       const bldType = bldKeysArr[i];
-      const sx = bldStartX + i * (bldSlotW + bldGap);
 </code></pre>
 </div>
 <div class="page">
 <div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 30 / 60 页</span></div>
 <pre><code>
+      const sx = bldStartX + i * (bldSlotW + bldGap);
       if (x &gt;= sx &amp;&amp; x &lt;= sx + bldSlotW &amp;&amp; y &gt;= bldSlotY &amp;&amp; y &lt;= bldSlotY + bldSlotH) {
         this._openBuildingDetail(bldType);
         return;
@@ -1658,7 +1659,6 @@ export class Game {
       this._buildingDetailType = null;
       if (this.audioManager) this.audioManager.playButtonClick();
       return;
-    }
 </code></pre>
 </div>
 <div class="page">

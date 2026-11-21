@@ -33,6 +33,7 @@ import { AnimationManager } from '../system/AnimationManager.js';
 import AudioManager from '../system/AudioManager.js';
 import AdManager from '../system/AdManager.js';
 import ComplianceSystem from '../system/ComplianceSystem.js';
+import { drawHealthAdvice } from '../system/HealthAdvice.js';
 
 import { FLIP_ANIMATION_DURATION, PLAYER_COLORS, getFlipCost,
   getHexSize, syncConfigToStatics } from '../config.js';
@@ -2629,6 +2630,10 @@ export class Game {
     ctx.fillStyle = '#2B4A6F';
     ctx.font = FontSystem.font(13, 'bold', 'number');
     ctx.fillText(`加载中... ${pct}%`, w / 2, cy + 60);
+
+    // 4) 健康游戏忠告：标准文案常驻加载页（版号/提审必查项）。
+    //    位于底部蒙层内、进度卡下方，浅色小字不遮挡插画主体。
+    drawHealthAdvice(ctx, w, h);
   }
 
   /**

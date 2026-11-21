@@ -57,6 +57,7 @@ ORDER = [
     "src/system/AudioManager.js",
     "src/system/AdManager.js",
     "src/system/ComplianceSystem.js",
+    "src/system/HealthAdvice.js",
     "src/meta/PlayerProfile.js",
     "src/meta/ProfileManager.js",
     "src/meta/PowerSystem.js",
