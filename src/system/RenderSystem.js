@@ -33,7 +33,11 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 // 2026-11-21 栅格收口：子界面顶部页签统一从 CONTENT_TOP=72 起（资源栏带 8..60 + gutter 12）。
 // 渲染与 Game.js 命中共用此常量，杜绝两处硬编码漂移。
 const SUBPAGE_TAB_Y = 72;
-export { SUBPAGE_TAB_Y };
+// 内容首行起点 = 页签底 + 12px gutter。科技页签高 35、排行榜页签高 30。
+// 排行榜 listStartY 是「行中心」，其卡片顶 = listStartY - 10，故再 +10。
+const TECH_NODES_Y = SUBPAGE_TAB_Y + 35 + 12;              // 119
+const LEADERBOARD_LIST_Y = SUBPAGE_TAB_Y + 30 + 12 + 10;   // 124
+export { SUBPAGE_TAB_Y, TECH_NODES_Y, LEADERBOARD_LIST_Y };
 
 // 水印占位图总闸（P0 收口）：effects/*、ui/*、tiles/*、buildings/* 前缀的素材均为
 // 带「特效/界面/地块/建筑 + 编号参数表」的粉紫水印占位图，无正式美术。它们通过
@@ -4510,10 +4514,11 @@ export class RenderSystem {
 
     const nodeW = techNodeWidth(w), nodeH = 70, nodeGap = 10;
     const nodeStartX = rowStartX(2, nodeW, nodeGap, w);
-    const nodesStartY = 100 - (gameState.metaScrollY || 0);
+    // 2026-11-21：跟随 SUBPAGE_TAB_Y=72 同步下移（原 100 与页签底 107 重叠），留 12px gutter
+    const nodesStartY = TECH_NODES_Y - (gameState.metaScrollY || 0);
 
-    // 裁剪：节点只在返回按钮/分支标签以下区域显示，上滚不盖顶部
-    this._beginScrollClip(ctx, w, h, 90);
+    // 裁剪：节点只在分支标签以下区域显示，上滚不盖页签（107 = 页签底 72+35）
+    this._beginScrollClip(ctx, w, h, 107);
 
     // 节点连线（A 类 P2-2）：前置节点 → 当前节点的 2px 折线，画在节点下层。
     // 纯视觉、不参与命中；解锁态用分支色，未解锁用弱灰蓝，均为半透明避免盖过云白卡。
@@ -5563,7 +5568,8 @@ export class RenderSystem {
 
     const metric = data.board.metric;
     const unit = data.board.unit;
-    const listStartY = 100;
+    // 2026-11-21：原 100 使首行卡片顶(90)被页签底(102)压住；改为页签底+12 gutter 的行中心
+    const listStartY = LEADERBOARD_LIST_Y;
     const rowH = 24;
 
     ctx.font = '12px sans-serif';

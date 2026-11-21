@@ -85,7 +85,7 @@ console.log('=== 测试2: 滚动裁剪结构守护（begin/end 成对 + topY 正
   );
   // 每个滚动界面的裁剪 topY 约定
   const expected = [
-    { label: '科技树节点', topY: 90 },
+    { label: '科技树节点', topY: 107 },
     { label: '商店商品', topY: 88 },
     { label: '任务列表', topY: 88 },
     { label: '成就列表', topY: 88 },

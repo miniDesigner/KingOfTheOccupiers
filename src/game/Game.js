@@ -22,7 +22,7 @@ import { TowerSystem } from '../system/TowerSystem.js';
 import { SynergySystem } from '../system/SynergySystem.js';
 import { SkillSystem } from '../system/SkillSystem.js';
 import { InputSystem } from '../system/InputSystem.js';
-import { RenderSystem, SUBPAGE_TAB_Y } from '../system/RenderSystem.js';
+import { RenderSystem, SUBPAGE_TAB_Y, TECH_NODES_Y } from '../system/RenderSystem.js';
 import { ArtSystem } from '../system/ArtSystem.js';
 import { FontSystem } from '../system/FontSystem.js';
 import { SCREEN_BG, LOADING_BG, RESULT_BG,
@@ -2427,7 +2427,8 @@ export class Game {
     const nodes = TechTreeSystem.getBranchNodes(this.selectedTechBranch);
     const nodeW = techNodeWidth(this.screenWidth), nodeH = 70, nodeGap = 10;
     const nodeStartX = rowStartX(2, nodeW, nodeGap, this.screenWidth);
-    const nodesStartY = 100 - this.metaScrollY;
+    // 与 RenderSystem.drawTechPanel 同源（页签底 107 + 12 gutter）
+    const nodesStartY = TECH_NODES_Y - this.metaScrollY;
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
