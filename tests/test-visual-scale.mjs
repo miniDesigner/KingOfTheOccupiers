@@ -63,15 +63,15 @@ console.log('=== 测试3: fitScale 适配（750 宽屏） ===');
   const map = new HexMap();
   map.generate(7, 11, []);
   const b = map.getBounds();
-  // Game.js initBattle 的相机适配公式
-  const fit = (screenW, screenH) => Math.max(0.5, Math.min(
-    1, screenW / (b.width + 40), (screenH * 0.86) / (b.height + 40)));
+  // Game.js initBattle 的相机适配公式（2026-11-21：默认倍率整体 ×1.5，钳制 0.5~2.0）
+  const fit = (screenW, screenH) => Math.max(0.5, Math.min(2.0, Math.min(
+    1, screenW / (b.width + 40), (screenH * 0.86) / (b.height + 40)) * 1.5));
   const s750 = fit(750, 1334);
   const s1080 = fit(1080, 1920);
   console.log(`  750×1334 → ${s750.toFixed(3)}；1080×1920 → ${s1080.toFixed(3)}`);
-  assert(s750 >= 0.9 && s750 <= 1.0, `750 屏 fitScale ∈ [0.9, 1]（实际 ${s750.toFixed(3)}，满幅显示）`);
-  assert(s1080 === 1.0, `1080 屏 fitScale = 1（实际 ${s1080.toFixed(3)}）`);
-  assert(fit(320, 500) >= 0.5, `极小屏仍被下限 0.5 托底（实际 ${fit(320, 500).toFixed(3)}，旧下限 0.35）`);
+  assert(s750 >= 1.35 && s750 <= 1.55, `750 屏默认倍率 ∈ [1.35, 1.55]（实际 ${s750.toFixed(3)}，适配×1.5）`);
+  assert(s1080 >= 1.49 && s1080 <= 1.51, `1080 屏默认倍率 = 1.5（实际 ${s1080.toFixed(3)}）`);
+  assert(fit(320, 500) >= 0.5, `极小屏仍被下限 0.5 托底（实际 ${fit(320, 500).toFixed(3)}）`);
 }
 
 // ============ 4. 兵种圆盘不重叠 ============
@@ -95,7 +95,7 @@ console.log('=== 测试5: 渲染字号放大常量 ===');
   assert(src.includes('bold 14px sans-serif'), '兵种有效生命值字号 14（旧 10）');
   assert(src.includes('baseRadius * 1.5'), '兵种图标字号倍率 ×1.5（旧 ×1.3）');
   const srcGame = rf(ROOT + 'src/game/Game.js', 'utf-8');
-  assert(srcGame.includes('Math.max(0.5, fitScale)'), 'Game.js 相机下限 0.5（旧 0.35）');
+  assert(srcGame.includes('Math.max(0.5, Math.min(2.0, fitScale * 1.5))'), 'Game.js 默认倍率 ×1.5 且钳制 0.5~2.0');
   const srcInput = rf(ROOT + 'src/system/InputSystem.js', 'utf-8');
   const clamps = (srcInput.match(/Math\.max\(0\.5, Math\.min\(2\.0/g) || []).length;
   assert(clamps === 2, `InputSystem 滚轮/双指两处钳制 0.5~2.0（实际 ${clamps} 处）`);

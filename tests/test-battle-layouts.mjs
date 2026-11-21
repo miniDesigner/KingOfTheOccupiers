@@ -366,12 +366,14 @@ console.log('=== 测试10: initBattle 集成 ===');
   const player = game.players.find(p => p.id === 1);
   const enemy = game.players.find(p => p.id === 2);
   assert(player.base.r === l.rows - 3 && enemy.base.r === 2, `双方大本营落位：玩家r=${player.base.r} 敌方r=${enemy.base.r}`);
-  // 相机自动缩放：整图适配屏幕
+  // 相机自动缩放：默认倍率 = 满幅适配值 ×1.5（2026-11-21 用户要求，接受棋盘略超视口）
   const bounds = game.map.getBounds();
   const s = game.inputSystem.scale;
-  assert(s >= 0.35 && s <= 1, `相机缩放在[0.35,1]（实际${s.toFixed(2)}）`);
-  assert(bounds.width * s <= 400 + 1, `地图宽度适配屏幕（${(bounds.width * s).toFixed(0)}px ≤ 400px）`);
-  assert(bounds.height * s <= 700 * 0.86 + 1, `地图高度适配屏幕（${(bounds.height * s).toFixed(0)}px ≤ 604px）`);
+  const rawFit = Math.min(1, 400 / (bounds.width + 40), (700 * 0.86) / (bounds.height + 40));
+  const expected = Math.max(0.5, Math.min(2.0, rawFit * 1.5));
+  assert(Math.abs(s - expected) < 1e-6, `默认倍率 = 适配值×1.5（实际${s.toFixed(3)}，期望${expected.toFixed(3)}）`);
+  assert(s >= 0.5 && s <= 2, `相机缩放在[0.5,2]（实际${s.toFixed(2)}）`);
+  assert(s > rawFit, `默认倍率大于满幅适配值，棋盘略超视口（${s.toFixed(3)} > ${rawFit.toFixed(3)}）`);
 }
 
 // ============ 11. 渲染冒烟（含障碍格 + 各布局） ============

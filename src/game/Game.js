@@ -394,8 +394,9 @@ export class Game {
       this.screenWidth / (bounds.width + 40),
       (this.screenHeight * 0.86) / (bounds.height + 40)
     );
-    // 2026-11 玩法改造：地图缩为 11×7 后棋盘像素变小，缩放下限 0.35→0.5（防止缩太小格子看不清）
-    this.inputSystem.scale = Math.max(0.5, fitScale);
+    // 2026-11-21：默认倍率整体 ×1.5（用户要求格子更大更清楚，接受棋盘略超视口、可平移/缩放看全）
+    // fitScale 原始适配计算保持不变，仅对最终默认倍率乘系数；钳制 0.5~2.0（与 InputSystem 缩放范围一致）
+    this.inputSystem.scale = Math.max(0.5, Math.min(2.0, fitScale * 1.5));
     const centerX = (bounds.minX + bounds.width / 2) * this.inputSystem.scale;
     const centerY = (bounds.minY + bounds.height / 2) * this.inputSystem.scale;
     this.inputSystem.cameraX = this.screenWidth / 2 - centerX;
