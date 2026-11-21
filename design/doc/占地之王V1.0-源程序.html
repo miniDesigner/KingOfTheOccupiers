@@ -1,0 +1,3314 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<title>占地之王 V1.0 源程序</title>
+<style>
+    @page { size: A4; margin: 16mm 12mm 14mm 12mm; }
+    body { margin: 0; font-family: Consolas, "Courier New", monospace; }
+    .page { page-break-after: always; min-height: 265mm; position: relative; }
+    .page:last-child { page-break-after: auto; }
+    .head { border-bottom: 1px solid #333; padding-bottom: 3mm; margin-bottom: 4mm;
+            font-size: 9pt; display: flex; justify-content: space-between; }
+    pre { margin: 0; font-size: 8.5pt; line-height: 1.32;
+          white-space: pre-wrap; word-break: break-all; }
+    </style></head><body>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 1 / 60 页</span></div>
+<pre><code>
+// === src/config.js ===
+/**
+ * 游戏配置 (从 JSON 配置表加载)
+ * 
+ * 本文件是配置数据的访问层，所有配置值来自 config/*.json
+ * 策划只需修改 JSON 文件，无需改动此文件
+ */
+
+import ConfigLoader from &#x27;./data/ConfigLoader.js&#x27;;
+
+// ========== 延迟加载 ==========
+// 配置在 Game.init() 中通过 ConfigLoader.init() 加载
+// 各模块通过本文件的 getter 函数同步访问
+
+function _game() { return ConfigLoader.get(&#x27;game&#x27;); }
+function _buildings() { return ConfigLoader.get(&#x27;buildings&#x27;); }
+function _tiles() { return ConfigLoader.get(&#x27;tiles&#x27;); }
+function _combat() { return ConfigLoader.get(&#x27;combat&#x27;); }
+function _synergy() { return ConfigLoader.get(&#x27;synergy&#x27;); }
+
+// ========== 六边形参数 ==========
+export function getHexSize() { return _game().hex.size; }
+
+// ========== 颜色 ==========
+export function getPlayerColors() { return _game().colors.players; }
+export function getTileBackColor() { return _game().colors.tileBack; }
+export function getTileBackBorder() { return _game().colors.tileBackBorder; }
+
+// ========== 地块分布 ==========
+export function getPresetDistribution() { return _tiles().presetDistribution; }
+export function getRandomTileResults() { return _tiles().randomTileResults; }
+export function getRandomTileCost() { return _tiles().randomTileCost; }
+
+// ========== 建筑配置 ==========
+export function getBuildingConfig() { return _buildings(); }
+
+/**
+ * 获取指定建筑类型和等级的配置
+ */
+export function getBuildingLevelConfig(type, level) {
+  const buildings = _buildings();
+  const typeConfig = buildings[type];
+  if (!typeConfig) return null;
+  return typeConfig[level || 1] || null;
+}
+
+/**
+ * 获取翻转消耗
+ */
+export function getFlipCost(presetBuilding) {
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 2 / 60 页</span></div>
+<pre><code>
+  if (!presetBuilding) return 0;
+  if (presetBuilding.type === &#x27;random&#x27;) return getRandomTileCost();
+  const levelConfig = getBuildingLevelConfig(presetBuilding.type, presetBuilding.level);
+  return levelConfig ? levelConfig.cost : 0;
+}
+
+// ========== 编组/行军 ==========
+export function getGroupThreshold() { return _game().march.groupThreshold; }
+export function getHQBufferMax() { return _game().march.hqBufferMax; }
+export function getMarchSpeed() { return _game().march.speed; }
+
+// ========== 战斗参数 ==========
+export function getCombatDuration() { return _combat().duration; }
+
+// ========== 动画时长 ==========
+export function getFlipAnimationDuration() { return _game().animation.flipDuration; }
+export function getRandomRevealDuration() { return _game().animation.randomRevealDuration; }
+
+// ========== 经济 ==========
+export function getInitialGold() { return _game().economy.initialGold; }
+export function getBaseGoldRate() { return _game().economy.baseGoldRate; }
+export function getKillGoldPerWarrior() { return _game().economy.killGoldPerWarrior ?? 2; }
+export function getKillGoldLevelStep() { return _game().economy.killGoldLevelStep ?? 0.5; }
+
+// ========== 羁绊配置 ==========
+export function getRaceSynergy() { return _synergy().raceSynergy; }
+export function getStyleSynergy() { return _synergy().styleSynergy; }
+
+// ========== 全局系数 ==========
+export function getUnitAttackCoefficient() { return _game().unitAttackCoefficient; }
+
+// ========== 兵种品质 ==========
+export function getQualityTiers() { return _game().quality?.tiers || []; }
+export function getQualityConfig(quality) {
+  const tiers = _game().quality?.tiers || [];
+  return tiers[Math.max(0, Math.min(tiers.length - 1, (quality || 1) - 1))];
+}
+export function getQualityMultiplier(quality) {
+  const cfg = getQualityConfig(quality);
+  return cfg ? (cfg.multiplier || 1.0) : 1.0;
+}
+export function getQualityColor(quality) {
+  const cfg = getQualityConfig(quality);
+  return cfg ? cfg.color : &#x27;#9ca3af&#x27;;
+}
+export function getQualityName(quality) {
+  const cfg = getQualityConfig(quality);
+  return cfg ? cfg.name : &#x27;白&#x27;;
+}
+
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 3 / 60 页</span></div>
+<pre><code>
+// ========== AI ==========
+export function getAIDecisionInterval() { return _game().ai.decisionInterval; }
+
+// ========== 地图配置 ==========
+export function getMapConfig() { return _game().map; }
+
+// ========== 向后兼容: 导出静态对象 ==========
+// 这些对象在 ConfigLoader.init() 完成后才有值
+// 使用方式: 在 Game.init() 之后访问，或使用 getter 函数
+
+export let HEX_SIZE;
+export let PLAYER_COLORS;
+export let TILE_BACK_COLOR;
+export let TILE_BACK_BORDER;
+export let PRESET_DISTRIBUTION;
+export let RANDOM_TILE_RESULTS;
+export let BUILDING_CONFIG;
+export let GROUP_THRESHOLD;
+export let HQ_WARRIOR_BUFFER_MAX;
+export let MARCH_SPEED;
+export let COMBAT_DURATION;
+export let FLIP_ANIMATION_DURATION;
+export let RANDOM_REVEAL_DURATION;
+export let INITIAL_GOLD;
+export let BASE_GOLD_RATE;
+export let KILL_GOLD_PER_WARRIOR;
+export let KILL_GOLD_LEVEL_STEP;
+export let RACE_SYNERGY;
+export let STYLE_SYNERGY;
+export let UNIT_ATTACK_COEFFICIENT;
+export let AI_DECISION_INTERVAL;
+export let MAP_CONFIG;
+
+/**
+ * 在 ConfigLoader.init() 完成后调用
+ * 将 JSON 配置同步到静态导出变量(向后兼容)
+ */
+export function syncConfigToStatics() {
+  const game = _game();
+  const tiles = _tiles();
+  const buildings = _buildings();
+  const combat = _combat();
+  const synergy = _synergy();
+
+  HEX_SIZE = game.hex.size;
+  PLAYER_COLORS = game.colors.players;
+  TILE_BACK_COLOR = game.colors.tileBack;
+  TILE_BACK_BORDER = game.colors.tileBackBorder;
+  PRESET_DISTRIBUTION = tiles.presetDistribution;
+  RANDOM_TILE_RESULTS = tiles.randomTileResults;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 4 / 60 页</span></div>
+<pre><code>
+  BUILDING_CONFIG = buildings;
+  GROUP_THRESHOLD = game.march.groupThreshold;
+  HQ_WARRIOR_BUFFER_MAX = game.march.hqBufferMax;
+  MARCH_SPEED = game.march.speed;
+  COMBAT_DURATION = combat.duration;
+  FLIP_ANIMATION_DURATION = game.animation.flipDuration;
+  RANDOM_REVEAL_DURATION = game.animation.randomRevealDuration;
+  INITIAL_GOLD = game.economy.initialGold;
+  BASE_GOLD_RATE = game.economy.baseGoldRate;
+  KILL_GOLD_PER_WARRIOR = game.economy.killGoldPerWarrior ?? 2;
+  KILL_GOLD_LEVEL_STEP = game.economy.killGoldLevelStep ?? 0.5;
+  RACE_SYNERGY = synergy.raceSynergy;
+  STYLE_SYNERGY = synergy.styleSynergy;
+  UNIT_ATTACK_COEFFICIENT = game.unitAttackCoefficient;
+  AI_DECISION_INTERVAL = game.ai.decisionInterval;
+  MAP_CONFIG = game.map;
+}
+
+// 默认导出 ConfigLoader
+export default ConfigLoader;
+
+// === src/game/Game.js ===
+/**
+ * 游戏主类
+ * 游戏循环 + 状态管理 + 系统调度
+ */
+
+import { HexMap } from &#x27;../world/HexMap.js&#x27;;
+import { HexTile } from &#x27;../world/HexTile.js&#x27;;
+import { Player } from &#x27;../entity/Player.js&#x27;;
+import { AIPlayer } from &#x27;../entity/AIPlayer.js&#x27;;
+import { SnapshotPlayer } from &#x27;../entity/SnapshotPlayer.js&#x27;;
+import { Building } from &#x27;../entity/Building.js&#x27;;
+import { MarchGroup } from &#x27;../entity/MarchGroup.js&#x27;;
+
+import { SessionManager } from &#x27;../net/SessionManager.js&#x27;;
+
+import { EconomySystem } from &#x27;../system/EconomySystem.js&#x27;;
+import { BuildSystem } from &#x27;../system/BuildSystem.js&#x27;;
+import { PathfindingSystem } from &#x27;../system/PathfindingSystem.js&#x27;;
+import { MarchSystem } from &#x27;../system/MarchSystem.js&#x27;;
+import { CombatSystem } from &#x27;../system/CombatSystem.js&#x27;;
+import { TowerSystem } from &#x27;../system/TowerSystem.js&#x27;;
+import { SynergySystem } from &#x27;../system/SynergySystem.js&#x27;;
+import { SkillSystem } from &#x27;../system/SkillSystem.js&#x27;;
+import { InputSystem } from &#x27;../system/InputSystem.js&#x27;;
+import { RenderSystem, SUBPAGE_TAB_Y, TECH_NODES_Y } from &#x27;../system/RenderSystem.js&#x27;;
+import { ArtSystem } from &#x27;../system/ArtSystem.js&#x27;;
+import { FontSystem } from &#x27;../system/FontSystem.js&#x27;;
+import { SCREEN_BG, LOADING_BG, RESULT_BG,
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 5 / 60 页</span></div>
+<pre><code>
+  ART_HOOKS, ART_PREFIXES, ART_ENTRIES } from &#x27;../system/ArtManifest.js&#x27;;
+import { APP_ASSETS, FONT_CARDS, RACE_KEYS_ALL, UNIT_SMALL_KEYS_ALL,
+  BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE } from &#x27;../system/ArtLayer.js&#x27;;
+import { AnimationManager } from &#x27;../system/AnimationManager.js&#x27;;
+import AudioManager from &#x27;../system/AudioManager.js&#x27;;
+import AdManager from &#x27;../system/AdManager.js&#x27;;
+
+import { FLIP_ANIMATION_DURATION, PLAYER_COLORS, getFlipCost,
+  getHexSize, syncConfigToStatics } from &#x27;../config.js&#x27;;
+import { getRandomBattleConfig,
+  syncLevels } from &#x27;../data/levels.js&#x27;;
+import { syncRaces, RACES } from &#x27;../data/races.js&#x27;;
+import ConfigLoader from &#x27;../data/ConfigLoader.js&#x27;;
+import { pixelToHex, hexToPixel } from &#x27;../world/HexMath.js&#x27;;
+import { setBattleRng, createRng } from &#x27;../utils/rng.js&#x27;;
+import { rowItemWidth, rowStartX, techNodeWidth, techTabWidth, ladderBarWidth, LAYOUT_DESIGN_MAX, LAYOUT_MIN, lobbyFuncBtnRect as layoutFuncBtnRect, lobbyFuncBottom, lobbyPlayerCardRect as layoutPlayerCardRect, lobbySeasonTop, lobbySeasonCombo as layoutSeasonCombo, lobbyDeployCardY as layoutDeployCardY, lobbyDeployLabelY as layoutDeployLabelY } from &#x27;../system/Layout.js&#x27;;
+
+// 局外养成系统
+import ProfileManager from &#x27;../meta/ProfileManager.js&#x27;;
+import AccountManager from &#x27;../meta/AccountManager.js&#x27;;
+import BonusCalculator from &#x27;../meta/BonusCalculator.js&#x27;;
+import TechTreeSystem from &#x27;../meta/TechTreeSystem.js&#x27;;
+import QuestSystem from &#x27;../meta/QuestSystem.js&#x27;;
+import ShopSystem from &#x27;../meta/ShopSystem.js&#x27;;
+import BattlePassSystem from &#x27;../meta/BattlePassSystem.js&#x27;;
+import DeploymentSystem from &#x27;../meta/DeploymentSystem.js&#x27;;
+import * as LadderSystem from &#x27;../meta/LadderSystem.js&#x27;;
+import PowerSystem from &#x27;../meta/PowerSystem.js&#x27;;
+import ShareSystem from &#x27;../meta/ShareSystem.js&#x27;;
+import LeaderboardSystem from &#x27;../meta/LeaderboardSystem.js&#x27;;
+import { generateOpponent, searchDelay, RULES_VERSION as ASYNC_RULES_VERSION,
+  ASYNC_MATCH_TIMEOUT_MS } from &#x27;../meta/AsyncMatchSystem.js&#x27;;
+
+/**
+ * 主包加载页背景 key（boot/loading.jpg，与 assets/bg/loading_art.jpg 同图）。
+ * 微信 assets/ 整目录已拆为分包，分包下载完成前只有主包资源可读；
+ * renderLoadingScreen 先尝试分包内的正式图，未就绪时回退这张主包图，
+ * 保证冷启动第一帧就能看到游戏名称插画，不会闪天蓝底。
+ */
+export const BOOT_LOADING_BG = &#x27;boot/loading&#x27;;
+
+export class Game {
+  constructor(canvas, ctx, screenWidth, screenHeight, safeArea) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    this.screenWidth = screenWidth;
+    this.screenHeight = screenHeight;
+
+    // ===== 安全区适配（iPhone 刘海 / Android 状态栏 / home indicator） =====
+    // Phase 7 P7：微信小游戏渲染全屏 Canvas，但部分设备顶部有刘海、底部有 home indicator。
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 6 / 60 页</span></div>
+<pre><code>
+    // 解决方案：RenderSystem 用 ctx.translate(0, top) + ctx.scale(1, scaleY) 把 inner 坐标系
+    //          [0, h] 线性映射到屏幕 [top, h-bottom]，所有 Scene 按全屏 h 设计的锚点
+    //          （顶部状态栏 y=0、底部按钮 y=h-80）渲染后恰好落在刘海下沿与 home indicator 上沿之间。
+    //          顶部 [0, top] + 底部 [h-bottom, h] 各画一道黑底覆盖；
+    //          点击命中由 Game 端对 clientY 反推 (y - top) / scaleY 命中 Scene 坐标。
+    // 浏览器环境（safari/iframe 预览）safeArea 全为 0，scaleY = 1，等同无刘海，行为不变。
+    this.safeArea = safeArea || { top: 0, bottom: 0, left: 0, right: 0 };
+
+    // 系统
+    this.inputSystem = new InputSystem(canvas, screenWidth, screenHeight);
+    this.renderSystem = new RenderSystem(ctx, screenWidth, screenHeight);
+    // P8：RenderSystem 是安全区的单一真相源 —— 内部做防御钳制（SAFE_AREA_MAX）并算出 scaleY。
+    // 这里回读钳制后的值，保证「点击反推」与「渲染映射」用同一个 scaleY，两边绝不会漂移。
+    this.renderSystem.setSafeArea(this.safeArea);
+    this.safeAreaTop = this.renderSystem.safeAreaTop;
+    this.safeAreaBottom = this.renderSystem.safeAreaBottom;
+    this.safeAreaScaleY = this.renderSystem.safeAreaScaleY;
+    // P8：同步给输入层 —— 地图拖拽 / 菜单滚动的增量需要换算回 inner 坐标系才跟手
+    this.inputSystem.touchScaleY = this.safeAreaScaleY;
+    // P36：top 偏移一并同步 —— 双指缩放要以「双指中心」为锚点，中心点是屏幕坐标，
+    // 必须按 inner_y = (screen_y - top) / scaleY 折算后才能与 cameraY 同一坐标系运算。
+    this.inputSystem.touchTop = this.safeAreaTop;
+
+    // 始终绑定点击事件（handleScreenClick 内部根据 screenState 分发，不存在时机冲突）
+    // 安全区适配：RenderSystem 用 translate(0, top) + scale(1, scaleY) 把 inner [0, h] 映射到屏幕
+    // [top, h-bottom]，点击坐标反推 inner_y = (screenY - top) / scaleY 命中 Scene 内 rect.y
+    this.inputSystem.onTileClick = (screenX, screenY) =&gt; {
+      this.handleScreenClick(screenX, (screenY - this.safeAreaTop) / this.safeAreaScaleY);
+    };
+    // 按压状态（按钮按压缩放反馈：记录按下位置与时间，渲染层据此轻微缩放）
+    this._press = null;
+    // P8：按压坐标同样要反推到 inner 坐标系 —— RenderSystem._drawPressed 拿 press.y 去比
+    // Scene 内 rect.y，若不反推，刘海机上会偏差 safeAreaTop(≈59px)，表现为
+    // 「点 A 按钮、B 按钮缩放」的按压反馈错位。
+    this.inputSystem.onPress = (x, y) =&gt; {
+      this._press = { x, y: (y - this.safeAreaTop) / this.safeAreaScaleY, t: Date.now() };
+    };
+    this.inputSystem.onRelease = () =&gt; { if (this._press) this._press.t = Date.now(); };
+    this.pathfindingSystem = PathfindingSystem;
+    this.animManager = new AnimationManager();
+    this.audioManager = AudioManager;
+
+    // 连接 CombatSystem → RenderSystem + AnimationManager + AudioManager
+    CombatSystem.renderSystem = this.renderSystem;
+    CombatSystem.animManager = this.animManager;
+    CombatSystem.audioManager = this.audioManager;
+
+    // 连接 SynergySystem → AnimationManager + AudioManager
+    SynergySystem.animManager = this.animManager;
+    SynergySystem.audioManager = this.audioManager;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 7 / 60 页</span></div>
+<pre><code>
+
+    // 连接 RenderSystem → AnimationManager + AudioManager
+    this.renderSystem.animManager = this.animManager;
+    this.renderSystem.audioManager = this.audioManager;
+
+    // 游戏状态
+    this.map = null;
+    this.players = [];
+    this.marchGroups = [];
+    this.gameStatus = &#x27;playing&#x27;; // playing / won / lost
+    this.elapsedTime = 0;
+
+    // 当前对战配置
+    this.currentBattleConfig = null;
+
+    // 对战形态（实时联机已移除）
+    this.battleMode = &#x27;ai&#x27;;          // &#x27;ai&#x27;（快速AI对战） | &#x27;snapshot&#x27;（异步快照PvP）
+    this.localPlayerId = 1;          // 我方恒为 1
+    this._opponentTrophies = null;   // 快照对手奖杯分（Elo 结算输入）
+
+    // 异步对战匹配状态：&#x27;searching&#x27; = 匹配搜索中（overlay 展示），null = 未在匹配
+    this._asyncState = null;
+    this._asyncStartAt = 0;          // 匹配开始时间戳（内部记录用；overlay 不展示等待秒数）
+    this._matchFoundTimer = null;    // 模拟检索延迟定时器（2~4s 找到快照对手）
+    this._matchTimeout = null;       // 10s 匹配超时定时器 → 降级 AI
+
+    // 解锁的种族（从ProfileManager同步）
+    this.unlockedRaces = [&#x27;human&#x27;, &#x27;beast&#x27;];
+
+    // 当前选择的种族阵容（保留兼容，玩家建筑不再依赖此字段）
+    this.selectedRace = &#x27;human&#x27;;
+
+    // 上阵数据包（每局开始时从局外养成生成）
+    this.deploymentBundle = null;
+
+    // 屏幕状态: &#x27;lobby&#x27; / &#x27;deploy_select&#x27; / &#x27;playing&#x27; / &#x27;tech_panel&#x27; / &#x27;shop&#x27; / &#x27;quest&#x27; / &#x27;battle_pass&#x27; / &#x27;gacha&#x27; / &#x27;leaderboard&#x27;
+    this.screenState = &#x27;lobby&#x27;;
+
+    // 翻转中的格子队列(等待动画完成)
+    this.flippingTiles = [];
+
+    // 暂停状态
+    this.paused = false;
+
+    this.metaScrollY = 0;
+    this.shopTab = 0;   // P37：商店默认停在「免费」分页（config/shop.json 中 free 排第一）
+
+    // 当前BonusBundle（每局开始时重新计算）
+    this.currentBonusBundle = null;
+
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 8 / 60 页</span></div>
+<pre><code>
+    // Toast 提示（屏幕浮动文字）
+    this._toastText = &#x27;&#x27;;
+    this._toastTimer = 0;
+
+    // 上阵拖拽状态
+    this._deployDrag = { active: false, type: null, id: null, fromSlot: -1, x: 0, y: 0 };
+    this._deployPress = null;       // 长按待激活的拖拽候选（兵种专用）
+    this._deployPressTimer = null;  // 长按计时器（DEPLOY_LONG_PRESS_MS 后激活拖拽）
+    this._lastDeployY = null; // 上阵界面滚动辅助
+    // 招募面板开关
+    this._showRecruitPanel = false;
+    // 兵种详情/升级面板
+    this._unitDetailId = null;
+    this._buildingDetailType = null;  // P33: 建筑升级详情面板状态(&#x27;barracks&#x27;/&#x27;arrow_tower&#x27;/&#x27;gold_mine&#x27;/null)
+    this._synergyDetailId = null;      // P35: 羁绊详情面板状态(羁绊ID/null)
+    // 抽卡系统状态
+    this._gachaResults = null;   // 抽卡结果数组
+    this._gachaRevealIdx = 0;    // 当前展示到第几张
+    this._gachaAnimating = false; // 抽卡动画进行中
+
+    // 排行榜状态（Phase 5）
+    this.leaderboardTab = 0;     // 0=天梯榜 1=战力榜 2=胜场榜 3=收集榜
+    this._leaderboardData = null;
+
+    // 新手引导状态（Phase 5）
+    this._tutorialActive = false;
+
+    // 设置窗口 / 公告子窗口（覆盖层，打开时屏蔽底层界面点击）
+    this._settingsOpen = false;
+    this._announceOpen = false;
+
+    // 账号面板（覆盖层，大厅点击账号信息行打开；登录/切换/注销多账号）
+    this._accountOpen = false;
+
+    // 系统返回键支持（浏览器 history 占位层 / 微信 Android 返回键）
+    this._backEnabled = false;    // 是否启用（浏览器环境自动启用）
+    this._lastLayerActive = false; // 上一帧是否有界面层（面板/战斗/窗口）打开
+    this._onPopState = null;       // popstate 回调（浏览器返回键）
+  }
+
+  /**
+   * 初始化对战
+   * @param {number} [seed] - 对局随机种子（测试复现用；日常对局不传，battleRandom() 回退 Math.random）
+   * @param {object|null} [session] - 对局会话：
+   *   - null → 快速 AI 对战（「开战」按钮 / 新手引导 / 离线练习）
+   *   - { mode: &#x27;snapshot&#x27;, snapshot } → 异步快照 PvP（SnapshotPlayer 对手 + Elo 结算）
+   */
+  initBattle(seed, session = null) {
+    // 确定性随机源：注入种子后本局所有随机决策（地图/AI/兵种/暴击/复活）走同一随机流
+    this.battleSeed = typeof seed === &#x27;number&#x27; ? seed : null;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 9 / 60 页</span></div>
+<pre><code>
+    this.rng = this.battleSeed !== null ? createRng(this.battleSeed) : null;
+    setBattleRng(this.rng);
+
+    // 对局形态：ai（快速AI对战）/ snapshot（异步快照PvP）
+    // 2026-11 玩法改造：快照带 rulesVersion，跨规则版本的旧快照降级为 AI 对战，
+    // 避免战力压缩/小地图规则错配导致强度失真（快照阵容由难度档现算，版本不齐即不可信）
+    const RULES_VERSION = ASYNC_RULES_VERSION || 1;
+    let isSnapshot = !!(session &amp;&amp; session.mode === &#x27;snapshot&#x27;);
+    if (isSnapshot &amp;&amp; session.snapshot &amp;&amp; session.snapshot.rulesVersion !== undefined
+        &amp;&amp; session.snapshot.rulesVersion !== RULES_VERSION) {
+      console.warn(&#x27;[Game] Snapshot rulesVersion mismatch (&#x27; + session.snapshot.rulesVersion
+        + &#x27; != &#x27; + RULES_VERSION + &#x27;), fallback to AI battle&#x27;);
+      isSnapshot = false;
+      session = null;
+    }
+    this.battleMode = isSnapshot ? &#x27;snapshot&#x27; : &#x27;ai&#x27;;
+    this.localPlayerId = 1;
+
+    // 天梯匹配：按当前奖杯决定对手 AI 难度（段位难度分布，养成模拟，无金币/产兵/技能档位/战力作弊）
+    const _profile = ProfileManager.get();
+    const _trophies = _profile ? (_profile.trophies || 0) : 0;
+    const config = getRandomBattleConfig(_trophies);
+    this.currentBattleConfig = config;
+
+    // 技能系统：AI 兵种一致化后，敌方兵种技能由等级自然驱动（getUnitStats→getUnitSkillList），
+    // 不再用独立技能档位；setEnemyDifficulty 仅保留难度（种族模式旧链路兼容用）
+    SkillSystem.reset();
+    SkillSystem.setEnemyDifficulty(
+      isSnapshot &amp;&amp; session.snapshot
+        ? (session.snapshot.difficulty || &#x27;normal&#x27;)
+        : (config.enemies?.[0]?.ai || &#x27;normal&#x27;),
+    );
+    this.gameStatus = &#x27;playing&#x27;;
+    this.screenState = &#x27;playing&#x27;;
+    this.elapsedTime = 0;
+    this.marchGroups = [];
+    this.flippingTiles = [];
+    this.paused = false;
+
+    // 重置战斗招募日志
+    EconomySystem.resetRecruitLog();
+
+    // 清除上一局的所有特效
+    this.animManager.clear();
+
+    // 播放BGM
+    this.audioManager.playBGM();
+
+    // 生成地图（行列制矩形棋盘 + 随机布局的障碍格：山脉/河流，切分进攻战线）
+    this.map = new HexMap();
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 10 / 60 页</span></div>
+<pre><code>
+    this.map.generate(config.cols, config.rows, config.obstacles);
+
+    // 保底：玩家大本营周围一圈至少3个一级地块（开局扩张平滑，避免周围全是高级地块卡死前期）
+    this.map.ensureLevelOneAround(config.playerBase.q, config.playerBase.r, 3);
+
+    // 战斗开始时只建造大本营，不放置预设建筑
+    // if (config.presetBuildings &amp;&amp; config.presetBuildings.length &gt; 0) {
+    //   for (const pb of config.presetBuildings) {
+    //     const tile = this.map.getTile(pb.q, pb.r);
+    //     if (tile) {
+    //       tile.presetBuilding = { type: pb.type, level: pb.level || 1 };
+    //     }
+    //   }
+    // }
+
+    // 创建玩家(使用上阵系统数据)
+    this.players = [];
+    const localId = this.localPlayerId; // 恒为 1
+    const _localName = (_profile &amp;&amp; _profile.nickname) ? _profile.nickname : &#x27;玩家&#x27;;
+    const humanPlayer = new Player(localId, _localName, PLAYER_COLORS[localId], false);
+    humanPlayer.gold = config.player.initialGold;
+
+    // 生成上阵数据包
+    this.deploymentBundle = DeploymentSystem.generateBundle();
+    humanPlayer.deploymentBundle = this.deploymentBundle;
+    humanPlayer.race = &#x27;custom&#x27;;
+    humanPlayer.raceLineup = [&#x27;custom&#x27;];
+    this.players.push(humanPlayer);
+
+    // 应用局外养成加成
+    this.currentBonusBundle = BonusCalculator.calculate();
+    BonusCalculator.applyToPlayer(humanPlayer, this.currentBonusBundle);
+
+    // 创建敌方：异步快照局用 SnapshotPlayer（快照阵容 + AI 决策），快速局用 AIPlayer
+    if (isSnapshot) {
+      const snap = session.snapshot || {};
+      const remoteCfg = (config.enemies &amp;&amp; config.enemies[0]) || {};
+      const enemyId = remoteCfg.id || 2;
+      const sp = new SnapshotPlayer(enemyId, snap);
+      sp.gold = typeof remoteCfg.initialGold === &#x27;number&#x27;
+        ? remoteCfg.initialGold
+        : (snap.initialGold || config.player.initialGold);
+      sp.race = &#x27;custom&#x27;;
+      sp.raceLineup = [&#x27;custom&#x27;];
+      // 战力规则匹配：段位产兵乘数（快照对手用其奖杯分段的天梯曲线值）
+      if (typeof snap.warriorRateMult === &#x27;number&#x27;) {
+        sp.warriorRateMult = snap.warriorRateMult;
+      } else if (typeof remoteCfg.warriorRateMult === &#x27;number&#x27;) {
+        sp.warriorRateMult = remoteCfg.warriorRateMult;
+      }
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 11 / 60 页</span></div>
+<pre><code>
+      // 快照对手阵容：按其难度档生成玩家同款 deploymentBundle（养成模拟，无技能档位/战力比修正）
+      sp.deploymentBundle = PowerSystem.generateAiDeployment(sp.aiLevel);
+      this.players.push(sp);
+      // 对手奖杯分：Elo 结算输入（呈现层 + 结算层，不参与战斗演算）
+      this._opponentTrophies = typeof snap.trophies === &#x27;number&#x27; ? snap.trophies : null;
+    } else {
+      // 创建敌方AI
+      for (const enemyConfig of config.enemies) {
+        const ai = new AIPlayer(enemyConfig.id, enemyConfig.name, enemyConfig.color, enemyConfig.ai);
+        ai.gold = enemyConfig.initialGold;
+        ai.race = enemyConfig.race;
+        ai.raceLineup = [enemyConfig.race];
+        // 战力规则匹配：段位产兵乘数（覆盖难度默认值）
+        if (typeof enemyConfig.warriorRateMult === &#x27;number&#x27;) {
+          ai.warriorRateMult = enemyConfig.warriorRateMult;
+        }
+        // AI 兵种一致化：按难度生成玩家同款 deploymentBundle（养成模拟：品质上限+等级基准随难度）
+        ai.deploymentBundle = PowerSystem.generateAiDeployment(enemyConfig.ai);
+        this.players.push(ai);
+      }
+    }
+
+    // 世界状态按 playerId 固化：players 数组顺序 canonical（升序）
+    this.players.sort((a, b) =&gt; a.id - b.id);
+
+    // 设置玩家大本营（本地玩家恒 id=1 拥有 playerBase）
+    const playerBaseOwnerId = localId;
+    const playerBaseTile = this.map.getTile(config.playerBase.q, config.playerBase.r);
+    if (playerBaseTile) {
+      const basePlayer = this.players.find(p =&gt; p.id === playerBaseOwnerId);
+      playerBaseTile.owner = playerBaseOwnerId;
+      playerBaseTile.isFlipped = true;
+      playerBaseTile.building = new Building(&#x27;headquarters&#x27;, 1, &#x27;custom&#x27;, playerBaseOwnerId, basePlayer ? basePlayer.deploymentBundle : this.deploymentBundle);
+      if (basePlayer) basePlayer.setBase(playerBaseTile);
+    }
+
+    // 设置敌方大本营（AI 用 config.enemies[0].id；快照局沿用同一 enemy id）
+    const firstEnemyId = (config.enemies &amp;&amp; config.enemies[0]) ? config.enemies[0].id : 2;
+    const enemyBaseTile = this.map.getTile(config.enemyBase.q, config.enemyBase.r);
+    if (enemyBaseTile) {
+      const enemy = this.players.find(p =&gt; p.id === firstEnemyId);
+      if (enemy) {
+        enemyBaseTile.owner = enemy.id;
+        enemyBaseTile.isFlipped = true;
+        enemyBaseTile.building = new Building(&#x27;headquarters&#x27;, 1, enemy.race, enemy.id, enemy.deploymentBundle);
+        enemy.setBase(enemyBaseTile);
+      }
+    }
+
+    // 多敌人: 其他敌人也设置大本营（仅 AI 模式；快照局只有 1 个对手）
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 12 / 60 页</span></div>
+<pre><code>
+    if (!isSnapshot) {
+      for (let i = 1; i &lt; config.enemies.length; i++) {
+        const ec = config.enemies[i];
+        const enemy = this.players.find(p =&gt; p.id === ec.id);
+        if (ec.base &amp;&amp; enemy) {
+          const tile = this.map.getTile(ec.base.q, ec.base.r);
+          if (tile) {
+            tile.owner = enemy.id;
+            tile.isFlipped = true;
+            tile.building = new Building(&#x27;headquarters&#x27;, 1, enemy.race, enemy.id, enemy.deploymentBundle);
+            enemy.setBase(tile);
+          }
+        }
+      }
+    }
+
+    // 战斗开始时只建造大本营，不预置其他建筑
+    // this.setupInitialTerritory();
+
+    // 设置相机：自动缩放适配整张棋盘（上下布局，上方留出HUD空间），再居中
+    const bounds = this.map.getBounds();
+    const fitScale = Math.min(
+      1,
+      this.screenWidth / (bounds.width + 40),
+      (this.screenHeight * 0.86) / (bounds.height + 40)
+    );
+    // 2026-11-21：默认倍率整体 ×1.5（用户要求格子更大更清楚，接受棋盘略超视口、可平移/缩放看全）
+    // fitScale 原始适配计算保持不变，仅对最终默认倍率乘系数；钳制 0.5~2.0（与 InputSystem 缩放范围一致）
+    this.inputSystem.scale = Math.max(0.5, Math.min(2.0, fitScale * 1.5));
+    const centerX = (bounds.minX + bounds.width / 2) * this.inputSystem.scale;
+    const centerY = (bounds.minY + bounds.height / 2) * this.inputSystem.scale;
+    this.inputSystem.cameraX = this.screenWidth / 2 - centerX;
+    this.inputSystem.cameraY = (this.screenHeight * 0.93) / 2 - centerY + this.screenHeight * 0.035;
+
+    const enemyPlayer = this.players.find(p =&gt; p.id === firstEnemyId);
+    const enemyBundle = enemyPlayer ? enemyPlayer.deploymentBundle : null;
+    const aiUnits = enemyBundle ? Object.values(enemyBundle.units || {}).map(u =&gt; `${u.name}(Lv${u.level})`).join(&#x27;/&#x27;) : &#x27;种族固定兵&#x27;;
+    console.log(&#x27;[Game] Battle initialized | Mode:&#x27;, this.battleMode,
+      &#x27;| Enemy:&#x27;, enemyPlayer ? enemyPlayer.name : &#x27;&#x27;,
+      &#x27;| AI:&#x27;, enemyPlayer ? (enemyPlayer.aiLevel || &#x27;&#x27;) : &#x27;&#x27;,
+      &#x27;| Race:&#x27;, enemyPlayer ? enemyPlayer.race : &#x27;&#x27;,
+      &#x27;| Layout:&#x27;, config.layoutName || `${config.rows}x${config.cols}`, &#x27;| Obstacles:&#x27;, (config.obstacles || []).length,
+      &#x27;| Enemy Units:&#x27;, aiUnits);
+  }
+
+  // === 异步对战匹配（PvP 快照对手 + 10s 超时降级 AI） ===
+
+  /**
+   * 启动异步对战匹配：
+   *   0~10s 匹配搜索（模拟 2~4s 检索延迟找到快照对手）→ 快照 PvP；
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 13 / 60 页</span></div>
+<pre><code>
+   *   10s 超时未找到 → 降级本地 AI 对战。
+   */
+  _startAsyncMatch() {
+    this._cancelAsyncMatch();
+    this._asyncState = &#x27;searching&#x27;;
+    this._asyncStartAt = Date.now();
+    // 模拟检索延迟：2~4s 后「找到」快照对手（营造匹配感；本地生成即得）
+    this._matchFoundTimer = setTimeout(() =&gt; this._onAsyncOpponentFound(), searchDelay());
+    // 10s 匹配超时 → 降级 AI（仅当检索延迟定时器异常未触发时兜底）
+    this._matchTimeout = setTimeout(() =&gt; {
+      this._matchTimeout = null;
+      if (this._asyncState === &#x27;searching&#x27;) {
+        this._fallbackToAI();
+      }
+    }, ASYNC_MATCH_TIMEOUT_MS);
+  }
+
+  /** 匹配成功：生成快照对手并进入异步 PvP 对局 */
+  _onAsyncOpponentFound() {
+    if (this._asyncState !== &#x27;searching&#x27;) return; // 已取消/已降级
+    const opponent = generateOpponent(ProfileManager.get());
+    this._cancelAsyncMatch();
+    this.initBattle(null, { mode: &#x27;snapshot&#x27;, snapshot: opponent });
+    this.showToast(`⚔ 已匹配对手：${opponent.name}（🏆${opponent.trophies}）`, 2.5);
+  }
+
+  /** 取消/清理异步匹配（清定时器 + 复位状态） */
+  _cancelAsyncMatch() {
+    if (this._matchFoundTimer) { clearTimeout(this._matchFoundTimer); this._matchFoundTimer = null; }
+    if (this._matchTimeout) { clearTimeout(this._matchTimeout); this._matchTimeout = null; }
+    this._asyncState = null;
+    this._asyncStartAt = 0;
+  }
+
+  /** 匹配超时：降级本地 AI 对战（按当前奖杯匹配难度） */
+  _fallbackToAI() {
+    this._cancelAsyncMatch();
+    this.showToast(&#x27;匹配超时，已为你匹配 AI 对手&#x27;, 2);
+    this.initBattle();
+  }
+
+  /** 匹配中 overlay 点击（取消按钮；遮罩点击不关闭，避免误触） */
+  _handleMatchOverlayClick(screenX, screenY) {
+    const { cancelBtn } = RenderSystem.matchOverlayLayout(this.screenWidth, this.screenHeight);
+    if (screenX &gt;= cancelBtn.x &amp;&amp; screenX &lt;= cancelBtn.x + cancelBtn.w &amp;&amp;
+        screenY &gt;= cancelBtn.y &amp;&amp; screenY &lt;= cancelBtn.y + cancelBtn.h) {
+      this.audioManager.playButtonClick();
+      this._cancelAsyncMatch();
+      this.showToast(&#x27;已取消匹配&#x27;, 1.5);
+    }
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 14 / 60 页</span></div>
+<pre><code>
+  }
+
+  /** 绘制异步匹配等待 overlay（匹配成功后自动消失；视觉统一由 RenderSystem 承载） */
+  _drawMatchOverlay() {
+    this.renderSystem.drawMatchOverlay();
+  }
+
+  /**
+   * 获取本局对手AI难度（天梯结算用）
+   */
+  _getEnemyDifficulty() {
+    const cfg = this.currentBattleConfig;
+    return (cfg &amp;&amp; cfg.enemies &amp;&amp; cfg.enemies[0] &amp;&amp; cfg.enemies[0].ai) || &#x27;normal&#x27;;
+  }
+
+  /**
+   * 天梯变动反馈：晋段金光 + toast
+   */
+  _notifyLadderChange(rewards) {
+    if (!rewards) return;
+    if (rewards.tierUp) {
+      this.animManager.flashScreen(&#x27;#ffd700&#x27;, 0.4);
+      this.showToast(`⬆ 晋升【${rewards.tier.icon} ${rewards.tier.label}】段位！${rewards.tierUpRewardText ? &#x27;奖励 &#x27; + rewards.tierUpRewardText : &#x27;&#x27;}`, 3);
+    } else if (rewards.protectedNotice) {
+      // 预留：保段提示（当前静默处理，避免败方连续弹窗）
+    }
+  }
+
+  /**
+   * AI初始占领格子
+   * 玩家获得2格，AI获得1格
+   */
+  setupInitialTerritory() {
+    const enemy = this.players.find(p =&gt; p.isAI);
+    if (!enemy || !enemy.base) return;
+
+    // AI大本营周围占领1个格子
+    const neighbors = this.map.getNeighbors(enemy.base.q, enemy.base.r);
+    if (neighbors.length &gt; 0) {
+      const tile = neighbors[0];
+      tile.owner = enemy.id;
+      tile.isFlipped = true;
+
+      const preset = tile.presetBuilding;
+      let buildingType = &#x27;barracks&#x27;;
+      let buildingLevel = 1;
+      if (preset &amp;&amp; preset.type !== &#x27;random&#x27;) {
+        buildingType = preset.type;
+        buildingLevel = preset.level || 1;
+      }
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 15 / 60 页</span></div>
+<pre><code>
+      tile.building = new Building(buildingType, buildingLevel, enemy.race, enemy.id, enemy.deploymentBundle);
+      enemy.addTile(tile);
+    }
+
+    // 玩家大本营周围给2个格子
+    const humanPlayer = this.players.find(p =&gt; p.id === this.localPlayerId);
+    if (humanPlayer &amp;&amp; humanPlayer.base) {
+      const playerNeighbors = this.map.getNeighbors(humanPlayer.base.q, humanPlayer.base.r);
+      for (let i = 0; i &lt; Math.min(2, playerNeighbors.length); i++) {
+        const tile = playerNeighbors[i];
+        tile.owner = this.localPlayerId;
+        tile.isFlipped = true;
+        const preset = tile.presetBuilding;
+        let buildingType = &#x27;barracks&#x27;;
+        let buildingLevel = 1;
+        if (preset &amp;&amp; preset.type !== &#x27;random&#x27;) {
+          buildingType = preset.type;
+          buildingLevel = preset.level || 1;
+        }
+        tile.building = new Building(buildingType, buildingLevel, &#x27;custom&#x27;, this.localPlayerId, this.deploymentBundle);
+        humanPlayer.addTile(tile);
+      }
+    }
+  }
+
+  /**
+   * 系统返回键处理（浏览器后退 / Android 物理返回 / 微信侧滑手势）
+   * 语义：逐级关闭当前打开的子窗口/界面，主大厅再返回才交还系统退出。
+   * @returns {&#x27;consumed&#x27;|&#x27;keep&#x27;|&#x27;none&#x27;}
+   *  - &#x27;consumed&#x27;：已关闭一个界面层（浏览器占位层自然消费，不再推回）
+   *  - &#x27;keep&#x27;   ：返回被消费但必须保持页面（战斗暂停/继续，需推回占位层）
+   *  - &#x27;none&#x27;   ：无可退界面（主大厅），交还系统默认行为（退出页面/小游戏）
+   */
+  tryBack() {
+    // 异步匹配搜索中（大厅模态 overlay）优先取消
+    if (this._asyncState === &#x27;searching&#x27;) {
+      this._cancelAsyncMatch();
+      this.audioManager.playButtonClick();
+      this.showToast(&#x27;已取消匹配&#x27;, 1.5);
+      return &#x27;consumed&#x27;;
+    }
+    // 子窗口优先：设置 → 公告 → 账号面板
+    if (this._settingsOpen) {
+      this._settingsOpen = false;
+      this.audioManager.playButtonClick();
+      return &#x27;consumed&#x27;;
+    }
+    if (this._announceOpen) {
+      this._announceOpen = false;
+      this.audioManager.playButtonClick();
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 16 / 60 页</span></div>
+<pre><code>
+      return &#x27;consumed&#x27;;
+    }
+    if (this._accountOpen) {
+      this._accountOpen = false;
+      this.audioManager.playButtonClick();
+      return &#x27;consumed&#x27;;
+    }
+    switch (this.screenState) {
+      case &#x27;lobby&#x27;:
+        return &#x27;none&#x27;;
+      case &#x27;playing&#x27;: {
+        if (this.gameStatus !== &#x27;playing&#x27;) {
+          // 战斗结算界面 → 返回大厅。
+          // 2026-11 交互改造：画布侧改为只认「返回大厅」按钮（见 handlePlayingClick），
+          // 但系统返回键 / 浏览器后退仍保留为关闭通道（避免玩家退不出去）。
+          this.audioManager.playButtonClick();
+          this.screenState = &#x27;lobby&#x27;;
+          return &#x27;consumed&#x27;;
+        }
+        // 战斗进行中 → 保持页面（暂停功能已移除：返回键不呼暂停菜单，仅挡退出）
+        return &#x27;keep&#x27;;
+      }
+      case &#x27;deploy_select&#x27;:
+        // 子面板优先：兵种详情 → 建筑详情 → 羁绊详情 → 招募面板 → 返回大厅
+        if (this._unitDetailId) { this._unitDetailId = null; return &#x27;consumed&#x27;; }
+        if (this._buildingDetailType) { this._buildingDetailType = null; return &#x27;consumed&#x27;; }
+        if (this._synergyDetailId) { this._synergyDetailId = null; return &#x27;consumed&#x27;; }
+        if (this._showRecruitPanel) { this._showRecruitPanel = false; return &#x27;consumed&#x27;; }
+        this.audioManager.playButtonClick();
+        this.screenState = &#x27;lobby&#x27;;
+        return &#x27;consumed&#x27;;
+      case &#x27;gacha&#x27;:
+        // 翻卡结果展示中 → 先关闭结果
+        if (this._gachaResults &amp;&amp; this._gachaResults.length &gt; 0) {
+          this._gachaResults = null;
+          this._gachaRevealIdx = 0;
+          return &#x27;consumed&#x27;;
+        }
+        this.audioManager.playButtonClick();
+        this.screenState = &#x27;lobby&#x27;;
+        return &#x27;consumed&#x27;;
+      case &#x27;shop&#x27;:
+      case &#x27;tech_panel&#x27;:
+      case &#x27;leaderboard&#x27;:
+      case &#x27;quest&#x27;:
+      case &#x27;achievement&#x27;:
+      case &#x27;battle_pass&#x27;:
+        this.audioManager.playButtonClick();
+        this.screenState = &#x27;lobby&#x27;;
+        return &#x27;consumed&#x27;;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 17 / 60 页</span></div>
+<pre><code>
+      default:
+        return &#x27;none&#x27;;
+    }
+  }
+
+  /**
+   * 初始化系统返回键支持
+   * 浏览器环境：挂 history 占位层 + popstate——后退键先触发 tryBack 关闭界面；
+   * 战斗类返回（keep）推回占位层保持页面；主大厅（none）放行浏览器正常退出。
+   * 微信小游戏：Android 返回键由 game.js 监听 wx.onKeyDown 调用 tryBack。
+   */
+  _initBackHandler() {
+    if (typeof window === &#x27;undefined&#x27; || !window.history || !window.addEventListener) return;
+    this._backEnabled = true;
+    this._lastLayerActive = false;
+    this._onPopState = () =&gt; {
+      const result = this.tryBack();
+      if (result === &#x27;keep&#x27;) {
+        // 战斗暂停/继续：占位层已被浏览器消费，推回保持页面不退出
+        try { window.history.pushState({ tk: 1 }, &#x27;&#x27;); } catch (err) { /* 忽略 */ }
+      }
+      // &#x27;consumed&#x27;：界面已关闭，占位层自然消费（栈回到初始层）
+      // &#x27;none&#x27;：主大厅，放行浏览器正常退出
+    };
+    window.addEventListener(&#x27;popstate&#x27;, this._onPopState);
+  }
+
+  /**
+   * 统一屏幕点击处理(根据屏幕状态分发)
+   */
+  handleScreenClick(screenX, screenY) {
+    // P38：新手引导激活时，遮罩（高亮区以外）的点击一律吞掉。
+    // 之前引导只在大厅分支里做了「未命中就提示」，其它界面/路径根本没挡，
+    // 表现为「黑色遮罩能点到后面的按钮」。这里统一在最前面收口。
+    if (this._interceptTutorialClick(screenX, screenY)) return;
+    // 异步匹配搜索中（大厅模态 overlay）：优先处理（取消按钮），屏蔽底层界面点击
+    if (this._asyncState === &#x27;searching&#x27;) {
+      this._handleMatchOverlayClick(screenX, screenY);
+      return;
+    }
+    // 账号面板打开时优先处理并屏蔽底层界面点击
+    if (this._accountOpen) {
+      this._handleAccountTap(screenX, screenY);
+      return;
+    }
+    // 设置/公告窗口打开时优先处理并屏蔽底层界面点击
+    if (this._settingsOpen || this._announceOpen) {
+      this._handleSettingsTap(screenX, screenY);
+      return;
+    }
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 18 / 60 页</span></div>
+<pre><code>
+    switch (this.screenState) {
+      case &#x27;lobby&#x27;:
+        this.handleLobbyClick(screenX, screenY);
+        break;
+      case &#x27;playing&#x27;:
+        this.handlePlayingClick(screenX, screenY);
+        break;
+      case &#x27;tech_panel&#x27;:
+        this.handleTechPanelClick(screenX, screenY);
+        break;
+      case &#x27;shop&#x27;:
+        this.handleShopClick(screenX, screenY);
+        break;
+      case &#x27;quest&#x27;:
+        this.handleQuestClick(screenX, screenY);
+        break;
+      case &#x27;achievement&#x27;:
+        this.handleAchievementClick(screenX, screenY);
+        break;
+      case &#x27;battle_pass&#x27;:
+        this.handleBattlePassClick(screenX, screenY);
+        break;
+      case &#x27;gacha&#x27;:
+        this.handleGachaClick(screenX, screenY);
+        break;
+      case &#x27;leaderboard&#x27;:
+        this.handleLeaderboardClick(screenX, screenY);
+        break;
+    }
+  }
+
+  /**
+   * 上阵选择界面点击
+   * 玩家在战斗前安排兵种/羁绊上阵
+   */
+  // === 上阵界面布局常量 ===
+  /** 长按激活拖拽的时长（ms），从按下起持续超过该时长即拿起 */
+  static get DEPLOY_LONG_PRESS_MS() { return 200; }
+
+  // === 上阵界面布局 ===
+  // P36：垂直锚点（slot/synergy/building/unit 的 y 与 labelY）与横排宽度全部由
+  // RenderSystem.deployLayout(w, h) 统一算出，渲染与命中共用同一份，禁止各自硬编码
+  // （P33 曾因两边硬编码不同步导致点击错位）。下面两个静态方法仅为兼容旧调用保留。
+  static deployLayoutOf(screenW, screenH) {
+    return RenderSystem.deployLayout(screenW, screenH);
+  }
+
+  /** @deprecated 请用 RenderSystem.deployLayout(w, h).slot.w */
+  static deployUnitSlotW(screenW) {
+    return RenderSystem.deployLayout(screenW, 844).slot.w;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 19 / 60 页</span></div>
+<pre><code>
+  }
+  /** @deprecated 请用 RenderSystem.deployLayout(w, h).unit.w */
+  static deployUnitCardW(screenW) {
+    return RenderSystem.deployLayout(screenW, 844).unit.w;
+  }
+  // 注：deploySynSlotW / deploySynCardW 已废弃（2026-09-09 改造：羁绊自动派生，无须 slot/card 布局）
+
+  // === 大厅布局常量（handleLobbyClick 与 RenderSystem.drawLobby 同源使用） ===
+  // P9：row.w / nav.w / battle.w 不再用静态数值，而是按屏宽动态计算（见下方静态方法）
+  // LOBBY_LAYOUT 仍保留 row/ nav/ battle 对象，但 .w 字段仅作「设计稿参考值」，
+  // 运行时命中框全部通过 lobbyRowItemW / lobbyNavItemW / battleBtnW 三个静态方法取值
+  static get LOBBY_LAYOUT() {
+    return {
+      // 功能按钮：分享 / 任务 / 成就 [+通行证]（v2 已改为右上角纵向排列，实际 rect 走 lobbyFuncBtnRect）
+      // 下方 w/h/gap/y 仅保留作「设计稿参考值 / 宽度公式兼容」（test-device-matrix 依赖 lobbyRowItemWByCount 公式）
+      // P25：battlePass=false 时 count=3，battlePass=true 时 count=4，默认 4 向后兼容
+      row: { w: LAYOUT_DESIGN_MAX.lobbyRow, h: 40, gap: 8, y: 262, count: 4 },
+      // 开战按钮（底部导航上方）：使用当前布阵直接开战
+      battle: { w: LAYOUT_DESIGN_MAX.battle, h: 58, yOffset: 150 },
+      // 底部导航：商店 / 招募 / 布阵 / 科技 / 排行榜
+      nav: { w: LAYOUT_DESIGN_MAX.lobbyNav, h: 56, gap: 6, count: 5 },
+      // 天梯区：大段位徽章 + 奖杯文字 + 段位进度条（v2 已移到屏幕中偏上）
+      // badgeR/barH 仅作设计稿参考值；运行时坐标由 Layout.lobbySeasonCombo 统一计算
+      ladder: { barH: 20, barGap: 34, badgeR: 54 },
+    };
+  }
+
+  /** 功能按钮行单按钮自适应宽（按 count 动态） */
+  static lobbyRowItemWByCount(count, screenW) {
+    return rowItemWidth(count, 8, screenW, 8, LAYOUT_MIN.lobbyRow, LAYOUT_DESIGN_MAX.lobbyRow);
+  }
+  /** 功能按钮行单按钮自适应宽（跟随 features.battlePass 决定 count，渲染与点击同源） */
+  static lobbyRowItemW(screenW) {
+    return Game.lobbyRowItemWByCount(Game.lobbyRowCount(), screenW);
+  }
+  /** 底部 nav 单按钮自适应宽 */
+  static lobbyNavItemW(screenW) {
+    return rowItemWidth(5, 6, screenW, 8, LAYOUT_MIN.lobbyNav, LAYOUT_DESIGN_MAX.lobbyNav);
+  }
+  /** 开战按钮自适应宽（padX=16 表示左右各 16，屏宽够大时维持设计稿 220） */
+  static battleBtnW(screenW) {
+    return rowItemWidth(1, 0, screenW, 16, LAYOUT_MIN.battle, LAYOUT_DESIGN_MAX.battle);
+  }
+
+  /** 功能按钮行当前实际 count（依 features.battlePass 决定，4=含通行证/3=折叠） */
+  static lobbyRowCount() {
+    const _features = ConfigLoader.getSafe(&#x27;game&#x27;)?.features || {};
+    return _features.battlePass !== false ? 4 : 3;
+  }
+
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 20 / 60 页</span></div>
+<pre><code>
+  /** 功能按钮行第 i 个按钮的 X（跟随 features.battlePass 决定 count，渲染与点击同源） */
+  static lobbyRowX(i, screenW) {
+    return Game.lobbyRowXByCount(i, Game.lobbyRowCount(), screenW);
+  }
+
+  /** 功能按钮行第 i 个按钮的 X（指定 count，count=3 用于折叠通行证场景） */
+  static lobbyRowXByCount(i, count, screenW) {
+    const r = Game.LOBBY_LAYOUT.row;
+    const w = Game.lobbyRowItemWByCount(count, screenW);
+    return (screenW - (count * w + (count - 1) * r.gap)) / 2 + i * (w + r.gap);
+  }
+
+  /** 段位组合单元布局（大徽章 + 奖杯文字 + 进度条，v2：赛季区中偏上） */
+  static lobbyLadderCombo(screenH) {
+    // v2：徽章区移到屏幕中偏上，锚点由 Layout.lobbySeasonCombo 统一计算；
+    // 传 400 作为参考屏宽（徽章为水平居中，宽高不含屏宽相关项，仅 count 影响顶部区块高度）。
+    const screenW = this.screenWidth || 400;
+    return layoutSeasonCombo(screenW, screenH, Game.lobbyRowCount());
+  }
+
+  /** 段位进度条 Y（徽章下方，跟随徽章） */
+  static lobbyLadderBarY(screenH) {
+    return Game.lobbyLadderCombo(screenH).barY;
+  }
+
+  /** 大段位徽章中心 Y */
+  static lobbyBadgeY(screenH) {
+    return Game.lobbyLadderCombo(screenH).badgeY;
+  }
+
+  /** 大段位徽章半径 */
+  static lobbyBadgeRadius(screenH) {
+    return Game.lobbyLadderCombo(screenH).badgeR;
+  }
+
+  /** 段位进度条宽度（居中，长度随屏宽自适应） */
+  static lobbyLadderBarWidth(screenW) {
+    return ladderBarWidth(screenW);
+  }
+
+  // === 大厅 v2 布局（与 RenderSystem.drawLobby 共用 Layout.js 单一真相源）===
+  /** 功能按钮纵列：第 i 个按钮 rect（分享/任务/成就/通行证，右上角纵向） */
+  static lobbyFuncBtnRect(i, screenW) {
+    return layoutFuncBtnRect(i, screenW, Game.lobbyRowCount());
+  }
+  /** 功能按钮纵列底部 Y */
+  static lobbyFuncBottom(screenW = 390) { return lobbyFuncBottom(Game.lobbyRowCount(), screenW); }
+  /** 左上玩家信息卡 rect（账号 + 战力合并） */
+  static lobbyPlayerCardRect(screenW) { return layoutPlayerCardRect(screenW); }
+  /** 赛季区顶部 Y（徽章上界锚点，替代旧 rowBottom=302） */
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 21 / 60 页</span></div>
+<pre><code>
+  static lobbySeasonTop(screenW) { return lobbySeasonTop(screenW, Game.lobbyRowCount()); }
+  /** 上阵卡片顶 Y（开战按钮上方） */
+  static lobbyDeployCardY(screenH) { return layoutDeployCardY(screenH); }
+  /** 上阵兵种标签 Y */
+  static lobbyDeployLabelY(screenH) { return layoutDeployLabelY(screenH); }
+
+  /** 底部导航 Y */
+  static lobbyNavY(screenH) { return screenH - 72; }
+
+  /** 底部导航第 i 个按钮的 X（按当前屏宽动态计算） */
+  static lobbyNavX(i, screenW) {
+    const n = Game.LOBBY_LAYOUT.nav;
+    const w = Game.lobbyNavItemW(screenW);
+    return (screenW - (n.count * w + (n.count - 1) * n.gap)) / 2 + i * (w + n.gap);
+  }
+
+  /** 开战按钮 Y（导航栏上方） */
+  static lobbyBattleY(screenH) {
+    return screenH - Game.LOBBY_LAYOUT.battle.yOffset;
+  }
+
+  /** 返回按钮（左下角）布局常量：距左 16、距底 16，宽 80 高 35（P16，与 RenderSystem._drawBackButton 同源） */
+  static get BACK_BUTTON() {
+    return { x: 16, w: 80, h: 35, bottomOffset: 16 };
+  }
+
+  /** 返回按钮命中判定（左下角，所有子界面共用） */
+  static isBackButtonHit(x, y, screenH) {
+    const b = Game.BACK_BUTTON;
+    return x &gt;= b.x &amp;&amp; x &lt;= b.x + b.w &amp;&amp;
+           y &gt;= screenH - b.bottomOffset - b.h &amp;&amp; y &lt;= screenH - b.bottomOffset;
+  }
+
+  /** 滚动列表可见区底部边界 Y（与 RenderSystem._beginScrollClip 底部裁剪同源：返回按钮顶部再留 8px） */
+  static scrollViewportBottom(screenH) {
+    const b = Game.BACK_BUTTON;
+    return screenH - b.bottomOffset - b.h - 8;
+  }
+
+  // === 设置窗口布局常量（_handleSettingsTap 与 RenderSystem._drawSettingsOverlay 同源使用） ===
+  static get SETTINGS_LAYOUT() {
+    return {
+      panelW: 290,
+      panelH: 316,
+      rowW: 232,
+      rowH: 44,
+      rowGap: 14,
+      rowStartOffset: 64, // 面板顶到第一行的距离（含标题）
+      closeSize: 30,
+    };
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 22 / 60 页</span></div>
+<pre><code>
+  }
+
+  /** 设置窗口面板矩形（居中） */
+  static settingsPanel(screenW, screenH) {
+    const L = Game.SETTINGS_LAYOUT;
+    return {
+      x: (screenW - L.panelW) / 2,
+      y: (screenH - L.panelH) / 2,
+      w: L.panelW,
+      h: L.panelH,
+    };
+  }
+
+  /** 设置窗口第 i 行按钮矩形（0=音效 1=音乐 2=震动 3=公告） */
+  static settingsRowRect(i, screenW, screenH) {
+    const L = Game.SETTINGS_LAYOUT;
+    const p = Game.settingsPanel(screenW, screenH);
+    return {
+      x: (screenW - L.rowW) / 2,
+      y: p.y + L.rowStartOffset + i * (L.rowH + L.rowGap),
+      w: L.rowW,
+      h: L.rowH,
+    };
+  }
+
+  /** 设置窗口关闭按钮矩形（面板右上角） */
+  static settingsCloseRect(screenW, screenH) {
+    const L = Game.SETTINGS_LAYOUT;
+    const p = Game.settingsPanel(screenW, screenH);
+    return { x: p.x + p.w - L.closeSize - 8, y: p.y + 8, w: L.closeSize, h: L.closeSize };
+  }
+
+  // === 账号面板布局常量（_handleAccountTap 与 RenderSystem._drawAccountOverlay 同源使用） ===
+  static get ACCOUNT_LAYOUT() {
+    return {
+      panelW: 300,
+      panelH: 340,
+      rowH: 46,
+      rowGap: 8,
+      rowStartOffset: 54, // 面板顶到第一行账号的距离（含标题）
+      maxRows: 3,         // 账号列表最多显示行数（超出截断，提示见绘制）
+      btnH: 46,
+      btnGap: 8,
+      closeSize: 30,
+    };
+  }
+
+  /** 账号面板矩形（居中） */
+  static accountPanel(screenW, screenH) {
+    const L = Game.ACCOUNT_LAYOUT;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 23 / 60 页</span></div>
+<pre><code>
+    return { x: (screenW - L.panelW) / 2, y: (screenH - L.panelH) / 2, w: L.panelW, h: L.panelH };
+  }
+
+  /** 账号面板第 i 行矩形 */
+  static accountRowRect(i, screenW, screenH) {
+    const L = Game.ACCOUNT_LAYOUT;
+    const p = Game.accountPanel(screenW, screenH);
+    return { x: p.x + 12, y: p.y + L.rowStartOffset + i * (L.rowH + L.rowGap), w: p.w - 24, h: L.rowH };
+  }
+
+  /** 账号行内「删除」小按钮矩形（非当前账号，右上角） */
+  static accountRowDeleteRect(i, screenW, screenH) {
+    const r = Game.accountRowRect(i, screenW, screenH);
+    return { x: r.x + r.w - 32, y: r.y + (r.h - 28) / 2, w: 28, h: 28 };
+  }
+
+  /** 「登录新账号」按钮矩形 */
+  static accountLoginRect(screenW, screenH) {
+    const L = Game.ACCOUNT_LAYOUT;
+    const p = Game.accountPanel(screenW, screenH);
+    const y = p.y + L.rowStartOffset + L.maxRows * (L.rowH + L.rowGap) + L.btnGap;
+    return { x: p.x + 16, y, w: p.w - 32, h: L.btnH };
+  }
+
+  /** 「注销当前账号」按钮矩形 */
+  static accountLogoutRect(screenW, screenH) {
+    const L = Game.ACCOUNT_LAYOUT;
+    const p = Game.accountPanel(screenW, screenH);
+    const y = p.y + L.rowStartOffset + L.maxRows * (L.rowH + L.rowGap) + L.btnGap + L.btnH + L.btnGap;
+    return { x: p.x + 16, y, w: p.w - 32, h: L.btnH };
+  }
+
+  /** 账号面板关闭按钮矩形（右上角） */
+  static accountCloseRect(screenW, screenH) {
+    const L = Game.ACCOUNT_LAYOUT;
+    const p = Game.accountPanel(screenW, screenH);
+    return { x: p.x + p.w - L.closeSize - 8, y: p.y + 8, w: L.closeSize, h: L.closeSize };
+  }
+
+  /** 公告内容（设置窗口 → 公告按钮查看） */
+  static get ANNOUNCEMENTS() {
+    return [
+      {
+        date: &#x27;2026-08-29&#x27;,
+        title: &#x27;v1.8 天梯段位赛季上线&#x27;,
+        lines: [
+          &#x27;🏆 8大段位：青铜→白银→黄金→铂金→钻石→大师→宗师→王者&#x27;,
+          &#x27;⚔ 胜利赢奖杯，失败扣奖杯（不扣货币），到段不跌段&#x27;,
+          &#x27;🎯 对手强度随奖杯匹配：低段练手，高段硬仗&#x27;,
+          &#x27;🎁 晋段一次性奖励 + 7天赛季结算，赛季末奖杯软重置&#x27;,
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 24 / 60 页</span></div>
+<pre><code>
+          &#x27;🏅 排行榜新增「天梯榜」&#x27;,
+        ],
+      },
+      {
+        date: &#x27;2026-08-29&#x27;,
+        title: &#x27;v1.7 设置窗口上线&#x27;,
+        lines: [
+          &#x27;右上角按钮升级为 ⚙ 设置窗口&#x27;,
+          &#x27;音效 / 背景音乐可独立开关并自动保存&#x27;,
+          &#x27;开战入口移至大厅「⚔ 开战」按钮&#x27;,
+        ],
+      },
+      {
+        date: &#x27;2026-08-28&#x27;,
+        title: &#x27;v1.6 布阵界面改版&#x27;,
+        lines: [
+          &#x27;兵种卡显示品质外框与上阵角标&#x27;,
+          &#x27;羁绊列表固定显示，不随兵种列表滚动&#x27;,
+          &#x27;长按或按住拖动兵种卡即可拿起上阵&#x27;,
+        ],
+      },
+    ];
+  }
+
+  /**
+   * 兵种卡列表起始 Y —— 紧贴自动羁绊预览面板下沿（2026-09-09 改造：羁绊不再占独立行数）
+   * （渲染与点击共用，保证布局同源）
+   */
+  static deployUnitListY(_synCount, screenW = 390, screenH = 844) {
+    return RenderSystem.deployLayout(screenW, screenH).unit.listY;
+  }
+
+  /**
+   * 上阵界面触摸按下
+   * - 兵种槽位/羁绊槽位/建筑区/羁绊列表：固定区，无拖拽不滚动，轻点在 DragEnd 中开详情
+   * - 兵种卡（未上阵）：记录长按候选，DEPLOY_LONG_PRESS_MS 后激活拖拽；按住并移动超阈值也立即拿起
+   * - 已上阵兵种卡：不可拖拽（轻点仍可查看详情，换位请用详情内「上阵」按钮）
+   */
+  _handleDeployDragStart(x, y) {
+    // P38：引导激活时遮罩不可穿透 —— 除高亮区外禁止长按/拖拽拿起卡片
+    if (this._interceptTutorialClick(x, y)) {
+      this._cancelDeployPress();
+      this._deployDrag.active = false;
+      return;
+    }
+    // 如果招募面板打开，不处理拖拽
+    if (this._showRecruitPanel) return;
+    // 如果详情面板打开，不处理拖拽
+    if (this._unitDetailId) return;
+    if (this._buildingDetailType) return;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 25 / 60 页</span></div>
+<pre><code>
+    if (this._synergyDetailId) return;
+
+    const layout = RenderSystem.deployLayout(this.screenWidth, this.screenHeight);
+    const w = this.screenWidth;
+    const profile = ProfileManager.get();
+    const unitListY = layout.unit.listY;
+
+    // === 固定区（兵种槽位/羁绊槽位/建筑强化/羁绊列表）：不产生拖拽候选，不参与滚动 ===
+    if (y &lt; unitListY - 20) {
+      return;
+    }
+
+    // === 可滚动区：兵种卡列表 ===
+    this._lastDeployY = y; // 用于滚动计算
+    const scrollY = this.metaScrollY || 0;
+    if (profile) {
+      const collected = DeploymentSystem.getCollectedUnitList();
+      const deployed = profile?.deployment?.units || [];
+      const card = layout.unit;
+      const cardStartX = (w - (card.perRow * card.w + (card.perRow - 1) * card.gap)) / 2;
+      for (let i = 0; i &lt; collected.length; i++) {
+        const col = i % card.perRow;
+        const row = Math.floor(i / card.perRow);
+        const cx = cardStartX + col * (card.w + card.gap);
+        const cy = unitListY + row * (card.h + card.gap) - scrollY;
+        if (x &gt;= cx &amp;&amp; x &lt;= cx + card.w &amp;&amp; y &gt;= cy &amp;&amp; y &lt;= cy + card.h) {
+          // 已上阵的兵种不可拖拽（换位请打开详情用「上阵」按钮）
+          if (!deployed.includes(collected[i].id)) {
+            this._startDeployPress({ type: &#x27;unit&#x27;, id: collected[i].id, fromSlot: -1, x, y });
+          }
+          return;
+        }
+      }
+    }
+  }
+
+  /**
+   * 启动长按候选：按住 DEPLOY_LONG_PRESS_MS 后激活拖拽；
+   * 期间松手取消候选；按住并移动超过阈值 → 立即激活拖拽（按住拖拽也可拿起）
+   */
+  _startDeployPress(press) {
+    this._deployPress = press;
+    this._deployPressTimer = setTimeout(() =&gt; {
+      this._deployPressTimer = null;
+      this._activateDeployDrag();
+    }, Game.DEPLOY_LONG_PRESS_MS);
+  }
+
+  /**
+   * 激活拖拽（长按到时 / 按住移动超阈值 两条路径共用）
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 26 / 60 页</span></div>
+<pre><code>
+   */
+  _activateDeployDrag() {
+    if (!this._deployPress) return;
+    this._deployDrag = {
+      active: true,
+      type: this._deployPress.type,
+      id: this._deployPress.id,
+      fromSlot: this._deployPress.fromSlot,
+      x: this._deployPress.x,
+      y: this._deployPress.y,
+    };
+    this._deployPress = null;
+    this._lastDeployY = null; // 拖拽期间不参与列表滚动
+    this.audioManager.playButtonClick(); // 「拿起」反馈
+    this.showToast(&#x27;已拿起 ⬆ 拖到槽位后松开&#x27;, 0.8);
+  }
+
+  /**
+   * 取消长按候选（松手/移动/离开界面时调用）
+   */
+  _cancelDeployPress() {
+    if (this._deployPressTimer) {
+      clearTimeout(this._deployPressTimer);
+      this._deployPressTimer = null;
+    }
+    this._deployPress = null;
+  }
+
+  /**
+   * 上阵界面拖拽移动
+   */
+  _handleDeployDragMove(x, y) {
+    // 长按未激活前移动超过10px → 立即拿起（按住拖拽也可上阵）；
+    // 列表滚动仅从卡片间隙/空白处起手触发
+    if (this._deployPress &amp;&amp; !this._deployDrag.active) {
+      const dx = Math.abs(x - this._deployPress.x);
+      const dy = Math.abs(y - this._deployPress.y);
+      if (dx &gt; 10 || dy &gt; 10) {
+        if (this._deployPressTimer) {
+          clearTimeout(this._deployPressTimer);
+          this._deployPressTimer = null;
+        }
+        this._activateDeployDrag();
+      }
+    }
+    if (this._deployDrag.active) {
+      this._deployDrag.x = x;
+      this._deployDrag.y = y;
+    } else if (this._lastDeployY != null) {
+      // 没有激活的拖拽 → 滚动列表
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 27 / 60 页</span></div>
+<pre><code>
+      const dy = y - this._lastDeployY;
+      this.metaScrollY = Math.max(0, this.metaScrollY - dy); // 上滑 dy&lt;0 → scrollY 增 → 内容上移
+    }
+    this._lastDeployY = y;
+  }
+
+  /**
+   * 上阵界面拖拽结束/点击
+   */
+  _handleDeployDragEnd(x, y, isDrag) {
+    // P38：引导激活时遮罩不可穿透 —— 除高亮区外禁止点击（返回按钮即高亮区，可正常点）
+    if (this._interceptTutorialClick(x, y)) {
+      this._deployDrag.active = false;
+      return;
+    }
+    this._lastDeployY = null;
+    // 松手时取消未触发的长按计时器
+    this._cancelDeployPress();
+    const w = this.screenWidth;
+    const h = this.screenHeight;
+    const layout = RenderSystem.deployLayout(w, h);
+
+    // 详情面板打开时，所有点击交给详情面板处理
+    if (this._buildingDetailType) {
+      this._handleBuildingDetailTap(x, y);
+      return;
+    }
+    if (this._synergyDetailId) {
+      this._handleSynergyDetailTap(x, y);
+      return;
+    }
+    if (this._unitDetailId) {
+      this._handleUnitDetailTap(x, y);
+      return;
+    }
+
+    // 招募面板打开时，所有点击交给招募面板处理
+    // 注意：不检查 isDrag，因为触摸屏上手指轻触很容易超过3px阈值被误判为拖拽，
+    // 导致招募面板内的所有点击（兵种卡片、关闭按钮）永远无法触发
+    if (this._showRecruitPanel) {
+      this._handleRecruitPanelTap(x, y);
+      return;
+    }
+
+    // 只要长按拿起了拖拽，松手一律按「拖拽放置」处理（不看 isDrag）：
+    // 手指没怎么移动时 InputSystem 会判定为点击，若落入点击分支会在原位误开详情
+    if (this._deployDrag.active) {
+      // === 拖拽放置 ===
+      const drag = this._deployDrag;
+
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 28 / 60 页</span></div>
+<pre><code>
+      if (drag.type === &#x27;unit&#x27;) {
+        // 检查是否放在兵种槽位上
+        // P36：槽位几何与 RenderSystem.drawDeploySelect 同源（避免命中框与渲染位置错位）
+        const uslot = layout.slot;
+        const uStartX = (w - (uslot.count * uslot.w + (uslot.count - 1) * uslot.gap)) / 2;
+        for (let i = 0; i &lt; uslot.count; i++) {
+          const sx = uStartX + i * (uslot.w + uslot.gap);
+          if (x &gt;= sx &amp;&amp; x &lt;= sx + uslot.w &amp;&amp; y &gt;= uslot.y &amp;&amp; y &lt;= uslot.y + uslot.h) {
+            // 放到槽位 i
+            const result = DeploymentSystem.setDeployedUnit(i, drag.id);
+      this._invalidateDeploymentBundle(); // P35：羁绊预览需重新派生
+            if (!result.success) {
+              this.showToast(result.reason || &#x27;无法上阵&#x27;, 1.5);
+            } else {
+              this.audioManager.playButtonClick();
+            }
+            this._deployDrag.active = false;
+            return;
+          }
+        }
+        // 没有放在槽位上 → 视为「放回原处」，不触发点击、不弹详情
+        // （从槽位拖出但不放在另一个槽位上，保持原样）
+      }
+      // 注：羁绊不再支持拖拽，上阵/卸下/换位在羁绊详情面板内操作
+
+      this._deployDrag.active = false;
+      return;
+    }
+
+    // === 滚动手势（有移动但未长按拿起）→ 不触发点击，避免滚动误开详情 ===
+    if (isDrag) {
+      this._deployDrag.active = false;
+      return;
+    }
+
+    // === 点击（非拖拽）===
+    // 点击意味着没有进行中的拖拽，复位拖拽状态（避免虚影残留）
+    this._deployDrag.active = false;
+
+    // 返回按钮
+    if (Game.isBackButtonHit(x, y, h)) {
+      this.audioManager.playButtonClick();
+      this.screenState = &#x27;lobby&#x27;;
+      // 新手引导第2步：从布阵界面返回 → 进入大厅第3步（高亮开战）
+      const tProf = ProfileManager.get();
+      if (tProf &amp;&amp; tProf.tutorialStep === 1) {
+        tProf.tutorialStep = 2;
+        ProfileManager.save();
+      }
+      return;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 29 / 60 页</span></div>
+<pre><code>
+    }
+
+    // 注：开始对战入口已移至大厅「开战」按钮，本界面只做布阵
+
+    // 点击已上阵的兵种槽位 → 打开该兵种详情（槽位不可拖拽，替换请长按兵种卡拖入或详情内上阵）
+    const clickProfile = ProfileManager.get();
+    const uslotClick = layout.slot;
+    const uClickStartX = (w - (uslotClick.count * uslotClick.w + (uslotClick.count - 1) * uslotClick.gap)) / 2;
+    for (let i = 0; i &lt; uslotClick.count; i++) {
+      const sx = uClickStartX + i * (uslotClick.w + uslotClick.gap);
+      if (x &gt;= sx &amp;&amp; x &lt;= sx + uslotClick.w &amp;&amp; y &gt;= uslotClick.y &amp;&amp; y &lt;= uslotClick.y + uslotClick.h) {
+        const unitId = clickProfile?.deployment?.units?.[i];
+        if (unitId) this._openUnitDetail(unitId);
+        return;
+      }
+    }
+
+    // P35: 点击羁绊卡 → 打开羁绊详情面板（激活方式 + 各级效果）
+    // 卡片几何与 RenderSystem.autoSynergyCardLayout 同源
+    {
+      const apc = layout.synergy;
+      const synList = SynergySystem.getAutoSynergyPanelData(this.deploymentBundle);
+      for (let i = 0; i &lt; apc.count; i++) {
+        const sx = apc.startX + i * (apc.size + apc.gap);
+        if (x &gt;= sx &amp;&amp; x &lt;= sx + apc.size &amp;&amp; y &gt;= apc.y &amp;&amp; y &lt;= apc.y + apc.size) {
+          const syn = synList[i];
+          if (syn) this._openSynergyDetail(syn.id);
+          return;
+        }
+      }
+    }
+
+    // 点击建筑强化卡 → 打开建筑详情/升级面板(P33: 复用 _unitDetailId 同套机制)
+    const bldSlotW = layout.building.w, bldSlotH = layout.building.h, bldGap = layout.building.gap;
+    const bldStartX = (w - (3 * bldSlotW + 2 * bldGap)) / 2;
+    const bldSlotY = layout.building.y;
+    const bldKeysArr = [&#x27;barracks&#x27;, &#x27;arrow_tower&#x27;, &#x27;gold_mine&#x27;];
+    for (let i = 0; i &lt; 3; i++) {
+      const bldType = bldKeysArr[i];
+      const sx = bldStartX + i * (bldSlotW + bldGap);
+      if (x &gt;= sx &amp;&amp; x &lt;= sx + bldSlotW &amp;&amp; y &gt;= bldSlotY &amp;&amp; y &lt;= bldSlotY + bldSlotH) {
+        this._openBuildingDetail(bldType);
+        return;
+      }
+    }
+
+    // 点击兵种卡(可滚动区) → 打开详情/升级面板
+    const scrollY = this.metaScrollY || 0;
+    const card = layout.unit;
+    const collected = DeploymentSystem.getCollectedUnitList();
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 30 / 60 页</span></div>
+<pre><code>
+    const unitListY = layout.unit.listY;
+    const cardStartX = (w - (card.perRow * card.w + (card.perRow - 1) * card.gap)) / 2;
+    for (let i = 0; i &lt; collected.length; i++) {
+      const col = i % card.perRow;
+      const row = Math.floor(i / card.perRow);
+      const cx = cardStartX + col * (card.w + card.gap);
+      const cy = unitListY + row * (card.h + card.gap) - scrollY;
+      if (x &gt;= cx &amp;&amp; x &lt;= cx + card.w &amp;&amp; y &gt;= cy &amp;&amp; y &lt;= cy + card.h) {
+        this._openUnitDetail(collected[i].id);
+        return;
+      }
+    }
+  }
+
+  /**
+   * 打开建筑详情/升级面板(P33)
+   * 复用 _unitDetailId 同套机制：字段+面板+点击+gameState
+   */
+  _openBuildingDetail(bldType) {
+    this._buildingDetailType = bldType;
+    if (this.audioManager) this.audioManager.playButtonClick();
+  }
+
+  /**
+   * 建筑详情面板点击处理：关闭 / 升级 / 遮罩关闭
+   * 面板布局与 _drawBuildingDetailPanel 共享 RenderSystem.buildingDetailPanelLayout
+   */
+  _handleBuildingDetailTap(x, y) {
+    const w = this.screenWidth;
+    const h = this.screenHeight;
+    const { panelW, panelH, panelX, panelY } = RenderSystem.buildingDetailPanelLayout(w, h);
+
+    // 关闭按钮
+    const closeBtnX = panelX + panelW - 35, closeBtnY = panelY + 5, closeBtnSize = 30;
+    if (x &gt;= closeBtnX &amp;&amp; x &lt;= closeBtnX + closeBtnSize &amp;&amp;
+        y &gt;= closeBtnY &amp;&amp; y &lt;= closeBtnY + closeBtnSize) {
+      this._buildingDetailType = null;
+      if (this.audioManager) this.audioManager.playButtonClick();
+      return;
+    }
+
+    // 背景遮罩点击(关闭面板)
+    if (x &lt; panelX || x &gt; panelX + panelW || y &lt; panelY || y &gt; panelY + panelH) {
+      this._buildingDetailType = null;
+      return;
+    }
+
+    // 升级按钮(面板底部居中，命中区由 buildingDetailPanelLayout 统一给出)
+    const { btnX, btnY, btnW, btnH } = RenderSystem.buildingDetailPanelLayout(w, h);
+    if (x &gt;= btnX &amp;&amp; x &lt;= btnX + btnW &amp;&amp; y &gt;= btnY &amp;&amp; y &lt;= btnY + btnH) {
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 31 / 60 页</span></div>
+<pre><code>
+  const name = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)]
+    + &#x27;_&#x27; + randomHexSuffix();
+
+  return {
+    name,
+    trophies,
+    difficulty: settings.difficulty,
+    rulesVersion: RULES_VERSION,
+  };
+}
+
+/**
+ * 模拟匹配检索延迟（2~4s）：找到快照对手需要的时间
+ * @returns {number} 毫秒
+ */
+export function searchDelay() {
+  return SEARCH_DELAY_MIN_MS + Math.random() * (SEARCH_DELAY_MAX_MS - SEARCH_DELAY_MIN_MS);
+}
+
+/**
+ * 匹配状态机（对外只读）
+ * - &#x27;idle&#x27;         未发起匹配
+ * - &#x27;searching&#x27;    检索中（模拟 2~4s 网络延迟）
+ * - &#x27;matched&#x27;      检索成功，产出对手快照
+ * - &#x27;timeout&#x27;      10s 超时未检索到
+ * - &#x27;cancelled&#x27;    外部取消（玩家主动返回大厅等）
+ */
+export const MATCH_STATE = Object.freeze({
+  IDLE: &#x27;idle&#x27;, SEARCHING: &#x27;searching&#x27;, MATCHED: &#x27;matched&#x27;,
+  TIMEOUT: &#x27;timeout&#x27;, CANCELLED: &#x27;cancelled&#x27;,
+});
+
+/**
+ * 异步匹配会话句柄
+ * 外部通过 start()/cancel() 控制，检索完成或超时后调 onState 回调。
+ *
+ * 用法：
+ *   const session = AsyncMatchSystem.start(profile, (state, payload) =&gt; {
+ *     if (state === &#x27;matched&#x27;) startBattle(payload.snapshot);
+ *     else if (state === &#x27;timeout&#x27;) startAiBattle();
+ *   });
+ *   // 玩家返回可取消
+ *   AsyncMatchSystem.cancel(session);
+ */
+class MatchmakingSession {
+  constructor(profile, onState) {
+    this.profile = profile || null;
+    this.onState = onState;
+    this.state = MATCH_STATE.SEARCHING;
+    this.snapshot = null;                // matched 后注入对手快照
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 32 / 60 页</span></div>
+<pre><code>
+    this._searchTimer = null;
+    this._timeoutTimer = null;
+    this._startedAt = Date.now();
+  }
+
+  /** 取消会话（外部触发，玩家返回大厅/确认超时） */
+  cancel() {
+    if (this.state === MATCH_STATE.MATCHED
+        || this.state === MATCH_STATE.TIMEOUT
+        || this.state === MATCH_STATE.CANCELLED) return;
+    this._clear();
+    this.state = MATCH_STATE.CANCELLED;
+    try { this.onState &amp;&amp; this.onState(MATCH_STATE.CANCELLED, { session: this }); }
+    catch (e) { /* 回调异常吞掉 */ }
+  }
+
+  _clear() {
+    if (this._searchTimer) { clearTimeout(this._searchTimer); this._searchTimer = null; }
+    if (this._timeoutTimer) { clearTimeout(this._timeoutTimer); this._timeoutTimer = null; }
+  }
+
+  _emit(state, payload) {
+    this.state = state;
+    try { this.onState &amp;&amp; this.onState(state, { ...payload, session: this }); }
+    catch (e) { /* 回调异常吞掉 */ }
+  }
+}
+
+/**
+ * 启动异步匹配会话（2~4s 检索 + 10s 超时降级 AI 的逻辑由 Game 层处理）
+ *
+ * 设计：检索延迟 + 10s 超时是两个独立计时，10s 是「匹配等待总时长上限」，
+ * 一旦命中快照立即回调 matched。Game 层 tryBack/资源清理时 cancel 当前会话。
+ *
+ * @param {object|null} profile 本地玩家 ProfileManager.get()
+ * @param {(state, payload) =&gt; void} onState 状态变化回调
+ * @returns {MatchmakingSession} 会话句柄
+ */
+export function start(profile, onState) {
+  const session = new MatchmakingSession(profile, onState);
+  // 检索延迟：模拟网络检索
+  session._searchTimer = setTimeout(() =&gt; {
+    session._searchTimer = null;
+    const snap = generateOpponent(profile);
+    session.snapshot = snap;
+    session._emit(MATCH_STATE.MATCHED, { snapshot: snap });
+  }, searchDelay());
+  // 10s 总超时：兜底防 cancelled/失败
+  session._timeoutTimer = setTimeout(() =&gt; {
+    if (session.state !== MATCH_STATE.SEARCHING) return;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 33 / 60 页</span></div>
+<pre><code>
+    session._emit(MATCH_STATE.TIMEOUT, {});
+  }, ASYNC_MATCH_TIMEOUT_MS);
+  return session;
+}
+
+/** 取消当前匹配会话 */
+export function cancel(session) {
+  if (!session) return;
+  session.cancel();
+}
+
+// === src/meta/ShareSystem.js ===
+/**
+ * ShareSystem — 分享系统（Phase 5）
+ * 分享裂变：大厅分享 / 战绩分享 / 每日分享奖励
+ *
+ * 微信小游戏环境：调用 wx.shareAppMessage / wx.onShareAppMessage
+ * 浏览器预览环境：wx-shim 提供 shareAppMessage stub
+ *
+ * 真机接入开放能力时的扩展点：
+ *  - 被动分享：在 game.js 入口调用 wx.onShareAppMessage(() =&gt; ShareSystem.getShareConfig())
+ *  - 朋友圈：wx.showShareMenu({ menus: [&#x27;shareAppMessage&#x27;, &#x27;shareTimeline&#x27;] })
+ *  - 战绩分享带图片：wx.shareAppMessage({ imageUrl: canvas.toTempFilePathSync() })
+ */
+
+import { get as getProfile, save as saveProfile } from &#x27;./ProfileManager.js&#x27;;
+
+/** 每日分享奖励（每天首次分享可领取） */
+const DAILY_SHARE_REWARD = { gold: 200, stardust: 5 };
+
+/** 今日日期字符串（本地时区） */
+function _todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+/**
+ * 获取分享文案配置
+ * @param {object} opts - { scene: &#x27;lobby&#x27; | &#x27;victory&#x27; | &#x27;defeat&#x27;, enemyName, streak }
+ */
+function getShareConfig(opts = {}) {
+  const profile = getProfile();
+  const scene = opts.scene || &#x27;lobby&#x27;;
+
+  const shareData = {
+    title: &#x27;占地之王：策略占地的对战小游戏，来和我一决高下！&#x27;,
+    // 应用级分享卡片图（assets/assets/share_card.png，当前为占位图，正式素材同名覆盖）。
+    // 微信小游戏 shareAppMessage 支持本地包内图片路径；浏览器预览由 wx-shim stub 忽略。
+    imageUrl: &#x27;assets/assets/share_card.png&#x27;,
+    // 小游戏无页面路由：path 可省略（默认进入游戏主入口）；
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 34 / 60 页</span></div>
+<pre><code>
+    // 需要带参数时用 query 形式，如 &#x27;index?from=share&#x27;
+  };
+
+  if (scene === &#x27;victory&#x27; &amp;&amp; profile) {
+    const streak = profile.pvpWinStreak || 0;
+    shareData.title = streak &gt;= 3
+      ? `我在占地之王拿到${streak}连胜！谁能挡我？`
+      : `我在占地之王击败了${opts.enemyName || &#x27;对手&#x27;}！来挑战我吧`;
+  } else if (scene === &#x27;defeat&#x27; &amp;&amp; profile) {
+    shareData.title = &#x27;我在占地之王被虐了...谁来帮我报仇？&#x27;;
+  } else if (profile) {
+    const owned = Object.keys(profile.collectedUnits || {}).length;
+    shareData.title = `我在占地之王已收集${owned}/40兵种，战力${profile.getTotalPower()}！快来超越我`;
+  }
+
+  return shareData;
+}
+
+/**
+ * 发起分享
+ * 微信环境调用 wx.shareAppMessage；浏览器预览由 wx-shim 兜底
+ * @returns {boolean} 是否成功发起
+ */
+function share(opts = {}) {
+  const config = getShareConfig(opts);
+
+  if (typeof wx !== &#x27;undefined&#x27; &amp;&amp; typeof wx.shareAppMessage === &#x27;function&#x27;) {
+    wx.shareAppMessage(config);
+    return true;
+  }
+  console.log(&#x27;[ShareSystem] share:&#x27;, config.title);
+  return false;
+}
+
+/**
+ * 领取每日分享奖励（每日限1次）
+ * 注意：微信分享回调无法可靠判定&quot;分享成功&quot;，业界通行做法是
+ * 点击分享按钮即视为完成分享行为，直接发放每日奖励。
+ * @returns {{ success: boolean, reason?: string, reward?: object, alreadyClaimed?: boolean }}
+ */
+function claimDailyShareReward() {
+  const profile = getProfile();
+  if (!profile) return { success: false, reason: &#x27;存档未加载&#x27; };
+
+  const today = _todayKey();
+  if (profile.lastShareDate === today) {
+    return { success: false, alreadyClaimed: true, reason: &#x27;今日奖励已领取&#x27; };
+  }
+
+  profile.lastShareDate = today;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 35 / 60 页</span></div>
+<pre><code>
+  profile.shareCount = (profile.shareCount || 0) + 1;
+  for (const [currency, amount] of Object.entries(DAILY_SHARE_REWARD)) {
+    profile.addCurrency(currency, amount);
+  }
+  saveProfile();
+  return { success: true, reward: DAILY_SHARE_REWARD };
+}
+
+/**
+ * 一键分享 + 领奖（大厅/结算界面按钮调用）
+ * @returns {{ success: boolean, message: string }}
+ */
+function shareAndReward(opts = {}) {
+  share(opts);
+  const result = claimDailyShareReward();
+  if (result.success) {
+    const r = result.reward;
+    const parts = [];
+    if (r.gold) parts.push(`金币+${r.gold}`);
+    if (r.stardust) parts.push(`星尘+${r.stardust}`);
+    return { success: true, message: `分享成功！${parts.join(&#x27; &#x27;)}` };
+  }
+  return { success: true, message: &#x27;今日分享奖励已领取，明天再来~&#x27; };
+}
+
+/**
+ * 今日是否已领取分享奖励
+ */
+function isDailyRewardClaimed() {
+  const profile = getProfile();
+  return profile ? profile.lastShareDate === _todayKey() : false;
+}
+
+export {
+  getShareConfig,
+  share,
+  claimDailyShareReward,
+  shareAndReward,
+  isDailyRewardClaimed,
+  DAILY_SHARE_REWARD,
+};
+export default {
+  getShareConfig,
+  share,
+  claimDailyShareReward,
+  shareAndReward,
+  isDailyRewardClaimed,
+  DAILY_SHARE_REWARD,
+};
+
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 36 / 60 页</span></div>
+<pre><code>
+// === src/data/ConfigLoader.js ===
+/**
+ * 配置加载器
+ * 负责从 JSON 配置文件加载所有游戏配置
+ *
+ * 支持两种环境:
+ * - 浏览器预览: 使用 fetch 加载 config/*.json
+ * - 微信小游戏: 使用 require 加载 config/*.js
+ *   （小游戏 require() 不支持 .json；wx.getFileSystemManager().readFileSync() 会 permission denied）
+ *   所以 build 时把 JSON 编译成 CommonJS 模块: tools/build-config-js.mjs
+ *   调用示例: require(&#x27;../../config/game.js&#x27;)
+ */
+
+// 配置文件列表
+const CONFIG_FILES = {
+  game: &#x27;game.json&#x27;,
+  buildings: &#x27;buildings.json&#x27;,
+  tiles: &#x27;tiles.json&#x27;,
+  combat: &#x27;combat.json&#x27;,
+  synergy: &#x27;synergy.json&#x27;,
+  races: &#x27;races.json&#x27;,
+  levels: &#x27;levels.json&#x27;,
+  audio: &#x27;audio.json&#x27;,
+  techTree: &#x27;tech-tree.json&#x27;,
+  equipment: &#x27;equipment.json&#x27;,
+  quests: &#x27;quests.json&#x27;,
+  shop: &#x27;shop.json&#x27;,
+  battlePass: &#x27;battle-pass.json&#x27;,
+  deployables: &#x27;deployables.json&#x27;,
+  skills: &#x27;skills.json&#x27;,
+  ads: &#x27;ads.json&#x27;,
+};
+
+// 缓存的配置数据
+const _cache = {};
+
+// 是否已初始化
+let _initialized = false;
+
+/**
+ * 判断当前是否为微信小游戏环境
+ *
+ * 注意：浏览器预览的 wx-shim 也提供 getSystemInfoSync，导致单凭 wx API 不能
+ * 区分「真微信」与「浏览器预览」。
+ *
+ * 真微信：wx.__tkBrowser 不存在
+ * 浏览器预览：wx-shim.js 注入了 wx.__tkBrowser = true（且 window 全局存在）
+ *
+ * 注：不能用「某个 wx API 是否存在」做硬性判定。
+ * getSystemInfoSync 已被官方标记废弃，一旦未来基础库将其移除，
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 37 / 60 页</span></div>
+<pre><code>
+ * 「typeof wx.getSystemInfoSync !== &#x27;function&#x27;」会让这里误判成浏览器，
+ * 进而走 fetch 分支 → 真机 fetch is not defined → 配置全挂 → 白屏，
+ * 且故障表象与真实原因隔着好几层，极难排查。
+ * 因此改用「任一微信专有 API 存在」的 OR 判定：单个 API 废弃不会打翻整条链路。
+ */
+const _WX_PROBES = [&#x27;createCanvas&#x27;, &#x27;getWindowInfo&#x27;, &#x27;getSystemInfoSync&#x27;, &#x27;getFileSystemManager&#x27;];
+
+function isWxEnv() {
+  // 真微信运行时原生支持 require()，浏览器原生没有。
+  // 用 require 是否为函数做兜底识别，是最可靠的运行时差异。
+  if (typeof require !== &#x27;function&#x27;) return false;
+  if (typeof wx === &#x27;undefined&#x27;) return false;
+  // 浏览器预览：wx-shim.js 注入 wx.__tkBrowser = true。
+  // 注意：微信开发者工具「模拟器」底层是 Chromium(nw.js)，存在 window 全局，
+  // 因此【不能】用 typeof window !== &#x27;undefined&#x27; 来区分浏览器预览与真微信——
+  // 否则模拟器会被误判为浏览器，走 fetch 分支（fetch is not defined 报错）。
+  if (wx.__tkBrowser === true) return false;
+  return _WX_PROBES.some((key) =&gt; typeof wx[key] === &#x27;function&#x27;);
+}
+
+/**
+ * 获取配置文件路径前缀
+ *
+ * 微信小游戏: require() 路径相对当前源文件 (src/data/ConfigLoader.js)
+ *   目标 config/ 在项目根 → 需要 &#x27;../../config/&lt;name&gt;.js&#x27; (上溯两级)
+ * 浏览器预览: fetch 相对 preview/index.html 的 URL
+ *   &#x27;../config/&lt;name&gt;.json&#x27;
+ */
+function getConfigBasePath() {
+  if (isWxEnv()) {
+    return &#x27;../../config/&#x27;;
+  }
+  return &#x27;../config/&#x27;;
+}
+
+/**
+ * 把 .json 文件名转为微信专用 .js 文件名
+ *   game.json  →  game.js
+ */
+function wxModulePath(jsonFileName) {
+  return jsonFileName.replace(/\.json$/, &#x27;.js&#x27;);
+}
+
+/**
+ * 加载单个 JSON 配置文件
+ */
+async function loadJson(fileName) {
+  // 微信环境: 使用 require 加载 .js 模块
+  if (isWxEnv()) {
+    const basePath = getConfigBasePath();
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 38 / 60 页</span></div>
+<pre><code>
+    const jsPath = basePath + wxModulePath(fileName);
+    try {
+      // eslint-disable-next-line no-undef
+      return require(jsPath);
+    } catch (e) {
+      console.error(`[ConfigLoader] Failed to require ${jsPath}:`, e);
+      throw e;
+    }
+  }
+
+  // 浏览器环境: 使用 fetch 加载 .json
+  const basePath = getConfigBasePath();
+  const path = basePath + fileName;
+  try {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${path}`);
+    }
+    return await response.json();
+  } catch (e) {
+    console.error(`[ConfigLoader] Failed to fetch ${path}:`, e);
+    throw e;
+  }
+}
+
+/**
+ * 初始化: 加载所有配置文件
+ * 必须在游戏启动前调用
+ * @param {Function} [onProgress] - 进度回调 (done, total, fileName)
+ */
+async function init(onProgress) {
+  if (_initialized) return;
+
+  console.log(&#x27;[ConfigLoader] Loading config files...&#x27;);
+
+  const keys = Object.keys(CONFIG_FILES);
+  const total = keys.length;
+  let done = 0;
+  const results = await Promise.all(
+    keys.map(key =&gt; loadJson(CONFIG_FILES[key]).then(res =&gt; {
+      done++;
+      if (typeof onProgress === &#x27;function&#x27;) {
+        onProgress(done, total, CONFIG_FILES[key]);
+      }
+      return res;
+    }))
+  );
+
+  keys.forEach((key, i) =&gt; {
+    _cache[key] = results[i];
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 39 / 60 页</span></div>
+<pre><code>
+    console.log(`[ConfigLoader] Loaded: ${CONFIG_FILES[key]}`);
+  });
+
+  _initialized = true;
+  console.log(&#x27;[ConfigLoader] All config files loaded.&#x27;);
+}
+
+/**
+ * 同步获取已加载的配置
+ * 必须在 init() 完成后调用
+ * @param {string} key - 配置名: game/buildings/tiles/combat/synergy/races/levels
+ * @returns {object} 配置数据
+ */
+function get(key) {
+  if (!_initialized) {
+    throw new Error(`[ConfigLoader] Not initialized. Call init() first.`);
+  }
+  if (!_cache[key]) {
+    throw new Error(`[ConfigLoader] Unknown config key: ${key}`);
+  }
+  return _cache[key];
+}
+
+/**
+ * 同步获取已加载的配置(安全版，不存在返回 null)
+ * @param {string} key - 配置名
+ * @returns {object|null}
+ */
+function getSafe(key) {
+  if (!_initialized) return null;
+  return _cache[key] || null;
+}
+
+/**
+ * 获取所有配置
+ */
+function getAll() {
+  if (!_initialized) {
+    throw new Error(`[ConfigLoader] Not initialized. Call init() first.`);
+  }
+  return { ..._cache };
+}
+
+/**
+ * 重新加载配置(开发调试用)
+ */
+async function reload() {
+  _initialized = false;
+  Object.keys(_cache).forEach(k =&gt; delete _cache[k]);
+  await init();
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 40 / 60 页</span></div>
+<pre><code>
+}
+
+export { init, get, getSafe, getAll, reload, isWxEnv };
+
+// 默认导出
+export default { init, get, getSafe, getAll, reload, isWxEnv };
+
+// === src/data/levels.js ===
+/**
+ * 战斗配置数据 (原关卡配置，改造为PvP对战模板)
+ * 数据源: config/levels.json
+ *
+ * 对战布局(v1.9)：上下布局，玩家大本营永远在下方(r正方向)，向上进攻敌方；
+ * 每次对战从 BOARD_LAYOUTS 随机抽取棋盘布局，障碍格将进攻路线切分为 2~3 条战线。
+ */
+
+import ConfigLoader from &#x27;./ConfigLoader.js&#x27;;
+import { getTierAiSettings } from &#x27;../meta/PowerSystem.js&#x27;;
+import { colRowToAxial } from &#x27;../world/HexMath.js&#x27;;
+import { battleRandom } from &#x27;../utils/rng.js&#x27;;
+
+// 对手名称池
+const OPPONENT_NAMES = [
+  &#x27;暗影军团&#x27;, &#x27;铁血战盟&#x27;, &#x27;烈焰先锋&#x27;, &#x27;霜狼部落&#x27;, &#x27;雷霆骑士团&#x27;,
+  &#x27;幽冥之影&#x27;, &#x27;风暴前线&#x27;, &#x27;星辰远征&#x27;, &#x27;黑暗裁决&#x27;, &#x27;荣耀守护者&#x27;,
+  &#x27;荒野猎人&#x27;, &#x27;深渊领主&#x27;, &#x27;破晓之刃&#x27;, &#x27;黄昏卫士&#x27;, &#x27;荆棘玫瑰&#x27;,
+];
+
+// 种族池
+const RACES = [&#x27;human&#x27;, &#x27;beast&#x27;, &#x27;undead&#x27;, &#x27;elf&#x27;, &#x27;dwarf&#x27;];
+
+// 新手池：排除全远程精灵族(对新手近战阵容压制过强)
+const RACES_EASY = [&#x27;human&#x27;, &#x27;beast&#x27;, &#x27;undead&#x27;, &#x27;dwarf&#x27;];
+
+// 高难度种族池：排除纯近战种族(human/beast 无远程单位，会被玩家远程编队无损全歼)
+const RACES_HARD = [&#x27;undead&#x27;, &#x27;elf&#x27;, &#x27;dwarf&#x27;, &#x27;dragon&#x27;];
+
+// 噩梦难度种族池：仅远程压制族(龙族+精灵)，拉开与 hard 的强度差
+const RACES_NIGHTMARE = [&#x27;dragon&#x27;, &#x27;elf&#x27;];
+
+/**
+ * 棋盘布局池（每次对战随机抽取一种）—— 行列制矩形棋盘
+ *
+ * 配置方式(手动调整友好):
+ * - rows: 纵向总行数(第0行最上=敌方侧，最后一行最下=玩家侧)。建议奇数(保证大本营严格居中)
+ * - cols: 每行格数(列数，第0列最左)。建议奇数(保证大本营严格居中列)
+ * - 六边形交错排列：奇数行整体向右错半格
+ * - obstacles: 障碍格列表，用直观的行列索引 { row, col } 配置(均为0起算)
+ *   障碍不可翻转、不可通行、始终可见，用于把进攻路线切分为 2~3 条战线
+ * - 大本营位置自动计算(见 baseCoords)：距上下边各2行、居中列，无需手动配置
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 41 / 60 页</span></div>
+<pre><code>
+ */
+export const BOARD_LAYOUTS = [
+  {
+    id: &#x27;plains&#x27;,
+    name: &#x27;开阔平原&#x27;,
+    rows: 11,
+    cols: 7,
+    lanes: 1,
+    desc: &#x27;无遮无拦的正面战场&#x27;,
+    obstacles: [],
+  },
+  {
+    id: &#x27;twin_canyon&#x27;,
+    name: &#x27;双线峡谷&#x27;,
+    rows: 11,
+    cols: 7,
+    lanes: 2,
+    desc: &#x27;中央山脉断龙脉，左右两条战线&#x27;,
+    // 中央纵墙(第3列，第4~6行)，切出左右两条战线（墙端可绕行）
+    obstacles: [
+      { row: 4, col: 3 }, { row: 5, col: 3 }, { row: 6, col: 3 },
+    ],
+  },
+  {
+    id: &#x27;tri_lanes&#x27;,
+    name: &#x27;三线走廊&#x27;,
+    rows: 11,
+    cols: 7,
+    lanes: 3,
+    desc: &#x27;两道山脊隔出左中右三条战线&#x27;,
+    // 左右两道纵墙(第1列与第5列，第4~6行)，切出 左/中/右 三条战线（墙端可绕行）
+    obstacles: [
+      { row: 4, col: 1 }, { row: 5, col: 1 }, { row: 6, col: 1 },
+      { row: 4, col: 5 }, { row: 5, col: 5 }, { row: 6, col: 5 },
+    ],
+  },
+  {
+    id: &#x27;river_ford&#x27;,
+    name: &#x27;河谷渡口&#x27;,
+    rows: 11,
+    cols: 7,
+    lanes: 3,
+    desc: &#x27;一横河岸横贯战场，仅余渡口通行&#x27;,
+    // 横向河岸(第5行)，col=3 留渡口，两端 col=0/6 留空可绕行
+    obstacles: [
+      { row: 5, col: 1 }, { row: 5, col: 2 },
+      { row: 5, col: 4 }, { row: 5, col: 5 },
+    ],
+  },
+  {
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 42 / 60 页</span></div>
+<pre><code>
+    id: &#x27;citadel&#x27;,
+    name: &#x27;中央山垒&#x27;,
+    rows: 11,
+    cols: 7,
+    lanes: 3,
+    desc: &#x27;十字山峦坐镇中央，只能侧翼包抄&#x27;,
+    // 中央十字山块(中心 row5/col3 + 上下左右四邻，四个斜角留缺口)
+    obstacles: [
+      { row: 5, col: 3 },
+      { row: 4, col: 3 }, { row: 6, col: 3 },
+      { row: 5, col: 2 }, { row: 5, col: 4 },
+    ],
+  },
+];
+
+/**
+ * 计算大本营坐标（行列制矩形棋盘）：
+ * - 敌方(row=2)距上边2行、玩家(row=rows-3)距下边2行，列取居中列 col=floor((cols-1)/2)
+ * - rows 为奇数时双方严格同一竖线；rows 为偶数时上下行奇偶不同，
+ *   双方像素 x 错半格（关于棋盘水平中心对称，视觉上仍居中）
+ * @param {number} rows - 总行数
+ * @param {number} cols - 列数
+ * @param {number} side - 1=下方(玩家)，-1=上方(敌方)
+ * @returns {{q:number, r:number}} 轴向坐标
+ */
+export function baseCoords(rows, cols, side) {
+  const row = side === 1 ? rows - 3 : 2;
+  const col = Math.floor((cols - 1) / 2);
+  return colRowToAxial(col, row);
+}
+
+/**
+ * 按指定布局构建对战配置（玩家在下、敌方在上）
+ * @param {object} layout - BOARD_LAYOUTS 中的一项
+ * @param {number} [trophies] - 玩家当前奖杯（天梯匹配难度；缺省纯随机）
+ * @param {number|null} [playerPower] - 玩家当前战力（战力规则匹配：段位AI设定 + 动态强弱修正；
+ *   缺省退回奖杯分段匹配，向后兼容）
+ * @returns {object} 战斗配置
+ */
+export function buildBattleConfig(layout, trophies) {
+  // AI难度：按段位（奖杯）难度分布推导（PowerSystem 养成模拟，AI 强度由难度决定）
+  let aiDifficulty;
+  if (typeof trophies === &#x27;number&#x27;) {
+    aiDifficulty = getTierAiSettings(trophies).difficulty;
+  } else {
+    const diffRoll = battleRandom();
+    aiDifficulty = diffRoll &lt; 0.35 ? &#x27;easy&#x27;
+      : diffRoll &lt; 0.70 ? &#x27;normal&#x27;
+      : diffRoll &lt; 0.92 ? &#x27;hard&#x27;
+      : &#x27;nightmare&#x27;;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 43 / 60 页</span></div>
+<pre><code>
+  }
+  // 初始金币：玩家与 AI 一致（2026-09-09 去除 AI 初始金币作弊）
+  // 2026-11 玩法改造：150→200（快节奏经营：开局可即刻铺 2 座兵营 + 1 座金矿）
+  const baseGold = 200;
+
+  // 随机对手种族（按难度分池：新手排除全远程族 / 噩梦仅远程压制族 / 高难排除纯近战族）
+  const racePool = aiDifficulty === &#x27;easy&#x27; ? RACES_EASY
+    : aiDifficulty === &#x27;nightmare&#x27; ? RACES_NIGHTMARE
+    : aiDifficulty === &#x27;hard&#x27; ? RACES_HARD
+    : RACES;
+  const enemyRace = racePool[Math.floor(battleRandom() * racePool.length)];
+
+  // 随机对手名称
+  const enemyName = OPPONENT_NAMES[Math.floor(battleRandom() * OPPONENT_NAMES.length)];
+
+  // 大本营：正下中间（玩家）/ 正上中间（敌方），距上下边各2行、居中列
+  const playerBase = baseCoords(layout.rows, layout.cols, 1);
+  const enemyBase = baseCoords(layout.rows, layout.cols, -1);
+
+  // 障碍格：行列索引 {row, col} → 轴向坐标 {q, r}
+  const obstacles = (layout.obstacles || []).map(({ row, col }) =&gt; colRowToAxial(col, row));
+
+  return {
+    rows: layout.rows,
+    cols: layout.cols,
+    layoutId: layout.id,
+    layoutName: layout.name,
+    layoutLanes: layout.lanes,
+    obstacles,
+    presetBuildings: [],
+    playerBase,
+    enemyBase,
+    player: { race: &#x27;custom&#x27;, initialGold: 200 },
+    enemies: [{
+      id: 2,
+      name: enemyName,
+      ai: aiDifficulty,
+      color: &#x27;#ef4444&#x27;,
+      race: enemyRace,
+      initialGold: baseGold,
+    }],
+  };
+}
+
+/**
+ * 生成随机对战配置（替代原getLevel）
+ * 每次对战随机抽取一种棋盘布局（含障碍战线划分）
+ * @param {number} [trophies=0] - 玩家当前奖杯（天梯匹配：低段打简单AI，高段强制强敌；缺省退回纯随机）
+ * @returns {object} 战斗配置
+ */
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 44 / 60 页</span></div>
+<pre><code>
+export function getRandomBattleConfig(trophies) {
+  const layout = BOARD_LAYOUTS[Math.floor(battleRandom() * BOARD_LAYOUTS.length)];
+  return buildBattleConfig(layout, trophies);
+}
+
+// ========== 向后兼容函数（部分系统仍引用） ==========
+
+/**
+ * 获取所有关卡数据（向后兼容）
+ */
+export function getLevels() {
+  return ConfigLoader.get(&#x27;levels&#x27;).levels;
+}
+
+/**
+ * 获取指定关卡（向后兼容，仅用于读取地图模板）
+ */
+export function getLevel(id) {
+  const levels = getLevels();
+  return levels.find(l =&gt; l.id === id) || levels[0];
+}
+
+// ========== 向后兼容: 静态导出 ==========
+
+export let LEVELS;
+
+/**
+ * 在 ConfigLoader.init() 完成后调用
+ */
+export function syncLevels() {
+  LEVELS = getLevels();
+}
+
+// === src/data/races.js ===
+/**
+ * 种族配置 (从 JSON 配置表加载)
+ * 数据源: config/races.json
+ *
+ * 6大种族：人族/兽族/亡灵/精灵/矮人/龙族
+ * 每族4兵种(对应兵营Lv1~4) + 种族羁绊 + 建筑变体
+ */
+
+import ConfigLoader from &#x27;./ConfigLoader.js&#x27;;
+
+/**
+ * 获取所有种族数据
+ */
+export function getRaces() {
+  return ConfigLoader.get(&#x27;races&#x27;);
+}
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 45 / 60 页</span></div>
+<pre><code>
+
+/**
+ * 获取指定种族数据
+ */
+export function getRace(raceId) {
+  const races = getRaces();
+  return races[raceId] || null;
+}
+
+/**
+ * 获取兵种信息(基础版，向后兼容)
+ * @param {string} race - 种族ID
+ * @param {number} level - 兵营等级(1~4)
+ * @returns {object} { name, attackCoeff, combatStyles }
+ */
+export function getUnitInfo(race, level) {
+  const raceData = getRace(race);
+  if (!raceData) return null;
+  return raceData.units[level] || raceData.units[&#x27;1&#x27;];
+}
+
+/**
+ * 获取兵种完整信息(含hpCoeff/speedCoeff/special)
+ * @param {string} race - 种族ID
+ * @param {number} level - 兵营等级(1~4)
+ * @returns {object|null} 完整兵种数据
+ */
+export function getUnitFullInfo(race, level) {
+  const raceData = getRace(race);
+  if (!raceData) return null;
+  return raceData.units[level] || raceData.units[&#x27;1&#x27;];
+}
+
+/**
+ * 获取种族羁绊加成配置
+ * @param {string} race - 种族ID
+ * @param {number} tier - 羁绊阶位(1/2/3)
+ * @returns {object|null} 该族该阶位的加成配置
+ */
+export function getRaceSynergyBonus(race, tier) {
+  const raceData = getRace(race);
+  if (!raceData || !raceData.raceSynergy) return null;
+  return raceData.raceSynergy[tier] || null;
+}
+
+/**
+ * 获取建筑变体(种族颜色 + 属性调整)
+ * @param {string} race - 种族ID
+ * @param {string} buildingType - 建筑类型(gold_mine/tower 等)
+ * @returns {object} { color, goldRateModifier, hpModifier, defenseModifier, ... }
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 46 / 60 页</span></div>
+<pre><code>
+ */
+export function getBuildingVariant(race, buildingType) {
+  const raceData = getRace(race);
+  if (!raceData) return { color: &#x27;#888888&#x27; };
+
+  const result = { color: raceData.color };
+
+  // 建筑变体属性
+  if (raceData.buildingVariants &amp;&amp; raceData.buildingVariants[buildingType]) {
+    const variant = raceData.buildingVariants[buildingType];
+    result.goldRateModifier = variant.goldRateModifier || 0;
+    result.hpModifier = variant.hpModifier || 0;
+    result.defenseModifier = variant.defenseModifier || 0;
+    result.attackBonusModifier = variant.attackBonusModifier || 0;
+    result.speedBonusModifier = variant.speedBonusModifier || 0;
+    result.allStatBonus = variant.allStatBonus || 0;
+    result.slowOnHit = variant.slowOnHit || 0;
+  }
+
+  return result;
+}
+
+/**
+ * 获取所有已解锁的种族ID列表
+ * (Demo阶段返回全部，后续由局外养成系统控制解锁)
+ */
+export function getUnlockedRaces() {
+  const races = getRaces();
+  return Object.keys(races).filter(k =&gt; !k.startsWith(&#x27;_&#x27;));
+}
+
+/**
+ * 获取种族风格描述
+ */
+export function getRaceStyle(raceId) {
+  const raceData = getRace(raceId);
+  return raceData ? raceData.style : &#x27;&#x27;;
+}
+
+// ========== 向后兼容: 静态导出 ==========
+// RACES 在 syncRaces() 调用后才有值
+export let RACES;
+
+/**
+ * 在 ConfigLoader.init() 完成后调用
+ */
+export function syncRaces() {
+  RACES = getRaces();
+}
+
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 47 / 60 页</span></div>
+<pre><code>
+// === src/net/CloudClient.js ===
+/**
+ * CloudClient — 云端存档同步封装（三通道：浏览器 fetch / 微信 wx.request / 微信云函数 wx.cloud.callFunction）
+ *
+ * 设计原则（与 server-backend-design.md / cloud-migration-design.md 一致）：
+ *   - 本地优先：save() 先写本地，再异步推云端；失败静默，下次再推。
+ *   - 权威结算：settle() 只上报「胜负 + 模式 + 对手」，服务端用同款纯函数重算奖励。
+ *   - 乐观锁：putProfile 带 version，409 冲突时拉最新重试一次。
+ *
+ * 通道选择（优先级从高到低）：
+ *   1. 云函数通道（isCloud()）：微信小游戏真机 + wx.cloud 可用 → wx.cloud.callFunction。
+ *      - openid 免密登录（login 无需 token），天然免域名白名单。
+ *   2. HTTP 通道（isWx() 的 wx.request / isBrowser() 的 fetch）：本地开发/浏览器预览。
+ *
+ * 默认关闭（CLOUD_ENABLED=false），由 ProfileManager.enableCloud() 激活。
+ */
+
+const DEFAULT_BASE = &#x27;http://127.0.0.1:8891&#x27;;
+const TOKEN_KEY = &#x27;territory_king_cloud_token&#x27;;
+
+// 云函数环境 ID（与 cloudbaserc.json 的 envId 一致）
+const CLOUD_ENV_ID = &#x27;minigame-prod-d5g02fq8e40658692&#x27;;
+
+let _base = DEFAULT_BASE;
+let _enabled = false;
+let _token = null;
+let _loggedIn = false;    // 云函数通道的「已登录」标记（openid 免密，无 token）
+let _serverVersion = 0;
+let _pending = null;      // 待推送的存档快照
+let _pushTimer = null;
+const PUSH_DEBOUNCE_MS = 800;
+
+// ==================== 环境判断 ====================
+function isWx() {
+  return typeof wx !== &#x27;undefined&#x27; &amp;&amp; typeof wx.request === &#x27;function&#x27;;
+}
+function isBrowser() {
+  return typeof fetch === &#x27;function&#x27;;
+}
+// 云函数通道是否可用：微信环境 + wx.cloud.callFunction 存在（真机/支持云开发的 IDE）
+function isCloud() {
+  return typeof wx !== &#x27;undefined&#x27; &amp;&amp; typeof wx.cloud === &#x27;object&#x27;
+    &amp;&amp; typeof wx.cloud.callFunction === &#x27;function&#x27; &amp;&amp; typeof wx.cloud.init === &#x27;function&#x27;;
+}
+
+// ==================== 存储（双环境） ====================
+function _storageGet(key) {
+  if (typeof wx !== &#x27;undefined&#x27; &amp;&amp; typeof wx.getStorageSync === &#x27;function&#x27;) {
+    try { return wx.getStorageSync(key) || null; } catch { return null; }
+  }
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 48 / 60 页</span></div>
+<pre><code>
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function _storageSet(key, val) {
+  if (typeof wx !== &#x27;undefined&#x27; &amp;&amp; typeof wx.setStorageSync === &#x27;function&#x27;) {
+    try { wx.setStorageSync(key, val); } catch {}
+  } else {
+    try { localStorage.setItem(key, val); } catch {}
+  }
+}
+
+// ==================== 底层 HTTP ====================
+function _raw(method, path, body) {
+  const url = _base + path;
+  const headers = { &#x27;Content-Type&#x27;: &#x27;application/json&#x27; };
+  if (_token) headers[&#x27;Authorization&#x27;] = &#x27;Bearer &#x27; + _token;
+
+  if (isWx()) {
+    return new Promise((resolve, reject) =&gt; {
+      wx.request({
+        url,
+        method,
+        data: body,
+        header: headers,
+        success: res =&gt; resolve({ status: res.statusCode, data: res.data }),
+        fail: err =&gt; reject(new Error(&#x27;wx.request failed: &#x27; + ((err &amp;&amp; err.errMsg) || &#x27;unknown&#x27;))),
+      });
+    });
+  }
+  if (isBrowser()) {
+    return fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined })
+      .then(async res =&gt; ({ status: res.status, data: await res.json().catch(() =&gt; ({})) }));
+  }
+  return Promise.reject(new Error(&#x27;no HTTP transport (fetch/wx.request) available&#x27;));
+}
+
+// ==================== 底层云函数调用 ====================
+let _cloudInited = false;
+function _ensureCloudInit() {
+  if (!_cloudInited &amp;&amp; isCloud()) {
+    try {
+      wx.cloud.init({ env: CLOUD_ENV_ID, traceUser: true });
+      _cloudInited = true;
+    } catch (e) {
+      console.warn(&#x27;[Cloud] wx.cloud.init failed:&#x27;, e &amp;&amp; e.message || e);
+    }
+  }
+  return _cloudInited;
+}
+
+/**
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 49 / 60 页</span></div>
+<pre><code>
+ * 调云函数。统一解包 res.result（wx.cloud.callFunction 的返回在 result 字段）。
+ * 云函数内部错误（result.ok === false 或 result.error）→ reject（带 status）。
+ * statusCode 约定：云函数在 result.statusCode 里回传（如 404/403/409），
+ * 以便复用 HTTP 通道的乐观锁重试逻辑（err.status）。
+ */
+function _callCloud(name, data) {
+  _ensureCloudInit();
+  return new Promise((resolve, reject) =&gt; {
+    wx.cloud.callFunction({
+      name,
+      data: data || {},
+      success: res =&gt; {
+        const r = res &amp;&amp; res.result;
+        if (!r || r.ok === false) {
+          const err = new Error((r &amp;&amp; r.error) || (&#x27;cloud fn &#x27; + name + &#x27; failed&#x27;));
+          err.status = (r &amp;&amp; r.statusCode) || 500;
+          err.data = r;
+          reject(err);
+          return;
+        }
+        resolve(r);
+      },
+      fail: err =&gt; {
+        const e = new Error(&#x27;wx.cloud.callFunction &#x27; + name + &#x27; failed: &#x27; + ((err &amp;&amp; err.errMsg) || &#x27;unknown&#x27;));
+        e.status = 0;
+        reject(e);
+      },
+    });
+  });
+}
+
+async function request(method, path, body) {
+  const { status, data } = await _raw(method, path, body);
+  if (status &gt;= 200 &amp;&amp; status &lt; 300) return data;
+  const err = new Error((data &amp;&amp; data.error) || (&#x27;HTTP &#x27; + status));
+  err.status = status;
+  err.data = data;
+  throw err;
+}
+
+// ==================== 配置 ====================
+function configure(opts = {}) {
+  if (opts.baseUrl) _base = opts.baseUrl;
+  if (opts.enabled !== undefined) _enabled = !!opts.enabled;
+}
+function enable(baseUrl) { _enabled = true; if (baseUrl) _base = baseUrl; }
+function disable() { _enabled = false; }
+function isEnabled() { return _enabled; }
+function getBaseUrl() { return _base; }
+
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 50 / 60 页</span></div>
+<pre><code>
+// ==================== token ====================
+function setToken(t) { _token = t; if (t) _storageSet(TOKEN_KEY, t); }
+function getToken() { return _token; }
+
+// ==================== 客户端 API ====================
+async function login(uid, nickname) {
+  // 云函数通道：openid 免密，无需 token（openid 由 wxContext 自动注入）
+  if (isCloud()) {
+    const r = await _callCloud(&#x27;login&#x27;, { uid, nickname });
+    // 云函数登录无 token；openid 已由服务端绑定，无需客户端保存
+    _loggedIn = true;
+    return r;
+  }
+  // HTTP 通道：guest 登录换取 token
+  const r = await request(&#x27;POST&#x27;, &#x27;/api/auth/guest&#x27;, { uid, nickname });
+  setToken(r.token);
+  _loggedIn = true;
+  return r;
+}
+
+async function getProfile() {
+  if (isCloud()) {
+    const r = await _callCloud(&#x27;getProfile&#x27;, {});
+    if (r &amp;&amp; typeof r.version === &#x27;number&#x27;) _serverVersion = r.version;
+    return r;
+  }
+  const r = await request(&#x27;GET&#x27;, &#x27;/api/profile&#x27;);
+  if (r &amp;&amp; typeof r.version === &#x27;number&#x27;) _serverVersion = r.version;
+  return r;
+}
+
+async function putProfile(version, data, power) {
+  if (isCloud()) {
+    const r = await _callCloud(&#x27;putProfile&#x27;, { version, data, power });
+    if (r &amp;&amp; typeof r.version === &#x27;number&#x27;) _serverVersion = r.version;
+    return r;
+  }
+  const r = await request(&#x27;PUT&#x27;, &#x27;/api/profile&#x27;, { version, data, power });
+  if (r &amp;&amp; typeof r.version === &#x27;number&#x27;) _serverVersion = r.version;
+  return r;
+}
+
+async function settle(result, mode, opts = {}) {
+  if (isCloud()) {
+    return _callCloud(&#x27;settle&#x27;, { result, mode, ...opts });
+  }
+  return request(&#x27;POST&#x27;, &#x27;/api/profile/settle&#x27;, { result, mode, ...opts });
+}
+
+// ==================== 防抖推送 ====================
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 51 / 60 页</span></div>
+<pre><code>
+function schedulePush(payload) {
+  if (!_enabled) return;
+  _pending = payload; // 最新快照覆盖旧快照
+  if (_pushTimer) clearTimeout(_pushTimer);
+  _pushTimer = setTimeout(flushPush, PUSH_DEBOUNCE_MS);
+}
+
+async function flushPush() {
+  _pushTimer = null;
+  if (!_enabled || !_pending) return;
+  const payload = _pending;
+  _pending = null;
+  try {
+    if (!_loggedIn &amp;&amp; !_token) await login(payload.uid, payload.nickname);
+    const r = await putProfile(_serverVersion, payload.data, payload.power);
+    console.log(&#x27;[Cloud] profile synced → v&#x27; + r.version);
+  } catch (e) {
+    if (e &amp;&amp; e.status === 409) {
+      // 乐观锁冲突：拉最新后重试一次
+      try {
+        const prof = await getProfile();
+        _serverVersion = prof.version;
+        const r2 = await putProfile(_serverVersion, payload.data, payload.power);
+        console.log(&#x27;[Cloud] profile synced (after conflict) → v&#x27; + r2.version);
+      } catch (e2) {
+        console.warn(&#x27;[Cloud] push retry failed:&#x27;, e2 &amp;&amp; e2.message || e2);
+      }
+    } else {
+      console.warn(&#x27;[Cloud] push failed:&#x27;, e &amp;&amp; e.message || e);
+    }
+  }
+}
+
+const CloudClient = {
+  configure, enable, disable, isEnabled, getBaseUrl,
+  setToken, getToken,
+  login, getProfile, putProfile, settle,
+  schedulePush, flushPush,
+};
+
+export { CloudClient };
+export default CloudClient;
+
+// === src/net/SessionManager.js ===
+/**
+ * 账号体系（会话管理）——本地持久化身份
+ *
+ * 目标：让联机对战「知道谁是谁」。uid 是跨对局的稳定身份标识，
+ * 首次进入生成本地游客身份并持久化，后续恢复同一 uid。
+ *
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 52 / 60 页</span></div>
+<pre><code>
+ * 真实环境：wx.login → 后端 code2Session → openid → 生成 uid/token
+ * 本地环境（浏览器/开发）：生成本地游客 uid（无服务端），持久化到 localStorage。
+ * 通过可注入的 authProvider 支持生产接微信登录，不影响上层逻辑。
+ *
+ * 关键约束：uid / openid / token 属「呈现层 + 握手层」数据，
+ * 绝不进入帧同步世界状态 / 命令 / checksum。
+ */
+
+import { AccountManager } from &#x27;../meta/AccountManager.js&#x27;;
+
+const STORAGE_KEY = &#x27;territory_king_session&#x27;;
+
+export class SessionManager {
+  constructor(authProvider = null) {
+    // authProvider：生产环境注入 wx.login→code2Session 实现；为空则走本地游客身份
+    this.authProvider = authProvider || null;
+    this.uid = null;
+    this.token = null;
+    this.openid = null;
+  }
+
+  /** 判断是否为微信环境（wx.setStorageSync 可用） */
+  static isWxEnv() {
+    return typeof wx !== &#x27;undefined&#x27; &amp;&amp; typeof wx.setStorageSync === &#x27;function&#x27;;
+  }
+
+  /** 读取本地持久化身份（双环境：wx storage / localStorage） */
+  static _readStorage() {
+    if (SessionManager.isWxEnv()) {
+      try { return wx.getStorageSync(STORAGE_KEY) || null; } catch (e) { return null; }
+    }
+    try {
+      if (typeof localStorage === &#x27;undefined&#x27;) return null;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  /** 写入本地持久化身份 */
+  static _writeStorage(data) {
+    if (SessionManager.isWxEnv()) {
+      try { wx.setStorageSync(STORAGE_KEY, data); } catch (e) {}
+    } else {
+      try { if (typeof localStorage !== &#x27;undefined&#x27;) localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+  }
+
+  /** 生成随机本地 uid */
+  static generateUID() {
+    return &#x27;u_&#x27; + Date.now().toString(36) + &#x27;_&#x27; + Math.random().toString(36).slice(2, 10);
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 53 / 60 页</span></div>
+<pre><code>
+  }
+
+  /** 生成随机本地 token */
+  static generateToken() {
+    return &#x27;tk_&#x27; + Math.random().toString(36).slice(2, 12);
+  }
+
+  /**
+   * 登录流程（幂等：先恢复持久化身份，再决定是否需要新身份）
+   * @returns {Promise&lt;{openid:string|null, uid:string, token:string|null}&gt;}
+   */
+  async init() {
+    // 多账号模型：uid 由 AccountManager 统一管理（Game.start 先 AccountManager.init()）。
+    // 本地游客无 token/openid，身份稳定由账号元数据保证。
+    const cur = AccountManager.getCurrent();
+    if (cur &amp;&amp; cur.uid) {
+      this.uid = cur.uid;
+      this.token = null;
+      this.openid = null;
+      return this._identity();
+    }
+
+    // 旧单账号 fallback（AccountManager 未初始化：独立使用/旧测试向后兼容）
+    // 1. 恢复本地持久化身份（uid 稳定可识别，是联机「谁是谁」的基础）
+    const saved = SessionManager._readStorage();
+    if (saved &amp;&amp; saved.uid) {
+      this.uid = saved.uid;
+      this.token = saved.token || null;
+      this.openid = saved.openid || null;
+      return this._identity();
+    }
+
+    // 2. 若注入真实认证源（生产 wx.login→code2Session），走服务端登录
+    if (this.authProvider) {
+      try {
+        const s = await this.authProvider.code2Session();
+        this.openid = s &amp;&amp; s.openid ? s.openid : null;
+        this.uid = s &amp;&amp; s.uid ? s.uid : SessionManager.generateUID();
+        this.token = s &amp;&amp; s.token ? s.token : null;
+        this._persist();
+        return this._identity();
+      } catch (e) {
+        console.warn(&#x27;[SessionManager] code2Session failed, fallback to local identity:&#x27;, e);
+      }
+    }
+
+    // 3. 兜底：生成本地游客身份（浏览器/开发环境，无服务端）
+    this.openid = null;
+    this.uid = SessionManager.generateUID();
+    this.token = SessionManager.generateToken();
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 54 / 60 页</span></div>
+<pre><code>
+    this._persist();
+    return this._identity();
+  }
+
+  /** 当前身份快照 */
+  _identity() {
+    return { openid: this.openid, uid: this.uid, token: this.token };
+  }
+
+  /** 持久化当前身份 */
+  _persist() {
+    SessionManager._writeStorage({ uid: this.uid, token: this.token, openid: this.openid });
+  }
+
+  getUID() { return this.uid; }
+  getToken() { return this.token; }
+  getOpenid() { return this.openid; }
+}
+
+// === src/utils/math.js ===
+/**
+ * 数学工具函数
+ */
+
+import { battleRandom } from &#x27;./rng.js&#x27;;
+
+export function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+export function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+export function distance(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+export function randomChoice(array, rand = battleRandom) {
+  return array[Math.floor(rand() * array.length)];
+}
+
+export function weightedRandom(weights, rand = battleRandom) {
+  // 过滤掉非数字值(如 JSON 配置中的 _doc 文档字段)
+  const entries = Object.entries(weights).filter(([, v]) =&gt; typeof v === &#x27;number&#x27; &amp;&amp; v &gt; 0);
+  const total = entries.reduce((s, [, v]) =&gt; s + v, 0);
+  if (total &lt;= 0) return entries[0]?.[0];
+  let r = rand() * total;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 55 / 60 页</span></div>
+<pre><code>
+  for (const [key, weight] of entries) {
+    r -= weight;
+    if (r &lt;= 0) return key;
+  }
+  return entries[0]?.[0];
+}
+
+export function manhattan(a, b) {
+  return Math.abs(a.q - b.q) + Math.abs(a.r - b.r);
+}
+
+// === src/utils/rng.js ===
+/**
+ * 确定性随机数工具（PvP 帧同步 / Lockstep 基础）
+ *
+ * 目标：同一对局内所有随机决策必须来自同一随机源，保证双端按相同命令序列
+ * 推演时产生完全一致的战斗结果（地图生成、AI 决策、兵种随机、暴击、复活等）。
+ *
+ * 核心设计：
+ * - `battleRandom()` 是对局全局随机源，返回 [0,1) 的浮点数。
+ * - 未注入种子随机源时 fallback 到 `Math.random`，保证现有单机/AI 对战、
+ *   无头模拟器（依赖全局 `Math.random` 覆盖）以及既有测试零回归。
+ * - `setBattleRng(rng)` 在对局开始时注入种子随机源；`setBattleRng(null)` 复位。
+ */
+
+/**
+ * mulberry32：小巧、快速、统计性质良好的 32 位种子 PRNG。
+ * 与 tests/sim-balance-phase6.mjs 中的实现保持一致，便于跨端复现。
+ * @param {number} seed - 32 位无符号整数种子
+ * @returns {function(): number} 返回 [0,1) 浮点数的随机函数
+ */
+export function createRng(seed) {
+  let a = seed &gt;&gt;&gt; 0;
+  return function next() {
+    a |= 0;
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a &gt;&gt;&gt; 15), 1 | a);
+    t = (t + Math.imul(t ^ (t &gt;&gt;&gt; 7), 61 | t)) ^ t;
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296;
+  };
+}
+
+let _battleRng = null;
+
+/**
+ * 注入对局随机源（传 null 复位到 Math.random）
+ * @param {function|null} rng - 返回 [0,1) 的随机函数，或 null
+ */
+export function setBattleRng(rng) {
+  _battleRng = rng || null;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 56 / 60 页</span></div>
+<pre><code>
+}
+
+/**
+ * 对局随机数 [0,1)：未注入时 fallback 到 Math.random
+ * @returns {number}
+ */
+export function battleRandom() {
+  return _battleRng ? _battleRng() : Math.random();
+}
+
+/**
+ * 当前是否处于确定性对局（已注入种子随机源）
+ * @returns {boolean}
+ */
+export function isDeterministic() {
+  return _battleRng !== null;
+}
+
+/**
+ * 随机整数 [min, max)（max 缺省时视为 [0, min)）
+ * @param {number} min - 下限（含）
+ * @param {number} [max] - 上限（不含）
+ * @param {function} [rng] - 随机函数，缺省用 battleRandom
+ * @returns {number}
+ */
+export function randInt(min, max, rng) {
+  const r = rng || battleRandom;
+  if (max === undefined) { max = min; min = 0; }
+  return Math.floor(r() * (max - min)) + min;
+}
+
+/**
+ * 从数组中随机取一项
+ * @param {Array} array
+ * @param {function} [rng] - 随机函数，缺省用 battleRandom
+ * @returns {*}
+ */
+export function pick(array, rng) {
+  const r = rng || battleRandom;
+  return array[Math.floor(r() * array.length)];
+}
+
+// === game.js ===
+/**
+ * 占地之王 - 微信小游戏入口
+ *
+ * 职责（保持精简，游戏逻辑全部在 src/game/Game.js）：
+ *  1. 创建 Canvas + 高分屏适配
+ *  2. 主包启动：微信环境先下载 assets/ 美术分包，再启动 Game
+ *  3. 注册被动分享（右上角菜单「转发」/「分享到朋友圈」）
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 57 / 60 页</span></div>
+<pre><code>
+ *  4. Android 物理返回键 → game.tryBack()
+ *
+ * 2026-11-21 分包改造：assets/ 整目录（37MB）配置为微信分包，
+ * 主包只留代码 + config + boot/loading.jpg。分包下载前用主包图绘制进度页，
+ * 下载完成后才 new Game()，避免游戏第一时间去读还不存在的分包资源。
+ * 浏览器预览 / Node 测试不具 wx.loadSubpackage，走同步启动分支，行为不变。
+ */
+
+import { Game, BOOT_LOADING_BG } from &#x27;./src/game/Game.js&#x27;;
+import { ArtSystem } from &#x27;./src/system/ArtSystem.js&#x27;;
+import ShareSystem from &#x27;./src/meta/ShareSystem.js&#x27;;
+import { normalizeSafeAreaUnit } from &#x27;./src/system/SafeArea.js&#x27;;
+
+// ============ 1. Canvas + 屏幕信息 ============
+const canvas = wx.createCanvas();
+const ctx = canvas.getContext(&#x27;2d&#x27;);
+
+/**
+ * 屏幕信息（新基础库优先拆分 API，旧库降级 getSystemInfoSync）
+ * 注：getSystemInfoSync 已被官方标记废弃，尽量拆用 getWindowInfo。
+ *
+ * 时序坑：微信开发者工具模拟器启动早期，jsbridge 尚未就绪时调用
+ * getWindowInfo/getSystemInfo 会抛「jsbridge not ready」告警并返回兜底值。
+ * 这里用 try/catch 兜底：先 getWindowInfo，失败降级 getSystemInfoSync，
+ * 仍失败返回安全默认值，避免同步阶段把 jsbridge 告警刷到控制台。
+ */
+const _DISPLAY_FALLBACK = { screenWidth: 375, screenHeight: 667, pixelRatio: 2, safeArea: null };
+
+function _displayInfo() {
+  if (typeof wx.getWindowInfo === &#x27;function&#x27;) {
+    try {
+      const win = wx.getWindowInfo();
+      if (win &amp;&amp; win.screenWidth &amp;&amp; win.screenHeight) {
+        return {
+          screenWidth: win.screenWidth,
+          screenHeight: win.screenHeight,
+          pixelRatio: win.pixelRatio || 2,
+          // 灵动岛 / 状态栏 / home indicator 安全区（逻辑像素，个别 ROM 返回物理像素由归一化兜底）
+          safeArea: win.safeArea || null,
+        };
+      }
+    } catch (e) {
+      // jsbridge not ready → 降级 getSystemInfoSync
+    }
+  }
+  if (typeof wx.getSystemInfoSync === &#x27;function&#x27;) {
+    try {
+      const si = wx.getSystemInfoSync();
+      if (si &amp;&amp; si.screenWidth &amp;&amp; si.screenHeight) {
+        return {
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 58 / 60 页</span></div>
+<pre><code>
+          screenWidth: si.screenWidth,
+          screenHeight: si.screenHeight,
+          pixelRatio: si.pixelRatio || 2,
+          safeArea: si.safeArea || null,
+        };
+      }
+    } catch (e) {
+      // jsbridge not ready → 使用默认值，后续由 SafeArea/RenderSystem 校准
+    }
+  }
+  return _DISPLAY_FALLBACK;
+}
+
+const { screenWidth, screenHeight, pixelRatio, safeArea: rawSafeArea } = _displayInfo();
+// 2026-11-21：接通安全区全链路 —— 此前整套机制（归一化/钳制/渲染映射/点击反推）
+// 都写好了，唯独入口没取值也没传给 Game，导致真机上 safeArea 恒为 0，
+// 顶部资源栏与标题被灵动岛（居中药丸）压住。归一化后再交给 Game/RenderSystem。
+const safeArea = normalizeSafeAreaUnit(rawSafeArea, screenWidth, screenHeight, pixelRatio);
+
+// 高分辨率渲染
+canvas.width = screenWidth * pixelRatio;
+canvas.height = screenHeight * pixelRatio;
+ctx.scale(pixelRatio, pixelRatio);
+
+// ============ 1.5 云开发初始化（原型阶段：默认关闭） ============
+// 《占地之王》原型阶段走纯本地存档，不接云开发。
+// 保留此段代码供后续启用：玩法定型后创建新云环境，替换 env 并解开注释即可。
+// 历史环境 ID（原占城先锋项目，勿复用，避免数据混淆）：minigame-prod-d5g02fq8e40658692
+//
+// if (typeof wx.cloud === &#x27;object&#x27; &amp;&amp; typeof wx.cloud.init === &#x27;function&#x27;) {
+//   try {
+//     wx.cloud.init({ env: &#x27;&lt;新云环境ID&gt;&#x27;, traceUser: true });
+//     globalThis.TK_CLOUD_ENABLED = true;
+//   } catch (e) {
+//     console.warn(&#x27;[boot] wx.cloud.init failed:&#x27;, e &amp;&amp; e.message || e);
+//   }
+// }
+globalThis.TK_CLOUD_ENABLED = false;
+
+// ============ 2. 分包下载进度页（只用主包资源） ============
+// boot/loading.jpg 是 assets/bg/loading_art.jpg 的同图副本，尺寸 &lt;350KB 留在主包。
+// 注册进 ArtSystem 的独立路径根，这样加载页与正式加载页共用同一套 cover 绘制。
+ArtSystem.registerBoot(&#x27;boot/loading&#x27;, &#x27;loading.jpg&#x27;);
+
+function drawBootProgress(p) {
+  try {
+    ctx.fillStyle = &#x27;#5BB8E8&#x27;;
+    ctx.fillRect(0, 0, screenWidth, screenHeight);
+    ArtSystem.draw(ctx, BOOT_LOADING_BG, 0, 0, screenWidth, screenHeight, { fit: &#x27;cover&#x27;, alpha: 1 });
+    ctx.fillStyle = &#x27;rgba(14,26,46,0.45)&#x27;;
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 59 / 60 页</span></div>
+<pre><code>
+    ctx.fillRect(0, screenHeight * 0.72, screenWidth, screenHeight * 0.28);
+    ctx.textAlign = &#x27;center&#x27;;
+    ctx.textBaseline = &#x27;middle&#x27;;
+    ctx.fillStyle = &#x27;#EAF8FF&#x27;;
+    ctx.font = &#x27;14px sans-serif&#x27;;
+    ctx.fillText(`资源加载中 ${Math.round(p * 100)}%`, screenWidth / 2, screenHeight * 0.84);
+  } catch (e) {
+    // 进度页绘制失败不应阻断启动（真机 canvas 状态异常时由 Game 自己的加载页兜底）
+  }
+}
+
+// ============ 3. 启动游戏 ============
+function bootstrap() {
+  const game = new Game(canvas, ctx, screenWidth, screenHeight, safeArea);
+
+  // 调试钩子：真机 vConsole / 自动化测试可通过 globalThis.__game 访问实例
+  globalThis.__game = game;
+
+  game.start().catch((err) =&gt; {
+    console.error(&#x27;[boot] 游戏启动失败:&#x27;, err);
+    // 画布上绘制可见错误（真机黑屏排查第一现场）
+    ctx.fillStyle = &#x27;#1a202c&#x27;;
+    ctx.fillRect(0, 0, screenWidth, screenHeight);
+    ctx.textAlign = &#x27;center&#x27;;
+    ctx.textBaseline = &#x27;middle&#x27;;
+    ctx.fillStyle = &#x27;#f87171&#x27;;
+    ctx.font = &#x27;bold 16px sans-serif&#x27;;
+    ctx.fillText(&#x27;游戏启动失败，请退出后重试&#x27;, screenWidth / 2, screenHeight / 2 - 14);
+    ctx.fillStyle = &#x27;#9ca3af&#x27;;
+    ctx.font = &#x27;12px sans-serif&#x27;;
+    const msg = String((err &amp;&amp; err.message) || err).slice(0, 60);
+    ctx.fillText(msg, screenWidth / 2, screenHeight / 2 + 14);
+  });
+
+  // ---- 被动分享（右上角菜单） ----
+  // 打开「转发」和「分享到朋友圈」菜单开关
+  if (typeof wx.showShareMenu === &#x27;function&#x27;) {
+    wx.showShareMenu({ menus: [&#x27;shareAppMessage&#x27;, &#x27;shareTimeline&#x27;] });
+  }
+  // 转发给好友：文案由 ShareSystem 按当前存档生成
+  if (typeof wx.onShareAppMessage === &#x27;function&#x27;) {
+    wx.onShareAppMessage(() =&gt; ShareSystem.getShareConfig({ scene: &#x27;lobby&#x27; }));
+  }
+  // 分享到朋友圈（需要单独注册，否则菜单项无效）
+  if (typeof wx.onShareTimeline === &#x27;function&#x27;) {
+    wx.onShareTimeline(() =&gt; {
+      const cfg = ShareSystem.getShareConfig({ scene: &#x27;lobby&#x27; });
+      return { title: cfg.title, query: &#x27;&#x27; };
+    });
+  }
+</code></pre>
+</div>
+<div class="page">
+<div class="head"><span>占地之王 V1.0 · 源程序</span><span>第 60 / 60 页</span></div>
+<pre><code>
+
+  // ---- Android 物理返回键 ----
+  // 语义：返回键先关闭打开的界面/窗口，主大厅再按才退出小游戏
+  // (keyCode 27 = ESC；部分机型 Backspace 8)
+  if (typeof wx.onKeyDown === &#x27;function&#x27;) {
+    wx.onKeyDown((res) =&gt; {
+      if (res.keyCode === 27 || res.keyCode === 8) {
+        const r = game.tryBack();
+        if (r === &#x27;none&#x27;) {
+          // 主大厅：交还系统默认行为（退出小游戏）
+          if (typeof wx.exitMiniProgram === &#x27;function&#x27;) wx.exitMiniProgram();
+        }
+      }
+    });
+  }
+
+  return game;
+}
+
+// 真实微信才有 loadSubpackage；浏览器预览由 wx-shim 注入 __tkBrowser，
+// Node 测试也没有此 API —— 两者都走同步启动，保持原有行为与测试契约。
+const hasSubpackage = typeof wx !== &#x27;undefined&#x27; &amp;&amp; wx &amp;&amp; wx.__tkBrowser !== true &amp;&amp;
+  typeof wx.loadSubpackage === &#x27;function&#x27;;
+
+if (hasSubpackage) {
+  drawBootProgress(0);
+  try {
+    wx.loadSubpackage({
+      name: &#x27;art&#x27;,
+      progress(res) {
+        let p = 0;
+        if (res &amp;&amp; typeof res.progress === &#x27;number&#x27;) p = res.progress / 100;
+        else if (res &amp;&amp; res.totalBytes &gt; 0) p = res.loadedBytes / res.totalBytes;
+        drawBootProgress(Math.max(0, Math.min(1, p)));
+      },
+      success() { bootstrap(); },
+      fail(err) {
+        // 分包下载失败时仍启动游戏：资源层会静默降级到程序化绘制，不至于黑屏
+        console.warn(&#x27;[boot] art subpackage load failed, fallback to procedural art:&#x27;, err);
+        bootstrap();
+      },
+    });
+  } catch (err) {
+    console.warn(&#x27;[boot] wx.loadSubpackage threw, starting without subpackage:&#x27;, err);
+    bootstrap();
+  }
+} else {
+  bootstrap();
+}
+
+</code></pre>
+</div>
+</body></html>
