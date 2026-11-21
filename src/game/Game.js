@@ -2499,49 +2499,119 @@ export class Game {
     const w = this.screenWidth;
     const h = this.screenHeight;
 
-    // 背景渐变
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, '#1e1b4b');
-    grad.addColorStop(0.5, '#0f172a');
-    grad.addColorStop(1, '#1e293b');
-    ctx.fillStyle = grad;
+    // 圆角矩形路径（内联，加载页不依赖 RenderSystem）
+    const roundRectPath = (x, y, rw, rh, r) => {
+      const rr = Math.min(r, rw / 2, rh / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + rw - rr, y);
+      ctx.quadraticCurveTo(x + rw, y, x + rw, y + rr);
+      ctx.lineTo(x + rw, y + rh - rr);
+      ctx.quadraticCurveTo(x + rw, y + rh, x + rw - rr, y + rh);
+      ctx.lineTo(x + rr, y + rh);
+      ctx.quadraticCurveTo(x, y + rh, x, y + rh - rr);
+      ctx.lineTo(x, y + rr);
+      ctx.quadraticCurveTo(x, y, x + rr, y);
+      ctx.closePath();
+    };
+
+    // 1) 主视觉：晴空乐园 Q版城堡插画，全亮度铺满（之前的 0.45 把这张图压废了）
+    ctx.fillStyle = '#5BB8E8'; // 图片未就绪时的兜底天蓝
     ctx.fillRect(0, 0, w, h);
-    ArtSystem.draw(this.ctx, LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 0.45 });
-    // 应用级启动图（assets/assets/splash.png）：叠加在渐变之上，占位阶段低不透明度
-    ArtSystem.draw(this.ctx, APP_ASSETS.splash, 0, 0, w, h, { fit: 'cover', alpha: 0.18 });
-    ArtSystem.draw(this.ctx, LOADING_LOGO, w / 2 - 60, h * 0.14, 120, 120, { alpha: 0.9 });
+    ArtSystem.draw(ctx, LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 1 });
+
+    // 2) 顶部深色蒙层：承托 Logo 与标题，避免明快插画冲淡文字（也不再压在幼龙脸上）
+    const top = ctx.createLinearGradient(0, 0, 0, h * 0.52);
+    top.addColorStop(0, 'rgba(14,26,46,0.86)');
+    top.addColorStop(0.62, 'rgba(14,26,46,0.42)');
+    top.addColorStop(1, 'rgba(14,26,46,0)');
+    ctx.fillStyle = top;
+    ctx.fillRect(0, 0, w, h * 0.52);
+
+    // 3) 底部蒙层：承托进度卡
+    const bot = ctx.createLinearGradient(0, h * 0.52, 0, h);
+    bot.addColorStop(0, 'rgba(14,26,46,0)');
+    bot.addColorStop(1, 'rgba(14,26,46,0.55)');
+    ctx.fillStyle = bot;
+    ctx.fillRect(0, h * 0.52, w, h * 0.48);
+
+    // 4) Logo 徽章卡：云白圆角卡 + 内贴 logo + 金边 + 投影（替代突兀的裸贴蓝方块）
+    const badge = Math.min(132, w * 0.32);
+    const bx = (w - badge) / 2;
+    const by = h * 0.12;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.32)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 8;
+    roundRectPath(bx, by, badge, badge, badge * 0.22);
+    ctx.fillStyle = '#EAF8FF';
+    ctx.fill();
+    ctx.restore();
+    ctx.save();
+    roundRectPath(bx + 5, by + 5, badge - 10, badge - 10, badge * 0.18);
+    ctx.clip();
+    ArtSystem.draw(ctx, LOADING_LOGO, bx + 5, by + 5, badge - 10, badge - 10, { fit: 'cover', alpha: 1 });
+    ctx.restore();
+    roundRectPath(bx, by, badge, badge, badge * 0.22);
+    ctx.strokeStyle = '#FFD23F';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // 标题：优先用 assets/fonts/title.ttf 自定义字体，未加载成功则回退系统 sans-serif
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = FontSystem.font(30, 'bold', 'title');
-    ctx.fillText('⚔ 占地之王', w / 2, h * 0.36);
+    // 5) 标题：金色 + 深色描边，移到蒙层区（自定义字体未就绪时回退系统 sans-serif）
+    const titleY = by + badge + Math.min(46, h * 0.05);
+    ctx.font = FontSystem.font(Math.min(30, w * 0.075), 'bold', 'title');
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(15,23,42,0.85)';
+    ctx.strokeText('⚔ 占地之王', w / 2, titleY);
+    ctx.fillStyle = '#FFD23F';
+    ctx.fillText('⚔ 占地之王', w / 2, titleY);
 
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '13px sans-serif';
-    ctx.fillText('六边形领地争夺战', w / 2, h * 0.36 + 30);
+    ctx.font = Math.min(14, w * 0.033) + 'px sans-serif';
+    ctx.fillStyle = '#EAF8FF';
+    ctx.fillText('六边形领地争夺战', w / 2, titleY + 30);
 
-    // 进度条
-    const barW = Math.min(220, w * 0.6);
-    const barH = 10;
-    const barX = (w - barW) / 2;
-    const barY = h * 0.55;
+    // 6) 进度卡：云白半透明圆角卡 + 金黄→活力橙渐变胶囊进度条
+    const cardW = Math.min(260, w * 0.72);
+    const cardH = 84;
+    const cx = (w - cardW) / 2;
+    const cy = h * 0.66;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 6;
+    roundRectPath(cx, cy, cardW, cardH, 16);
+    ctx.fillStyle = 'rgba(234,248,255,0.92)';
+    ctx.fill();
+    ctx.restore();
+
     const p = Math.max(0, Math.min(1, progress));
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(barX, barY, barW, barH);
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(barX, barY, barW * p, barH);
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(barX, barY, barW, barH);
+    const barX = cx + 20;
+    const barW = cardW - 40;
+    const barH = 12;
+    const barY = cy + 28;
+    roundRectPath(barX, barY, barW, barH, barH / 2);
+    ctx.fillStyle = 'rgba(43,74,111,0.18)';
+    ctx.fill();
+    if (p > 0) {
+      ctx.save();
+      roundRectPath(barX, barY, barW, barH, barH / 2);
+      ctx.clip();
+      const pg = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+      pg.addColorStop(0, '#FFD23F');
+      pg.addColorStop(1, '#FF8C42');
+      ctx.fillStyle = pg;
+      ctx.fillRect(barX, barY, barW * p, barH);
+      ctx.restore();
+    }
 
     // 百分比：数字字体（assets/fonts/number.ttf）
     const pct = Math.round(p * 100);
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = FontSystem.font(14, 'bold', 'number');
-    ctx.fillText(`加载中... ${pct}%`, w / 2, barY + barH + 26);
+    ctx.fillStyle = '#2B4A6F';
+    ctx.font = FontSystem.font(13, 'bold', 'number');
+    ctx.fillText(`加载中... ${pct}%`, w / 2, cy + 60);
   }
 
   /**
