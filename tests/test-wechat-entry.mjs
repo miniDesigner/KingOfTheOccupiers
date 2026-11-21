@@ -230,6 +230,10 @@ console.log('\n=== 5. 工程配置 ===');
   // assets/ 整目录拆为美术分包，主包只留代码 + config + boot 图
   check('game.json 配置 art 分包', Array.isArray(gj.subpackages) && gj.subpackages.some(s => s.name === 'art'));
   check('art 分包 root = assets/', (gj.subpackages || []).some(s => s.root === 'assets/'));
+  // 微信硬性规则：目录型分包的 root 下必须有 game.js，否则上传时报
+  // "未找到 subpackages[0].root 对应的 /assets/game.js 文件"
+  const subEntry = await fs.stat(path.join(ROOT, 'assets/game.js')).catch(() => null);
+  check('art 分包入口 assets/game.js 存在（目录分包硬性要求）', !!subEntry);
   const bootPath = path.join(ROOT, 'boot/loading.jpg');
   const bootStat = await fs.stat(bootPath).catch(() => null);
   check('主包 boot/loading.jpg 存在且 <1MB', !!bootStat && bootStat.size > 0 && bootStat.size < 1024 * 1024,
