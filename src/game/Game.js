@@ -59,6 +59,14 @@ import LeaderboardSystem from '../meta/LeaderboardSystem.js';
 import { generateOpponent, searchDelay, RULES_VERSION as ASYNC_RULES_VERSION,
   ASYNC_MATCH_TIMEOUT_MS } from '../meta/AsyncMatchSystem.js';
 
+/**
+ * 主包加载页背景 key（boot/loading.jpg，与 assets/bg/loading_art.jpg 同图）。
+ * 微信 assets/ 整目录已拆为分包，分包下载完成前只有主包资源可读；
+ * renderLoadingScreen 先尝试分包内的正式图，未就绪时回退这张主包图，
+ * 保证冷启动第一帧就能看到游戏名称插画，不会闪天蓝底。
+ */
+export const BOOT_LOADING_BG = 'boot/loading';
+
 export class Game {
   constructor(canvas, ctx, screenWidth, screenHeight, safeArea) {
     this.canvas = canvas;
@@ -2522,7 +2530,10 @@ export class Game {
     //    界面层不再叠 Logo 徽章与标题文字——避免 UI 层文字与插画主体打架，且名称随图缩放永不错位。
     ctx.fillStyle = '#5BB8E8'; // 图片未就绪时的兜底天蓝
     ctx.fillRect(0, 0, w, h);
-    ArtSystem.draw(ctx, LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 1 });
+    // 分包就绪后用正式图；分包下载阶段回退主包 boot 图（同一张插画，视觉连续）。
+    if (!ArtSystem.draw(ctx, LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 1 })) {
+      ArtSystem.draw(ctx, BOOT_LOADING_BG, 0, 0, w, h, { fit: 'cover', alpha: 1 });
+    }
 
     // 2) 底部蒙层：仅承托进度卡（顶部不再有 UI 文字，撤掉顶部蒙层让插画保持明快）
     const bot = ctx.createLinearGradient(0, h * 0.52, 0, h);
@@ -2587,7 +2598,7 @@ export class Game {
     // 0. 先发起加载页素材预载，再绘制首帧。
     //    必须在首帧之前 preload：加载页期间主循环尚未启动（见 2815 行 requestAnimationFrame(loop)），
     //    若等到配置加载完才预载，图片异步完成时就再没有重绘机会 → 背景/名称永远看不到。
-    ArtSystem.preload([LOADING_BG]);
+    ArtSystem.preload([LOADING_BG, BOOT_LOADING_BG]);
     this.renderLoadingScreen(0);
 
     // 1. 加载 JSON 配置（带进度回调，每加载一个文件刷新加载画面）

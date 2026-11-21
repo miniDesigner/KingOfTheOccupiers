@@ -57,6 +57,21 @@ class ArtSystemClass {
   get available() { return this._env !== 'node'; }
   get env() { return this._env; }
   get base() { return this._env === 'browser' ? '../assets/' : 'assets/'; }
+  /** 主包 boot/ 资源根：微信分包下载前就能读，浏览器预览走 ../boot/ */
+  get bootBase() { return this._env === 'browser' ? '../boot/' : 'boot/'; }
+
+  /**
+   * 注册主包资源（仅供分包下载前的加载页使用）。
+   * 复用同一套缓存/绘制管线，仅路径根与 manifest 条目不同。
+   * 注意：这里的 key 不要与 manifest 冲突；加载页优先 manifest 图，未就绪才回退 boot 图。
+   */
+  registerBoot(key, path) {
+    ART_INDEX[key] = {
+      key, path, root: 'boot', w: 1500, h: 2115, fmt: 'JPG',
+      is9: false, slice: 0, quality: '', source: 'boot', note: 'split-package boot art',
+    };
+    return this;
+  }
 
   setEnabled(v) { this.enabled = !!v; }
   setAlpha(v) { this.alpha = Math.max(0, Math.min(1, Number(v) || 0)); }
@@ -98,7 +113,7 @@ class ArtSystemClass {
       c.img = img;
       img.onload = () => { c.status = 'ready'; this._stats.ready++; };
       img.onerror = () => { c.status = 'failed'; this._stats.failed++; };
-      img.src = this.base + e.path;
+      img.src = (e.root === 'boot' ? this.bootBase : this.base) + e.path;
     } catch (err) {
       c.status = 'failed';
       this._stats.failed++;

@@ -8,7 +8,9 @@
 用法:
     python3 tools/derive-tone.py BATTLE_BG OUTDIR
 
-仅依赖 Pillow。输出 10 张 1500x2115 PNG，命名与占位一致。
+仅依赖 Pillow。输出 10 张 750x1058 JPG q85，命名与占位一致。
+2026-11-21 上传瘦身：色调叠层只以 alpha 0.14 叠加，原 1500x2115 PNG
+（单张 2.3MB / 共 23MB）降采样转 JPG 后仅 50KB，视觉无可见差异。
 """
 import os
 import sys
@@ -39,10 +41,10 @@ def tint(im, mul, contrast):
 def main(src, outdir):
     base = Image.open(src).convert("RGB")
     for name, (bg_mul, bg_c, tile_mul, tile_c) in TONES.items():
-        bg = tint(base, bg_mul, bg_c)
-        bg.save(os.path.join(outdir, f"battle_tone_{name}.png"), "PNG")
-        tile = tint(base, tile_mul, tile_c)
-        tile.save(os.path.join(outdir, f"territory_tone_{name}.png"), "PNG")
+        bg = tint(base, bg_mul, bg_c).resize((750, 1058), Image.LANCZOS)
+        bg.save(os.path.join(outdir, f"battle_tone_{name}.jpg"), "JPEG", quality=85, optimize=True)
+        tile = tint(base, tile_mul, tile_c).resize((750, 1058), Image.LANCZOS)
+        tile.save(os.path.join(outdir, f"territory_tone_{name}.jpg"), "JPEG", quality=85, optimize=True)
         print(f"tone {name}: bg + tiles generated")
 
 

@@ -221,6 +221,28 @@ console.log('\n=== 5. 工程配置 ===');
   check('packOptions 排除 *.md 文档', ignores.some(i => i.type === 'regexp' && i.value.includes('md')));
   const gj = JSON.parse(await fs.readFile(path.join(ROOT, 'game.json'), 'utf-8'));
   check('game.json 合法（竖屏）', gj.deviceOrientation === 'portrait');
+
+  // 2026-11-21 上传瘦身：工作区元数据 / git 历史不得进入微信包体
+  check('packOptions 排除 .workbuddy/（437MB 工作区素材）', vals.includes('.workbuddy'));
+  check('packOptions 排除 .git/（60MB 提交历史）', vals.includes('.git'));
+  check('packOptions 排除 design/（设计稿）', vals.includes('design'));
+
+  // assets/ 整目录拆为美术分包，主包只留代码 + config + boot 图
+  check('game.json 配置 art 分包', Array.isArray(gj.subpackages) && gj.subpackages.some(s => s.name === 'art'));
+  check('art 分包 root = assets/', (gj.subpackages || []).some(s => s.root === 'assets/'));
+  const bootPath = path.join(ROOT, 'boot/loading.jpg');
+  const bootStat = await fs.stat(bootPath).catch(() => null);
+  check('主包 boot/loading.jpg 存在且 <1MB', !!bootStat && bootStat.size > 0 && bootStat.size < 1024 * 1024,
+    bootStat ? `size=${(bootStat.size / 1024).toFixed(0)}KB` : 'missing');
+  const src = await fs.readFile(path.join(ROOT, 'game.js'), 'utf-8');
+  check('入口先注册主包 boot 图', src.includes("registerBoot('boot/loading'"));
+  check('入口支持 wx.loadSubpackage 分包加载', src.includes('wx.loadSubpackage'));
+
+  // 色调叠层瘦身：10 张 2.3MB PNG → 50KB JPG，manifest 路径同步
+  const manifest = await fs.readFile(path.join(ROOT, 'src/system/ArtManifest.js'), 'utf-8');
+  check('ArtManifest 色调叠层已改为 .jpg', manifest.includes('"path": "bg/battle_tone_plains.jpg"'));
+  const tonePng = await fs.stat(path.join(ROOT, 'assets/bg/battle_tone_plains.png')).catch(() => null);
+  check('旧色调 PNG 已移除', !tonePng);
 }
 
 console.log(`\n结果: ${passed} 通过 / ${failed} 失败`);

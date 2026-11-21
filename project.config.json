@@ -60,6 +60,38 @@
         "type": "folder"
       },
       {
+        "value": ".workbuddy",
+        "type": "folder"
+      },
+      {
+        "value": ".git",
+        "type": "folder"
+      },
+      {
+        "value": ".playwright-cli",
+        "type": "folder"
+      },
+      {
+        "value": "design",
+        "type": "folder"
+      },
+      {
+        "value": "BUSINESS-PLAN.pdf",
+        "type": "file"
+      },
+      {
+        "value": "BUSINESS-PLAN.html",
+        "type": "file"
+      },
+      {
+        "value": "BUSINESS-PLAN.docx",
+        "type": "file"
+      },
+      {
+        "value": ".env.local",
+        "type": "file"
+      },
+      {
         "value": "preview-server.py",
         "type": "file"
       },

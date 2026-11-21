@@ -1,6 +1,12 @@
 {
   "deviceOrientation": "portrait",
   "showStatusBar": false,
+  "subpackages": [
+    {
+      "name": "art",
+      "root": "assets/"
+    }
+  ],
   "networkTimeout": {
     "request": 5000,
     "connectSocket": 5000,

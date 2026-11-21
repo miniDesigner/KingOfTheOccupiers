@@ -7,11 +7,11 @@ BG-01,bg/lobby_fg.png,背景,前景光斑,1500×2115,PNG,,,占地之王-逐界�
 BG-02,bg/gacha_bg.jpg,背景,渐变底,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 BG-02,bg/gacha_circle.png,背景,光柱 + 符文阵,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 BG-03,bg/battle_bg.jpg,背景,基础暗纹,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-BG-03,bg/battle_tone_plains.png,背景,变体 plains,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-BG-03,bg/battle_tone_twin_canyon.png,背景,变体 twin_canyon,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-BG-03,bg/battle_tone_tri_lanes.png,背景,变体 tri_lanes,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-BG-03,bg/battle_tone_river_ford.png,背景,变体 river_ford,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-BG-03,bg/battle_tone_citadel.png,背景,变体 citadel,1500×2115,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_plains.jpg,背景,变体 plains,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_twin_canyon.jpg,背景,变体 twin_canyon,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_tri_lanes.jpg,背景,变体 tri_lanes,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_river_ford.jpg,背景,变体 river_ford,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BG-03,bg/battle_tone_citadel.jpg,背景,变体 citadel,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 BG-04,bg/result_win.jpg,背景,结算胜利主视觉,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 BG-05,bg/result_lose.jpg,背景,结算失败主视觉,1500×2115,JPG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 BG-06,bg/loading_logo.png,背景,品牌 Logo,900×1080,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
@@ -36,11 +36,11 @@ TL-01,tiles/hex_empty.png,地块,空地,312×312,PNG,,,占地之王-逐界面素
 TL-02,tiles/mountain.png,地块,山脉障碍,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 TL-02,tiles/river.png,地块,河流障碍,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 TL-03,tiles/territory_edge.png,地块,边界纹理,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-TL-03,tiles/territory_tone_plains.png,地块,氛围 plains,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-TL-03,tiles/territory_tone_twin_canyon.png,地块,氛围 twin_canyon,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-TL-03,tiles/territory_tone_tri_lanes.png,地块,氛围 tri_lanes,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-TL-03,tiles/territory_tone_river_ford.png,地块,氛围 river_ford,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-TL-03,tiles/territory_tone_citadel.png,地块,氛围 citadel,312×312,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_plains.jpg,地块,氛围 plains,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_twin_canyon.jpg,地块,氛围 twin_canyon,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_tri_lanes.jpg,地块,氛围 tri_lanes,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_river_ford.jpg,地块,氛围 river_ford,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+TL-03,tiles/territory_tone_citadel.jpg,地块,氛围 citadel,750×1058,JPG,,,占地之王-逐界面素材清单.csv,2026-11-21 上传瘦身：原 1500×2115 PNG 转 750×1058 JPG q85；原图备份 .workbuddy/art-staging/tone-png-backup/,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 FX-01,effects/gacha_epic_q4.png,特效,稀有度光效 紫 Q4,384×384,PNG,,#a855f7,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 FX-01,effects/gacha_epic_q5.png,特效,稀有度光效 橙 Q5,384×384,PNG,,#f97316,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 FX-01,effects/gacha_epic_q6.png,特效,稀有度光效 红 Q6,384×384,PNG,,#ef4444,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
