@@ -46,7 +46,7 @@ const WATERMARK_BG_KEYS = new Set([
 // 已替换为正式美术的棋盘素材：这些 key 虽属 tiles/ 前缀，但不再是带水印占位图，
 // 必须绕过 WATERMARK_PREFIXES 拦截。每出一版正式图并覆盖 assets/ 就往这里加一项。
 // 注意：这些是「立体石砖」——自带六边形轮廓 + 厚度侧面，_artHex/_art 需走整图不裁剪 + 尺寸标定。
-const SOLID_BOARD_KEYS = new Set(['tiles/hex_bright']);
+const SOLID_BOARD_KEYS = new Set(['tiles/hex_bright', 'tiles/mountain']);
 // 已替换为正式美术的建筑素材（奇幻Q版 · 兵营4级/箭塔/金矿/双HQ/废墟，312² RGBA）：
 // 同名覆盖 assets/buildings/ 后逐 key 放行，绕开 buildings/ 前缀水印拦截。
 // 其余 buildings/*（若有未出图项）继续拦水印；程序化「兵/塔/金/王」兜底保留在其下。
@@ -1755,50 +1755,16 @@ export class RenderSystem {
   }
 
   /**
-   * 绘制障碍格(山脉/河流)：与已翻格共用 45° 立体石砖管线，但用无阵营的冷板岩灰
-   * 表达"不可占据/不可通行"；中心是极简纯色双峰山剪影（与建筑剪影同一视觉语言）。
+   * 绘制障碍格(山脉/河流)：直接贴一张自包含的障碍砖块贴图（冷灰石砖 + 顶面刻入山纹），
+   * 几何与 hex_bright 完全一致，无阵营色、不可占据/不可通行。
+   * 程序化深色兜底保留：贴图未就绪时仍是一块中性石砖，不露天。
    */
   drawObstacleTile(tile, x, y) {
     const { ctx } = this;
-    const OBSTACLE_COLOR = '#64748b'; // 冷板岩灰：既非玩家蓝，也非敌人红
-    // 与已翻格一致的石砖管线：深色兜底 → 立体石砖 → 顶面染色 + 粗描边
     this.drawHexShape(x, y, HEX_SIZE);
     ctx.fillStyle = '#334155';
     ctx.fill();
-    this._artHex(ART_HOOKS.hexBright, x, y);
-    // 复用染色层（内部 globalAlpha=0.45 + 3px 描边），让障碍与已占格同一套顶面表现
-    this._drawTileOwnerTint(x, y, OBSTACLE_COLOR);
-    // 极简双峰山剪影：单 path 纯色，无雪顶/纹理等内部细节
-    this._drawObstacleSilhouette(x, y - 4, 40, '#e2e8f0');
-  }
-
-  /**
-   * 障碍山形剪影：极简纯色单轮廓（与建筑剪影同语言），落地影消除贴纸感。
-   * @param {number} x 中心 x
-   * @param {number} y 中心 y
-   * @param {number} s 外框尺寸（正方形边长）
-   * @param {string} color 剪影色
-   */
-  _drawObstacleSilhouette(x, y, s, color) {
-    const { ctx } = this;
-    const k = s / 40; // 与建筑剪影同基准 40×40
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(k, k);
-    ctx.fillStyle = 'rgba(0,0,0,0.28)';
-    ctx.beginPath();
-    ctx.ellipse(0, 13, 15, 3.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(-17, 12);
-    ctx.lineTo(-7, -11);
-    ctx.lineTo(0, -1);
-    ctx.lineTo(8, -15);
-    ctx.lineTo(17, 12);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+    this._artHex(ART_HOOKS.mountain, x, y);
   }
 
   /**
