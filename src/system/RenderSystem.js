@@ -2682,16 +2682,22 @@ export class RenderSystem {
 
     ctx.restore(); // 恢复 clip（滚动区仅兵种卡列表）
 
-    // === 底部提示（开战入口在大厅「⚔ 开战」按钮，本界面仅布阵） ===
-    this._drawTextPillBg(this.screenWidth / 2, L.tipY1, '点击卡片查看详情  |  长按拖动兵种卡上阵', '9px sans-serif', { padX: 10, padY: 4, border: 'rgba(43,74,111,0.22)' });
+    // === 底部提示（开战入口在大厅「开战」按钮，本界面仅布阵） ===
+    // 2026-11-21 A 类 P2-7：两行提示收进一个云白操作带，消除悬空文字；去 ⚔ emoji。
+    const tipBandX = 104; // 避开返回按钮(16..96)：右侧起排，与大厅设置按钮同侧留白一致
+    const tipBandW = w - tipBandX - 16;
+    const tipBandY = h - 104;
+    this._cardBg({ x: tipBandX, y: tipBandY, w: tipBandW, h: 48, r: 10 }, {
+      tint: 'rgba(234,248,255,0.90)', border: 'rgba(43,74,111,0.16)', flat: true,
+    });
     ctx.fillStyle = UI_THEME.navy;
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('点击卡片查看详情  |  长按拖动兵种卡上阵', this.screenWidth / 2, L.tipY1);
+    ctx.fillText('点击卡片查看详情  |  长按拖动兵种卡上阵', tipBandX + tipBandW / 2, tipBandY + 16);
+    ctx.fillStyle = UI_THEME.navySoft;
+    ctx.fillText('布阵完成后回大厅点「开战」出战', tipBandX + tipBandW / 2, tipBandY + 34);
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = ON_DARK.body;
-    ctx.fillText('布阵完成后回大厅点「⚔ 开战」出战', this.screenWidth / 2, L.tipY2);
 
     // === 拖拽视觉反馈（仅兵种） ===
     if (drag.active && drag.type === 'unit') {
