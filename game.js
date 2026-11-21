@@ -10,6 +10,7 @@
 
 import { Game } from './src/game/Game.js';
 import ShareSystem from './src/meta/ShareSystem.js';
+import { normalizeSafeAreaUnit } from './src/system/SafeArea.js';
 
 // ============ 1. Canvas + 屏幕信息 ============
 const canvas = wx.createCanvas();
@@ -24,7 +25,7 @@ const ctx = canvas.getContext('2d');
  * 这里用 try/catch 兜底：先 getWindowInfo，失败降级 getSystemInfoSync，
  * 仍失败返回安全默认值，避免同步阶段把 jsbridge 告警刷到控制台。
  */
-const _DISPLAY_FALLBACK = { screenWidth: 375, screenHeight: 667, pixelRatio: 2 };
+const _DISPLAY_FALLBACK = { screenWidth: 375, screenHeight: 667, pixelRatio: 2, safeArea: null };
 
 function _displayInfo() {
   if (typeof wx.getWindowInfo === 'function') {
@@ -35,6 +36,8 @@ function _displayInfo() {
           screenWidth: win.screenWidth,
           screenHeight: win.screenHeight,
           pixelRatio: win.pixelRatio || 2,
+          // 灵动岛 / 状态栏 / home indicator 安全区（逻辑像素，个别 ROM 返回物理像素由归一化兜底）
+          safeArea: win.safeArea || null,
         };
       }
     } catch (e) {
@@ -49,6 +52,7 @@ function _displayInfo() {
           screenWidth: si.screenWidth,
           screenHeight: si.screenHeight,
           pixelRatio: si.pixelRatio || 2,
+          safeArea: si.safeArea || null,
         };
       }
     } catch (e) {
@@ -58,7 +62,11 @@ function _displayInfo() {
   return _DISPLAY_FALLBACK;
 }
 
-const { screenWidth, screenHeight, pixelRatio } = _displayInfo();
+const { screenWidth, screenHeight, pixelRatio, safeArea: rawSafeArea } = _displayInfo();
+// 2026-11-21：接通安全区全链路 —— 此前整套机制（归一化/钳制/渲染映射/点击反推）
+// 都写好了，唯独入口没取值也没传给 Game，导致真机上 safeArea 恒为 0，
+// 顶部资源栏与标题被灵动岛（居中药丸）压住。归一化后再交给 Game/RenderSystem。
+const safeArea = normalizeSafeAreaUnit(rawSafeArea, screenWidth, screenHeight, pixelRatio);
 
 // 高分辨率渲染
 canvas.width = screenWidth * pixelRatio;
@@ -81,7 +89,7 @@ ctx.scale(pixelRatio, pixelRatio);
 globalThis.TK_CLOUD_ENABLED = false;
 
 // ============ 2. 启动游戏 ============
-const game = new Game(canvas, ctx, screenWidth, screenHeight);
+const game = new Game(canvas, ctx, screenWidth, screenHeight, safeArea);
 
 // 调试钩子：真机 vConsole / 自动化测试可通过 globalThis.__game 访问实例
 globalThis.__game = game;

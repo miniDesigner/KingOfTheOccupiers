@@ -81,7 +81,11 @@ const spies = {
 let appShareHandler = null;
 let timelineHandler = null;
 let keyHandler = null;
-const WIN = { screenWidth: 812, screenHeight: 375, pixelRatio: 2 }; // 特征值：证明用的是 getWindowInfo
+// 特征值：证明用的是 getWindowInfo；safeArea 证明入口把安全区接到了 Game（灵动岛适配回归）
+const WIN = {
+  screenWidth: 812, screenHeight: 375, pixelRatio: 2,
+  safeArea: { top: 44, bottom: 331, left: 0, right: 812, width: 812, height: 300 },
+};
 
 // 让 Node ESM 支持 require（ConfigLoader WX 分支需要）
 global.require = (await import('node:module')).createRequire(new URL('../src/data/ConfigLoader.js', import.meta.url));
@@ -146,6 +150,23 @@ console.log('\n=== 2. 屏幕信息 API 兼容 ===');
   const src = await fs.readFile(path.join(ROOT, 'game.js'), 'utf-8');
   check('入口源码含 getWindowInfo 优先分支', src.includes('wx.getWindowInfo'));
   check('入口源码含 getSystemInfoSync 降级分支', src.includes('getSystemInfoSync'));
+}
+
+console.log('\n=== 2.5 灵动岛安全区接线（入口取值 → 归一化 → 传给 Game） ===');
+{
+  // WIN.safeArea: top=44, bottom 边界=331 → 避让 375-331=44（逻辑像素，不折算）
+  // 若入口没传或忘了归一化，Game.safeAreaTop 会是 0 / 44*dpr=88，这里就会失败。
+  check('入口把 wx.getWindowInfo().safeArea 传给 Game（top=44）',
+    game.safeAreaTop === 44, `game.safeAreaTop=${game.safeAreaTop}`);
+  check('入口归一化 bottom 边界 → 避让高度（bottom=44）',
+    game.safeAreaBottom === 44, `game.safeAreaBottom=${game.safeAreaBottom}`);
+  check('RenderSystem 与 Game 共用同一份钳制结果',
+    game.renderSystem.safeAreaTop === game.safeAreaTop &&
+    game.renderSystem.safeAreaScaleY === game.safeAreaScaleY);
+  const src = await fs.readFile(path.join(ROOT, 'game.js'), 'utf-8');
+  check('入口 import 了 normalizeSafeAreaUnit 归一化函数', src.includes('normalizeSafeAreaUnit'));
+  check('入口把 safeArea 作为第 5 参数传给 Game',
+    /new Game\([^)]*safeArea\s*\)/.test(src));
 }
 
 console.log('\n=== 3. 被动分享注册（右上角菜单） ===');
