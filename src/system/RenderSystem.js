@@ -1896,9 +1896,10 @@ export class RenderSystem {
         ctx.fillStyle = building.variantColor || building.color;
       }
       // 2026-11-21：建筑图放大到 72px，中心上移量按尺寸等比（LIFT_RATIO），改尺寸无需再手调偏移
-      // 72px 主体高约 68px，石砖顶面约 75px：上移 0.10·size≈7px 让建筑落在顶面内、底部给投影/等级字留位
+      // 72px 主体高约 68px，石砖顶面约 75px：上移 0.25·size≈18px 让建筑重心明显抬到顶面中上部，
+      // 底部给投影/等级字留位；同时减小被相邻格盖住的概率。
       const ART_SIZE = 72;
-      const ART_LIFT_RATIO = 0.10;
+      const ART_LIFT_RATIO = 0.25;
       const ART_CY = y - ART_SIZE * ART_LIFT_RATIO;
       ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
