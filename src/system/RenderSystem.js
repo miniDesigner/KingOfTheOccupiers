@@ -1330,6 +1330,30 @@ export class RenderSystem {
     return this._art(key, x - size / 2, y - size / 2, size, size, { alpha: 0.92 });
   }
 
+  /**
+   * 建筑落地投影：把"贴"在石砖上的建筑图变成"立"在砖上的实体。
+   * 三层羽化椭圆（外宽淡→内窄浓），落在建筑底部接触点，消除抠图贴纸感。
+   * @param {number} x 建筑中心 x
+   * @param {number} y 接触点 y（建筑底部）
+   * @param {number} size 建筑图尺寸（用于等比缩放投影）
+   */
+  _drawBuildingGroundShadow(x, y, size) {
+    const { ctx } = this;
+    ctx.save();
+    const layers = [
+      { rx: 0.46, ry: 0.13, a: 0.10 },
+      { rx: 0.36, ry: 0.10, a: 0.14 },
+      { rx: 0.27, ry: 0.07, a: 0.18 },
+    ];
+    for (const l of layers) {
+      ctx.fillStyle = `rgba(10,18,32,${l.a})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y, size * l.rx, size * l.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   /** 兵种贴图：序号精确构造 unit_01..40 / unit_small_01..40 */
   _artUnit(n, x, y, w, h, small) {
     if (!n || n < 1 || n > 40) return false;
@@ -1871,20 +1895,24 @@ export class RenderSystem {
       } else {
         ctx.fillStyle = building.variantColor || building.color;
       }
-      // 2026-11 玩法改造：格子放大后建筑图标同步放大 15→24
-      ctx.font = 'bold 24px sans-serif';
+      // 2026-11-21：建筑图放大 40→54px，并加羽化落地投影让建筑"立"在石砖上（消除贴纸感）
+      const ART_SIZE = 54;
+      const ART_CY = y - 8;
+      ctx.font = 'bold 26px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      // 先落投影再贴图：投影接触点在建筑底部
+      this._drawBuildingGroundShadow(x, ART_CY + ART_SIZE * 0.42, ART_SIZE);
       // 贴图优先：BL-01/02 建筑图标
-      if (!this._artBuilding(building.type, building.level, false, x, y - 5, 40)) {
-        ctx.fillText(icon, x, y - 5);
+      if (!this._artBuilding(building.type, building.level, false, x, ART_CY, ART_SIZE)) {
+        ctx.fillText(icon, x, ART_CY);
       }
 
-      // 兵营/金矿显示等级
+      // 兵营/金矿显示等级（下移到 y+26，避免被放大的建筑盖住）
       if (building.type === 'barracks' || building.type === 'gold_mine') {
         ctx.fillStyle = '#fff';
         ctx.font = '13px sans-serif';
-        ctx.fillText('Lv' + building.level, x, y + 12);
+        ctx.fillText('Lv' + building.level, x, y + 26);
       }
 
       // HP条
@@ -1988,7 +2016,8 @@ export class RenderSystem {
           const lc = cfg ? (cfg[tile.isRandomResult.level || 1] || cfg[1]) : null;
           silColor = lc ? this.lightenColor(lc.color, 0.42) : '#cbd5e1';
         }
-        this._drawBuildingSilhouette(silType, 0, -6, 36, silColor);
+        // 48px：与翻开后的精细大图(54)接近，减小翻完瞬间的尺寸跳变
+        this._drawBuildingSilhouette(silType, 0, -8, 48, silColor);
       }
 
       // 揭晓高光：随翻转展开从轴心向外掠过的一道亮带，收尾时淡出

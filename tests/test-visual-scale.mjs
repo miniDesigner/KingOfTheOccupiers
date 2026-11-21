@@ -90,7 +90,7 @@ console.log('=== 测试4: 兵种圆盘尺寸约束 ===');
 console.log('=== 测试5: 渲染字号放大常量 ===');
 {
   const src = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
-  assert(src.includes('bold 24px sans-serif'), '建筑图标字号 24（旧 15）');
+  assert(src.includes('bold 26px sans-serif'), '建筑图标兜底字号 26（正式图放大 40→54 同步，旧 24/15）');
   assert(src.includes("'13px sans-serif'"), '建筑等级字号 13（旧 9）');
   assert(src.includes('bold 14px sans-serif'), '兵种有效生命值字号 14（旧 10）');
   assert(src.includes('baseRadius * 1.5'), '兵种图标字号倍率 ×1.5（旧 ×1.3）');
