@@ -4596,12 +4596,21 @@ export class RenderSystem {
       ctx.textAlign = 'left';
       ctx.fillText('Lv.' + level + '/' + node.maxLevel, x + 5, y + 48);
 
-      // 消耗
+      // 消耗：星尘前缀改用正式资源图标（与顶部资源栏同源），图片未就绪时回退 ✦ 文本
       if (!isMax && hasPrereq) {
-        ctx.fillStyle = canAfford ? UI_THEME.goldDeep : '#C0394B';
+        const costStr = String(nextCost);
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText('✦' + nextCost, x + nodeW - 5, y + 48);
+        const numRight = x + nodeW - 5;
+        const numW = ctx.measureText(costStr).width;
+        const iconSize = 10;
+        const iconX = numRight - numW - 2 - iconSize;
+        if (!this._art(ART_PREFIXES.currency + 'stardust', iconX, y + 47, iconSize, iconSize, { alpha: 0.95 })) {
+          ctx.fillStyle = canAfford ? UI_THEME.goldDeep : '#C0394B';
+          ctx.fillText('✦', iconX + iconSize, y + 48);
+        }
+        ctx.fillStyle = canAfford ? UI_THEME.goldDeep : '#C0394B';
+        ctx.fillText(costStr, numRight, y + 48);
       } else if (!hasPrereq) {
         const prereqNode = branch.nodes.find(n => n.id === node.prerequisite.node);
         ctx.fillStyle = 'rgba(43,74,111,0.82)';
