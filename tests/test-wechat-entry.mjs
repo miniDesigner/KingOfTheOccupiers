@@ -247,6 +247,17 @@ console.log('\n=== 5. 工程配置 ===');
   check('ArtManifest 色调叠层已改为 .jpg', manifest.includes('"path": "bg/battle_tone_plains.jpg"'));
   const tonePng = await fs.stat(path.join(ROOT, 'assets/bg/battle_tone_plains.png')).catch(() => null);
   check('旧色调 PNG 已移除', !tonePng);
+
+  // 字体必须在主包：微信分包资源隔离，主包 wx.loadFont 无法读分包内字体（实测 404）
+  const fontMain = await fs.stat(path.join(ROOT, 'fonts/title.ttf')).catch(() => null);
+  const fontNumMain = await fs.stat(path.join(ROOT, 'fonts/number.ttf')).catch(() => null);
+  check('字体 title.ttf 在主包 fonts/', !!fontMain && fontMain.size > 0);
+  check('字体 number.ttf 在主包 fonts/', !!fontNumMain && fontNumMain.size > 0);
+  const fontInSub = await fs.stat(path.join(ROOT, 'assets/fonts/title.ttf')).catch(() => null);
+  check('分包 assets/fonts/ 内无 ttf（避免误加载 404）', !fontInSub);
+  const fontSrc = await fs.readFile(path.join(ROOT, 'src/system/FontSystem.js'), 'utf-8');
+  check('FontSystem 默认路径指向主包 fonts/', fontSrc.includes("'fonts/title.ttf'") && fontSrc.includes("'fonts/number.ttf'"));
+  check('FontSystem 默认路径不再指向 assets/fonts/', !fontSrc.includes("'assets/fonts/title.ttf'"));
 }
 
 console.log(`\n结果: ${passed} 通过 / ${failed} 失败`);

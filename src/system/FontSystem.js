@@ -4,13 +4,18 @@
  * 职责：加载 assets/fonts/ 下的真实 .ttf 占位字体，供渲染层在标题 / 数值处使用。
  *
  * 三环境行为：
- *  - 微信小游戏：wx.loadFont('assets/fonts/title.ttf') → 返回字体族名
- *  - 浏览器预览：FontFace API 加载 '../assets/fonts/title.ttf'（相对 preview/index.html）
+ *  - 微信小游戏：wx.loadFont('fonts/title.ttf') → 返回字体族名
+ *  - 浏览器预览：FontFace API 加载 '../fonts/title.ttf'（相对 preview/index.html）
  *  - Node 测试：无 wx / document → 静默降级，families 为空，渲染层继续用 sans-serif
+ *
+ * 【2026-11-21 分包铁律】字体放在主包根目录 fonts/，绝不能放 assets/ 分包内。
+ * 微信小游戏有分包资源隔离：主包代码 wx.loadFont('assets/...') 走主包 HTTP 服务，
+ * 分包文件不在该服务上 → 404（实测 GET /assets/fonts/title.ttf net::ERR_ABORTED 404）。
+ * 首屏就要用的字体必须在主包，分包只放异步加载的图片/音频。
  *
  * 设计铁律：字体只影响「文字外观」，不改任何 Layout / 命中几何；
  *          加载失败、环境不支持一律静默降级，绝不抛错、绝不改变游戏状态。
- *          正式字体同名覆盖 assets/fonts/*.ttf 即可，无需改代码。
+ *          正式字体同名覆盖主包 fonts/*.ttf 即可，无需改代码。
  */
 class FontSystemClass {
   constructor() {
@@ -53,8 +58,8 @@ class FontSystemClass {
   load(paths = {}, opts = {}) {
     if (opts.enabled === false || !this.available) return this.families;
     const specs = [
-      ['title', paths.title || 'assets/fonts/title.ttf', 'KingTitle'],
-      ['number', paths.number || 'assets/fonts/number.ttf', 'KingNumber'],
+      ['title', paths.title || 'fonts/title.ttf', 'KingTitle'],
+      ['number', paths.number || 'fonts/number.ttf', 'KingNumber'],
     ];
     for (const [key, path, fallbackFamily] of specs) {
       if (this._attempted[key]) continue;

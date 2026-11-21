@@ -2578,7 +2578,7 @@ export class Game {
       ctx.restore();
     }
 
-    // 百分比：数字字体（assets/fonts/number.ttf）
+    // 百分比：数字字体（主包 fonts/number.ttf）
     const pct = Math.round(p * 100);
     ctx.fillStyle = '#2B4A6F';
     ctx.font = FontSystem.font(13, 'bold', 'number');
@@ -2674,7 +2674,8 @@ export class Game {
       }
     }
 
-    // 2.06 字体资源层：加载 assets/fonts/ 下真实 .ttf；失败静默回退系统 sans-serif。
+    // 2.06 字体资源层：加载主包 fonts/ 下真实 .ttf；失败静默回退系统 sans-serif。
+    //     字体必须在主包（不能放 assets/ 分包）——微信分包资源隔离会让 wx.loadFont 取不到文件。
     //      Node 测试环境无 wx / document，FontSystem.available=false，零副作用。
     if (ConfigLoader.getSafe('game')?.features?.useCustomFont !== false) {
       FontSystem.load({}, { enabled: true });

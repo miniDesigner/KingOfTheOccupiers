@@ -276,7 +276,7 @@ export const APP_ASSETS = {
   shareCard: 'assets/share_card',
 };
 
-/** 字体说明卡：真实字体文件为 assets/fonts/title.ttf 与 number.ttf（由 wx.loadFont 加载） */
+/** 字体说明卡：真实字体文件在主包 fonts/title.ttf 与 number.ttf（由 wx.loadFont 加载，不能放 assets 分包） */
 export const FONT_CARDS = ['fonts/title.ttf', 'fonts/number.ttf'];
 
 // ===================== 状态变体选择器（供各绘制方法按状态精确取图） =====================

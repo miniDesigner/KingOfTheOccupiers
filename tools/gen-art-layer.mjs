@@ -153,7 +153,7 @@ L.push(`  splash: 'assets/splash',`);
 L.push(`  shareCard: 'assets/share_card',`);
 L.push(`};`);
 L.push(``);
-L.push(`/** 字体说明卡：真实字体文件为 assets/fonts/title.ttf 与 number.ttf（由 wx.loadFont 加载） */`);
+L.push(`/** 字体说明卡：真实字体文件在主包 fonts/title.ttf 与 number.ttf（由 wx.loadFont 加载，不能放 assets 分包） */`);
 L.push(`export const FONT_CARDS = ['fonts/title.ttf', 'fonts/number.ttf'];`);
 L.push(``);
 

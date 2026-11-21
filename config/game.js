@@ -31,7 +31,7 @@ module.exports = {
     "useAudioAssets": true,
     "_doc_useAudioAssets": "音频资源总开关。assets/audio/ 下已放置 17 个 sfx + 1 个 BGM 占位音频；true=真微信环境启用音效/BGM（浏览器预览始终启用），false=静默。正式音源同名覆盖即可",
     "useCustomFont": true,
-    "_doc_useCustomFont": "自定义字体开关。assets/fonts/ 下已放置 title.ttf / number.ttf 两个真实字体；true=启动时尝试 wx.loadFont / FontFace 加载，失败静默回退系统 sans-serif"
+    "_doc_useCustomFont": "自定义字体开关。主包根目录 fonts/ 下已放置 title.ttf / number.ttf 两个真实字体（2026-11-21 从 assets/ 分包移出，微信分包资源隔离会导致 wx.loadFont 404）；true=启动时尝试 wx.loadFont / FontFace 加载，失败静默回退系统 sans-serif"
   },
   "hex": {
     "size": 52,
