@@ -34,7 +34,7 @@ import AudioManager from '../system/AudioManager.js';
 import AdManager from '../system/AdManager.js';
 
 import { FLIP_ANIMATION_DURATION, PLAYER_COLORS, getFlipCost,
-  syncConfigToStatics } from '../config.js';
+  getHexSize, syncConfigToStatics } from '../config.js';
 import { getRandomBattleConfig,
   syncLevels } from '../data/levels.js';
 import { syncRaces, RACES } from '../data/races.js';
@@ -2929,6 +2929,8 @@ export class Game {
           const pixel = this.map.hexToPixel(tile.q, tile.r);
           const sparkColor = (tile.owner === this.localPlayerId) ? PLAYER_COLORS[1] : PLAYER_COLORS[2];
           this.animManager.spark(pixel.x, pixel.y, sparkColor, 4);
+          // 落定光环：随砖体回弹扩散一圈阵营色环，强化"落地定格"的完成反馈
+          this.animManager.ringPulse(pixel.x, pixel.y, sparkColor, getHexSize() * 1.05, 0.42);
         }
         this.flippingTiles.splice(i, 1);
       }

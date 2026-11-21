@@ -1915,25 +1915,46 @@ export class RenderSystem {
 
   /**
    * 绘制翻转动画中的格子
+   * 表现分层：翻转轴压缩(缓动) + 砖体抬升/落地影 + 轴心高光带 + 落定回弹与光环。
+   * 只改绘制层，不动 tile.isFlipping 的线性数据语义（随机格 0.5 roll 时机不变）。
    */
   drawFlippingTile(tile, x, y, map, gameState) {
     const { ctx } = this;
     const progress = tile.isFlipping;
 
-    // 简单的Y轴压缩翻转效果
-    const scaleY = Math.abs(Math.cos(progress * Math.PI));
-    const showFront = progress > 0.5;
+    // 对称缓动：起步/落定慢、中段快，避免匀速翻转的机械感；f(0.5)=0.5 保持换面时机不变
+    const p = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    // Y 轴压缩：p=0/1 满高，p=0.5 压到薄片；保留 0.1 厚度下限，让换面瞬间仍有实体侧边而非消失成线
+    const rawScale = Math.max(0.1, Math.abs(Math.cos(p * Math.PI)));
+    // 抬升弧线：翻转中砖体离地最高，落地归零
+    const lift = Math.sin(p * Math.PI) * HEX_SIZE * 0.16;
+    const showFront = progress >= 0.5;
+    // 落定回弹：末段轻微放大后收回（归一到 1）
+    const settleT = Math.max(0, (progress - 0.86) / 0.14);
+    const settle = 1 + Math.sin(settleT * Math.PI) * 0.06;
+
+    // 落地影：抬升时缩小变淡，落定恢复——给翻转一个"离地/落地"的体积关系
+    const shadowScale = 1 - Math.sin(p * Math.PI) * 0.32;
+    ctx.save();
+    ctx.globalAlpha = 0.3 * shadowScale;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(x, y + HEX_SIZE * 0.44, HEX_SIZE * 0.78 * shadowScale, HEX_SIZE * 0.2 * shadowScale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(1, Math.max(0.05, scaleY));
+    ctx.translate(x, y - lift);
+    ctx.scale(settle, Math.max(0.05, rawScale) * settle);
 
     // 翻格过渡帧：正面亮格 / 背面可翻格贴图，跟随同一 scaleY 变换
     // 正式立体石砖需按主体占比放大（同 _artHex），否则翻格瞬间石砖缩水。
     const flipKey = showFront ? 'tiles/hex_bright' : 'tiles/hex_flippable';
     if (SOLID_BOARD_KEYS.has(flipKey)) {
-      const p = solidBoardPlacement(0, 0);
-      this._art(flipKey, p.ox, p.oy, p.drawW, p.drawH, { alpha: 0.22 });
+      const pp = solidBoardPlacement(0, 0);
+      this._art(flipKey, pp.ox, pp.oy, pp.drawW, pp.drawH, { alpha: 0.22 });
     } else {
       this._art(flipKey, -HEX_SIZE, -HEX_SIZE, HEX_SIZE * 2, HEX_SIZE * 2, { alpha: 0.22 });
     }
@@ -1969,6 +1990,23 @@ export class RenderSystem {
         }
         this._drawBuildingSilhouette(silType, 0, -6, 36, silColor);
       }
+
+      // 揭晓高光：随翻转展开从轴心向外掠过的一道亮带，收尾时淡出
+      const sweep = (progress - 0.5) / 0.5; // 0→1（后半段）
+      const sweepAlpha = Math.sin(sweep * Math.PI) * 0.28;
+      if (sweepAlpha > 0.01) {
+        ctx.save();
+        this.drawHexShape(0, 0, HEX_SIZE);
+        ctx.clip();
+        const gy = -HEX_SIZE * 0.9 + sweep * HEX_SIZE * 1.8;
+        const grad = ctx.createLinearGradient(0, gy - HEX_SIZE * 0.34, 0, gy + HEX_SIZE * 0.34);
+        grad.addColorStop(0, 'rgba(255,255,255,0)');
+        grad.addColorStop(0.5, `rgba(255,255,255,${sweepAlpha.toFixed(3)})`);
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(-HEX_SIZE, -HEX_SIZE, HEX_SIZE * 2, HEX_SIZE * 2);
+        ctx.restore();
+      }
     } else {
       // 翻转前半段：显示背面
       ctx.fillStyle = TILE_BACK_COLOR;
@@ -1976,6 +2014,17 @@ export class RenderSystem {
       ctx.strokeStyle = TILE_BACK_BORDER;
       ctx.lineWidth = 1;
       ctx.stroke();
+      // 背面轴心暗带：翻起时中部压暗，模拟背光面转动的体积感
+      const bandAlpha = Math.sin(progress * 2 * Math.PI) * 0.22;
+      if (bandAlpha > 0.01) {
+        ctx.save();
+        this.drawHexShape(0, 0, HEX_SIZE);
+        ctx.clip();
+        ctx.globalAlpha = bandAlpha;
+        ctx.fillStyle = '#0b1220';
+        ctx.fillRect(-HEX_SIZE, -HEX_SIZE * 0.2, HEX_SIZE * 2, HEX_SIZE * 0.4);
+        ctx.restore();
+      }
     }
 
     ctx.restore();
