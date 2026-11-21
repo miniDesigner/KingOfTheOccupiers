@@ -22,7 +22,7 @@ import { TowerSystem } from '../system/TowerSystem.js';
 import { SynergySystem } from '../system/SynergySystem.js';
 import { SkillSystem } from '../system/SkillSystem.js';
 import { InputSystem } from '../system/InputSystem.js';
-import { RenderSystem, SUBPAGE_TAB_Y, TECH_NODES_Y } from '../system/RenderSystem.js';
+import { RenderSystem, SUBPAGE_TAB_Y, TECH_NODES_Y, complianceButtonLayout } from '../system/RenderSystem.js';
 import { ArtSystem } from '../system/ArtSystem.js';
 import { FontSystem } from '../system/FontSystem.js';
 import { SCREEN_BG, LOADING_BG, RESULT_BG,
@@ -32,6 +32,7 @@ import { APP_ASSETS, FONT_CARDS, RACE_KEYS_ALL, UNIT_SMALL_KEYS_ALL,
 import { AnimationManager } from '../system/AnimationManager.js';
 import AudioManager from '../system/AudioManager.js';
 import AdManager from '../system/AdManager.js';
+import ComplianceSystem from '../system/ComplianceSystem.js';
 
 import { FLIP_ANIMATION_DURATION, PLAYER_COLORS, getFlipCost,
   getHexSize, syncConfigToStatics } from '../config.js';
@@ -214,6 +215,9 @@ export class Game {
     this._backEnabled = false;    // 是否启用（浏览器环境自动启用）
     this._lastLayerActive = false; // 上一帧是否有界面层（面板/战斗/窗口）打开
     this._onPopState = null;       // popstate 回调（浏览器返回键）
+
+    // 合规提示层：适龄提示 / 实名引导 / 未成年人保护（前端状态，不收集个人信息）
+    ComplianceSystem.init();
   }
 
   /**
@@ -657,6 +661,12 @@ export class Game {
    * 统一屏幕点击处理(根据屏幕状态分发)
    */
   handleScreenClick(screenX, screenY) {
+    // 合规提示层（适龄提示 / 未成年人拦截）：最顶层模态，优先处理并屏蔽底层界面
+    const complianceStatus = ComplianceSystem.getStatus();
+    if (complianceStatus.needsNotice || complianceStatus.blocked) {
+      this._handleComplianceTap(screenX, screenY, complianceStatus);
+      return;
+    }
     // P38：新手引导激活时，遮罩（高亮区以外）的点击一律吞掉。
     // 之前引导只在大厅分支里做了「未命中就提示」，其它界面/路径根本没挡，
     // 表现为「黑色遮罩能点到后面的按钮」。这里统一在最前面收口。
@@ -869,7 +879,7 @@ export class Game {
   static get SETTINGS_LAYOUT() {
     return {
       panelW: 290,
-      panelH: 316,
+      panelH: 432,  // 6 行：音效/音乐/震动/公告/实名认证/青少年模式（原 4 行 316）
       rowW: 232,
       rowH: 44,
       rowGap: 14,
@@ -889,7 +899,7 @@ export class Game {
     };
   }
 
-  /** 设置窗口第 i 行按钮矩形（0=音效 1=音乐 2=震动 3=公告） */
+  /** 设置窗口第 i 行按钮矩形（0=音效 1=音乐 2=震动 3=公告 4=实名认证 5=青少年模式） */
   static settingsRowRect(i, screenW, screenH) {
     const L = Game.SETTINGS_LAYOUT;
     const p = Game.settingsPanel(screenW, screenH);
@@ -1527,7 +1537,33 @@ export class Game {
   }
 
   /**
-   * 设置窗口点击（同时接管公告子窗口；打开期间屏蔽所有底层界面点击）
+   * 合规提示层点击（适龄提示卡 / 未成年人拦截卡）
+   * 布局与 RenderSystem._drawComplianceOverlay 同源（complianceButtonLayout）；
+   * safeArea 下屏幕坐标需反推回 inner 坐标，与场景输入处理一致。
+   */
+  _handleComplianceTap(screenX, screenY, status) {
+    const w = this.screenWidth;
+    const h = this.screenHeight;
+    const innerY = (screenY - this.safeAreaTop) / (this.safeAreaScaleY || 1);
+    const hit = (r) => screenX >= r.x && screenX <= r.x + r.w && innerY >= r.y && innerY <= r.y + r.h;
+    const main = complianceButtonLayout(w, h, 1);
+
+    if (hit(main)) {
+      this.audioManager.playButtonClick();
+      ComplianceSystem.acceptNotice();
+      return;
+    }
+    if (!status.blocked && hit(complianceButtonLayout(w, h, 0))) {
+      this.audioManager.playButtonClick();
+      this.showToast(status.identity === 'minor'
+        ? '已标记为未成年人（本地声明，非服务端核验）'
+        : '实名核验需服务端接口，当前为前端引导态', 2.4);
+      return;
+    }
+    // 遮罩其他区域不关闭：强制用户确认适龄提示 / 拦截说明
+  }
+
+  /** 设置窗口点击（同时接管公告子窗口；打开期间屏蔽所有底层界面点击）
    * 布局与 RenderSystem._drawSettingsOverlay 通过 Game.SETTINGS_LAYOUT 同源
    */
   _handleSettingsTap(x, y) {
@@ -1562,8 +1598,8 @@ export class Game {
       return;
     }
 
-    // 行按钮：0=音效开关 1=背景音乐开关 2=震动开关 3=公告
-    for (let i = 0; i < 4; i++) {
+    // 行按钮：0=音效 1=音乐 2=震动 3=公告 4=实名认证 5=青少年模式
+    for (let i = 0; i < 6; i++) {
       const r = Game.settingsRowRect(i, w, h);
       if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
         const profile = ProfileManager.get();
@@ -1583,9 +1619,19 @@ export class Game {
           profile.settings.haptic = this.audioManager.hapticEnabled;
           ProfileManager.save();
           this.showToast(this.audioManager.hapticEnabled ? '📳 震动已开启' : '📴 震动已关闭', 1.2);
-        } else {
+        } else if (i === 3) {
           this.audioManager.playButtonClick();
           this._announceOpen = true;
+        } else if (i === 4) {
+          this.audioManager.playButtonClick();
+          const st = ComplianceSystem.getStatus();
+          this.showToast(st.identity === 'minor'
+            ? '已标记为未成年人（本地声明，非服务端核验）'
+            : '实名核验需服务端接口，当前为前端引导态', 2.4);
+        } else if (i === 5) {
+          this.audioManager.playButtonClick();
+          const on = ComplianceSystem.toggleMinorMode();
+          this.showToast(on ? '青少年模式已开启（30分钟/日，限定时段）' : '青少年模式已关闭', 2.2);
         }
         return;
       }
@@ -2802,6 +2848,8 @@ export class Game {
    * 更新逻辑
    */
   update(dt) {
+    // 合规：累计当日游玩时长（含大厅停留；异常 dt 由 ComplianceSystem 自行忽略）
+    ComplianceSystem.recordPlayTime(dt);
     // Toast 计时器递减（所有屏幕状态通用）
     if (this._toastTimer > 0) {
       this._toastTimer -= dt;
@@ -3283,6 +3331,8 @@ export class Game {
       audioHapticEnabled: !!this.audioManager.hapticEnabled,
       press: this._press,
       announcements: (this._settingsOpen || this._announceOpen) ? Game.ANNOUNCEMENTS : null,
+      // 合规提示层：适龄提示 / 实名引导 / 未成年人时长与时段管控（前端状态）
+      compliance: ComplianceSystem.getStatus(),
     };
     this.renderSystem.render(gameState, this.inputSystem, dt);
     // 在最上层绘制 Toast 提示

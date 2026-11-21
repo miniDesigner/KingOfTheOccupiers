@@ -39,6 +39,23 @@ const TECH_NODES_Y = SUBPAGE_TAB_Y + 35 + 12;              // 119
 const LEADERBOARD_LIST_Y = SUBPAGE_TAB_Y + 30 + 12 + 10;   // 124
 export { SUBPAGE_TAB_Y, TECH_NODES_Y, LEADERBOARD_LIST_Y };
 
+// === 合规提示层布局（_drawComplianceOverlay 与 Game._handleComplianceTap 共用） ===
+// 单一真相源：渲染与命中不能各写一套坐标，否则安全区/不同屏宽下会错位。
+export function complianceCardLayout(screenW, screenH) {
+  const w = 324;
+  const h = 320;
+  return { x: (screenW - w) / 2, y: (screenH - h) / 2, w, h };
+}
+/** index=0 实名引导（拦截态不显示）；index=1 主按钮（已知悉 / 我知道了） */
+export function complianceButtonLayout(screenW, screenH, index) {
+  const p = complianceCardLayout(screenW, screenH);
+  const bw = 244;
+  const bh = 44;
+  const gap = 12;
+  const firstY = p.y + p.h - 22 - bh * 2 - gap;
+  return { x: (screenW - bw) / 2, y: firstY + index * (bh + gap), w: bw, h: bh };
+}
+
 // 水印占位图总闸（P0 收口）：effects/*、ui/*、tiles/*、buildings/* 前缀的素材均为
 // 带「特效/界面/地块/建筑 + 编号参数表」的粉紫水印占位图，无正式美术。它们通过
 // _artHex/_artBuilding/_artFx 等直连通道绕过装饰层过滤，把水印贴到棋盘/建筑/引导层。
@@ -1534,6 +1551,10 @@ export class RenderSystem {
     }
     if (gameState.settingsOpen || gameState.announceOpen) {
       this._drawSettingsOverlay(gameState);
+    }
+    // 合规提示层：适龄提示 / 未成年人拦截，画在设置窗口之上、安全区包裹之内
+    if (gameState.compliance && (gameState.compliance.needsNotice || gameState.compliance.blocked)) {
+      this._drawComplianceOverlay(gameState);
     }
     ctx.restore();
 
@@ -6328,8 +6349,8 @@ export class RenderSystem {
     const { ctx } = this;
     const w = this.screenWidth;
     const h = this.screenHeight;
-    // = Game.SETTINGS_LAYOUT
-    const L = { panelW: 290, panelH: 316, rowW: 232, rowH: 44, rowGap: 14, rowStartOffset: 64, closeSize: 30 };
+    // = Game.SETTINGS_LAYOUT（6 行：多出实名认证 / 青少年模式）
+    const L = { panelW: 290, panelH: 432, rowW: 232, rowH: 44, rowGap: 14, rowStartOffset: 64, closeSize: 30 };
 
     // 半透明遮罩
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -6385,13 +6406,19 @@ export class RenderSystem {
       iconPrefix: ART_PREFIXES.setting, iconName: 'music',
     });
 
-    // 行按钮：0=音效 1=音乐 2=震动 3=公告（标签去掉 emoji，图标走正式素材）
+    // 行按钮：0=音效 1=音乐 2=震动 3=公告 4=实名认证 5=青少年模式
+    const st = gameState.compliance || {};
     const rows = [
       { label: '音效', on: gameState.audioSfxEnabled !== false, icon: 'music' },
       { label: '背景音乐', on: gameState.audioBgmEnabled !== false, icon: 'notify' },
       { label: '震动', on: gameState.audioHapticEnabled !== false, icon: 'vibrate' },
     ];
-    for (let i = 0; i < 4; i++) {
+    const plainRows = {
+      3: '公告',
+      4: st.identity === 'minor' ? '实名认证 · 未成年人' : (st.identity === 'adult' ? '实名认证 · 成人' : '实名认证'),
+      5: st.minorMode ? '青少年模式 · 已开启' : '青少年模式 · 已关闭',
+    };
+    for (let i = 0; i < 6; i++) {
       const r = { x: (w - L.rowW) / 2, y: p.y + L.rowStartOffset + i * (L.rowH + L.rowGap), w: L.rowW, h: L.rowH };
 
       if (i < 3) {
@@ -6400,14 +6427,14 @@ export class RenderSystem {
           iconPrefix: ART_PREFIXES.setting, iconName: rows[i].icon,
         });
       } else {
-        // 公告按钮：云白次按钮 + 正式图标
+        // 次按钮：公告 / 实名认证 / 青少年模式（云白次按钮 + 正式图标）
         this._cardBg(r, { r: 12, tint: 'rgba(214,238,251,0.96)', border: 'rgba(43,74,111,0.3)' });
-        this._artIcon(ART_PREFIXES.quest, 'daily', r.x + 30, r.y + r.h / 2, 18, 0.95);
+        if (i === 3) this._artIcon(ART_PREFIXES.quest, 'daily', r.x + 30, r.y + r.h / 2, 18, 0.95);
         ctx.fillStyle = UI_THEME.ink;
         ctx.font = 'bold 15px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('公告', r.x + r.w / 2, r.y + r.h / 2);
+        ctx.fillText(plainRows[i], r.x + r.w / 2, r.y + r.h / 2);
         ctx.textBaseline = 'alphabetic';
       }
     }
@@ -6518,6 +6545,85 @@ export class RenderSystem {
   /**
    * 绘制屏幕浮动 Toast 提示（所有屏幕状态通用，最上层）
    */
+  /**
+   * 合规提示层（最顶层，处于安全区包裹内）：
+   *  - needsNotice：首次进入显示适龄提示 8+ 与实名引导
+   *  - blocked：未成年人时段/时长拦截
+   * 只画提示，不改玩法、不改底层命中；按钮几何由 complianceButtonLayout 提供。
+   */
+  _drawComplianceOverlay(gameState) {
+    const c = gameState && gameState.compliance;
+    if (!c || (!c.needsNotice && !c.blocked)) return;
+
+    const { ctx } = this;
+    const w = this.screenWidth;
+    const h = this.screenHeight;
+    const p = complianceCardLayout(w, h);
+    const blocked = !!c.blocked;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(8,15,30,0.78)';
+    ctx.fillRect(0, 0, w, h);
+
+    this._modalShell(p, null, blocked ? '未成年人保护' : '适龄提示', { showClose: false });
+
+    // 徽章：适龄 8+（橙）/ 拦截感叹号（红）。用 arc 画圆，避开 roundRect 兼容问题。
+    const badgeX = w / 2;
+    const badgeY = p.y + 74;
+    ctx.beginPath();
+    ctx.arc(badgeX, badgeY, 25, 0, Math.PI * 2);
+    ctx.fillStyle = blocked ? '#ef4444' : '#FF8C42';
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(blocked ? '!' : (c.ageRating || '8+'), badgeX, badgeY + 1);
+
+    const lines = blocked
+      ? (c.blockReason === 'limit'
+          ? ['今日游戏时长已达上限，请明天再来。', '未成年人每日游戏时间不超过 1 小时。']
+          : ['当前时段不在未成年人可玩时间内。', '仅周五、周六、周日 20:00–21:00 可游玩。'])
+      : ['本游戏适合 8 周岁及以上玩家。', '未实名账号按未成年人规则管理。', '请在监护人陪同下合理安排游戏时间。'];
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = '#2B4A6F';
+    let ty = p.y + 122;
+    for (const line of lines) {
+      ctx.fillText(line, w / 2, ty);
+      ty += 24;
+    }
+
+    if (blocked) {
+      const remain = Math.max(0, Math.ceil((c.remainingSeconds || 0) / 60));
+      ctx.fillStyle = 'rgba(43,74,111,0.62)';
+      ctx.font = '11px sans-serif';
+      ctx.fillText(`今日剩余可玩时长 ${remain} 分钟`, w / 2, ty + 2);
+    }
+
+    // 主按钮：已知悉 / 我知道了（明黄 CTA）
+    const main = complianceButtonLayout(w, h, 1);
+    this._cardBg(main, { r: 12, tint: '#FFD23F', border: 'rgba(43,74,111,0.35)' });
+    ctx.fillStyle = '#2B4A6F';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(blocked ? '我知道了' : '已知悉，进入游戏', w / 2, main.y + main.h / 2);
+
+    // 次按钮：实名认证引导（仅适龄提示卡显示；真实核验需服务端，点击给明确提示）
+    if (!blocked) {
+      const sub = complianceButtonLayout(w, h, 0);
+      this._cardBg(sub, { r: 12, tint: 'rgba(234,248,255,0.96)', border: 'rgba(43,74,111,0.3)' });
+      ctx.fillStyle = '#2B4A6F';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('实名认证引导', w / 2, sub.y + sub.h / 2);
+    }
+
+    ctx.restore();
+  }
+
   drawToast(gameState) {
     if (!gameState.toastText || gameState.toastTimer <= 0) return;
 
