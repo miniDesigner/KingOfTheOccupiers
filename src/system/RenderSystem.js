@@ -4494,6 +4494,31 @@ export class RenderSystem {
     // 裁剪：节点只在返回按钮/分支标签以下区域显示，上滚不盖顶部
     this._beginScrollClip(ctx, w, h, 90);
 
+    // 节点连线（A 类 P2-2）：前置节点 → 当前节点的 2px 折线，画在节点下层。
+    // 纯视觉、不参与命中；解锁态用分支色，未解锁用弱灰蓝，均为半透明避免盖过云白卡。
+    ctx.save();
+    ctx.lineWidth = 2;
+    for (const node of branch.nodes) {
+      if (!node.prerequisite) continue;
+      const pre = branch.nodes.find(n => n.id === node.prerequisite.node);
+      if (!pre) continue;
+      const x1 = nodeStartX + Math.min(pre.position.col, 1) * (nodeW + nodeGap) + nodeW / 2;
+      const y1 = nodesStartY + pre.position.row * (nodeH + nodeGap) + nodeH / 2;
+      const x2 = nodeStartX + Math.min(node.position.col, 1) * (nodeW + nodeGap) + nodeW / 2;
+      const y2 = nodesStartY + node.position.row * (nodeH + nodeGap) + nodeH / 2;
+      if (Math.max(y1, y2) < 90 || Math.min(y1, y2) > h) continue;
+      const unlocked = (profile?.getTechNodeLevel(pre.id) || 0) >= node.prerequisite.level;
+      ctx.strokeStyle = unlocked ? hexToRgba(branch.color, 0.55) : 'rgba(43,74,111,0.28)';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      const midY = (y1 + y2) / 2;
+      ctx.lineTo(x1, midY);
+      ctx.lineTo(x2, midY);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
     for (const node of branch.nodes) {
       const col = Math.min(node.position.col, 1); // 防御：最多两列
       const x = nodeStartX + col * (nodeW + nodeGap);
@@ -4526,7 +4551,7 @@ export class RenderSystem {
       ctx.fillText(node.name, x + 5, y + 5);
 
       // 描述
-      ctx.fillStyle = !hasPrereq ? 'rgba(43,74,111,0.42)' : UI_THEME.navy;
+      ctx.fillStyle = !hasPrereq ? 'rgba(43,74,111,0.72)' : UI_THEME.navy;
       ctx.font = '9px sans-serif';
       ctx.fillText(node.description, x + 5, y + 22);
 
@@ -4550,10 +4575,10 @@ export class RenderSystem {
         ctx.fillStyle = canAfford ? UI_THEME.goldDeep : '#C0394B';
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText('⭐' + nextCost, x + nodeW - 5, y + 48);
+        ctx.fillText('✦' + nextCost, x + nodeW - 5, y + 48);
       } else if (!hasPrereq) {
         const prereqNode = branch.nodes.find(n => n.id === node.prerequisite.node);
-        ctx.fillStyle = 'rgba(43,74,111,0.7)';
+        ctx.fillStyle = 'rgba(43,74,111,0.82)';
         ctx.font = '8px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText('需' + (prereqNode?.name || '?') + node.prerequisite.level + '级', x + nodeW - 5, y + 48);
@@ -4783,13 +4808,16 @@ export class RenderSystem {
     const n = Math.max(1, tabCount || 1);
     const tabGap = 4;
     const tabH = 30;
-    const tabStartX = 20;
+    // 2026-11-21 边界缝隙收口：统一走 L_SCALE 的 SIDE=16 内容区，
+    // 页签/卡片左右对称铺满（旧值 tabStartX=20 + tabW≤70 + itemW≤340 在 430 屏右侧空 55~118px）
+    const SIDE = 16;
+    const tabStartX = SIDE;
     const tabY = 50;
-    const avail = screenWidth - tabStartX * 2;
-    const tabW = Math.max(38, Math.min(70, Math.floor((avail - (n - 1) * tabGap) / n)));
+    const avail = screenWidth - SIDE * 2;
+    const tabW = Math.max(38, Math.floor((avail - (n - 1) * tabGap) / n));
 
-    const cardX = 20;
-    const itemW = Math.min(340, screenWidth - 40);
+    const cardX = SIDE;
+    const itemW = avail;
     const itemH = 70;
     const gap = 8;
     const listStartY = 95;
@@ -4965,23 +4993,45 @@ export class RenderSystem {
     }
 
     // 商品较少时（如免费页仅 2 件），下方补非交互说明卡填充空区，避免下半屏纯空夜景。
-    // 只画提示不影响任何命中（不占商品索引、不响应点击）。
+    // 2026-11-21 A 类 P1：单卡 96px → 福利日历 200px，内容区利用率明显提升。
+    // 只画提示不影响任何命中（不占商品索引、不响应点击、不虚构商品）。
     if (cat.items.length > 0 && cat.items.length <= 3) {
       const emptyY = startY + cat.items.length * (itemH + gap) + 8;
-      if (emptyY < h - 90) {
-        const eh = 96;
+      const eh = 200;
+      if (emptyY + eh < h - 60) {
         this._cardBg({ x: cardX, y: emptyY, w: itemW, h: eh, r: 12 }, {
-          r: 12, tint: 'rgba(234,248,255,0.82)', border: 'rgba(43,74,111,0.16)', flat: true,
+          tint: 'rgba(234,248,255,0.86)', border: 'rgba(43,74,111,0.16)', flat: true,
         });
-        this._artIcon(ART_PREFIXES.shopCat, 'item', cardX + itemW / 2, emptyY + 30, 24, 0.85);
+        // 标题带
         ctx.fillStyle = UI_THEME.navy;
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('更多商品陆续上架', cardX + itemW / 2, emptyY + 58);
-        ctx.fillStyle = UI_THEME.navySoft;
-        ctx.font = '10px sans-serif';
-        ctx.fillText('每日免费福利记得领取', cardX + itemW / 2, emptyY + 76);
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('每日福利日历', cardX + 14, emptyY + 12);
+        this._artIcon(ART_PREFIXES.shopCat, 'item', cardX + itemW - 30, emptyY + 12, 18, 0.9);
+
+        // 三段式说明行（纯静态信息，不虚构商品/数值承诺）
+        const rows = [
+          { dot: UI_THEME.gold, t: '免费福利', d: '每日 0 点重置，记得上线领取' },
+          { dot: UI_THEME.sky, t: '星尘兑换', d: '积累星尘可兑换稀有养成物资' },
+          { dot: UI_THEME.orange, t: '限时特惠', d: '不定期开放，以实际商品为准' },
+        ];
+        rows.forEach((row, i) => {
+          const ry = emptyY + 44 + i * 48;
+          // 色点
+          ctx.beginPath();
+          ctx.arc(cardX + 22, ry + 8, 5, 0, Math.PI * 2);
+          ctx.fillStyle = row.dot;
+          ctx.fill();
+          // 标题 + 说明
+          ctx.textAlign = 'left';
+          ctx.fillStyle = UI_THEME.ink;
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillText(row.t, cardX + 36, ry);
+          ctx.fillStyle = UI_THEME.navySoft;
+          ctx.font = '10px sans-serif';
+          ctx.fillText(row.d, cardX + 36, ry + 18);
+        });
         ctx.textBaseline = 'alphabetic';
       }
     }
@@ -5094,12 +5144,14 @@ export class RenderSystem {
    * 每个 rect: { id, x, y, w, h }；领取按钮区域 = { x+w-70, y+10, 60, 30 }
    */
   static questLayout(dailyQuests, weeklyQuests, seasonQuests, scrollY, screenWidth) {
-    const itemW = Math.min(340, screenWidth - 40), itemH = 55, gap = 6;
+    // 2026-11-21 边界缝隙收口：统一 SIDE=16 内容区，左右对称（旧值 x=20 + itemW≤340 右侧空 70px）
+    const SIDE = 16;
+    const itemW = screenWidth - SIDE * 2, itemH = 55, gap = 6;
     // 起点 68：首行 y=90 ≥ 裁剪 topY=88，避免云白卡顶边与文字被裁（P7 修复）
     const dailyHeaderY = 68 - scrollY;
     let y = dailyHeaderY + 22; // "📋 每日任务" 标题占位
     const dailyRects = dailyQuests.map((q) => {
-      const r = { id: q.id, x: 20, y, w: itemW, h: itemH };
+      const r = { id: q.id, x: SIDE, y, w: itemW, h: itemH };
       y += itemH + gap;
       return r;
     });
@@ -5107,7 +5159,7 @@ export class RenderSystem {
     const weeklyHeaderY = y;
     y += 22; // "📅 每周任务" 标题占位
     const weeklyRects = weeklyQuests.map((q) => {
-      const r = { id: q.id, x: 20, y, w: itemW, h: itemH };
+      const r = { id: q.id, x: SIDE, y, w: itemW, h: itemH };
       y += itemH + gap;
       return r;
     });
@@ -5115,7 +5167,7 @@ export class RenderSystem {
     const seasonHeaderY = y;
     y += 22; // "🌟 赛季任务" 标题占位
     const seasonRects = seasonQuests.map((q) => {
-      const r = { id: q.id, x: 20, y, w: itemW, h: itemH };
+      const r = { id: q.id, x: SIDE, y, w: itemW, h: itemH };
       y += itemH + gap;
       return r;
     });

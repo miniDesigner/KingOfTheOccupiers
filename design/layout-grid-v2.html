@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>占地之王 · 界面栅格图 v1</title>
+<style>
+:root{
+  --stage:#0B1424; --panel:#16243A; --line:rgba(234,248,255,0.14);
+  --ink:#EAF8FF; --ink-2:rgba(234,248,255,0.72); --ink-3:rgba(234,248,255,0.45);
+  --card:#EAF8FF; --navy:#2B4A6F; --gold:#FFD23F;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:40px 32px 64px;background:var(--stage);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+header{max-width:1440px;margin:0 auto 28px}
+h1{margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:.5px}
+.sub{color:var(--ink-3);font-size:13px;line-height:1.7;margin:0}
+.sub b{color:var(--ink-2);font-weight:500}
+.scale{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0;padding:0;list-style:none}
+.scale li{
+  background:rgba(234,248,255,0.05);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px;font-size:12px;color:var(--ink-2)
+}
+.scale li b{color:var(--gold);font-weight:600;margin-right:6px;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin:20px 0 0;font-size:12px;color:var(--ink-3)}
+.legend span{display:flex;align-items:center;gap:7px}
+.sw{width:14px;height:10px;border-radius:3px;display:inline-block}
+.sw.card{background:var(--card)}
+.sw.stage{background:rgba(91,184,232,0.12);border:1px dashed rgba(234,248,255,0.3)}
+.sw.zone{background:rgba(234,248,255,0.04);border:1px dashed rgba(234,248,255,0.2)}
+.sw.list{background:rgba(234,248,255,0.08);border:1px solid rgba(234,248,255,0.2)}
+.sw.cta{background:var(--gold)}
+.sw.bar{background:rgba(234,248,255,0.14);border:1px solid rgba(234,248,255,0.24)}
+.grid{
+  max-width:1440px;margin:0 auto;display:grid;gap:30px 26px;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+}
+.item{min-width:0}
+.head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.no{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.name{font-size:15px;font-weight:600}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--ink-2)}
+.tag.done{color:#4ADE80;border-color:rgba(74,222,128,0.4)}
+.tag.todo{color:#FFB84D;border-color:rgba(255,184,77,0.4)}
+.phone{
+  position:relative;width:100%;aspect-ratio:430/932;background:var(--panel);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;
+}
+.blk{
+  position:absolute;border-radius:6px;display:flex;align-items:center;
+  padding:0 6px;font-size:10px;line-height:1.25;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;
+}
+.sm{padding:0 2px;font-size:9px;justify-content:center}
+.k-bar{background:rgba(234,248,255,0.13);border:1px solid rgba(234,248,255,0.22);color:#CBD9E6}
+.k-card{background:var(--card);color:var(--navy);box-shadow:0 2px 0 rgba(6,14,28,0.5)}
+.k-stage{background:rgba(91,184,232,0.10);border:1px dashed rgba(234,248,255,0.24);color:#9FB6CC}
+.k-zone{background:rgba(234,248,255,0.035);border:1px dashed rgba(234,248,255,0.15);color:#8FA5B8}
+.k-list{background:rgba(234,248,255,0.07);border:1px solid rgba(234,248,255,0.16);color:#B9CADB}
+.k-cta{background:var(--gold);color:#4A2A00;font-weight:600;justify-content:center}
+.k-back{background:rgba(234,248,255,0.9);color:var(--navy);justify-content:center;font-weight:600}
+.k-ghost{background:transparent;border:1px solid rgba(234,248,255,0.3);color:var(--ink-2);justify-content:center}
+.ta{align-items:flex-start;padding-top:9px}
+.tick{position:absolute;left:0;width:7px;height:1px;background:rgba(234,248,255,0.22)}
+.tick.r{left:auto;right:0}
+.bound{position:absolute;left:0;width:9px;height:0;border-top:1px dashed rgba(255,210,63,0.75)}
+.bound.r{left:auto;right:0}
+.k-ring{border-radius:50%;padding:0;justify-content:center;background:rgba(91,184,232,0.10);border:1px dashed rgba(91,184,232,0.55);color:#A8C6DE}
+.k-veil{background:rgba(6,14,28,0.74);border:none;color:var(--ink-3)}
+.k-fx{border-radius:50%;padding:0;background:rgba(124,58,237,0.10);border:1px dashed rgba(167,139,250,0.6)}
+.k-fx::after{content:'';position:absolute;left:50%;top:50%;width:26%;height:26%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(234,248,255,0.9)}
+.meta{margin-top:7px;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.tbl{max-width:1440px;margin:46px auto 0}
+.tbl h2{font-size:15px;font-weight:600;margin:0 0 6px}
+.tbl p{font-size:12px;color:var(--ink-3);margin:0 0 14px;line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid rgba(234,248,255,0.09);vertical-align:top}
+th{color:var(--ink-3);font-weight:500;font-size:11.5px;letter-spacing:.4px}
+td:first-child{color:var(--ink);white-space:nowrap;font-weight:500}
+td:nth-child(2){color:var(--ink-2)}
+td:nth-child(3){color:var(--ink-3)}
+.foot{max-width:1440px;margin:44px auto 0;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.8}
+</style>
+</head>
+<body>
+<header>
+  <h1>占地之王 · 界面栅格图 v2 · 现状对照</h1>
+  <p class="sub">
+    基准 <b>430 × 932</b>，所有界面共用 <code>RenderSystem.L_SCALE</code>：状态带 8→60 / 内容区 <b>72→h−80</b> / 操作带 h−80→h−16，
+    左右安全边 <b style="color:#FFD23F">SIDE=16</b>（内容区 x=16→414）。
+    <b style="color:#FFD23F">2026-11-21 边界缝隙收口</b>：商店/任务等屏旧值 x=20 + itemW≤340 导致右侧空 55~118px，
+    已统一为 SIDE=16 铺满。屏体黄色刻度是内容区上下边界（72 / 852），灰线每 100px 一道。
+  </p>
+  <ul class="scale">
+    <li><b>8</b>状态带顶</li>
+    <li><b>52</b>状态带高</li>
+    <li><b>72</b>内容区顶</li>
+    <li><b>852</b>内容区底</li>
+    <li><b>780</b>内容区高 · 84%</li>
+    <li><b>56</b>操作带高</li>
+    <li><b>16</b>左右安全边</li>
+    <li><b>80</b>返回按钮宽</li>
+  </ul>
+  <div class="legend">
+    <span><i class="sw bar"></i>状态带 / 导航</span>
+    <span><i class="sw card"></i>云白内容卡</span>
+    <span><i class="sw stage"></i>图示区（法阵 / 主视觉 / 节点）</span>
+    <span><i class="sw list"></i>列表容器</span>
+    <span><i class="sw zone"></i>弱面 / 空档</span>
+    <span><i class="sw cta"></i>主 CTA</span>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<div class="tbl">
+  <h2>附 · 未在栅格图中的元素（遗漏审查）</h2>
+  <p>以下内容不占独立界面，或属于浮层 / 组件状态，已在表中列出归属，避免后续按图施工时漏项。</p>
+  <table>
+    <thead><tr><th>界面</th><th>图中未体现</th><th>归属 / 说明</th></tr></thead>
+    <tbody>
+      <tr><td>大厅</td><td>新手引导遮罩层、分享未领红点、功能键光晕</td><td>状态类浮层，P10 统一收口</td></tr>
+      <tr><td>对战准备</td><td>兵种详情 / 建筑详情 / 羁绊详情三类弹层</td><td>P9 覆盖层，共用同一套面板皮肤</td></tr>
+      <tr><td>兵种招募</td><td>结果揭示浮层</td><td>已单独出图（02b）</td></tr>
+      <tr><td>商店</td><td>售罄 / 限购次数 / 折扣倒计时</td><td>商品卡组件态，见部件栅格</td></tr>
+      <tr><td>战斗结算</td><td>失败态文案、战绩分享图</td><td>与胜利态同结构，只换主视觉与文案</td></tr>
+      <tr><td>科技树</td><td>节点连线、节点升级确认弹层</td><td>连线见部件栅格；弹层归 P9</td></tr>
+      <tr><td>通行证</td><td>高级版购买入口</td><td>待定：是否保留付费解锁，需产品确认</td></tr>
+      <tr><td>任务 / 成就</td><td>滚动条、领取动效、已领完成态</td><td>列表行组件态</td></tr>
+      <tr><td>排行榜</td><td>空列表态、名次上升箭头</td><td>榜单行组件态 + 空状态组件</td></tr>
+      <tr><td>全界面</td><td>设置弹窗、公告弹窗、账号面板、Toast</td><td>P9 覆盖层，共 5 件</td></tr>
+      <tr><td>战斗内</td><td>HUD、顶栏、羁绊面板</td><td>P10，不在本图范围</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="foot">
+  说明：本图为布局栅格，不表现最终视觉。卡片圆角、描边、阴影以 ART-STYLE.md 为准；
+  所有 y 值来自 <code>RenderSystem.L_SCALE</code> 与各屏静态 Layout 函数，渲染与点击命中共用同一份结果，禁止各屏自填坐标。
+  v2 变更（2026-11-21）：① 商店/任务边距统一 SIDE=16 铺满，消除右侧缝隙；② 补齐战斗 HUD / 结算 / 覆盖层视图；③ 全部标签更新为已实现状态。
+</div>
+
+<script>
+const H = 932, W = 430;
+const P = v => (v / H * 100).toFixed(3) + '%';
+const S = v => (v / W * 100).toFixed(3) + '%';
+
+const screens = [
+  {
+    no: '00', name: '大厅', tag: '已实现', cls: 'done', meta: '资源栏 0–46 / 顶部区块 54–264 / 赛季区 272–620 / 上阵 678–776 / 开战 782–840 / 导航 860–916', noBound: true,
+    blocks: [
+      { y: 8, h: 38, x: 8, w: 120, t: '资源栏 2×2', k: 'bar' },
+      { y: 10, h: 30, x: 385, w: 35, t: '设置', k: 'bar' },
+      { y: 54, h: 82, x: 8, w: 143, t: '玩家卡 · 昵称 / 战力', k: 'card' },
+      { y: 54, h: 48, x: 374, w: 48, t: '分享', k: 'bar sm' },
+      { y: 108, h: 48, x: 374, w: 48, t: '任务', k: 'bar sm' },
+      { y: 162, h: 48, x: 374, w: 48, t: '成就', k: 'bar sm' },
+      { y: 216, h: 48, x: 374, w: 48, t: '通行证', k: 'bar sm' },
+      { y: 272, h: 62, t: '赛季区上留白', k: 'zone' },
+      { y: 340, h: 216, x: 107, w: 216, t: '段位城堡 216×216', k: 'ring' },
+      { y: 567, h: 20, x: 71, w: 288, t: '天梯进度条 288×20', k: 'card' },
+      { y: 597, h: 24, x: 155, w: 120, t: '赛季剩 7 天', k: 'zone' },
+      { y: 678, h: 98, t: '上阵兵种 · 标题 + 6 张牌', k: 'card' },
+      { y: 782, h: 58, x: 95, w: 240, t: '开战 240×58', k: 'cta' },
+      { y: 860, h: 56, t: '底部导航 ×5', k: 'bar' }
+    ]
+  },
+  {
+    no: '01', name: '对战准备', tag: '已实现', cls: 'done', meta: '内容区 72–852 · 780px；三区块加外层分区卡',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 对战准备', k: 'bar' },
+      { y: 72, h: 118, t: 'A 上阵阵容 · 分区卡（6 槽 61×85）', k: 'card' },
+      { y: 200, h: 130, t: 'B 羁绊 · 分区卡（4 卡 86×86）', k: 'card' },
+      { y: 340, h: 100, t: 'C 建筑强化 · 分区卡（3 卡）', k: 'card' },
+      { y: 450, h: 402, t: 'D 兵库 · 分区卡（可滚动网格）', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' },
+      { y: 866, h: 48, x: 108, w: 306, t: '开战（回收底部 228px 空区）', k: 'cta' }
+    ]
+  },
+  {
+    no: '02', name: '兵种招募', tag: '已实现', cls: 'done', meta: '内容区 72–852；概率明细折叠后释放约 90px 给法阵',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 兵种招募', k: 'bar' },
+      { y: 72, h: 160, t: '信息卡 · 图鉴进度 6/40 + 概率色点行（折叠态）', k: 'card' },
+      { y: 244, h: 416, t: '召唤法阵区（代码绘制 · 直径 260 / r 上限 132）', k: 'stage ta' },
+      { y: 322, h: 260, x: 85, w: 260, t: '', k: 'fx' },
+      { y: 668, h: 40, t: '说明两行 · 法阵区 416 高（当前仅 380）', k: 'zone' },
+      { y: 716, h: 66, x: 16, w: 192, t: '单抽 ×1', k: 'card' },
+      { y: 716, h: 66, x: 220, w: 194, t: '十连（主）', k: 'cta' },
+      { y: 792, h: 44, t: '看广告免费抽 ×1', k: 'ghost' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '02b', name: '招募 · 结果揭示', tag: '已实现', cls: 'done', meta: '全屏遮罩上的浮层；单张卡 180×240 逐张揭示，顶部圆点指示进度',
+    blocks: [
+      { y: 0, h: 932, x: 0, w: 430, t: '', k: 'veil' },
+      { y: 326, h: 240, x: 125, w: 180, t: '结果卡 180×240', k: 'card' },
+      { y: 586, h: 14, x: 175, w: 80, t: '圆点 3 / 10', k: 'zone' },
+      { y: 618, h: 44, x: 115, w: 200, t: '点击任意处继续', k: 'ghost' }
+    ]
+  },
+  {
+    no: '03', name: '商店', tag: '已实现', cls: 'done', meta: '内容区底放宽到 h−64（无主 CTA）；2 列商品网格',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 商店', k: 'bar' },
+      { y: 72, h: 44, t: '分页 ×4（免费 / 金币 / 物资 / 特惠）', k: 'card' },
+      { y: 128, h: 92, x: 16, w: 194, t: '商品卡 1', k: 'card' },
+      { y: 128, h: 92, x: 220, w: 194, t: '商品卡 2', k: 'card' },
+      { y: 230, h: 92, x: 16, w: 194, t: '商品卡 3', k: 'card' },
+      { y: 230, h: 92, x: 220, w: 194, t: '商品卡 4', k: 'card' },
+      { y: 332, h: 92, x: 16, w: 194, t: '商品卡 5', k: 'card' },
+      { y: 332, h: 92, x: 220, w: 194, t: '商品卡 6', k: 'card' },
+      { y: 434, h: 92, x: 16, w: 194, t: '商品卡 7', k: 'card' },
+      { y: 434, h: 92, x: 220, w: 194, t: '商品卡 8', k: 'card' },
+      { y: 536, h: 92, x: 16, w: 194, t: '商品卡 9', k: 'card' },
+      { y: 536, h: 92, x: 220, w: 194, t: '商品卡 10', k: 'card' },
+      { y: 638, h: 92, x: 16, w: 194, t: '商品卡 11', k: 'card' },
+      { y: 638, h: 92, x: 220, w: 194, t: '商品卡 12', k: 'card' },
+      { y: 740, h: 92, x: 16, w: 194, t: '商品卡 13', k: 'card' },
+      { y: 740, h: 92, x: 220, w: 194, t: '商品卡 14', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '04', name: '战斗结算', tag: '已实现', cls: 'done', meta: '内容区 72–852；现状为遮罩 + 居中散点文字，方案改三段式（主视觉 / 结果卡 / 晋升）',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 战斗结算', k: 'bar' },
+      { y: 72, h: 196, t: '胜负主视觉（奖牌 / 星级光晕）', k: 'stage' },
+      { y: 280, h: 250, t: '结果卡 · 星级 / 奖杯 / 奖励', k: 'card' },
+      { y: 542, h: 300, t: '晋升进度 + 段位升降', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 110, t: '炫耀战绩（仅胜利）', k: 'card' },
+      { y: 866, h: 48, x: 138, w: 276, t: '返回大厅', k: 'cta' }
+    ]
+  },
+  {
+    no: '05', name: '科技树', tag: '已实现', cls: 'done', meta: '内容区 72–852；节点 2 列 × 5 行 + 底部进度摘要',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 科技树', k: 'bar' },
+      { y: 72, h: 44, t: '分支 ×4（军事 / 经济 / 防御 / 统帅）', k: 'card' },
+      { y: 132, h: 576, t: '节点区 · 2 列 × 5 行（96 高 + 24 间距，折线连线）', k: 'stage' },
+      { y: 720, h: 132, t: '本分支进度摘要（补满 38% 空区）', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '06', name: '通行证', tag: '已实现', cls: 'done', meta: '内容区 72–852；行高 50 + 行间 4；现状两列只占 x=40–300，右侧空 130，方案改三列铺满',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 通行证', k: 'bar' },
+      { y: 72, h: 84, x: 16, w: 270, t: '赛季卡 · Lv + EXP 条', k: 'card' },
+      { y: 72, h: 84, x: 296, w: 118, t: '一键领取', k: 'cta' },
+      { y: 164, h: 30, x: 16, w: 40, t: 'Lv', k: 'zone' },
+      { y: 164, h: 30, x: 64, w: 171, t: '免费轨道', k: 'zone' },
+      { y: 164, h: 30, x: 243, w: 171, t: '高级轨道', k: 'zone' },
+      { y: 202, h: 650, t: '奖励行 ×12 · Lv 40 + 免费格 + 高级格', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '07', name: '任务', tag: '已实现', cls: 'done', meta: '内容区 72–852；条目 64 高，一键领取与首分类同行',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 任务', k: 'bar' },
+      { y: 72, h: 40, x: 16, w: 240, t: '分类 · 每日任务', k: 'zone' },
+      { y: 72, h: 40, x: 268, w: 146, t: '一键领取', k: 'cta' },
+      { y: 120, h: 212, t: '每日 · 条目 ×3（64 高 + 8 间距）', k: 'list' },
+      { y: 340, h: 260, t: '每周 · 条目 ×4', k: 'list' },
+      { y: 608, h: 244, t: '赛季 · 条目 ×3', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '08', name: '成就', tag: '已实现', cls: 'done', meta: '内容区 72–852；顶部补统计条，与任务拉开差异',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 成就', k: 'bar' },
+      { y: 72, h: 56, t: '统计条 · 已获得 5/13 + 一键领取', k: 'card' },
+      { y: 140, h: 712, t: '成就条目 ×11（64 高 + 8 间距）', k: 'list' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '09', name: '排行榜', tag: '已实现', cls: 'done', meta: '内容区 72–852；行高 48（前三 56）+ 吸底自己排名',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 120, t: '资源栏', k: 'bar' },
+      { y: 8, h: 52, x: 130, w: 292, t: '标题 · 排行榜', k: 'bar' },
+      { y: 72, h: 44, t: '榜单 ×4（天梯 / 战力 / 胜场 / 收集）', k: 'card' },
+      { y: 128, h: 120, t: '前三名 podium（金银铜）', k: 'stage' },
+      { y: 260, h: 528, t: '榜单行 4–14（48 高）', k: 'list' },
+      { y: 797, h: 52, t: '吸底条 · 你的排名 第 12 名', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '10', name: '战斗 HUD', tag: '已实现', cls: 'done', meta: 'playing 态：顶栏资源 + 悬浮 HUD + 底部操作带；棋盘占满内容区，双指缩放 0.5–2.0（默认 fitScale×1.5）',
+    blocks: [
+      { y: 8, h: 52, x: 8, w: 150, t: '资源栏', k: 'bar' },
+      { y: 8, h: 44, x: 300, w: 114, t: '敌我信息', k: 'bar' },
+      { y: 72, h: 700, t: '棋盘 · 11×7 六边形（45°石砖 / 翻转动画 / 建筑剪影+精细图）', k: 'stage ta' },
+      { y: 96, h: 30, x: 16, w: 120, t: '金币/战士 HUD', k: 'card' },
+      { y: 788, h: 44, x: 16, w: 398, t: '底部提示带（翻转/平移/缩放）', k: 'zone' },
+      { y: 866, h: 48, x: 16, w: 80, t: '返回', k: 'back' }
+    ]
+  },
+  {
+    no: '11', name: '战斗结算', tag: '已实现', cls: 'done', meta: '遮罩 + 胜负主视觉 + 云白结果卡；装饰层由 artResultDecor 控制（正式素材到位后开启）',
+    blocks: [
+      { y: 0, h: 932, x: 0, w: 430, t: '', k: 'veil' },
+      { y: 280, h: 120, x: 55, w: 320, t: '胜负主视觉 · 奖牌/星级', k: 'card' },
+      { y: 400, h: 152, x: 35, w: 360, t: '云白结果卡 · 胜负/对手/奖励', k: 'card' },
+      { y: 570, h: 120, x: 35, w: 360, t: '晋升进度 / 段位', k: 'card' },
+      { y: 866, h: 48, x: 16, w: 110, t: '炫耀战绩', k: 'card' },
+      { y: 866, h: 48, x: 138, w: 276, t: '返回大厅', k: 'cta' }
+    ]
+  },
+  {
+    no: '12', name: '覆盖层 · 5 件', tag: '已实现', cls: 'done', meta: '设置/公告/账号/匹配/引导共用 ModalShell 云白皮肤；几何来自各 Layout 静态函数，渲染命中同源',
+    blocks: [
+      { y: 0, h: 932, x: 0, w: 430, t: '', k: 'veil' },
+      { y: 180, h: 560, x: 24, w: 382, t: 'ModalShell · 云白卡 + 4px 厚底 + 投影', k: 'card ta' },
+      { y: 210, h: 40, x: 40, w: 350, t: '标题（去 emoji）', k: 'zone' },
+      { y: 260, h: 380, x: 40, w: 350, t: '内容行 / 开关 / 列表', k: 'list ta' },
+      { y: 660, h: 48, x: 40, w: 350, t: '关闭 / 操作按钮', k: 'cta' }
+    ]
+  }
+];
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = screens.map(s => {
+    const ticks = [];
+    for (let y = 100; y < H; y += 100) ticks.push(`<i class="tick" style="top:${P(y)}"></i><i class="tick r" style="top:${P(y)}"></i>`);
+    const bounds = s.noBound ? '' : [72, 852].map(y => `<i class="bound" style="top:${P(y)}"></i><i class="bound r" style="top:${P(y)}"></i>`).join('');
+    const blocks = s.blocks.map(b => {
+      const x = b.x === undefined ? 16 : b.x;
+      const w = b.w === undefined ? W - 32 : b.w;
+      return `<div class="blk k-${b.k}" style="top:${P(b.y)};height:${P(b.h)};left:${S(x)};width:${S(w)}">${b.t}</div>`;
+    }).join('');
+    return `<section class="item">
+      <div class="head"><span class="no">${s.no}</span><span class="name">${s.name}</span><span class="tag ${s.cls}">${s.tag}</span></div>
+      <div class="phone">${ticks.join('')}${bounds}${blocks}</div>
+      <div class="meta">${s.meta}</div>
+    </section>`;
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>

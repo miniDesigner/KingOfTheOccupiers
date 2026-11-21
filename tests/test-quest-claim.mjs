@@ -126,7 +126,8 @@ console.log('=== 测试4: 窄屏(320px) itemW 自适应 — 命中仍准确 ==='
 {
   game.screenWidth = 320;
   const layout = RenderSystem.questLayout([], [], [], 0, 320);
-  assert(layout.itemW === 280, `窄屏 itemW=280(实际 ${layout.itemW})`);
+  // 2026-11-21 边界缝隙收口：itemW 统一 SIDE=16 内容区 = w-32（旧值 w-40=280）
+  assert(layout.itemW === 288, `窄屏 itemW=288(实际 ${layout.itemW})`);
   game.screenWidth = 400;
 }
 
