@@ -1895,10 +1895,12 @@ export class RenderSystem {
       } else {
         ctx.fillStyle = building.variantColor || building.color;
       }
-      // 2026-11-21：建筑图放大 40→54px，并加羽化落地投影让建筑"立"在石砖上（消除贴纸感）
-      const ART_SIZE = 54;
-      const ART_CY = y - 8;
-      ctx.font = 'bold 26px sans-serif';
+      // 2026-11-21：建筑图放大到 72px，中心上移量按尺寸等比（LIFT_RATIO），改尺寸无需再手调偏移
+      // 72px 主体高约 68px，石砖顶面约 75px：上移 0.10·size≈7px 让建筑落在顶面内、底部给投影/等级字留位
+      const ART_SIZE = 72;
+      const ART_LIFT_RATIO = 0.10;
+      const ART_CY = y - ART_SIZE * ART_LIFT_RATIO;
+      ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       // 先落投影再贴图：投影接触点在建筑底部
@@ -1908,11 +1910,11 @@ export class RenderSystem {
         ctx.fillText(icon, x, ART_CY);
       }
 
-      // 兵营/金矿显示等级（下移到 y+26，避免被放大的建筑盖住）
+      // 兵营/金矿显示等级（按尺寸定位在建筑底部下方，避免被放大建筑盖住）
       if (building.type === 'barracks' || building.type === 'gold_mine') {
         ctx.fillStyle = '#fff';
         ctx.font = '13px sans-serif';
-        ctx.fillText('Lv' + building.level, x, y + 26);
+        ctx.fillText('Lv' + building.level, x, y + ART_SIZE * 0.44);
       }
 
       // HP条
@@ -2016,8 +2018,8 @@ export class RenderSystem {
           const lc = cfg ? (cfg[tile.isRandomResult.level || 1] || cfg[1]) : null;
           silColor = lc ? this.lightenColor(lc.color, 0.42) : '#cbd5e1';
         }
-        // 48px：与翻开后的精细大图(54)接近，减小翻完瞬间的尺寸跳变
-        this._drawBuildingSilhouette(silType, 0, -8, 48, silColor);
+        // 64px：约为精细大图(72)的 0.89 倍，中心上移按同比例，减小翻完瞬间的尺寸/位置跳变
+        this._drawBuildingSilhouette(silType, 0, -7, 64, silColor);
       }
 
       // 揭晓高光：随翻转展开从轴心向外掠过的一道亮带，收尾时淡出
