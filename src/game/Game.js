@@ -22,7 +22,7 @@ import { TowerSystem } from '../system/TowerSystem.js';
 import { SynergySystem } from '../system/SynergySystem.js';
 import { SkillSystem } from '../system/SkillSystem.js';
 import { InputSystem } from '../system/InputSystem.js';
-import { RenderSystem } from '../system/RenderSystem.js';
+import { RenderSystem, SUBPAGE_TAB_Y } from '../system/RenderSystem.js';
 import { ArtSystem } from '../system/ArtSystem.js';
 import { FontSystem } from '../system/FontSystem.js';
 import { SCREEN_BG, LOADING_BG, RESULT_BG,
@@ -2246,7 +2246,7 @@ export class Game {
     const tabCount = Math.min(LeaderboardSystem.BOARDS.length, 4);
     const totalTabW = tabCount * tabW + (tabCount - 1) * tabGap;
     const tabStartX = (w - totalTabW) / 2;
-    const tabY = 55;
+    const tabY = SUBPAGE_TAB_Y;
     for (let i = 0; i < tabCount; i++) {
       const x = tabStartX + i * (tabW + tabGap);
       if (screenX >= x && screenX <= x + tabW &&
@@ -2408,7 +2408,7 @@ export class Game {
     const branches = TechTreeSystem.getBranches();
     const tabW = techTabWidth(this.screenWidth), tabH = 35, tabGap = 4;
     const tabStartX = rowStartX(Object.keys(branches).length, tabW, tabGap, this.screenWidth);
-    const tabY = 50;
+    const tabY = SUBPAGE_TAB_Y;
     const branchKeys = Object.keys(branches);
 
     for (let i = 0; i < branchKeys.length; i++) {
@@ -2578,8 +2578,9 @@ export class Game {
    * 异步: 先加载 JSON 配置，再启动
    */
   async start() {
-    // 加载页面最小展示时长（ms）：冷启动强制显示满 3 秒，避免一闪而过
-    const LOADING_MIN_MS = 3000;
+    // 加载页面最小展示时长（ms）：冷启动强制显示满 3 秒，避免一闪而过。
+    // Node 测试环境无真实 canvas/图片，加载页无展示意义——跳过等待，避免多次 start() 拖垮测试超时。
+    const LOADING_MIN_MS = ArtSystem.available ? 3000 : 0;
     const startTs = Date.now();
 
     // 0. 先发起加载页素材预载，再绘制首帧。

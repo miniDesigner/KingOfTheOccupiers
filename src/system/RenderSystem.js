@@ -30,6 +30,10 @@ export { SAFE_AREA_MAX } from './SafeArea.js';
 
 // 左下角返回按钮几何（与 Game.BACK_BUTTON 同源）：距左 16、距底 16、宽 80、高 35
 const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
+// 2026-11-21 栅格收口：子界面顶部页签统一从 CONTENT_TOP=72 起（资源栏带 8..60 + gutter 12）。
+// 渲染与 Game.js 命中共用此常量，杜绝两处硬编码漂移。
+const SUBPAGE_TAB_Y = 72;
+export { SUBPAGE_TAB_Y };
 
 // 水印占位图总闸（P0 收口）：effects/*、ui/*、tiles/*、buildings/* 前缀的素材均为
 // 带「特效/界面/地块/建筑 + 编号参数表」的粉紫水印占位图，无正式美术。它们通过
@@ -329,15 +333,19 @@ export class RenderSystem {
     const r = Math.max(2, Math.min(rect.r === undefined ? 8 : rect.r, rect.w / 2, rect.h / 2));
     if (typeof ctx.arcTo === 'function' && typeof ctx.fill === 'function') {
       ctx.save();
-      // 卡通厚底：卡片正下方偏移 4px 的海军蓝实心层，形成清晰的前后景分离（Q版卡片常用）
+      // 2026-11-21 轮廓均匀化：旧厚底只在 rect.y+4 向下偏移一层，
+      // 导致下缘比上/左/右粗 4px（按钮/卡片"一边粗一边细"的根因）。
+      // 改为四边各外扩 2px 的对称深色底 + 无方向偏移的柔光阴影，
+      // 保留前后景分离又让四边描边等宽。
+      const pad = 2;
       ctx.fillStyle = 'rgba(22, 48, 79, 0.22)';
-      this._roundRectPath(rect.x, rect.y + 4, rect.w, rect.h, r);
+      this._roundRectPath(rect.x - pad, rect.y - pad, rect.w + pad * 2, rect.h + pad * 2, r + pad);
       ctx.fill();
-      // 柔和阴影：让厚底与卡片本体之间的过渡更自然
+      // 柔和阴影：无方向偏移，四边等量晕开
       ctx.shadowColor = 'rgba(20, 48, 84, 0.26)';
       ctx.shadowBlur = 8;
       ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 2;
+      ctx.shadowOffsetY = 0;
       ctx.fillStyle = 'rgba(255,255,255,0.8)';
       this._roundRectPath(rect.x, rect.y, rect.w, rect.h, r);
       ctx.fill();
@@ -514,14 +522,17 @@ export class RenderSystem {
     const leftLimit = o.leftLimit === undefined
       ? (BACK_BTN.x + Math.min(120, w - BACK_BTN.x - 95) + 8)
       : o.leftLimit;
-    const rightLimit = o.rightLimit === undefined ? BACK_BTN.x : o.rightLimit;
+    const rightLimit = o.rightLimit === undefined ? RenderSystem.L_SCALE(w, this.screenHeight).SIDE : o.rightLimit;
     const availW = Math.max(80, w - leftLimit - rightLimit);
     const pillW = Math.min(availW, tw + padX * 2);
     const pillH = 34;
     const S = RenderSystem.L_SCALE(w, this.screenHeight);
     const cy = o.cy === undefined ? S.STATUS_Y + S.STATUS_H / 2 - 4 : o.cy;
-    const cx = leftLimit + availW / 2;
-    const x = cx - pillW / 2;
+    // 2026-11-21 栅格收口：标题胶囊右缘统一贴右安全边（SIDE=16，430 屏 x=414），
+    // 不再按可用区居中——短标题会留出一大段右空隙。左缘按胶囊实际宽度回退，
+    // 且被 availW 兜底（资源栏簇很宽时也不会压到货币格）。
+    const x = w - rightLimit - pillW;
+    const cx = x + pillW / 2;
     const y = cy - pillH / 2;
 
     this._drawRaisedCard({ x, y, w: pillW, h: pillH, r: 12 }, () => {
@@ -611,14 +622,18 @@ export class RenderSystem {
       // 老基础库没有 arcTo：退化为直角描边，视觉降级但绝不能让整个界面抛错
       if (typeof ctx.arcTo === 'function') {
         ctx.save();
-        this._roundRectPath(x, y, cw, ch, Math.max(2, Math.min(r, cw / 2, ch / 2)));
+        // 2026-11-21：坐标对齐到半像素，避免 ctx.stroke() 落在整数格线上时
+        // 描边被分到两侧各 0.75px 产生抗锯齿深浅不均（"一边粗一边细"）。
+        const sx = Math.round(x) + 0.5, sy = Math.round(y) + 0.5;
+        const sw = Math.round(cw) - 1, sh = Math.round(ch) - 1;
+        this._roundRectPath(sx, sy, sw, sh, Math.max(2, Math.min(r, sw / 2, sh / 2)));
         ctx.strokeStyle = o.border;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1;
         ctx.stroke();
         ctx.restore();
       } else {
         ctx.strokeStyle = o.border;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1;
         ctx.strokeRect(x, y, cw, ch);
       }
     }
@@ -4465,7 +4480,7 @@ export class RenderSystem {
     const branchKeys = Object.keys(techConfig.branches);
     const tabW = techTabWidth(w), tabH = 35, tabGap = 4;
     const tabStartX = rowStartX(branchKeys.length, tabW, tabGap, w);
-    const tabY = 50;
+    const tabY = SUBPAGE_TAB_Y;
     const selectedBranch = gameState.selectedTechBranch || 'military';
 
     for (let i = 0; i < branchKeys.length; i++) {
@@ -4818,7 +4833,9 @@ export class RenderSystem {
     // 页签/卡片左右对称铺满（旧值 tabStartX=20 + tabW≤70 + itemW≤340 在 430 屏右侧空 55~118px）
     const SIDE = 16;
     const tabStartX = SIDE;
-    const tabY = 50;
+    // 2026-11-21 栅格收口：内容顶统一 L_SCALE.CONTENT_TOP=72（资源栏带 8..60 + gutter 12），
+    // 旧值 tabY=50 压在资源栏上、listStartY=95 又与页签脱节。
+    const tabY = 72;
     const avail = screenWidth - SIDE * 2;
     const tabW = Math.max(38, Math.floor((avail - (n - 1) * tabGap) / n));
 
@@ -4826,7 +4843,7 @@ export class RenderSystem {
     const itemW = avail;
     const itemH = 70;
     const gap = 8;
-    const listStartY = 95;
+    const listStartY = tabY + tabH + 7; // 页签底 102 → 列表顶 109，gutter 7
 
     const btnW = 60;
     const btnH = 30;
@@ -5090,16 +5107,18 @@ export class RenderSystem {
 
     // ---- 顶部区域自上而下排布 ----
     const titleY = 26;
-    // 纵向下移 6px：云白卡有 4px 厚底投影，标题胶囊下沿到卡顶需要留出呼吸位
-    const ownedY = 64;
+    // 2026-11-21 栅格收口：收集卡顶 48→66，卡内字段同步下移保持相对关系。
+    // 矮屏（h<680）空间紧张，下移量收窄到 6px 保证概率末行不压底部说明。
+    const topShift = h >= 680 ? 18 : 6;
+    const cardTopY = 48 + topShift;
+    const ownedY = 64 + topShift;
     const progressW = Math.min(280, w - 60);
     const progressX = (w - progressW) / 2;
-    const progressY = 76;
-    const pityTextY = 100;
-    const pityBarY = 110;
-    // 概率卡下移 10px：与上方图鉴卡留出卡片间隙（云白厚底卡需要呼吸位）
-    const rateTitleY = 144;
-    const rateStartY = 166;
+    const progressY = 76 + topShift;
+    const pityTextY = 100 + topShift;
+    const pityBarY = 110 + topShift;
+    const rateTitleY = 144 + topShift;
+    const rateStartY = 166 + topShift;
 
     // 概率行步长：按可用高度自适应，下限 16 保证不重叠
     const avail = (noteY1 - 16) - rateStartY;
@@ -5115,7 +5134,7 @@ export class RenderSystem {
     const ratePctX = rateBarX + barW + gapBP;
 
     return {
-      titleY, ownedY, progressX, progressY, progressW,
+      titleY, cardTopY, ownedY, progressX, progressY, progressW,
       pityTextY, pityBarY, rateTitleY, rateStartY, rateStep,
       rateBlockX: blockX, rateBlockW: blockW,
       rateLabelRightX, rateBarX, rateBarW: barW, ratePctX,
@@ -5514,7 +5533,7 @@ export class RenderSystem {
     const tabCount = Math.min(boards.length, 4);
     const tabW = 80, tabH = 30, tabGap = 8;
     const tabStartX = (w - (tabCount * tabW + (tabCount - 1) * tabGap)) / 2;
-    const tabY = 55;
+    const tabY = SUBPAGE_TAB_Y;
     for (let i = 0; i < tabCount; i++) {
       const x = tabStartX + i * (tabW + tabGap);
       const active = gameState.leaderboardTab === i;
@@ -5660,7 +5679,8 @@ export class RenderSystem {
 
     // === 收集 / 保底卡 ===
     const pityProgress = info.pityCount / info.pityThreshold;
-    const collectCard = { x: 12, y: 48, w: w - 24, h: 70, r: 14 };
+    // 2026-11-21 栅格收口：收集卡顶 48→66（内容区顶 72 上方给标题留呼吸位，不再压资源栏带）
+    const collectCard = { x: 16, y: L.cardTopY, w: w - 32, h: 70, r: 14 };
     this._cardBg(collectCard, { tint: 'rgba(255,255,255,0.95)' });
 
     ctx.textAlign = 'left';

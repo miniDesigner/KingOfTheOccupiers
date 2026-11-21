@@ -197,18 +197,20 @@ test('_cardBg 的 flat 模式：不画厚底/柔光，只出一层平面底', ()
   const rect = { x: 10, y: 70, w: 300, h: 60, r: 12 };
   rs._cardBg(rect, { tint: 'rgba(6,14,28,0.34)', flat: true });
   // flat 走 clip + fillRect，不进 fills；_drawRaisedCard 的厚底/柔光走路径填充，记在 fills
-  const raised = ctx.rec.fills.filter(f => Math.abs(f.y - (rect.y + 4)) < 1e-6);
-  assert.equal(raised.length, 0, 'flat 模式不得绘制 y+4 的厚底');
+  // 2026-11-21：厚底四边对称外扩 2px（旧版只向下偏移 y+4，造成下缘更粗），
+  // 底层路径顶边现为 rect.y-2；flat 模式仍不进 fills。
+  const raised = ctx.rec.fills.filter(f => Math.abs(f.y - (rect.y - 2)) < 1e-6);
+  assert.equal(raised.length, 0, 'flat 模式不得绘制对称厚底');
   assert.equal(ctx.rec.fills.length, 0, 'flat 模式不得走 _drawRaisedCard 的柔光路径');
   const body = ctx.rec.rects.filter(r => Math.abs(r.h - rect.h) < 1e-6 && Math.abs(r.y - rect.y) < 1e-6);
   assert.equal(body.length, 1, 'flat 模式应恰好绘制一层平面底');
 
-  // 对照：非 flat 必须出现厚底，确认这条测试真的在区分两种模式
+  // 对照：非 flat 必须出现对称厚底，确认这条测试真的在区分两种模式
   const ctx2 = fakeCtx();
   const rs2 = makeRS(ctx2);
   rs2._cardBg(rect, { tint: 'rgba(255,255,255,0.9)' });
-  const raised2 = ctx2.rec.fills.filter(f => Math.abs(f.y - (rect.y + 4)) < 1e-6);
-  assert.ok(raised2.length >= 1, '非 flat 模式应有 y+4 的厚底');
+  const raised2 = ctx2.rec.fills.filter(f => Math.abs(f.y - (rect.y - 2)) < 1e-6);
+  assert.ok(raised2.length >= 1, '非 flat 模式应有四边对称的厚底');
 });
 
 test('_screenBg：底图不可用时画出兜底色与压暗层，不抛错也不露白', () => {
