@@ -614,7 +614,16 @@ export class RenderSystem {
     const x = rect.x, y = rect.y, cw = rect.w, ch = rect.h;
 
     const paint = () => {
-      ctx.fillStyle = o.tint || 'rgba(255,255,255,0.90)';
+      // 2026-11-23：可选竖向渐变底（[topColor, bottomColor]），用于夜色兵种卡等需要
+      // 明暗层次的卡面；未传则沿用纯色 tint，对既有调用方零影响。
+      if (o.tintGradient && o.tintGradient.length >= 2 && typeof ctx.createLinearGradient === 'function') {
+        const g = ctx.createLinearGradient(0, y, 0, y + ch);
+        g.addColorStop(0, o.tintGradient[0]);
+        g.addColorStop(1, o.tintGradient[1]);
+        ctx.fillStyle = g;
+      } else {
+        ctx.fillStyle = o.tint || 'rgba(255,255,255,0.90)';
+      }
       ctx.fillRect(x, y, cw, ch);
       if (o.edge) {
         ctx.fillStyle = o.edge;
@@ -646,17 +655,17 @@ export class RenderSystem {
         // 2026-11-23 轮廓修复：路径整体内缩 1px + 2px 线宽，让描边完整落在卡面内。
         // 旧实现把 1px 线压在填充边界上，外侧半条落进深色背景几乎不可见，
         // 圆角处曲率大最明显——表现为"轮廓断续、圆角出不来"。
-        const inset = 1;
+        const inset = 1.5;
         const iw = Math.max(2, cw - inset * 2), ih = Math.max(2, ch - inset * 2);
         this._roundRectPath(x + inset, y + inset, iw, ih,
           Math.max(1, Math.min(r - inset, iw / 2, ih / 2)));
         ctx.strokeStyle = o.border;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5; // 2026-11-23：2→2.5px 加粗，深底上轮廓更清晰
         ctx.stroke();
         ctx.restore();
       } else {
         ctx.strokeStyle = o.border;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         ctx.strokeRect(x, y, cw, ch);
       }
     }
@@ -702,14 +711,14 @@ export class RenderSystem {
     ctx.save();
     if (typeof ctx.arcTo === 'function') {
       // 2026-11-23：同 _cardBg，描边内缩 1px 保证四边与圆角完整贴在按钮内侧
-      const iw = Math.max(2, bw - 2), ih = Math.max(2, bh - 2);
-      this._roundRectPath(x + 1, y + 1, iw, ih, Math.max(1, Math.min(r - 1, iw / 2, ih / 2)));
-      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
-      ctx.lineWidth = 2;
+      const iw = Math.max(2, bw - 3), ih = Math.max(2, bh - 3);
+      this._roundRectPath(x + 1.5, y + 1.5, iw, ih, Math.max(1, Math.min(r - 1.5, iw / 2, ih / 2)));
+      ctx.strokeStyle = 'rgba(255,255,255,0.96)';
+      ctx.lineWidth = 2.5; // 2026-11-23：2→2.5px 加粗
       ctx.stroke();
     } else {
-      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.96)';
+      ctx.lineWidth = 2.5;
       ctx.strokeRect(x, y, bw, bh);
     }
     ctx.restore();
@@ -2507,15 +2516,14 @@ export class RenderSystem {
       const isDragSource = drag.active && drag.type === 'unit' && drag.fromSlot === i;
       const qColor = qualityColor(slotData.quality);
 
-      // 云白厚底卡：品质只走外缘描边与顶部色条，卡底不再压深色
+      // 2026-11-23 夜色统一：上阵槽与图鉴卡同族，实槽改深靛蓝渐变底 + 品质色整卡边框，
+      // 消除上白下暗的风格割裂；空槽仍为半透暗块表示"待填"。
       const _q = slotData.quality || 1;
       this._cardBg({ x: sx, y: uslot.y, w: uslot.w, h: uslot.h, r: 10 }, {
-        // 空槽在深底上压成半透暗块（表示"待填"），实槽才是云白亮面
-        tint: slotData.empty ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.97)',
-        border: isDragTarget ? UI_THEME.skyDeep : (slotData.empty ? 'rgba(234,248,255,0.26)' : qColor),
-        edge: slotData.empty ? null : qColor,
-        edgeSide: 'top',
-        flat: slotData.empty,
+        tintGradient: slotData.empty ? null : ['rgba(46,72,112,0.96)', 'rgba(20,36,62,0.97)'],
+        tint: slotData.empty ? 'rgba(255,255,255,0.10)' : 'rgba(20,36,62,0.97)',
+        border: isDragTarget ? UI_THEME.gold : (slotData.empty ? 'rgba(150,180,215,0.40)' : qColor),
+        flat: true,
       });
       // 立绘（2026-11-23 放大）：52px 见方占卡面主体，名字(y+66)/等级(y+80)下移不遮挡。
       let slotArtDrawn = false;
@@ -2534,7 +2542,7 @@ export class RenderSystem {
         ctx.fillRect(sx, uslot.y, uslot.w, uslot.h);
         ctx.globalAlpha = 1;
       }
-      ctx.fillStyle = 'rgba(43,74,111,0.45)';
+      ctx.fillStyle = 'rgba(234,248,255,0.52)';
       ctx.font = '8px sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('#' + (i + 1), sx + 5, uslot.y + 10);
@@ -2552,7 +2560,7 @@ export class RenderSystem {
           ctx.textAlign = 'center';
           ctx.fillText(slotData.icon || '?', sx + uslot.w / 2, uslot.y + 40);
         }
-        ctx.fillStyle = UI_THEME.ink;
+        ctx.fillStyle = UI_THEME.cloud; // 夜色底：名称改云白，原 ink 深蓝在暗底不可读
         ctx.font = 'bold 9px sans-serif';
         ctx.fillText(slotData.name || '?', sx + uslot.w / 2, uslot.y + 66);
         // 品质名（左）+ 等级（右）—— 品质用名称描述（与抽卡界面一致），不用颜色字
@@ -2560,7 +2568,7 @@ export class RenderSystem {
         // 注意 430 屏卡宽被 LAYOUT_DESIGN_MAX 夹到 52，仍属可放下，阈值不能设到 52 以上。
         const qNames = ['普通', '精良', '稀有', '史诗', '传说', '神话'];
         if (uslot.w < 50) {
-          ctx.fillStyle = UI_THEME.orangeDeep;
+          ctx.fillStyle = UI_THEME.gold; // 夜色底：等级改明黄保证对比度
           ctx.font = 'bold 8px sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w / 2, uslot.y + 80);
@@ -2569,7 +2577,7 @@ export class RenderSystem {
           ctx.font = 'bold 8px sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText(qNames[(slotData.quality || 1) - 1] || '普通', sx + 5, uslot.y + 80);
-          ctx.fillStyle = UI_THEME.orangeDeep;
+          ctx.fillStyle = UI_THEME.gold; // 夜色底：等级改明黄保证对比度
           ctx.font = 'bold 8px sans-serif';
           ctx.textAlign = 'right';
           ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w - 5, uslot.y + 80);
@@ -2707,16 +2715,18 @@ export class RenderSystem {
       const qColor = qualityColor(unit.quality);
       const centerX = cx + card.w / 2;
 
-      // 卡片底：已拥有云白亮卡（品质左边条）；未拥有深蓝暗卡（无品质色，弱化）
+      // 2026-11-23 夜色卡改造：卡底改用贴合背景的深靛蓝渐变，让立绘与品质色整卡边框
+      // 成为视觉焦点。已拥有=品质色整卡边框（Q1~Q6 一眼可辨）；未拥有=冷灰蓝弱边框。
       // 描边不交给 _cardBg —— 立绘会盖住卡内描边，改到本卡绘制末尾统一补画。
-      const cardBorder = isDragging ? UI_THEME.skyDeep
-        : (owned ? (isDeployed ? qColor : 'rgba(43,74,111,0.42)') : 'rgba(234,248,255,0.40)');
+      const cardBorder = isDragging ? UI_THEME.gold
+        : (owned ? qColor : 'rgba(150,180,215,0.58)');
       this._cardBg({ x: cx, y: cy, w: card.w, h: card.h, r: 12 }, {
-        tint: isDragging ? 'rgba(255,255,255,0.35)'
-          : (owned ? 'rgba(255,255,255,0.97)' : 'rgba(18,34,56,0.82)'),
+        tintGradient: isDragging ? ['rgba(58,92,140,0.96)', 'rgba(32,54,86,0.96)']
+          : (owned ? ['rgba(46,72,112,0.96)', 'rgba(20,36,62,0.97)']
+                   : ['rgba(20,34,58,0.94)', 'rgba(10,19,36,0.96)']),
         edge: owned ? qColor : null,
         edgeSide: 'left',
-        flat: !owned,
+        flat: true, // 夜色卡面必须平面底：_drawRaisedCard 预填白柔光会把夜色冲成灰白板
       });
 
       if (isDragging) continue; // 拖拽中只保留卡底占位
@@ -2748,10 +2758,10 @@ export class RenderSystem {
       const infoH = 32;
       const infoY = cy + card.h - infoH - 2;
       this._roundRectPath(cx + 3, infoY, card.w - 6, infoH, 8);
-      ctx.fillStyle = owned ? 'rgba(8,20,40,0.80)' : 'rgba(4,10,22,0.90)';
+      ctx.fillStyle = owned ? 'rgba(6,14,30,0.88)' : 'rgba(4,10,22,0.92)';
       ctx.fill();
-      ctx.strokeStyle = owned ? 'rgba(234,248,255,0.22)' : 'rgba(234,248,255,0.16)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = owned ? 'rgba(234,248,255,0.34)' : 'rgba(234,248,255,0.24)';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.textAlign = 'center';
@@ -2842,9 +2852,10 @@ export class RenderSystem {
       }
 
       // ---- 描边补画：立绘与信息条会盖住卡底描边，最后统一描一次保证四边与圆角完整 ----
-      this._roundRectPath(cx + 1, cy + 1, card.w - 2, card.h - 2, 11);
+      // 3px 内缩 1.5：线宽中心在 cx+1.5，整条落在 cx..cx+3 卡内，不越出圆角。
+      this._roundRectPath(cx + 1.5, cy + 1.5, card.w - 3, card.h - 3, 10.5);
       ctx.strokeStyle = cardBorder;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3; // 2026-11-23：品质边框加粗到 3px，夜色底上清晰可辨
       ctx.stroke();
     }
 
