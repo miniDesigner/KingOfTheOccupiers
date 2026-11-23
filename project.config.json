@@ -76,16 +76,8 @@
         "type": "folder"
       },
       {
-        "value": "BUSINESS-PLAN.pdf",
-        "type": "file"
-      },
-      {
-        "value": "BUSINESS-PLAN.html",
-        "type": "file"
-      },
-      {
-        "value": "BUSINESS-PLAN.docx",
-        "type": "file"
+        "value": "docs",
+        "type": "folder"
       },
       {
         "value": ".env.local",

@@ -133,10 +133,10 @@ const FUNC_LABELS = ['分享', '任务', '成就', '通行证'];
 const SHOP_CAT_KEYS = ['coin', 'gem', 'unit', 'item', 'ad'];
 
 // 品质色（Q1-Q6: 白/绿/蓝/紫/橙/红）—— 布阵槽位 / 兵种卡 / 大厅上阵预览共用
-// 注意：这是功能色，独立于界面主调（ART-STYLE.md 2.4），不要随晴空乐园配色改动。
+// 注意：这是功能色，独立于界面主调（docs/ART-STYLE.md 2.4），不要随晴空乐园配色改动。
 const QUALITY_COLORS = ['#9ca3af', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ef4444'];
 
-// 界面主调「晴空乐园」——与 ART-STYLE.md 2.1 同源。
+// 界面主调「晴空乐园」——与 docs/ART-STYLE.md 2.1 同源。
 // 用于程序化绘制的 UI（按钮/卡片/文字），与贴图素材保持同一视觉语言；
 // 只影响「看起来」，不改任何 Layout 几何与点击命中。
 const UI_THEME = {
@@ -429,7 +429,7 @@ export class RenderSystem {
   // ===================== 统一纵向栅格 L-SCALE（方案 M1）=====================
   // 子界面没有底部导航（大厅独有），用独立一套三段栅格，所有屏共用同一基线：
   //   状态带 8→60 / 内容区 72→h-80 / 操作带 h-80→h-16，安全底 16。
-  // 设计稿见 design/layout-grid.html，规格见 UI-LAYOUT-PLAN.md §1。
+  // 设计稿见 design/layout-grid.html，规格见 docs/UI-LAYOUT-PLAN.md §1。
   // 纯计算、不依赖 ctx，渲染与命中两侧都可读，杜绝各屏自填 88/90/95 三套顶边。
   static L_SCALE(w, h) {
     const sw = Number(w) || 375;
@@ -463,7 +463,7 @@ export class RenderSystem {
   }
 
   // ===================== 子界面统一骨架 ScreenShell =====================
-  // 规格见 UI-SCREENS.md §3：夜景舞台底 + 云白厚底卡 + 海军蓝文字三级。
+  // 规格见 docs/UI-SCREENS.md §3：夜景舞台底 + 云白厚底卡 + 海军蓝文字三级。
   // 全部为纯绘制，不改 Layout 几何、不改点击命中；各界面按制作顺序逐个接入。
 
   /**

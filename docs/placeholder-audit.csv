@@ -1,0 +1,103 @@
+﻿品类,路径,名称
+应用,assets/icon_432.png,应用图标 432
+应用,assets/splash.png,启动图
+应用,assets/share_card.png,战绩分享图
+背景,bg/gacha_bg.jpg,渐变底
+背景,bg/gacha_circle.png,光柱 + 符文阵
+背景,bg/match_panel.png,异步匹配面板底图
+背景,bg/panel_bg.9.png,通用深色面板背景
+背景,bg/bp_banner.jpg,通行证主视觉横幅
+背景,bg/subpage_bg.jpg,子界面通用背景
+地块,tiles/hex_dark.png,背面暗格
+地块,tiles/hex_flippable.png,相邻可翻格
+地块,tiles/hex_empty.png,空地
+地块,tiles/river.png,河流障碍
+地块,tiles/territory_edge.png,边界纹理
+特效,effects/gacha_epic_q4.png,稀有度光效 紫 Q4
+特效,effects/gacha_epic_q5.png,稀有度光效 橙 Q5
+特效,effects/gacha_epic_q6.png,稀有度光效 红 Q6
+特效,effects/quality_glow_q1.png,品质光晕 白 Q1
+特效,effects/quality_glow_q3.png,品质光晕 蓝 Q3
+特效,effects/quality_glow_q4.png,品质光晕 紫 Q4
+特效,effects/quality_glow_q5.png,品质光晕 橙 Q5
+特效,effects/quality_glow_q6.png,品质光晕 红 Q6
+特效,effects/firework.png,胜利烟花
+特效,effects/defeat_flash.png,失败灰暗闪屏
+特效,effects/defeat_debris.png,失败破碎粒子
+特效,effects/combat_hit.png,命中
+特效,effects/combat_crit.png,暴击
+特效,effects/combat_flash.png,受击闪白
+特效,effects/combat_knockback.png,击退
+特效,effects/territory_wave.png,领地扩散波纹
+特效,effects/build_beam.png,建筑升级光柱
+特效,effects/tutorial_halo.png,引导高亮圈
+特效,effects/rank_shine.png,段位徽章流光
+特效,effects/ambient.png,环境氛围粒子
+特效,effects/achieve_stamp.png,成就完成盖章
+字体,fonts/title.ttf.png,标题字 · 字体占位说明卡
+字体,fonts/number.ttf.png,数字字 · 字体占位说明卡
+界面,ui/panel.9.png,面板九宫格
+界面,ui/quality_q1.9.png,品质框 白 Q1
+界面,ui/quality_q2.9.png,品质框 绿 Q2
+界面,ui/quality_q3.9.png,品质框 蓝 Q3
+界面,ui/quality_q4.9.png,品质框 紫 Q4
+界面,ui/quality_q5.9.png,品质框 橙 Q5
+界面,ui/quality_q6.9.png,品质框 红 Q6
+界面,ui/bar_track.9.png,进度条·底槽
+界面,ui/bar_fill.9.png,进度条·填充
+界面,ui/card.9.png,通用卡底
+界面,ui/card_empty.9.png,空槽位
+界面,ui/back_normal.png,返回按钮·常态
+界面,ui/back_pressed.png,返回按钮·按压
+界面,ui/switch_off.png,开关·关闭
+界面,ui/switch_on.png,开关·开启
+界面,ui/shop_card_normal.9.png,普通商品卡
+界面,ui/shop_card_free.9.png,免费商品卡
+界面,ui/tech_node_locked.9.png,科技节点·未解锁
+界面,ui/tech_node_upgradeable.9.png,科技节点·可升级
+界面,ui/tech_node_max.9.png,科技节点·满级
+界面,ui/tech_line.png,连线点亮
+界面,ui/bp_cell_locked.9.png,奖励格·未解锁
+界面,ui/bp_cell_claimable.9.png,奖励格·可领
+界面,ui/bp_cell_claimed.9.png,奖励格·已领
+界面,ui/bp_cell_premium.9.png,奖励格·需高级
+界面,ui/tutorial_card.9.png,引导文案卡
+界面,ui/tutorial_dots.png,步骤指示器 4 点
+界面,ui/slot_empty.9.png,布阵槽位空态
+界面,ui/slot_drag.png,拖拽卡面高亮
+界面,ui/unit_detail.9.png,兵种详情专属底板
+界面,ui/building_detail.9.png,建筑详情对比区
+界面,ui/result_star.9.png,星级评价底板
+界面,ui/result_promote.9.png,段位晋升图形
+界面,ui/result_summary.9.png,招募摘要条目
+界面,ui/gacha_rate.9.png,概率条
+界面,ui/gacha_pity.9.png,保底进度条
+界面,ui/gacha_collection.9.png,已收集图鉴底板
+界面,ui/loading_tip.9.png,加载提示底板
+兵种,units/race_human_lv1.png,步兵
+兵种,units/race_human_lv2.png,剑士
+兵种,units/race_human_lv3.png,骑士
+兵种,units/race_human_lv4.png,圣骑士
+兵种,units/race_beast_lv1.png,兽人战士
+兵种,units/race_beast_lv2.png,狂战士
+兵种,units/race_beast_lv3.png,兽王
+兵种,units/race_beast_lv4.png,战争领主
+兵种,units/race_undead_lv1.png,骷髅兵
+兵种,units/race_undead_lv2.png,僵尸
+兵种,units/race_undead_lv3.png,死灵法师
+兵种,units/race_undead_lv4.png,巫妖
+兵种,units/race_elf_lv1.png,弓箭手
+兵种,units/race_elf_lv2.png,游侠
+兵种,units/race_elf_lv3.png,精灵骑士
+兵种,units/race_elf_lv4.png,月之骑士
+兵种,units/race_dwarf_lv1.png,矮人战士
+兵种,units/race_dwarf_lv2.png,矮人守卫
+兵种,units/race_dwarf_lv3.png,矮人火枪手
+兵种,units/race_dwarf_lv4.png,矮人王
+兵种,units/race_dragon_lv1.png,龙裔
+兵种,units/race_dragon_lv2.png,幼龙
+兵种,units/race_dragon_lv3.png,龙骑士
+兵种,units/race_dragon_lv4.png,古龙
+兵种,units/unit_walk_start.png,行走序列·起步
+兵种,units/unit_walk_loop.png,行走序列·行走
+兵种,units/unit_walk_attack.png,行走序列·攻击前冲
