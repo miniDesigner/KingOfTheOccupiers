@@ -235,6 +235,30 @@ console.log('=== 测试11: 渲染冒烟（deploy_select 十帧无异常）===');
   assert(!err, `渲染无异常${err ? ': ' + err.message : ''}`);
 }
 
+console.log('=== 测试11b: 图鉴立绘使用主立绘并按原图比例等比铺满 ===');
+{
+  const origArtUnit = RenderSystem.prototype._artUnit;
+  const calls = [];
+  RenderSystem.prototype._artUnit = function (n, x, y, cw, ch, small, opts) {
+    calls.push({ n, x, y, cw, ch, small, opts });
+    return origArtUnit.call(this, n, x, y, cw, ch, small, opts);
+  };
+  let err = null;
+  try {
+    game.screenState = 'deploy_select';
+    game._deployDrag.active = false;
+    game.metaScrollY = 0;
+    game.render();
+  } catch (e) { err = e; }
+  finally { RenderSystem.prototype._artUnit = origArtUnit; }
+  assert(!err, `图鉴立绘比例渲染无异常${err ? ': ' + err.message : ''}`);
+  const galleryCalls = calls.filter(c =>
+    Math.abs(c.cw - card.w) < 0.6 && Math.abs(c.ch - card.h) < 0.6);
+  assert(galleryCalls.length >= 4, `图鉴卡按 card.w×card.h 目标框绘制（命中${galleryCalls.length}张）`);
+  assert(galleryCalls.every(c => c.small === false), '图鉴卡改回主立绘 unit_XX，不再用 96×96 裁切小图');
+  assert(galleryCalls.every(c => c.opts && c.opts.fit === 'cover'), '图鉴卡使用 cover 等比裁切，保持 174×216 原图比例');
+}
+
 console.log('\n=== 测试: 拖动跟随卡立绘序号可从两种导出通道取得 ===');
 {
   const mod = await import('../src/meta/DeploymentSystem.js');
