@@ -643,13 +643,15 @@ export class RenderSystem {
       // 老基础库没有 arcTo：退化为直角描边，视觉降级但绝不能让整个界面抛错
       if (typeof ctx.arcTo === 'function') {
         ctx.save();
-        // 2026-11-21：坐标对齐到半像素，避免 ctx.stroke() 落在整数格线上时
-        // 描边被分到两侧各 0.75px 产生抗锯齿深浅不均（"一边粗一边细"）。
-        const sx = Math.round(x) + 0.5, sy = Math.round(y) + 0.5;
-        const sw = Math.round(cw) - 1, sh = Math.round(ch) - 1;
-        this._roundRectPath(sx, sy, sw, sh, Math.max(2, Math.min(r, sw / 2, sh / 2)));
+        // 2026-11-23 轮廓修复：路径整体内缩 1px + 2px 线宽，让描边完整落在卡面内。
+        // 旧实现把 1px 线压在填充边界上，外侧半条落进深色背景几乎不可见，
+        // 圆角处曲率大最明显——表现为"轮廓断续、圆角出不来"。
+        const inset = 1;
+        const iw = Math.max(2, cw - inset * 2), ih = Math.max(2, ch - inset * 2);
+        this._roundRectPath(x + inset, y + inset, iw, ih,
+          Math.max(1, Math.min(r - inset, iw / 2, ih / 2)));
         ctx.strokeStyle = o.border;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
       } else {
@@ -699,12 +701,14 @@ export class RenderSystem {
     // 白描边：老基础库无 arcTo 时退化为直角描边，绝不抛错（覆盖层 also 复用本组件）
     ctx.save();
     if (typeof ctx.arcTo === 'function') {
-      this._roundRectPath(x, y, bw, bh, Math.max(2, Math.min(r, bw / 2, bh / 2)));
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      // 2026-11-23：同 _cardBg，描边内缩 1px 保证四边与圆角完整贴在按钮内侧
+      const iw = Math.max(2, bw - 2), ih = Math.max(2, bh - 2);
+      this._roundRectPath(x + 1, y + 1, iw, ih, Math.max(1, Math.min(r - 1, iw / 2, ih / 2)));
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
       ctx.lineWidth = 2;
       ctx.stroke();
     } else {
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, bw, bh);
     }
@@ -725,22 +729,12 @@ export class RenderSystem {
     const o = opts || {};
     const r = rect.r === undefined ? 12 : rect.r;
     const x = rect.x, y = rect.y, bw = rect.w, bh = rect.h;
+    // 2026-11-23：描边统一交给 _cardBg（内缩 1px + 2px），
+    // 旧实现在这里又 stroke 一次，双重描边导致深浅不均、圆角处发虚。
     this._cardBg({ x, y, w: bw, h: bh, r }, {
       tint: o.tint || 'rgba(234,248,255,0.96)',
       border: o.border || 'rgba(43,74,111,0.42)',
     });
-    ctx.save();
-    if (typeof ctx.arcTo === 'function') {
-      this._roundRectPath(x, y, bw, bh, Math.max(2, Math.min(r, bw / 2, bh / 2)));
-      ctx.strokeStyle = o.border || 'rgba(43,74,111,0.42)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    } else {
-      ctx.strokeStyle = o.border || 'rgba(43,74,111,0.42)';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x, y, bw, bh);
-    }
-    ctx.restore();
     ctx.fillStyle = o.color || UI_THEME.navy;
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
@@ -2699,7 +2693,7 @@ export class RenderSystem {
     const card = L.unit;
     const cardStartX = (w - (card.perRow * card.w + (card.perRow - 1) * card.gap)) / 2;
     const deployedUnits = profile?.deployment?.units || [];
-    const artBox = 60; // 立绘方框：卡宽约96，60px 居中占卡宽 62%，冲击力足够
+    const artSpan = card.h; // 立绘按卡高等比放大，横向溢出由卡片圆角裁剪收口
 
     for (let i = 0; i < unitCards.length; i++) {
       const col = i % card.perRow;
@@ -2714,11 +2708,12 @@ export class RenderSystem {
       const centerX = cx + card.w / 2;
 
       // 卡片底：已拥有云白亮卡（品质左边条）；未拥有深蓝暗卡（无品质色，弱化）
+      // 描边不交给 _cardBg —— 立绘会盖住卡内描边，改到本卡绘制末尾统一补画。
+      const cardBorder = isDragging ? UI_THEME.skyDeep
+        : (owned ? (isDeployed ? qColor : 'rgba(43,74,111,0.42)') : 'rgba(234,248,255,0.40)');
       this._cardBg({ x: cx, y: cy, w: card.w, h: card.h, r: 12 }, {
         tint: isDragging ? 'rgba(255,255,255,0.35)'
           : (owned ? 'rgba(255,255,255,0.97)' : 'rgba(18,34,56,0.82)'),
-        border: isDragging ? UI_THEME.skyDeep
-          : (owned ? (isDeployed ? qColor : 'rgba(43,74,111,0.22)') : 'rgba(234,248,255,0.16)'),
         edge: owned ? qColor : null,
         edgeSide: 'left',
         flat: !owned,
@@ -2726,87 +2721,110 @@ export class RenderSystem {
 
       if (isDragging) continue; // 拖拽中只保留卡底占位
 
-      // ---- 立绘（60px 居中，卡上半部 cy+6 ~ cy+66）----
+      // ---- 立绘：按卡高放大铺满整卡，圆角裁剪收口；底部信息条随后叠在立绘上 ----
+      ctx.save();
+      this._roundRectPath(cx, cy, card.w, card.h, 12);
+      ctx.clip();
       let unitArtDrawn = false;
       ctx.save();
-      if (!owned) ctx.globalAlpha = 0.34; // 未拥有：立绘显著压暗，一眼可辨
+      if (!owned) ctx.globalAlpha = 0.46; // 未拥有：压暗但仍可辨认是哪只兵种
       if (unit.artIndex >= 1 && unit.artIndex <= 40) {
-        unitArtDrawn = this._artUnit(unit.artIndex, cx + (card.w - artBox) / 2, cy + 6,
-          artBox, artBox, true, { alpha: 0.98, fit: 'contain' });
+        unitArtDrawn = this._artUnit(unit.artIndex, cx + (card.w - artSpan) / 2, cy,
+          artSpan, artSpan, true, { alpha: 0.98, fit: 'contain' });
       }
       ctx.restore();
       if (!unitArtDrawn) {
         ctx.save();
         if (!owned) ctx.globalAlpha = 0.4;
         ctx.fillStyle = qColor;
-        ctx.font = 'bold 34px sans-serif';
+        ctx.font = 'bold 40px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(unit.icon || '?', centerX, cy + 48);
+        ctx.fillText(unit.icon || '?', centerX, cy + card.h * 0.52);
         ctx.restore();
       }
+      ctx.restore();
 
-      // ---- 文字区（卡下半部）----
+      // ---- 底部信息条：半透明深底框叠在立绘上（角色名不再占卡面） ----
+      const infoH = 32;
+      const infoY = cy + card.h - infoH - 2;
+      this._roundRectPath(cx + 3, infoY, card.w - 6, infoH, 8);
+      ctx.fillStyle = owned ? 'rgba(8,20,40,0.80)' : 'rgba(4,10,22,0.90)';
+      ctx.fill();
+      ctx.strokeStyle = owned ? 'rgba(234,248,255,0.22)' : 'rgba(234,248,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       if (owned) {
-        // 名称
-        ctx.fillStyle = UI_THEME.ink;
+        // 第一行：等级 + 射程
         ctx.font = 'bold 11px sans-serif';
-        ctx.fillText(unit.name || '?', centerX, cy + 79);
-        // Lv + 射程（同一行，两端分布）
-        ctx.fillStyle = UI_THEME.orangeDeep;
-        ctx.font = 'bold 9px sans-serif';
-        ctx.fillText('Lv.' + unit.level, centerX - 16, cy + 94);
-        ctx.fillStyle = unit.attackRange > 1 ? UI_THEME.skyDeep : 'rgba(43,74,111,0.5)';
-        ctx.font = '9px sans-serif';
-        ctx.fillText('射' + (unit.attackRange || 1), centerX + 16, cy + 94);
-        // 招募进度 / MAX
+        ctx.fillStyle = UI_THEME.gold;
+        ctx.fillText('Lv.' + unit.level, centerX - 15, infoY + 11);
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = unit.attackRange > 1 ? '#8ed6ff' : 'rgba(234,248,255,0.62)';
+        ctx.fillText('射' + (unit.attackRange || 1), centerX + 17, infoY + 11);
+        // 第二行：招募进度 / MAX
+        ctx.font = 'bold 10px sans-serif';
         if (unit.level >= MAX_UNIT_LEVEL) {
-          ctx.fillStyle = UI_THEME.green;
-          ctx.font = 'bold 9px sans-serif';
-          ctx.fillText('MAX', centerX, cy + 105);
+          ctx.fillStyle = '#6ee7a8';
+          ctx.fillText('MAX', centerX, infoY + 23);
         } else if (unit.recruitRequired > 0) {
           const needed = unit.recruitRequired * unit.level;
           const current = unit.recruitCount || 0;
-          ctx.fillStyle = current >= needed ? UI_THEME.green : 'rgba(22,48,79,0.62)';
-          ctx.font = '9px sans-serif';
-          ctx.fillText(`招募 ${current}/${needed}`, centerX, cy + 105);
-        }
-
-        // 上阵标记：「阵N」胶囊（左上角，避开立绘主体）
-        if (isDeployed) {
-          const slotIdx = deployedUnits.indexOf(unit.id);
-          const tagW = 24, tagH = 12;
-          const tagX = cx + 4, tagY = cy + 4;
-          ctx.save();
-          this._roundRectPath(tagX, tagY, tagW, tagH, tagH / 2);
-          ctx.fillStyle = UI_THEME.skyDeep;
-          ctx.fill();
-          ctx.restore();
-          ctx.fillStyle = UI_THEME.white;
-          ctx.font = 'bold 9px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('阵' + (slotIdx + 1), tagX + tagW / 2, tagY + tagH / 2 + 0.5);
-          ctx.textBaseline = 'alphabetic';
-          // 可升级角标（右上，与阵N 对角）
-        } else if (DeploymentSystem.isUnitUpgradeable(unit.id)) {
-          ctx.fillStyle = '#22c55e';
-          ctx.beginPath();
-          ctx.arc(cx + card.w - 9, cy + 9, 8, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 10px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('↑', cx + card.w - 9, cy + 9);
-          ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = current >= needed ? '#6ee7a8' : 'rgba(234,248,255,0.86)';
+          ctx.fillText(`招募 ${current}/${needed}`, centerX, infoY + 23);
         }
       } else {
-        // 未拥有：名称（浅灰）+「未拥有」锁标 + 解锁花费贴图
-        ctx.fillStyle = 'rgba(234,248,255,0.82)';
-        ctx.font = 'bold 11px sans-serif';
-        ctx.fillText(unit.name || '?', centerX, cy + 79);
+        // 第一行：行动提示（左上角已有「未拥有」胶囊，这里给下一步动作）；第二行：解锁花费贴图
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillStyle = 'rgba(234,248,255,0.9)';
+        ctx.fillText('去招募', centerX, infoY + 11);
+        const uc = unit.unlockCost || {};
+        const costEntries = [];
+        if (uc.stardust) costEntries.push(['stardust', uc.stardust]);
+        if (uc.gold) costEntries.push(['gold', uc.gold]);
+        if (costEntries.length) {
+          this._drawCurrencyRun(costEntries, centerX, infoY + 23, {
+            align: 'center', iconSize: 10, fontSize: 9, tokenGap: 8, iconGap: 2,
+            alpha: unit.affordable ? 0.95 : 0.6, plus: false,
+          });
+        } else {
+          ctx.font = '9px sans-serif';
+          ctx.fillStyle = 'rgba(234,248,255,0.7)';
+          ctx.fillText('去招募解锁', centerX, infoY + 23);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
 
+      // ---- 角标：上阵编号 / 可升级 / 未拥有锁 ----
+      if (isDeployed) {
+        const slotIdx = deployedUnits.indexOf(unit.id);
+        const tagW = 24, tagH = 12;
+        const tagX = cx + 4, tagY = cy + 4;
+        ctx.save();
+        this._roundRectPath(tagX, tagY, tagW, tagH, tagH / 2);
+        ctx.fillStyle = UI_THEME.skyDeep;
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = UI_THEME.white;
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('阵' + (slotIdx + 1), tagX + tagW / 2, tagY + tagH / 2 + 0.5);
+        ctx.textBaseline = 'alphabetic';
+      } else if (owned && DeploymentSystem.isUnitUpgradeable(unit.id)) {
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.arc(cx + card.w - 9, cy + 9, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('↑', cx + card.w - 9, cy + 9);
+        ctx.textBaseline = 'alphabetic';
+      } else if (!owned) {
         // 「未拥有」胶囊（左上角）
         const tagW = 40, tagH = 13;
         const tagX = cx + 4, tagY = cy + 4;
@@ -2821,24 +2839,13 @@ export class RenderSystem {
         ctx.textBaseline = 'middle';
         ctx.fillText('未拥有', tagX + tagW / 2, tagY + tagH / 2 + 0.5);
         ctx.textBaseline = 'alphabetic';
-
-        // 解锁花费：星尘 + 金币贴图（居中，cy+98）；可负担时金色高亮
-        const uc = unit.unlockCost || {};
-        const costEntries = [];
-        if (uc.stardust) costEntries.push(['stardust', uc.stardust]);
-        if (uc.gold) costEntries.push(['gold', uc.gold]);
-        if (costEntries.length) {
-          this._drawCurrencyRun(costEntries, centerX, cy + 98, {
-            align: 'center', iconSize: 11, fontSize: 9, tokenGap: 8, iconGap: 2,
-            alpha: unit.affordable ? 0.95 : 0.55, plus: false,
-          });
-        } else {
-          ctx.fillStyle = 'rgba(234,248,255,0.6)';
-          ctx.font = '9px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('去招募解锁', centerX, cy + 98);
-        }
       }
+
+      // ---- 描边补画：立绘与信息条会盖住卡底描边，最后统一描一次保证四边与圆角完整 ----
+      this._roundRectPath(cx + 1, cy + 1, card.w - 2, card.h - 2, 11);
+      ctx.strokeStyle = cardBorder;
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
 
     ctx.restore(); // 恢复 clip（滚动区仅兵种卡列表）
@@ -3375,6 +3382,7 @@ export class RenderSystem {
     const h = this.screenHeight;
     const unit = gameState.unitDetailData;
     const profile = gameState.profile;
+    const isOwned = unit.owned !== false;
 
     // 遮罩
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -3415,11 +3423,18 @@ export class RenderSystem {
     ctx.font = 'bold 16px sans-serif';
     ctx.fillText('×', closeX + 15, closeY + 15);
 
-    // === 单位图标 + 名称（兵种立绘本轮不出，保留 emoji 文字兜底，仅转深色）===
-    const iconY = panelY + 65;
-    ctx.font = 'bold 36px sans-serif';
-    ctx.fillStyle = UI_THEME.navy;
-    ctx.fillText(unit.icon || '?', panelX + 50, iconY);
+    // === 单位图标 + 名称（用正式立绘，emoji 仅兜底）===
+    let detailArtDrawn = false;
+    if (unit.artIndex >= 1 && unit.artIndex <= 40) {
+      detailArtDrawn = this._artUnit(unit.artIndex, panelX + 18, panelY + 42, 58, 58,
+        false, { alpha: isOwned ? 0.98 : 0.72, fit: 'contain' });
+    }
+    if (!detailArtDrawn) {
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillStyle = UI_THEME.navy;
+      ctx.textAlign = 'center';
+      ctx.fillText(unit.icon || '?', panelX + 47, panelY + 65);
+    }
 
     ctx.textAlign = 'left';
     ctx.fillStyle = UI_THEME.ink;
@@ -3431,10 +3446,28 @@ export class RenderSystem {
     ctx.font = 'bold 11px sans-serif';
     ctx.fillText(`[${qName}]`, panelX + 90, panelY + 72);
 
-    // 等级
+    // 等级（未拥有按 Lv.1 预览，避免显示 Lv.0）
     ctx.fillStyle = UI_THEME.orangeDeep;
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(`Lv.${unit.level}`, panelX + 90, panelY + 88);
+    ctx.fillText(isOwned ? `Lv.${unit.level}` : 'Lv.1 预览', panelX + 90, panelY + 88);
+
+    // 未拥有：右上角状态胶囊（关闭按钮下方，避免重叠）
+    if (!isOwned) {
+      const tagW = 56, tagH = 18;
+      const tagX = panelX + panelW - tagW - 16, tagY = panelY + 42;
+      ctx.save();
+      this._roundRectPath(tagX, tagY, tagW, tagH, tagH / 2);
+      ctx.fillStyle = 'rgba(6,14,28,0.78)';
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = 'rgba(234,248,255,0.92)';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('未拥有', tagX + tagW / 2, tagY + tagH / 2 + 0.5);
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+    }
 
     // 战斗风格
     const styleNames = { melee: '近战', ranged: '远程', defense: '防御', magic: '法术' };
@@ -3577,12 +3610,33 @@ export class RenderSystem {
       nextY += 14;
     }
 
-    // === 招募进度 ===
+    // === 招募进度（未拥有改为解锁费用预览）===
     const recruitNeeded = (unit.recruitRequired || 0) * unit.level;
     const recruitCurrent = unit.recruitCount || 0;
     const recruitReady = recruitNeeded > 0 && recruitCurrent >= recruitNeeded;
     const isMaxLevel = unit.level >= MAX_UNIT_LEVEL;
+    let canUpgrade = false; // 未拥有分支不计算，保持 false（该分支提前 return）
 
+    if (!isOwned) {
+      const uc = unit.unlockCost || {};
+      ctx.textAlign = 'left';
+      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.font = '10px sans-serif';
+      ctx.fillText('解锁消耗:', panelX + 15, nextY);
+      ctx.textAlign = 'right';
+      this._drawCurrencyRun(
+        [['stardust', uc.stardust || 0], ['gold', uc.gold || 0]].filter(e => e[1] > 0),
+        panelX + panelW - 15, nextY,
+        { align: 'right', iconSize: 11, fontSize: 10, tokenGap: 8, iconGap: 2,
+          alpha: unit.affordable ? 0.95 : 0.6, plus: false }
+      );
+      ctx.textAlign = 'left';
+      ctx.fillStyle = unit.affordable ? UI_THEME.green : '#C0392B';
+      ctx.font = '9px sans-serif';
+      ctx.fillText(unit.affordable ? '资源充足，去招募吧' : '资源不足，可先攒材料', panelX + 15, nextY + 16);
+      nextY += 32;
+      // 未拥有不展示升级消耗，直接把 nextY 推到按钮区之前
+    } else {
     ctx.textAlign = 'left';
     ctx.fillStyle = UI_THEME.navySoft;
     ctx.font = '10px sans-serif';
@@ -3610,7 +3664,6 @@ export class RenderSystem {
     nextY += 20;
 
     // === 升级消耗 ===
-    let canUpgrade = false;
     if (!isMaxLevel) {
       const cost = unit.upgradeCost || { starDust: 0, gold: 0 };
       const scaledStarDust = Math.floor((cost.starDust || 0) * Math.pow(UPGRADE_COST_GROWTH, unit.level - 1));
@@ -3632,21 +3685,25 @@ export class RenderSystem {
       ctx.fillText(`◆ ${scaledGold}`, panelX + panelW - 15, nextY);
       nextY += 15;
     }
+    } // end isOwned 招募进度/升级消耗
 
-    // === 底部按钮区：上阵（左） + 升级（右） ===
+    // === 底部按钮区（几何来自 unitDetailActionLayout，与 Game 命中同源）===
+    const acts = RenderSystem.unitDetailActionLayout(w, h);
+    const btnCenterY = () => acts.btnY + acts.btnH / 2;
     const deployedUnits = profile?.deployment?.units || [];
     const isDeployed = deployedUnits.includes(unit.id);
-    const btnH = 38;
-    const btnY = panelY + panelH - 50;
-    const btnGap = 10;
-    const btnW = (panelW - 40 - btnGap) / 2;
-    const deployBtnX = panelX + 20;
-    const upgradeBtnX = deployBtnX + btnW + btnGap;
+
+    if (!isOwned) {
+      // 未拥有：整行主 CTA「前往获取」，点击跳招募页
+      this._primaryButton(acts.goto, '前往获取');
+      ctx.textBaseline = 'alphabetic';
+      return;
+    }
 
     // 上阵按钮（几何不变：已上阵=云白弱面，可上阵=明黄主 CTA，槽满=灰弱面）
     const slotsFull = !isDeployed && deployedUnits.filter(Boolean).length >= 6;
     const canDeploy = !isDeployed && !slotsFull;
-    const deployRect = { x: deployBtnX, y: btnY, w: btnW, h: btnH, r: 10 };
+    const deployRect = acts.deploy;
     if (canDeploy) {
       this._primaryButton(deployRect, '上 阵');
     } else {
@@ -3659,11 +3716,11 @@ export class RenderSystem {
       ctx.font = 'bold 13px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(isDeployed ? '✓ 已上阵' : '槽位已满', deployBtnX + btnW / 2, btnY + btnH / 2);
+      ctx.fillText(isDeployed ? '✓ 已上阵' : '槽位已满', deployRect.x + deployRect.w / 2, btnCenterY(acts));
     }
 
     // 升级按钮 / 已满级（几何不变）
-    const upgradeRect = { x: upgradeBtnX, y: btnY, w: btnW, h: btnH, r: 10 };
+    const upgradeRect = acts.upgrade;
     if (!isMaxLevel) {
       if (canUpgrade) {
         this._primaryButton(upgradeRect, '升 级');
@@ -3673,7 +3730,7 @@ export class RenderSystem {
         ctx.font = 'bold 13px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('条件不足', upgradeBtnX + btnW / 2, btnY + btnH / 2);
+        ctx.fillText('条件不足', upgradeRect.x + upgradeRect.w / 2, btnCenterY(acts));
       }
     } else {
       this._cardBg(upgradeRect, { r: 10, tint: 'rgba(255,237,213,0.95)', border: 'rgba(232,168,56,0.5)' });
@@ -3681,7 +3738,7 @@ export class RenderSystem {
       ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('★ 已满级 ★', upgradeBtnX + btnW / 2, btnY + btnH / 2);
+      ctx.fillText('★ 已满级 ★', upgradeRect.x + upgradeRect.w / 2, btnCenterY(acts));
     }
     ctx.textBaseline = 'alphabetic';
   }
@@ -4078,16 +4135,18 @@ export class RenderSystem {
 
   _roundRectPath(x, y, w, h, r) {
     const { ctx } = this;
+    // 2026-11-23：半径统一在这里收敛，避免调用方漏 clamp 时 arcTo 画出反向弧
+    const rr = Math.max(0, Math.min(r, w / 2, h / 2));
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
+    ctx.moveTo(x + rr, y);
+    ctx.lineTo(x + w - rr, y);
+    ctx.arcTo(x + w, y, x + w, y + rr, rr);
+    ctx.lineTo(x + w, y + h - rr);
+    ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+    ctx.lineTo(x + rr, y + h);
+    ctx.arcTo(x, y + h, x, y + h - rr, rr);
+    ctx.lineTo(x, y + rr);
+    ctx.arcTo(x, y, x + rr, y, rr);
     ctx.closePath();
   }
 
@@ -5306,6 +5365,25 @@ export class RenderSystem {
     const panelW = Math.min(screenWidth - 20, 300);
     const panelH = Math.min(screenHeight - 60, 465);
     return { panelW, panelH, panelX: (screenWidth - panelW) / 2, panelY: (screenHeight - panelH) / 2 };
+  }
+
+  /**
+   * 兵种详情底部按钮几何（渲染与 Game._handleUnitDetailTap 共用单一真相源）
+   * 已拥有：上阵(左) + 升级(右)；未拥有：整行「前往获取」。
+   */
+  static unitDetailActionLayout(screenWidth, screenHeight) {
+    const { panelW, panelX, panelY, panelH } = RenderSystem.unitDetailPanelLayout(screenWidth, screenHeight);
+    const btnH = 38;
+    const btnY = panelY + panelH - 50;
+    const btnGap = 10;
+    const btnW = (panelW - 40 - btnGap) / 2;
+    const deployBtnX = panelX + 20;
+    return {
+      btnH: btnH, btnY: btnY,
+      deploy: { x: deployBtnX, y: btnY, w: btnW, h: btnH, r: 10 },
+      upgrade: { x: deployBtnX + btnW + btnGap, y: btnY, w: btnW, h: btnH, r: 10 },
+      goto: { x: deployBtnX, y: btnY, w: panelW - 40, h: btnH, r: 10 },
+    };
   }
 
   /**

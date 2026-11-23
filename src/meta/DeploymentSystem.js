@@ -572,6 +572,8 @@ export function getAllUnitCardList() {
     if (unitId.startsWith('_') || typeof cfg !== 'object') continue;
     if (ownedIds.has(unitId)) continue;
     const cost = cfg.unlockCost || { starDust: 0, gold: 0 };
+    // 未拥有也要能展开详情：按 Lv.1 派生完整属性/技能，渲染层复用同一套面板
+    const stats = getUnitStats(unitId, 1) || {};
     result.push({
       id: unitId,
       owned: false,
@@ -584,6 +586,12 @@ export function getAllUnitCardList() {
       combatStyles: cfg.combatStyles || [],
       special: cfg.special || null,
       attackRange: cfg.attackRange ?? 1,
+      // 详情面板属性区需要的字段（未拥有统一按 Lv.1 展示，仅作预览）
+      attackCoeff: stats.attackCoeff ?? 1,
+      hpCoeff: stats.hpCoeff ?? 1,
+      speedCoeff: stats.speedCoeff ?? 1,
+      productionSpeed: stats.productionSpeed ?? 1,
+      skills: stats.skills || [],
       unlockCost: { stardust: cost.starDust || 0, gold: cost.gold || 0 },
       affordable: profile.stardust >= (cost.starDust || 0) && profile.gold >= (cost.gold || 0),
     });

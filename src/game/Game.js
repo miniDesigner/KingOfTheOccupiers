@@ -1299,7 +1299,7 @@ export class Game {
       }
     }
 
-    // 点击兵种卡(可滚动区) → 已拥有打开详情/升级面板；未拥有引导去招募
+    // 点击兵种卡(可滚动区) → 统一打开详情面板；未拥有卡详情底部提供「前往获取」
     const scrollY = this.metaScrollY || 0;
     const card = layout.unit;
     const unitCards = DeploymentSystem.getAllUnitCardList();
@@ -1312,16 +1312,8 @@ export class Game {
       const cy = unitListY + row * (card.h + card.gap) - scrollY;
       // 可视区外卡片不响应点击（clip遮挡区），避免点底部提示带误触
       if (y <= layout.scrollAreaBottom && x >= cx && x <= cx + card.w && y >= cy && y <= cy + card.h) {
-        const clicked = unitCards[i];
-        if (clicked.owned) {
-          this._openUnitDetail(clicked.id);
-        } else {
-          this.showToast(`「${clicked.name}」尚未拥有，去招募解锁`, 1.8);
-          this.metaScrollY = 0;
-          this._gachaResults = null;
-          this._gachaRevealIdx = 0;
-          this.screenState = 'gacha';
-        }
+        // 已拥有 / 未拥有都展开详情，未拥有的获取入口放在详情底部按钮
+        this._openUnitDetail(unitCards[i].id);
         return;
       }
     }
@@ -1457,16 +1449,29 @@ export class Game {
       return;
     }
 
-    // === 底部按钮区（与 _drawUnitDetailPanel 布局一致）：上阵（左） + 升级（右） ===
-    const btnH = 38;
-    const btnY = panelY + panelH - 50;
-    const btnGap = 10;
-    const btnW = (panelW - 40 - btnGap) / 2;
-    const deployBtnX = panelX + 20;
-    const upgradeBtnX = deployBtnX + btnW + btnGap;
+    // === 底部按钮区（几何来自 unitDetailActionLayout，与渲染同源）===
+    const acts = RenderSystem.unitDetailActionLayout(w, h);
+    const btnY = acts.btnY;
+    const btnH = acts.btnH;
+
+    // 未拥有：整行「前往获取」→ 跳招募页
+    const detailUnit = DeploymentSystem.getAllUnitCardList().find(u => u.id === this._unitDetailId);
+    if (!detailUnit || detailUnit.owned === false) {
+      const g = acts.goto;
+      if (x >= g.x && x <= g.x + g.w && y >= g.y && y <= g.y + g.h) {
+        this._unitDetailId = null;
+        this.metaScrollY = 0;
+        this._gachaResults = null;
+        this._gachaRevealIdx = 0;
+        this.screenState = 'gacha';
+        this.audioManager.playButtonClick();
+      }
+      return;
+    }
 
     // 上阵按钮（左）
-    if (x >= deployBtnX && x <= deployBtnX + btnW && y >= btnY && y <= btnY + btnH) {
+    if (x >= acts.deploy.x && x <= acts.deploy.x + acts.deploy.w
+        && y >= btnY && y <= btnY + btnH) {
       const profile = ProfileManager.get();
       const deployed = profile?.deployment?.units || [];
       if (deployed.includes(this._unitDetailId)) {
@@ -1494,7 +1499,8 @@ export class Game {
     }
 
     // 升级按钮（右）
-    if (x >= upgradeBtnX && x <= upgradeBtnX + btnW && y >= btnY && y <= btnY + btnH) {
+    if (x >= acts.upgrade.x && x <= acts.upgrade.x + acts.upgrade.w
+        && y >= btnY && y <= btnY + btnH) {
       const result = DeploymentSystem.upgradeUnit(this._unitDetailId);
       this._invalidateDeploymentBundle(); // P35：羁绊预览需重新派生
       if (result.success) {
@@ -3316,8 +3322,9 @@ export class Game {
       deployDrag: this._deployDrag,
       showRecruitPanel: this._showRecruitPanel,
       unitDetailId: this._unitDetailId,
+      // 详情数据取自全量图鉴（含未拥有），未拥有兵种按 Lv.1 属性预览
       unitDetailData: (this.screenState === 'deploy_select' && this._unitDetailId)
-        ? (DeploymentSystem.getCollectedUnitList().find(u => u.id === this._unitDetailId) || null)
+        ? (DeploymentSystem.getAllUnitCardList().find(u => u.id === this._unitDetailId) || null)
         : null,
       buildingDetailType: this._buildingDetailType,
       buildingDetailData: (this.screenState === 'deploy_select' && this._buildingDetailType)
