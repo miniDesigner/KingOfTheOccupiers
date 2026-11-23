@@ -1468,7 +1468,10 @@ export class RenderSystem {
     }
 
     let curX = x;
+    // 2026-11-23：补 right 对齐——此前只实现了 center，传 right 时会错误地
+    // 从 x 起向右绘制导致溢出（未拥有详情的解锁消耗数字曾跑出面板）。
     if (o.align === 'center') curX = x - totalW / 2;
+    else if (o.align === 'right') curX = x - totalW;
     const cy = y;
     if (prefix) {
       ctx.fillText(prefix, curX, cy);
@@ -2525,14 +2528,19 @@ export class RenderSystem {
         border: isDragTarget ? UI_THEME.gold : (slotData.empty ? 'rgba(150,180,215,0.40)' : qColor),
         flat: true,
       });
-      // 立绘（2026-11-23 放大）：52px 见方占卡面主体，名字(y+66)/等级(y+80)下移不遮挡。
+      // 2026-11-23 与图鉴一致：立绘按卡高放大、横向溢出由圆角裁剪收口，铺满卡面主体；
+      // 名称不再绘制，底部只留品质名 + Lv 细带（见下）。
       let slotArtDrawn = false;
       if (!slotData.empty) {
         const _uid = slotData.artIndex || Number(slotData.unitId || slotData.id || slotData.unitIndex || 0);
         if (_uid >= 1 && _uid <= 40) {
-          const artBox = Math.min(52, uslot.h - 38);
-          slotArtDrawn = this._artUnit(_uid, sx + (uslot.w - artBox) / 2, uslot.y + 4,
-            artBox, artBox, false, { alpha: 0.98, fit: 'contain' });
+          ctx.save();
+          this._roundRectPath(sx, uslot.y, uslot.w, uslot.h, 10);
+          ctx.clip();
+          const artSpan = uslot.h - 22;
+          slotArtDrawn = this._artUnit(_uid, sx + (uslot.w - artSpan) / 2, uslot.y + 2,
+            artSpan, artSpan, false, { alpha: 0.98, fit: 'contain' });
+          ctx.restore();
         }
       }
       // 高品质(紫及以上)槽位内部微光，强化品质感
@@ -2542,10 +2550,18 @@ export class RenderSystem {
         ctx.fillRect(sx, uslot.y, uslot.w, uslot.h);
         ctx.globalAlpha = 1;
       }
-      ctx.fillStyle = 'rgba(234,248,255,0.52)';
-      ctx.font = '8px sans-serif';
+      // 序号 #N：左上角小胶囊，压在立绘上不与底部信息冲突
+      ctx.save();
+      this._roundRectPath(sx + 3, uslot.y + 3, 16, 12, 5);
+      ctx.fillStyle = 'rgba(6,14,28,0.66)';
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = 'rgba(234,248,255,0.85)';
+      ctx.font = 'bold 8px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('#' + (i + 1), sx + 5, uslot.y + 10);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('#' + (i + 1), sx + 6, uslot.y + 9.5);
+      ctx.textBaseline = 'alphabetic';
 
       if (slotData.empty && !isDragSource) {
         ctx.fillStyle = 'rgba(234,248,255,0.55)';
@@ -2556,32 +2572,34 @@ export class RenderSystem {
         // emoji 兜底：立绘加载失败时才画，避免与人物图叠字
         if (!slotArtDrawn) {
           ctx.fillStyle = qColor;
-          ctx.font = 'bold 22px sans-serif';
+          ctx.font = 'bold 26px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(slotData.icon || '?', sx + uslot.w / 2, uslot.y + 40);
+          ctx.fillText(slotData.icon || '?', sx + uslot.w / 2, uslot.y + uslot.h * 0.46);
         }
-        ctx.fillStyle = UI_THEME.cloud; // 夜色底：名称改云白，原 ink 深蓝在暗底不可读
-        ctx.font = 'bold 9px sans-serif';
-        ctx.fillText(slotData.name || '?', sx + uslot.w / 2, uslot.y + 66);
-        // 品质名（左）+ 等级（右）—— 品质用名称描述（与抽卡界面一致），不用颜色字
-        // 卡宽 < 50 时两端会挤在一起（320 屏约 46）：品质已由描边色表达，此处只留居中等级。
-        // 注意 430 屏卡宽被 LAYOUT_DESIGN_MAX 夹到 52，仍属可放下，阈值不能设到 52 以上。
+        // 底部信息细带：深底半透明 + 品质色左条，叠在立绘下缘（与图鉴卡信息条同语言）
+        const bandY = uslot.y + uslot.h - 20;
+        this._roundRectPath(sx + 2, bandY, uslot.w - 4, 17, 5);
+        ctx.fillStyle = 'rgba(6,14,30,0.86)';
+        ctx.fill();
         const qNames = ['普通', '精良', '稀有', '史诗', '传说', '神话'];
+        ctx.textBaseline = 'middle';
         if (uslot.w < 50) {
-          ctx.fillStyle = UI_THEME.gold; // 夜色底：等级改明黄保证对比度
-          ctx.font = 'bold 8px sans-serif';
+          // 窄卡只放居中 Lv，品质已由整卡边框色表达
+          ctx.fillStyle = UI_THEME.gold;
+          ctx.font = 'bold 9px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w / 2, uslot.y + 80);
+          ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w / 2, bandY + 9);
         } else {
           ctx.fillStyle = qColor;
           ctx.font = 'bold 8px sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText(qNames[(slotData.quality || 1) - 1] || '普通', sx + 5, uslot.y + 80);
-          ctx.fillStyle = UI_THEME.gold; // 夜色底：等级改明黄保证对比度
-          ctx.font = 'bold 8px sans-serif';
+          ctx.fillText(qNames[(slotData.quality || 1) - 1] || '普通', sx + 5, bandY + 9);
+          ctx.fillStyle = UI_THEME.gold;
+          ctx.font = 'bold 9px sans-serif';
           ctx.textAlign = 'right';
-          ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w - 5, uslot.y + 80);
+          ctx.fillText('Lv.' + (slotData.level || 1), sx + uslot.w - 5, bandY + 9);
         }
+        ctx.textBaseline = 'alphabetic';
         // P35：品质改由外框颜色 + 品质名表达，移除 ★ 重复计数
       } else {
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
@@ -2604,24 +2622,24 @@ export class RenderSystem {
       const isActive = syn && syn.level > 0;
       const styleKey = syn?.style || ['melee', 'ranged', 'defense', 'magic'][i];
       const styleColor = { melee: '#ef4444', ranged: '#22c55e', defense: '#3b82f6', magic: '#a855f7' }[styleKey] || '#a855f7';
-      // 激活态云白亮卡 + style 色外缘；未激活用平面暗块，深底上与背景融为一体
+      // 2026-11-23 夜色统一：激活态改深靛蓝渐变 + 语义色整卡边框，与兵种卡同族；
+      // 未激活保持半透暗块（弱化），文字统一浅色保证暗底可读。
       this._cardBg({ x: sx, y: ap.y, w: ap.size, h: ap.size, r: 10 }, {
-        tint: isActive ? 'rgba(255,255,255,0.94)' : 'rgba(255,255,255,0.10)',
-        border: isActive ? styleColor : 'rgba(234,248,255,0.22)',
-        edge: isActive ? styleColor : null,
-        edgeSide: 'top',
-        flat: !isActive,
+        tintGradient: isActive ? ['rgba(46,72,112,0.96)', 'rgba(20,36,62,0.97)'] : null,
+        tint: isActive ? 'rgba(20,36,62,0.97)' : 'rgba(255,255,255,0.10)',
+        border: isActive ? styleColor : 'rgba(150,180,215,0.38)',
+        flat: true,
       });
       // P35：未激活也显示真实羁绊图标 + 中文羁绊名（不再回落英文 style key）
-      ctx.fillStyle = isActive ? styleColor : 'rgba(234,248,255,0.38)';
+      ctx.fillStyle = isActive ? styleColor : 'rgba(234,248,255,0.42)';
       ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(syn?.icon || '?', sx + ap.size / 2, ap.y + 22);
-      ctx.fillStyle = isActive ? UI_THEME.ink : 'rgba(234,248,255,0.50)';
+      ctx.fillStyle = isActive ? UI_THEME.cloud : 'rgba(234,248,255,0.52)';
       ctx.font = 'bold 9px sans-serif';
       ctx.fillText(syn?.name || '羁绊', sx + ap.size / 2, ap.y + 38);
       // 等级 (Lv.X/6) 或未激活
-      ctx.fillStyle = isActive ? UI_THEME.orangeDeep : 'rgba(234,248,255,0.45)';
+      ctx.fillStyle = isActive ? UI_THEME.gold : 'rgba(234,248,255,0.46)';
       ctx.font = 'bold 10px sans-serif';
       ctx.fillText(isActive ? `Lv.${syn.level}/${syn.maxLevel || 6}` : '未激活', sx + ap.size / 2, ap.y + 54);
     }
@@ -2641,11 +2659,14 @@ export class RenderSystem {
       const bldType = bldKeys[i];
       const bldData = buildings[bldType] || { level: 1, maxLevel: 1 };
       const sx = bldStartX + i * (bldSlotW + bldGap);
+      // 2026-11-23 夜色统一：建筑卡同族深靛蓝渐变 + 橙色整卡边框/左条
       this._cardBg({ x: sx, y: bldSlotY, w: bldSlotW, h: bldSlotH, r: 10 }, {
-        tint: 'rgba(255,255,255,0.92)',
-        border: 'rgba(232,114,47,0.55)',
+        tintGradient: ['rgba(58,50,86,0.96)', 'rgba(28,28,52,0.97)'],
+        tint: 'rgba(28,28,52,0.97)',
+        border: 'rgba(249,138,66,0.92)',
         edge: UI_THEME.orange,
         edgeSide: 'left',
+        flat: true,
       });
       if (!this._artIcon(ART_PREFIXES.buildingUp, bldArtKeys[i], sx + bldSlotW / 2, bldSlotY + 18, 18, 1)) {
         ctx.fillStyle = UI_THEME.orangeDeep;
@@ -2653,16 +2674,16 @@ export class RenderSystem {
         ctx.textAlign = 'center';
         ctx.fillText(bldFallback[i], sx + bldSlotW / 2, bldSlotY + 18);
       }
-      ctx.fillStyle = UI_THEME.ink;
+      ctx.fillStyle = UI_THEME.cloud; // 夜色底：名称改云白
       ctx.font = 'bold 9px sans-serif';
       ctx.fillText(bldNames[bldType] || bldType, sx + bldSlotW / 2, bldSlotY + 34);
       const isMaxLevel = bldData.level >= bldData.maxLevel;
-      ctx.fillStyle = isMaxLevel ? UI_THEME.green : UI_THEME.navySoft;
+      ctx.fillStyle = isMaxLevel ? '#4ADE80' : 'rgba(234,248,255,0.66)'; // 夜底等级色提亮
       ctx.font = '8px sans-serif';
       ctx.fillText(`Lv.${bldData.level}/${bldData.maxLevel}`, sx + bldSlotW / 2, bldSlotY + 45);
       // P36: 可点击 hint —— 画在卡内右侧（原在卡下方 +65，与「已拥有兵种」标题重叠）
       if (!isMaxLevel) {
-        ctx.fillStyle = UI_THEME.orangeDeep;
+        ctx.fillStyle = UI_THEME.gold;
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText('▸', sx + bldSlotW - 7, bldSlotY + 45);
@@ -2824,15 +2845,20 @@ export class RenderSystem {
         ctx.fillText('阵' + (slotIdx + 1), tagX + tagW / 2, tagY + tagH / 2 + 0.5);
         ctx.textBaseline = 'alphabetic';
       } else if (owned && DeploymentSystem.isUnitUpgradeable(unit.id)) {
-        ctx.fillStyle = '#22c55e';
+        // 2026-11-23：原 #22c55e 与 Q2 绿色品质边框同色，无法分辨；
+        // 改明黄 + 深棕描边，与 Q1~Q6 品质色全部区分，↑ 语义也更醒目。
         ctx.beginPath();
         ctx.arc(cx + card.w - 9, cy + 9, 8, 0, Math.PI * 2);
+        ctx.fillStyle = UI_THEME.gold;
         ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px sans-serif';
+        ctx.strokeStyle = '#8A5A00';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#7A4A00';
+        ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('↑', cx + card.w - 9, cy + 9);
+        ctx.fillText('↑', cx + card.w - 9, cy + 9 + 0.5);
         ctx.textBaseline = 'alphabetic';
       } else if (!owned) {
         // 「未拥有」胶囊（左上角）
@@ -3081,8 +3107,8 @@ export class RenderSystem {
     // --- 兵种槽位（顶部区域，须避开统一资源栏 0~50 的覆盖带）---
     const slotLabelY = 62;
     const slotY = 72;
-    // 上阵槽加高（2026-11-23）：立绘 40→52px，名称/等级下移，强化主视觉
-    const slotH = 92;
+    // 上阵槽（2026-11-23 与图鉴一致化）：立绘放大占主体，去名称，只留品质+Lv 细带
+    const slotH = 100;
 
     // --- 羁绊（4 类风格卡，正方形）---
     const synLabelY = slotY + slotH + SECTION_GAP;
@@ -3130,8 +3156,10 @@ export class RenderSystem {
         gap: 8,
         perRow: 4,
       },
-      // 可滚动区底边（底部两行提示之上留 14px）
-      scrollAreaBottom: h - 94,
+      // 2026-11-23 重叠修复：提示带 tipBandY=h-104 高48（占 h-104~h-56）。
+      // 旧值 h-94 让滚动区底边落进提示带内部 10px，最后一行卡被盖住；
+      // 改 h-112 使滚动区在提示带上方 8px 收口，两者不再重叠。
+      scrollAreaBottom: h - 112,
       tipY1: h - 80,
       tipY2: h - 64,
     };
@@ -3408,67 +3436,78 @@ export class RenderSystem {
     const qColor = qColors[(unit.quality || 1) - 1] || '#9ca3af';
     const qName = qNames[(unit.quality || 1) - 1] || '?';
 
-    // 云白面板 + 品质色左侧竖条（几何来自 unitDetailPanelLayout，不变）
+    // 2026-11-23 大立绘布局：面板改深靛蓝夜色渐变 + 品质色整卡边框，与布阵界面同族
     this._cardBg({ x: panelX, y: panelY, w: panelW, h: panelH }, {
-      r: 18, tint: 'rgba(255,255,255,0.98)', border: 'rgba(43,74,111,0.28)',
-      edge: qColor, edgeSide: 'left',
+      r: 18,
+      tintGradient: ['rgba(32,52,84,0.985)', 'rgba(14,26,48,0.99)'],
+      tint: 'rgba(16,30,54,0.99)',
+      border: qColor,
+      flat: true,
     });
 
-    // 标题栏：云白偏蓝软底 + 深色文字
-    this._cardBg({ x: panelX + 2, y: panelY + 2, w: panelW - 4, h: 35, r: 12 }, {
-      r: 12, tint: 'rgba(214,238,251,0.9)', flat: true,
+    // 标题栏：深色软底 + 云白文字
+    this._cardBg({ x: panelX + 2, y: panelY + 2, w: panelW - 4, h: 32, r: 12 }, {
+      r: 12, tint: 'rgba(8,18,38,0.55)', flat: true,
     });
-    ctx.fillStyle = UI_THEME.ink;
+    ctx.fillStyle = UI_THEME.cloud;
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('兵种详情', panelX + panelW / 2, panelY + 18);
+    ctx.fillText('兵种详情', panelX + panelW / 2, panelY + 17);
 
-    // 关闭按钮（几何不变，圆形云白底 + 深蓝 ✕）
+    // 关闭按钮（夜色软底 + 云白 ✕）
     const closeX = panelX + panelW - 35;
-    const closeY = panelY + 5;
-    this._cardBg({ x: closeX, y: closeY, w: 30, h: 30, r: 15 }, {
-      r: 15, tint: 'rgba(214,238,251,0.95)', border: 'rgba(43,74,111,0.3)', flat: true,
+    const closeY = panelY + 4;
+    this._cardBg({ x: closeX, y: closeY, w: 28, h: 28, r: 14 }, {
+      r: 14, tint: 'rgba(8,18,38,0.6)', border: 'rgba(234,248,255,0.32)', flat: true,
     });
-    ctx.fillStyle = UI_THEME.navy;
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('×', closeX + 15, closeY + 15);
+    ctx.fillStyle = UI_THEME.cloud;
+    ctx.font = 'bold 17px sans-serif';
+    ctx.fillText('×', closeX + 14, closeY + 14);
 
-    // === 单位图标 + 名称（用正式立绘，emoji 仅兜底）===
+    // === 大立绘主视觉区（2026-11-23 重设计）===
+    // 立绘放大到 118px 居中，背后品质色径向光晕 + 底部云白信息条，成为面板第一焦点。
+    const artCX = panelX + panelW / 2;
+    const artTop = panelY + 40;
+    const artSpan = 124;
+    const artCY = artTop + artSpan / 2;
+
+    // 品质色径向光晕（用同心半透明圆近似，老基础库 createRadialGradient 可能缺失）
+    if (typeof ctx.createRadialGradient === 'function') {
+      const halo = ctx.createRadialGradient(artCX, artCY, 8, artCX, artCY, artSpan * 0.72);
+      halo.addColorStop(0, hexToRgba(qColor, 0.34));
+      halo.addColorStop(0.6, hexToRgba(qColor, 0.12));
+      halo.addColorStop(1, hexToRgba(qColor, 0));
+      ctx.fillStyle = halo;
+      ctx.fillRect(artCX - artSpan, artTop - 12, artSpan * 2, artSpan + 24);
+    } else {
+      ctx.fillStyle = hexToRgba(qColor, 0.1);
+      ctx.beginPath();
+      ctx.arc(artCX, artCY, artSpan * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 立绘本体
     let detailArtDrawn = false;
     if (unit.artIndex >= 1 && unit.artIndex <= 40) {
-      detailArtDrawn = this._artUnit(unit.artIndex, panelX + 18, panelY + 42, 58, 58,
-        false, { alpha: isOwned ? 0.98 : 0.72, fit: 'contain' });
+      detailArtDrawn = this._artUnit(unit.artIndex, artCX - artSpan / 2, artTop,
+        artSpan, artSpan, false, { alpha: isOwned ? 1 : 0.72, fit: 'contain' });
     }
     if (!detailArtDrawn) {
-      ctx.font = 'bold 36px sans-serif';
-      ctx.fillStyle = UI_THEME.navy;
+      ctx.font = 'bold 60px sans-serif';
+      ctx.fillStyle = qColor;
       ctx.textAlign = 'center';
-      ctx.fillText(unit.icon || '?', panelX + 47, panelY + 65);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(unit.icon || '?', artCX, artCY);
     }
 
-    ctx.textAlign = 'left';
-    ctx.fillStyle = UI_THEME.ink;
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText(unit.name || '?', panelX + 90, panelY + 55);
-
-    // 品质标签（功能色保留）
-    ctx.fillStyle = qColor;
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillText(`[${qName}]`, panelX + 90, panelY + 72);
-
-    // 等级（未拥有按 Lv.1 预览，避免显示 Lv.0）
-    ctx.fillStyle = UI_THEME.orangeDeep;
-    ctx.font = 'bold 13px sans-serif';
-    ctx.fillText(isOwned ? `Lv.${unit.level}` : 'Lv.1 预览', panelX + 90, panelY + 88);
-
-    // 未拥有：右上角状态胶囊（关闭按钮下方，避免重叠）
+    // 未拥有：立绘右上角状态胶囊
     if (!isOwned) {
       const tagW = 56, tagH = 18;
-      const tagX = panelX + panelW - tagW - 16, tagY = panelY + 42;
+      const tagX = panelX + panelW - tagW - 20, tagY = artTop + 4;
       ctx.save();
       this._roundRectPath(tagX, tagY, tagW, tagH, tagH / 2);
-      ctx.fillStyle = 'rgba(6,14,28,0.78)';
+      ctx.fillStyle = 'rgba(6,14,28,0.82)';
       ctx.fill();
       ctx.restore();
       ctx.fillStyle = 'rgba(234,248,255,0.92)';
@@ -3476,53 +3515,69 @@ export class RenderSystem {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('未拥有', tagX + tagW / 2, tagY + tagH / 2 + 0.5);
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign = 'left';
     }
 
-    // 战斗风格
+    // 名称信息条：叠在立绘下缘的深色圆角带
+    const nameY = artTop + artSpan - 26;
+    this._roundRectPath(panelX + 12, nameY, panelW - 24, 42, 10);
+    ctx.fillStyle = 'rgba(6,14,30,0.86)';
+    ctx.fill();
+    ctx.strokeStyle = hexToRgba(qColor, 0.65);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = UI_THEME.cloud;
+    ctx.font = 'bold 17px sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(unit.name || '?', artCX, nameY + 14);
+
+    // 第二行：品质胶囊 + 等级 + 战斗风格
     const styleNames = { melee: '近战', ranged: '远程', defense: '防御', magic: '法术' };
     const styles = (unit.combatStyles || []).map(s => styleNames[s] || s).join('/');
-    ctx.fillStyle = UI_THEME.navySoft;
-    ctx.font = '10px sans-serif';
-    ctx.fillText(styles, panelX + 130, panelY + 88);
+    const lvText = isOwned ? `Lv.${unit.level}` : 'Lv.1 预览';
+    ctx.font = 'bold 10px sans-serif';
+    const meta = `[${qName}]  ${lvText}${styles ? '  ·  ' + styles : ''}`;
+    ctx.fillStyle = qColor;
+    ctx.fillText(meta, artCX, nameY + 31);
+    ctx.textBaseline = 'alphabetic';
 
-    // === 属性区（云白卡 + 深色文字，几何不变）===
-    const statsY = panelY + 110;
-    this._cardBg({ x: panelX + 10, y: statsY, w: panelW - 20, h: 70, r: 10 }, {
-      r: 10, tint: 'rgba(234,248,255,0.92)', border: 'rgba(43,74,111,0.18)', flat: true,
+    // === 属性区（夜色卡 + 浅色文字，下移让位大立绘）===
+    const statsY = panelY + 190;
+    this._cardBg({ x: panelX + 10, y: statsY, w: panelW - 20, h: 66, r: 10 }, {
+      r: 10, tint: 'rgba(8,20,42,0.56)', border: 'rgba(234,248,255,0.16)', flat: true,
     });
 
     ctx.textAlign = 'left';
     ctx.font = '11px sans-serif';
-    const colX1 = panelX + 20;
-    const colX2 = panelX + panelW / 2 + 5;
-    const rowH = 16;
+    const colX1 = panelX + 22;
+    const colX2 = panelX + panelW / 2 + 8;
+    const rowH = 17;
 
-    ctx.fillStyle = UI_THEME.navySoft;
+    ctx.fillStyle = 'rgba(234,248,255,0.58)';
     ctx.fillText('攻击', colX1, statsY + 15);
     ctx.fillText('生命', colX2, statsY + 15);
     ctx.fillText('速度', colX1, statsY + 15 + rowH);
     ctx.fillText('射程', colX2, statsY + 15 + rowH);
     ctx.fillText('生产', colX1, statsY + 15 + rowH * 2);
 
-    ctx.fillStyle = UI_THEME.ink;
+    ctx.fillStyle = UI_THEME.cloud;
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(unit.attackCoeff.toFixed(2), colX1 + 60, statsY + 15);
-    ctx.fillText(unit.hpCoeff.toFixed(2), colX2 + 60, statsY + 15);
-    ctx.fillText(unit.speedCoeff.toFixed(2), colX1 + 60, statsY + 15 + rowH);
-    ctx.fillText(`${unit.attackRange}格`, colX2 + 60, statsY + 15 + rowH);
-    ctx.fillText(`${unit.productionSpeed.toFixed(1)}x`, colX1 + 60, statsY + 15 + rowH * 2);
+    ctx.fillText(unit.attackCoeff.toFixed(2), colX1 + 62, statsY + 15);
+    ctx.fillText(unit.hpCoeff.toFixed(2), colX2 + 62, statsY + 15);
+    ctx.fillText(unit.speedCoeff.toFixed(2), colX1 + 62, statsY + 15 + rowH);
+    ctx.fillText(`${unit.attackRange}格`, colX2 + 62, statsY + 15 + rowH);
+    ctx.fillText(`${unit.productionSpeed.toFixed(1)}x`, colX1 + 62, statsY + 15 + rowH * 2);
 
     // === 特殊技能 ===
     let nextY = statsY + 80;
     if (unit.special && unit.special.desc) {
       ctx.textAlign = 'left';
-      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.fillStyle = 'rgba(234,248,255,0.58)';
       ctx.font = '10px sans-serif';
       ctx.fillText('特殊:', panelX + 15, nextY);
-      ctx.fillStyle = UI_THEME.skyDeep;
+      ctx.fillStyle = UI_THEME.skyLight;
       ctx.fillText(unit.special.desc, panelX + 50, nextY);
       nextY += 20;
     }
@@ -3539,12 +3594,12 @@ export class RenderSystem {
 
       // 区块标题行
       ctx.textAlign = 'left';
-      ctx.fillStyle = UI_THEME.skyDeep;
+      ctx.fillStyle = UI_THEME.skyLight;
       ctx.font = 'bold 10px sans-serif';
       ctx.fillText(`技能 (${unlockedCount}/${skills.length})`, panelX + 15, nextY);
       ctx.textAlign = 'right';
       ctx.font = '9px sans-serif';
-      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.fillStyle = 'rgba(234,248,255,0.5)';
       ctx.fillText('紫6/12级 · 橙18级解锁', panelX + panelW - 15, nextY);
       nextY += 5;
 
@@ -3587,33 +3642,33 @@ export class RenderSystem {
         // 品质色点（功能色保留）
         ctx.beginPath();
         ctx.arc(panelX + 19, nextY - 3, 3, 0, Math.PI * 2);
-        ctx.fillStyle = unlocked ? (skQColors[sk.quality] || UI_THEME.navySoft) : 'rgba(43,74,111,0.3)';
+        ctx.fillStyle = unlocked ? (skQColors[sk.quality] || 'rgba(234,248,255,0.5)') : 'rgba(234,248,255,0.2)';
         ctx.fill();
 
         // 技能名（锁定置灰）
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = unlocked ? UI_THEME.ink : UI_THEME.navySoft;
+        ctx.fillStyle = unlocked ? UI_THEME.cloud : 'rgba(234,248,255,0.42)';
         ctx.font = 'bold 10px sans-serif';
         ctx.fillText(sk.name, panelX + 27, nextY - 3);
 
         // 被动/主动 + 数值标签
-        ctx.fillStyle = unlocked ? UI_THEME.navySoft : 'rgba(43,74,111,0.4)';
+        ctx.fillStyle = unlocked ? 'rgba(234,248,255,0.62)' : 'rgba(234,248,255,0.28)';
         ctx.font = '9px sans-serif';
         ctx.fillText(`${sk.kind === 'active' ? '主动' : '被动'}·${skLabel(sk)}`, panelX + 92, nextY - 3);
 
         // 右侧解锁状态
         ctx.textAlign = 'right';
         if (!unlocked) {
-          ctx.fillStyle = '#C0392B';
+          ctx.fillStyle = '#F87171';
           ctx.font = '9px sans-serif';
           ctx.fillText('锁 Lv.' + sk.unlockLevel, panelX + panelW - 15, nextY - 3);
         } else if (sk.kind === 'active') {
-          ctx.fillStyle = UI_THEME.orangeDeep;
+          ctx.fillStyle = UI_THEME.orange;
           ctx.font = 'bold 9px sans-serif';
           ctx.fillText('主动', panelX + panelW - 15, nextY - 3);
         } else {
-          ctx.fillStyle = UI_THEME.green;
+          ctx.fillStyle = '#4ADE80';
           ctx.font = '9px sans-serif';
           ctx.fillText('✓', panelX + panelW - 15, nextY - 3);
         }
@@ -3622,6 +3677,7 @@ export class RenderSystem {
     }
 
     // === 招募进度（未拥有改为解锁费用预览）===
+    nextY += 8; // 2026-11-23：技能列表与招募/解锁区之间留呼吸位，避免文字黏连
     const recruitNeeded = (unit.recruitRequired || 0) * unit.level;
     const recruitCurrent = unit.recruitCount || 0;
     const recruitReady = recruitNeeded > 0 && recruitCurrent >= recruitNeeded;
@@ -3631,7 +3687,7 @@ export class RenderSystem {
     if (!isOwned) {
       const uc = unit.unlockCost || {};
       ctx.textAlign = 'left';
-      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.fillStyle = 'rgba(234,248,255,0.58)';
       ctx.font = '10px sans-serif';
       ctx.fillText('解锁消耗:', panelX + 15, nextY);
       ctx.textAlign = 'right';
@@ -3642,18 +3698,18 @@ export class RenderSystem {
           alpha: unit.affordable ? 0.95 : 0.6, plus: false }
       );
       ctx.textAlign = 'left';
-      ctx.fillStyle = unit.affordable ? UI_THEME.green : '#C0392B';
+      ctx.fillStyle = unit.affordable ? '#4ADE80' : '#F87171';
       ctx.font = '9px sans-serif';
       ctx.fillText(unit.affordable ? '资源充足，去招募吧' : '资源不足，可先攒材料', panelX + 15, nextY + 16);
       nextY += 32;
       // 未拥有不展示升级消耗，直接把 nextY 推到按钮区之前
     } else {
     ctx.textAlign = 'left';
-    ctx.fillStyle = UI_THEME.navySoft;
+    ctx.fillStyle = 'rgba(234,248,255,0.58)';
     ctx.font = '10px sans-serif';
     ctx.fillText('招募进度:', panelX + 15, nextY);
 
-    ctx.fillStyle = isMaxLevel ? UI_THEME.orangeDeep : (recruitReady ? UI_THEME.green : UI_THEME.navySoft);
+    ctx.fillStyle = isMaxLevel ? UI_THEME.orange : (recruitReady ? '#4ADE80' : 'rgba(234,248,255,0.7)');
     ctx.textAlign = 'right';
     ctx.font = 'bold 10px sans-serif';
     if (isMaxLevel) {
@@ -3684,15 +3740,15 @@ export class RenderSystem {
       canUpgrade = recruitReady && hasStarDust && hasGold;
 
       ctx.textAlign = 'left';
-      ctx.fillStyle = UI_THEME.navySoft;
+      ctx.fillStyle = 'rgba(234,248,255,0.58)';
       ctx.font = '10px sans-serif';
       ctx.fillText('升级消耗:', panelX + 15, nextY);
 
       ctx.textAlign = 'right';
       ctx.font = 'bold 10px sans-serif';
-      ctx.fillStyle = hasStarDust ? UI_THEME.green : '#C0392B';
+      ctx.fillStyle = hasStarDust ? '#4ADE80' : '#F87171';
       ctx.fillText(`✦ ${scaledStarDust}`, panelX + panelW / 2, nextY);
-      ctx.fillStyle = hasGold ? UI_THEME.green : '#C0392B';
+      ctx.fillStyle = hasGold ? '#4ADE80' : '#F87171';
       ctx.fillText(`◆ ${scaledGold}`, panelX + panelW - 15, nextY);
       nextY += 15;
     }
@@ -5373,8 +5429,9 @@ export class RenderSystem {
    * 兵种详情/升级面板布局（渲染与点击统一使用，防止命中区与绘制偏移）
    */
   static unitDetailPanelLayout(screenWidth, screenHeight) {
-    const panelW = Math.min(screenWidth - 20, 300);
-    const panelH = Math.min(screenHeight - 60, 465);
+    const panelW = Math.min(screenWidth - 20, 312);
+    // 2026-11-23 大立绘布局：面板增高到 h-36，上限 520，给顶部主视觉让出空间
+    const panelH = Math.min(screenHeight - 36, 520);
     return { panelW, panelH, panelX: (screenWidth - panelW) / 2, panelY: (screenHeight - panelH) / 2 };
   }
 
