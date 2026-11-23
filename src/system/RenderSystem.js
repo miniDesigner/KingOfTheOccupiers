@@ -1716,7 +1716,7 @@ export class RenderSystem {
     const cells = [
       { icon: '◆', value: profile ? profile.gold : 0, color: UI_THEME.goldDeep },
       { icon: '✧', value: profile ? profile.diamond : 0, color: UI_THEME.skyDeep },
-      { icon: '⭐', value: profile ? profile.stardust : 0, color: UI_THEME.navySoft },
+      { icon: '✦', value: profile ? profile.stardust : 0, color: UI_THEME.navySoft },
       { icon: '★', value: profile ? (profile.trophies || 0) : 0, color: tier ? tier.color : UI_THEME.goldDeep },
     ];
 
@@ -4973,7 +4973,7 @@ export class RenderSystem {
 
         // 单次奖励
         const rwText = Object.entries(item.reward || {}).map(([k, v]) => {
-          const icons = { diamond: '✧', gold: '◆', stardust: '✦' };
+          const icons = { diamond: '✧', gold: '◆', stardust: '✦', heroTickets: '券' };
           return `${icons[k] || k}+${v}`;
         }).join(' ');
         ctx.fillStyle = UI_THEME.goldDeep;
@@ -5033,7 +5033,7 @@ export class RenderSystem {
 
       // 价格
       const costText = Object.entries(item.cost).map(([k, v]) => {
-        const icons = { diamond: '✧', gold: '◆', stardust: '✦', realMoney: '¥' };
+        const icons = { diamond: '✧', gold: '◆', stardust: '✦', heroTickets: '券', realMoney: '¥' };
         return `${icons[k] || k}${v}`;
       }).join(' ');
       ctx.fillStyle = item.canAfford ? UI_THEME.goldDeep : UI_THEME.navySoft;
@@ -5323,7 +5323,7 @@ export class RenderSystem {
 
     // 奖励
     const rewardText = Object.entries(item.reward || {}).map(([k, v]) => {
-      const icons = { gold: '◆', diamond: '✧', stardust: '✦' };
+      const icons = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券' };
       return `${icons[k] || k}+${v}`;
     }).join(' ');
     ctx.fillStyle = UI_THEME.goldDeep;
@@ -5560,7 +5560,7 @@ export class RenderSystem {
     }
 
     const rewardText = Object.entries(reward.reward || {}).map(([k, v]) => {
-      const icons = { gold: '◆', diamond: '✧', stardust: '✦' };
+      const icons = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券' };
       return `${icons[k] || k}+${v}`;
     }).join(' ');
     ctx.fillStyle = claimable ? UI_THEME.ink : UI_THEME.navySoft;

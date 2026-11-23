@@ -2098,7 +2098,7 @@ export class Game {
     if (result.success) {
       this.audioManager.playSynergy();
       this.animManager.flashScreen('#ffd700', 0.2);
-      const icons = { diamond: '💎', gold: '💰', stardust: '⭐' };
+      const icons = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券' };
       const rw = Object.entries((result.reward && result.reward.currencies) || {})
         .map(([k, v]) => `${icons[k] || k}+${v}`).join(' ');
       this.showToast(`领取成功 ${rw}（今日 ${result.dailyClaimed}/${item.dailyLimit}）`, 1.5);
