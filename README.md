@@ -90,7 +90,7 @@ kingoftheoccupiers/
 │   ├── ui/                  # 界面文档（UI-LAYOUT-PLAN、UI-SCREENS、UI-VISUAL-AUDIT）
 │   ├── business/            # 商业计划书（BUSINESS-PLAN.html 唯一真相源 → pdf/docx）
 │   ├── project/             # 交付记录（CHECKLIST、GIT-SYNC）
-│   └── design/              # 设计稿 + 申报材料（软著/版署，见 docs/design/doc/README.md）
+│   └── design/              # 设计稿 + 申报材料（软著/版署，见 docs/design/申报/README.md）
 ├── preview/                 # 浏览器预览（index.html + wx-shim.js 兼容层）
 ├── preview-server.py        # 本地预览服务器（端口 8890）
 ├── src/                     # 业务代码唯一真相源

@@ -10,7 +10,7 @@
   - 内容必须是真实源程序
 
 用法： python3 tools/gen-copyright-source.py
-输出： docs/design/doc/软著/占地之王V1.0-源程序.html
+输出： docs/design/申报/软著/占地之王V1.0-源程序.html
 """
 
 from pathlib import Path
@@ -18,7 +18,7 @@ from html import escape
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "docs" / "design" / "doc" / "软著" / "占地之王V1.0-源程序.html"
+OUT = ROOT / "docs" / "design" / "申报" / "软著" / "占地之王V1.0-源程序.html"
 
 SOFTWARE = "占地之王"
 VERSION = "V1.0"
