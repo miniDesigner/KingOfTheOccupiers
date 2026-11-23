@@ -87,10 +87,10 @@ kingoftheoccupiers/
 ├── README.md                # 本文件：工程总览 + 历史坑
 ├── docs/                    # 全部非代码文档（按主题分类）
 │   ├── art/                 # 美术规范 + 审计/计划（ART-STYLE、ART-*、TILE-*、RESOURCE-*）
-│   ├── ui/                  # 界面文档（UI-LAYOUT-PLAN、UI-SCREENS、UI-VISUAL-AUDIT）
+│   ├── ui/                  # 界面文档 + 栅格设计稿（UI-* 文档、layout-grid / battle-grid 等）
 │   ├── business/            # 商业计划书（BUSINESS-PLAN.html 唯一真相源 → pdf/docx）
 │   ├── project/             # 交付记录（CHECKLIST、GIT-SYNC）
-│   └── design/              # 设计稿 + 申报材料（软著/版署，见 docs/design/申报/README.md）
+│   └── 申报/                # 软著/版署申报材料（见 docs/申报/README.md）
 ├── preview/                 # 浏览器预览（index.html + wx-shim.js 兼容层）
 ├── preview-server.py        # 本地预览服务器（端口 8890）
 ├── src/                     # 业务代码唯一真相源

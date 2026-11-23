@@ -429,7 +429,7 @@ export class RenderSystem {
   // ===================== 统一纵向栅格 L-SCALE（方案 M1）=====================
   // 子界面没有底部导航（大厅独有），用独立一套三段栅格，所有屏共用同一基线：
   //   状态带 8→60 / 内容区 72→h-80 / 操作带 h-80→h-16，安全底 16。
-  // 设计稿见 docs/design/layout-grid.html，规格见 docs/ui/UI-LAYOUT-PLAN.md §1。
+  // 设计稿见 docs/ui/layout-grid.html，规格见 docs/ui/UI-LAYOUT-PLAN.md §1。
   // 纯计算、不依赖 ctx，渲染与命中两侧都可读，杜绝各屏自填 88/90/95 三套顶边。
   static L_SCALE(w, h) {
     const sw = Number(w) || 375;
@@ -2250,7 +2250,7 @@ export class RenderSystem {
       return name.length > max ? name.slice(0, max) + '…' : name;
     };
 
-    // ===== B-SCALE 战斗界面栅格（430×932 基准，见 docs/design/battle-grid.html）=====
+    // ===== B-SCALE 战斗界面栅格（430×932 基准，见 docs/ui/battle-grid.html）=====
     // 状态带A 0–55 / 对战态势带 55–112 / 棋盘视口 120–h-96 / 手势提示带 h-96–h-16 / 安全底 h-16–h
     // ⚠ 本作是 realtime 210s 制，无「回合」；领地数取 player.tiles.length（与超时裁定同源）。
 
@@ -2356,7 +2356,7 @@ export class RenderSystem {
     ctx.font = 'bold 14px sans-serif';
     ctx.fillText('VS', w / 2, 79);
 
-    // ===== 棋盘视口内浮层胶囊（栅格图 docs/design/battle-grid.html：right 2%，top 13.6% ≈ y124）=====
+    // ===== 棋盘视口内浮层胶囊（栅格图 docs/ui/battle-grid.html：right 2%，top 13.6% ≈ y124）=====
     // 2026-11-20：羁绊胶囊按用户要求移除，仅保留领地 chip。尺寸常量沿用，避免牵动右侧布局。
     const chipY = 124;
     const chipH = 22;
