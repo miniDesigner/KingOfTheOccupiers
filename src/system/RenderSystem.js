@@ -1391,11 +1391,11 @@ export class RenderSystem {
   }
 
   /** 兵种贴图：序号精确构造 unit_01..40 / unit_small_01..40 */
-  _artUnit(n, x, y, w, h, small) {
+  _artUnit(n, x, y, w, h, small, opts) {
     if (!n || n < 1 || n > 40) return false;
     const key = (small ? ART_PREFIXES.unitSmall : ART_PREFIXES.unit) + String(n).padStart(2, '0');
     if (!ART_INDEX[key]) return false;
-    return this._art(key, x, y, w, h, { alpha: 0.92 });
+    return this._art(key, x, y, w, h, opts || { alpha: 0.92 });
   }
 
   // ===================== 全量静态元素贴图通道 =====================
@@ -2449,10 +2449,15 @@ export class RenderSystem {
         edgeSide: 'top',
         flat: slotData.empty,
       });
+      // 立绘（2026-11-23 接线）：artIndex=config.units 键顺序，与 unit_01..40 一一对应。
+      // 画在卡片上半部 40px 见方，名字(y+48)/等级(y+62)保持原位不被遮挡。
+      let slotArtDrawn = false;
       if (!slotData.empty) {
-        const _uid = Number(slotData.unitId || slotData.id || slotData.unitIndex || 0);
+        const _uid = slotData.artIndex || Number(slotData.unitId || slotData.id || slotData.unitIndex || 0);
         if (_uid >= 1 && _uid <= 40) {
-          this._artUnit(_uid, sx + 3, uslot.y + 4, uslot.w - 6, uslot.h - 8, false);
+          const artBox = Math.min(40, uslot.h - 42);
+          slotArtDrawn = this._artUnit(_uid, sx + (uslot.w - artBox) / 2, uslot.y + 5,
+            artBox, artBox, false, { alpha: 0.96, fit: 'contain' });
         }
       }
       // 高品质(紫及以上)槽位内部微光，强化品质感
@@ -2473,10 +2478,13 @@ export class RenderSystem {
         ctx.textAlign = 'center';
         ctx.fillText('空槽位', sx + uslot.w / 2, uslot.y + uslot.h / 2);
       } else if (!isDragSource) {
-        ctx.fillStyle = qColor;
-        ctx.font = 'bold 18px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(slotData.icon || '?', sx + uslot.w / 2, uslot.y + 30);
+        // emoji 兜底：立绘加载失败时才画，避免与人物图叠字
+        if (!slotArtDrawn) {
+          ctx.fillStyle = qColor;
+          ctx.font = 'bold 18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(slotData.icon || '?', sx + uslot.w / 2, uslot.y + 30);
+        }
         ctx.fillStyle = UI_THEME.ink;
         ctx.font = 'bold 8px sans-serif';
         ctx.fillText(slotData.name || '?', sx + uslot.w / 2, uslot.y + 48);
@@ -2666,11 +2674,21 @@ export class RenderSystem {
       }
 
       if (!isDragging) {
-        // 图标
-        ctx.fillStyle = qColor;
-        ctx.font = 'bold 20px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(unit.icon || '?', cx + card.w / 2, cy + 22);
+        // 立绘小图（2026-11-23 接线）：unit.artIndex 对应 unit_small_01..40。
+        // 30px 见方放在卡上半部（cy+1~31），名称/等级/招募文字保持原位不被遮挡。
+        let unitArtDrawn = false;
+        if (unit.artIndex >= 1 && unit.artIndex <= 40) {
+          const artBox = 30;
+          unitArtDrawn = this._artUnit(unit.artIndex, cx + (card.w - artBox) / 2, cy + 1,
+            artBox, artBox, true, { alpha: 0.96, fit: 'contain' });
+        }
+        // emoji 兜底：小图加载失败时才画
+        if (!unitArtDrawn) {
+          ctx.fillStyle = qColor;
+          ctx.font = 'bold 20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(unit.icon || '?', cx + card.w / 2, cy + 22);
+        }
         // 名称
         ctx.fillStyle = UI_THEME.ink;
         ctx.font = 'bold 9px sans-serif';

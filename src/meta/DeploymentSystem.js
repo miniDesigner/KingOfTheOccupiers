@@ -37,6 +37,22 @@ export const GROWTH_SCALE = 0.07;
 // ==================== 兵种管理 ====================
 
 /**
+ * 兵种 id → 立绘序号（1~40）。
+ * config/deployables.json 的 units 键顺序与 assets/units/unit_01~40.png 的
+ * label 顺序完全一致（剑士=01 … 古龙=40），按插入顺序取 index+1 即可，
+ * 无需另建映射表。渲染层据此调用 _artUnit(n, ..., small) 显示立绘。
+ * @param {string} unitId
+ * @returns {number} 1~40，未命中返回 0（渲染层回落 emoji 兜底）
+ */
+export function getUnitArtIndex(unitId) {
+  if (!unitId) return 0;
+  const config = ConfigLoader.getSafe('deployables');
+  const keys = Object.keys(config?.units || {});
+  const idx = keys.indexOf(unitId);
+  return idx >= 0 ? Math.min(40, idx + 1) : 0;
+}
+
+/**
  * 获取兵种计算属性（含升级加成）
  * @param {string} unitId - 兵种ID
  * @param {number} level - 兵种升级等级
@@ -463,6 +479,7 @@ export function getDeploymentSummary() {
     return {
       slot: i,
       unitId,
+      artIndex: getUnitArtIndex(unitId),
       name: cfg?.name || unitId,
       icon: cfg?.icon || '?',
       level: collected?.level || 1,
@@ -509,6 +526,7 @@ export function getCollectedUnitList() {
     const stats = getUnitStats(unitId, data.level || 1);
     result.push({
       id: unitId,
+      artIndex: getUnitArtIndex(unitId),
       name: cfg.name,
       icon: cfg.icon,
       level: data.level || 1,
