@@ -2769,10 +2769,11 @@ export class RenderSystem {
     const card = L.unit;
     const cardStartX = (w - (card.perRow * card.w + (card.perRow - 1) * card.gap)) / 2;
     const deployedUnits = profile?.deployment?.units || [];
-    // 2026-11-23 比例还原：图鉴卡不再用 96×96 裁切小图（会把 174×216 原图裁成方形），
-    // 改用主立绘 + cover 等比铺满 card.w×card.h；横向不再按卡高画成大正方形再裁边。
-    // 目标框宽高比与原图接近，cover 只裁掉少量上下透明留白，主体不拉伸。
-    const cardArtW = card.w, cardArtH = card.h;
+    // 2026-11-23 比例还原：图鉴卡不再用 96×96 裁切小图（会把 174×216 原图裁成方形）。
+    // 取景框固定按原图 174:216 计算，与卡宽无关；这样 375 与 430 屏宽下角色裁切一致。
+    // cover 在等比例框内不裁源图，只做缩放；窄屏卡宽不足时由圆角裁剪收掉极少左右边缘。
+    const cardArtH = card.h;
+    const cardArtW = card.h * (174 / 216);
 
     for (let i = 0; i < unitCards.length; i++) {
       const col = i % card.perRow;
@@ -2810,7 +2811,7 @@ export class RenderSystem {
       ctx.save();
       if (!owned) ctx.globalAlpha = 0.46; // 未拥有：压暗但仍可辨认是哪只兵种
       if (unit.artIndex >= 1 && unit.artIndex <= 40) {
-        unitArtDrawn = this._artUnit(unit.artIndex, cx, cy,
+        unitArtDrawn = this._artUnit(unit.artIndex, cx + (card.w - cardArtW) / 2, cy,
           cardArtW, cardArtH, false, { alpha: 0.98, fit: 'cover' });
       }
       ctx.restore();

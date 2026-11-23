@@ -253,9 +253,10 @@ console.log('=== 测试11b: 图鉴立绘使用主立绘并按原图比例等比�
   finally { RenderSystem.prototype._artUnit = origArtUnit; }
   assert(!err, `图鉴立绘比例渲染无异常${err ? ': ' + err.message : ''}`);
   const galleryCalls = calls.filter(c =>
-    Math.abs(c.cw - card.w) < 0.6 && Math.abs(c.ch - card.h) < 0.6);
-  assert(galleryCalls.length >= 4, `图鉴卡按 card.w×card.h 目标框绘制（命中${galleryCalls.length}张）`);
+    Math.abs(c.cw - card.h * 174 / 216) < 0.6 && Math.abs(c.ch - card.h) < 0.6);
+  assert(galleryCalls.length >= 4, `图鉴卡按原图比例取景框绘制（命中${galleryCalls.length}张）`);
   assert(galleryCalls.every(c => c.small === false), '图鉴卡改回主立绘 unit_XX，不再用 96×96 裁切小图');
+  assert(galleryCalls.every(c => Math.abs(c.cw / c.ch - 174 / 216) < 0.01), '取景框固定 174:216，不随屏宽变化');
   assert(galleryCalls.every(c => c.opts && c.opts.fit === 'cover'), '图鉴卡使用 cover 等比裁切，保持 174×216 原图比例');
 }
 
