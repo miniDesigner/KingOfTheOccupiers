@@ -1413,6 +1413,80 @@ export class RenderSystem {
       { alpha: alpha === undefined ? 0.55 : alpha });
   }
 
+  /**
+   * 资源串：图标 + 数字，统一把奖励/消耗行从裸符号升级成正式贴图。
+   * 贴图未加载/失败时逐个回落文字符号（◆✧✦券¥），保证任何环境可读。
+   * 只负责画，不改任何 Layout 几何与点击命中。
+   * @param {Array<[key:string,value:number]>} entries  [['gold',500],['heroTickets',1]]
+   * @param {number} x 起点（align=left）或中心点（align=center）
+   * @param {number} y 垂直中心（与 ctx.textBaseline='middle' 配合）
+   * @param {{align?:'left'|'center',iconSize?:number,fontSize?:number,alpha?:number,
+   *          color?:string,bold?:boolean,tokenGap?:number,iconGap?:number,plus?:boolean,prefix?:string}} opts
+   */
+  _drawCurrencyRun(entries, x, y, opts) {
+    const ctx = this.ctx;
+    const o = opts || {};
+    const iconSize = o.iconSize || 13;
+    const fontSize = o.fontSize || 12;
+    const tokenGap = o.tokenGap === undefined ? 10 : o.tokenGap;
+    const iconGap = o.iconGap === undefined ? 3 : o.iconGap;
+    const alpha = o.alpha === undefined ? 0.95 : o.alpha;
+    const plus = o.plus !== false;
+    const prefix = o.prefix || '';
+    // 资源 key → currency 贴图名；符号兜底；realMoney 无贴图用 ¥
+    const artName = { gold: 'coin', diamond: 'gem', stardust: 'stardust', heroTickets: 'ticket' };
+    const symbol = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券', realMoney: '¥' };
+
+    const prevAlign = ctx.textAlign, prevBaseline = ctx.textBaseline;
+    ctx.save();
+    ctx.font = `${o.bold === false ? '' : 'bold '}${fontSize}px sans-serif`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    if (o.color) ctx.fillStyle = o.color;
+
+    // 预组装每个 token 的文字与宽度（prefix 计入总宽用于居中）
+    const tokens = [];
+    let totalW = 0;
+    if (prefix) {
+      totalW += ctx.measureText(prefix).width;
+    }
+    for (let i = 0; i < entries.length; i++) {
+      const key = String(entries[i][0]);
+      const val = entries[i][1];
+      const nm = artName[key];
+      const sym = symbol[key] || key;
+      const hasArt = nm && ART_INDEX[ART_PREFIXES.currency + nm];
+      const txt = (plus ? '+' : '') + val;
+      const txtW = ctx.measureText(txt).width;
+      const fallbackW = hasArt ? ctx.measureText(sym).width + iconGap : 0;
+      const w = (hasArt ? iconSize + iconGap : 0) + txtW;
+      tokens.push({ nm, sym, hasArt, txt, txtW, fallbackW, w });
+      totalW += w + (i < entries.length - 1 ? tokenGap : 0);
+    }
+
+    let curX = x;
+    if (o.align === 'center') curX = x - totalW / 2;
+    const cy = y;
+    if (prefix) {
+      ctx.fillText(prefix, curX, cy);
+      curX += ctx.measureText(prefix).width;
+    }
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (t.hasArt && this._artIcon(ART_PREFIXES.currency, t.nm, curX + iconSize / 2, cy, iconSize, alpha)) {
+        curX += iconSize + iconGap;
+      } else {
+        ctx.fillText(t.sym, curX, cy);
+        curX += t.fallbackW || (ctx.measureText(t.sym).width + iconGap);
+      }
+      ctx.fillText(t.txt, curX, cy);
+      curX += t.txtW + (i < tokens.length - 1 ? tokenGap : 0);
+    }
+    ctx.restore();
+    ctx.textAlign = prevAlign;
+    ctx.textBaseline = prevBaseline;
+  }
+
   /** 按钮 4 态（normal / pressed / disabled / selected）；叠加在按钮底色之上 */
   _artButton(x, y, w, h, state) {
     const map = {
@@ -3654,15 +3728,16 @@ export class RenderSystem {
     ctx.font = '12px sans-serif';
     ctx.fillText('对手: ' + (gameState.enemyName || 'AI'), cx, cy - 48);
 
-    // 奖励信息（金币 + 星尘）
+    // 奖励信息（贴图 + 数字）
     const rewards = gameState.lastRewards || {};
-    if (rewards.gold || rewards.stardust) {
-      ctx.fillStyle = UI_THEME.goldDeep;
-      ctx.font = 'bold 15px sans-serif';
-      let rewardText = '';
-      if (rewards.gold) rewardText += '◆' + rewards.gold + ' ';
-      if (rewards.stardust) rewardText += '✦' + rewards.stardust;
-      ctx.fillText('奖励: ' + rewardText, cx, cy - 26);
+    const rewardEntries = [];
+    if (rewards.gold) rewardEntries.push(['gold', rewards.gold]);
+    if (rewards.stardust) rewardEntries.push(['stardust', rewards.stardust]);
+    if (rewardEntries.length) {
+      this._drawCurrencyRun(rewardEntries, cx, cy - 26, {
+        align: 'center', fontSize: 15, iconSize: 15, plus: false,
+        color: UI_THEME.goldDeep, prefix: '奖励: ',
+      });
     }
 
     // 天梯奖杯变化（胜利 ▲ 绿 / 失败 ▼ 红，附当前段位）
@@ -4971,14 +5046,11 @@ export class RenderSystem {
         ctx.font = 'bold 13px sans-serif';
         ctx.fillText(item.name, cardX + 8, iy + 8);
 
-        // 单次奖励
-        const rwText = Object.entries(item.reward || {}).map(([k, v]) => {
-          const icons = { diamond: '✧', gold: '◆', stardust: '✦', heroTickets: '券' };
-          return `${icons[k] || k}+${v}`;
-        }).join(' ');
-        ctx.fillStyle = UI_THEME.goldDeep;
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillText(`每次 ${rwText}`, cardX + 8, iy + 28);
+        // 单次奖励（贴图 + 数字；贴图未就绪时回落 ◆✧✦券）
+        this._drawCurrencyRun(Object.entries(item.reward || {}), cardX + 8, iy + 28, {
+          fontSize: 12, color: item.exhausted ? UI_THEME.navySoft : UI_THEME.goldDeep,
+          prefix: '每次 ',
+        });
 
         // 可领次数 + 领取规则
         ctx.fillStyle = item.exhausted ? UI_THEME.navySoft : UI_THEME.navy;
@@ -5031,14 +5103,11 @@ export class RenderSystem {
         ctx.fillText(item.desc, cardX + 8, iy + 28);
       }
 
-      // 价格
-      const costText = Object.entries(item.cost).map(([k, v]) => {
-        const icons = { diamond: '✧', gold: '◆', stardust: '✦', heroTickets: '券', realMoney: '¥' };
-        return `${icons[k] || k}${v}`;
-      }).join(' ');
-      ctx.fillStyle = item.canAfford ? UI_THEME.goldDeep : UI_THEME.navySoft;
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText(costText, cardX + 8, iy + 48);
+      // 价格（贴图 + 数字；realMoney 无贴图走 ¥ 文本）
+      this._drawCurrencyRun(Object.entries(item.cost), cardX + 8, iy + 48, {
+        fontSize: 12, plus: false,
+        color: item.canAfford ? UI_THEME.goldDeep : UI_THEME.navySoft,
+      });
 
       // 限购
       if (item.limit > 0) {
@@ -5321,14 +5390,10 @@ export class RenderSystem {
     ctx.font = '10px sans-serif';
     ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, 28, y + 24);
 
-    // 奖励
-    const rewardText = Object.entries(item.reward || {}).map(([k, v]) => {
-      const icons = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券' };
-      return `${icons[k] || k}+${v}`;
-    }).join(' ');
-    ctx.fillStyle = UI_THEME.goldDeep;
-    ctx.font = '10px sans-serif';
-    ctx.fillText(rewardText, 28, y + 40);
+    // 奖励（贴图 + 数字）
+    this._drawCurrencyRun(Object.entries(item.reward || {}), 28, y + 40, {
+      fontSize: 10, iconSize: 11, color: UI_THEME.goldDeep,
+    });
 
     // 领取按钮 / 已领（几何不变，视觉改云白按钮 + 深色字，accent 作描边）
     if (canClaim) {
@@ -5559,13 +5624,10 @@ export class RenderSystem {
       return;
     }
 
-    const rewardText = Object.entries(reward.reward || {}).map(([k, v]) => {
-      const icons = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券' };
-      return `${icons[k] || k}+${v}`;
-    }).join(' ');
-    ctx.fillStyle = claimable ? UI_THEME.ink : UI_THEME.navySoft;
-    ctx.font = claimable ? 'bold 10px sans-serif' : '10px sans-serif';
-    ctx.fillText(rewardText, x + w / 2, y + h / 2);
+    this._drawCurrencyRun(Object.entries(reward.reward || {}), x + w / 2, y + h / 2, {
+      align: 'center', fontSize: 10, iconSize: 11,
+      bold: !!claimable, color: claimable ? UI_THEME.ink : UI_THEME.navySoft,
+    });
   }
 
   // ==================== 排行榜面板（Phase 5） ====================

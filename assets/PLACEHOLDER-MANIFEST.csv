@@ -69,6 +69,7 @@ IC-01,icons/currency_coin.png,图标,金币,132×132,PNG,,,占地之王-逐界�
 IC-01,icons/currency_gem.png,图标,钻石,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 IC-01,icons/currency_stardust.png,图标,星尘,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 IC-01,icons/currency_trophy.png,图标,奖杯,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+IC-01,icons/currency_ticket.png,图标,英雄券,132×132,PNG,,,占地之王-逐界面素材清单.csv,AI图生图+程序化抠图去底/水印；券面纯图形无文字,已正式化
 IC-02,icons/nav_shop.png,图标,商店,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 IC-02,icons/nav_gacha.png,图标,招募,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 IC-02,icons/nav_deploy.png,图标,布阵,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png

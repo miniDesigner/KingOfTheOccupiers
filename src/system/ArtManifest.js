@@ -1062,6 +1062,21 @@ export const ART_ENTRIES = [
     "note": ""
   },
   {
+    "key": "icons/currency_ticket",
+    "code": "IC-01",
+    "path": "icons/currency_ticket.png",
+    "label": "英雄券",
+    "cat": "icons",
+    "w": 132,
+    "h": 132,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "占地之王-逐界面素材清单.csv",
+    "note": "AI图生图+程序化抠图去底去水印"
+  },
+  {
     "key": "icons/nav_shop",
     "code": "IC-02",
     "path": "icons/nav_shop.png",
