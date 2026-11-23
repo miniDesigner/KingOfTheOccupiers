@@ -148,24 +148,40 @@ class ArtSystemClass {
     }
   }
 
-  /** 等比裁切（cover）/ 完整显示（contain） */
-  _drawFit(ctx, img, e, x, y, w, h, mode) {
-    // 源尺寸优先取图片实际像素，而不是清单声明值 e.w/e.h。
+  /** 等比裁切（cover）/ 完整显示（contain），支持可选源矩形裁剪 crop */
+  _drawFit(ctx, img, e, x, y, w, h, mode, crop) {
+    // 源尺寸优先取图片实际像素，而不是清单声明值 e.w/e/h。
     // 原因：替换素材时若实际尺寸与 PLACEHOLDER-MANIFEST 声明不一致，
     // 用声明值算出的源矩形会越界到图片之外，drawImage 取不到像素，
     // 右侧/底部就会露出底层渐变（表现为背景左右两条浅色竖边）。
     const iw = (img && img.width) || e.w;
     const ih = (img && img.height) || e.h;
-    const ir = iw / ih, tr = w / h;
-    let sx = 0, sy = 0, sw = iw, sh = ih;
+    // crop（2026-11-23）：按归一化比例裁源图，如 { bottom: 0.35 } 只取上方 65%（半身像）。
+    // 先在完整源图上取有效区，再在有效区内做 cover/contain，保证任意目标比例都不变形。
+    let bx = 0, by = 0, bw = iw, bh = ih;
+    if (crop) {
+      const top = Math.max(0, Math.min(0.9, crop.top || 0));
+      const bottom = Math.max(0, Math.min(0.9, crop.bottom || 0));
+      const left = Math.max(0, Math.min(0.9, crop.left || 0));
+      const right = Math.max(0, Math.min(0.9, crop.right || 0));
+      bx = iw * left;
+      by = ih * top;
+      bw = Math.max(1, iw * (1 - left - right));
+      bh = Math.max(1, ih * (1 - top - bottom));
+    }
+    const ir = bw / bh, tr = w / h;
+    let sx = bx, sy = by, sw = bw, sh = bh;
     if (mode === 'cover') {
-      if (ir > tr) { sw = ih * tr; sx = (iw - sw) / 2; }
-      else { sh = iw / tr; sy = (ih - sh) / 2; }
+      if (ir > tr) { sw = bh * tr; sx = bx + (bw - sw) / 2; }
+      else { sh = bw / tr; sy = by + (bh - sh) / 2; }
       ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
     } else {
-      const scale = Math.min(w / iw, h / ih);
-      const dw = iw * scale, dh = ih * scale;
-      ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+      const scale = Math.min(w / bw, h / bh);
+      const dw = bw * scale, dh = bh * scale;
+      const dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
+      // 无 crop 时保留原有 3 参数调用形式（测试与老基础库均依赖该签名）
+      if (crop) ctx.drawImage(img, bx, by, bw, bh, dx, dy, dw, dh);
+      else ctx.drawImage(img, dx, dy, dw, dh);
     }
   }
 
@@ -176,7 +192,7 @@ class ArtSystemClass {
    * @param {CanvasRenderingContext2D} ctx
    * @param {string} key  ART_INDEX 中的 key（如 'bg/lobby_bg'）
    * @param {number} x,y,w,h 目标矩形（逻辑坐标，与 Layout 同源）
-   * @param {{alpha?:number, fit?:'cover'|'contain'}} opts
+   * @param {{alpha?:number, fit?:'cover'|'contain', crop?:{top?:number,bottom?:number,left?:number,right?:number}}} opts
    */
   draw(ctx, key, x, y, w, h, opts = {}) {
     if (!this.available || !this.enabled || !ctx || w <= 0 || h <= 0) {
@@ -196,8 +212,12 @@ class ArtSystemClass {
         ? ctx.globalAlpha : 1;
       ctx.globalAlpha = Math.max(0, Math.min(1, _base * _a));
       if (e.is9) this._draw9(ctx, img, e, x, y, w, h);
-      else if (opts.fit === 'cover' || opts.fit === 'contain') this._drawFit(ctx, img, e, x, y, w, h, opts.fit);
-      else ctx.drawImage(img, x, y, w, h);
+      else if (opts.fit === 'cover' || opts.fit === 'contain') {
+        this._drawFit(ctx, img, e, x, y, w, h, opts.fit, opts.crop);
+      } else if (opts.crop) {
+        // crop 未配 fit 时默认按 cover 处理，保证源矩形裁剪生效且不变形
+        this._drawFit(ctx, img, e, x, y, w, h, 'cover', opts.crop);
+      } else ctx.drawImage(img, x, y, w, h);
       ctx.restore();
       this._stats.drawn++;
       return true;

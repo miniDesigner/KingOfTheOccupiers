@@ -3445,15 +3445,7 @@ export class RenderSystem {
       flat: true,
     });
 
-    // 标题栏：深色软底 + 云白文字
-    this._cardBg({ x: panelX + 2, y: panelY + 2, w: panelW - 4, h: 32, r: 12 }, {
-      r: 12, tint: 'rgba(8,18,38,0.55)', flat: true,
-    });
-    ctx.fillStyle = UI_THEME.cloud;
-    ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('兵种详情', panelX + panelW / 2, panelY + 17);
+    // 2026-11-23：去掉「兵种详情」标题栏，顶部空间全部让给半身像主视觉
 
     // 关闭按钮（夜色软底 + 云白 ✕）
     const closeX = panelX + panelW - 35;
@@ -3465,46 +3457,49 @@ export class RenderSystem {
     ctx.font = 'bold 17px sans-serif';
     ctx.fillText('×', closeX + 14, closeY + 14);
 
-    // === 大立绘主视觉区（2026-11-23 重设计）===
-    // 立绘放大到 118px 居中，背后品质色径向光晕 + 底部云白信息条，成为面板第一焦点。
+    // === 半身像主视觉区（2026-11-23 放大版）===
+    // 去掉标题后整块顶部让给立绘：用源矩形裁剪只取原图上方 65%（头+胸+腰），
+    // 放大到接近卡片满宽的展示区，人物成为唯一第一焦点。
     const artCX = panelX + panelW / 2;
-    const artTop = panelY + 40;
-    const artSpan = 124;
-    const artCY = artTop + artSpan / 2;
+    const artTop = panelY + 12;
+    const artH = 230;
+    const artX = panelX + 10;
+    const artW = panelW - 20;
+    const artCY = artTop + artH / 2;
 
-    // 品质色径向光晕（用同心半透明圆近似，老基础库 createRadialGradient 可能缺失）
+    // 品质色径向光晕（老基础库 createRadialGradient 可能缺失）
     if (typeof ctx.createRadialGradient === 'function') {
-      const halo = ctx.createRadialGradient(artCX, artCY, 8, artCX, artCY, artSpan * 0.72);
-      halo.addColorStop(0, hexToRgba(qColor, 0.34));
-      halo.addColorStop(0.6, hexToRgba(qColor, 0.12));
+      const halo = ctx.createRadialGradient(artCX, artCY, 12, artCX, artCY, artH * 0.82);
+      halo.addColorStop(0, hexToRgba(qColor, 0.38));
+      halo.addColorStop(0.6, hexToRgba(qColor, 0.14));
       halo.addColorStop(1, hexToRgba(qColor, 0));
       ctx.fillStyle = halo;
-      ctx.fillRect(artCX - artSpan, artTop - 12, artSpan * 2, artSpan + 24);
+      ctx.fillRect(artX, artTop, artW, artH + 10);
     } else {
       ctx.fillStyle = hexToRgba(qColor, 0.1);
       ctx.beginPath();
-      ctx.arc(artCX, artCY, artSpan * 0.55, 0, Math.PI * 2);
+      ctx.arc(artCX, artCY, artH * 0.55, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // 立绘本体
+    // 半身立绘本体：crop.bottom=0.35 → 只画源图上方 65%，contain 保证头部不被裁掉
     let detailArtDrawn = false;
     if (unit.artIndex >= 1 && unit.artIndex <= 40) {
-      detailArtDrawn = this._artUnit(unit.artIndex, artCX - artSpan / 2, artTop,
-        artSpan, artSpan, false, { alpha: isOwned ? 1 : 0.72, fit: 'contain' });
+      detailArtDrawn = this._artUnit(unit.artIndex, artX, artTop, artW, artH, false,
+        { alpha: isOwned ? 1 : 0.72, fit: 'contain', crop: { bottom: 0.35 } });
     }
     if (!detailArtDrawn) {
-      ctx.font = 'bold 60px sans-serif';
+      ctx.font = 'bold 76px sans-serif';
       ctx.fillStyle = qColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(unit.icon || '?', artCX, artCY);
     }
 
-    // 未拥有：立绘右上角状态胶囊
+    // 未拥有：状态胶囊移到左上角（右上角让给关闭按钮）
     if (!isOwned) {
       const tagW = 56, tagH = 18;
-      const tagX = panelX + panelW - tagW - 20, tagY = artTop + 4;
+      const tagX = artX + 6, tagY = artTop + 8;
       ctx.save();
       this._roundRectPath(tagX, tagY, tagW, tagH, tagH / 2);
       ctx.fillStyle = 'rgba(6,14,28,0.82)';
@@ -3517,10 +3512,11 @@ export class RenderSystem {
       ctx.fillText('未拥有', tagX + tagW / 2, tagY + tagH / 2 + 0.5);
     }
 
-    // 名称信息条：叠在立绘下缘的深色圆角带
-    const nameY = artTop + artSpan - 26;
+    // 名称信息条：叠在半身像下缘的深色圆角带
+    const nameY = artTop + artH - 30;
     this._roundRectPath(panelX + 12, nameY, panelW - 24, 42, 10);
-    ctx.fillStyle = 'rgba(6,14,30,0.86)';
+    // 不透明底：半透明会让立绘下半身从信息条透出，破坏「只显示半身像」的观感
+    ctx.fillStyle = '#0a1428';
     ctx.fill();
     ctx.strokeStyle = hexToRgba(qColor, 0.65);
     ctx.lineWidth = 2;
@@ -3542,8 +3538,8 @@ export class RenderSystem {
     ctx.fillText(meta, artCX, nameY + 31);
     ctx.textBaseline = 'alphabetic';
 
-    // === 属性区（夜色卡 + 浅色文字，下移让位大立绘）===
-    const statsY = panelY + 190;
+    // === 属性区（夜色卡 + 浅色文字，下移让位半身像）===
+    const statsY = panelY + 266;
     this._cardBg({ x: panelX + 10, y: statsY, w: panelW - 20, h: 66, r: 10 }, {
       r: 10, tint: 'rgba(8,20,42,0.56)', border: 'rgba(234,248,255,0.16)', flat: true,
     });
@@ -5429,9 +5425,9 @@ export class RenderSystem {
    * 兵种详情/升级面板布局（渲染与点击统一使用，防止命中区与绘制偏移）
    */
   static unitDetailPanelLayout(screenWidth, screenHeight) {
-    const panelW = Math.min(screenWidth - 20, 312);
-    // 2026-11-23 大立绘布局：面板增高到 h-36，上限 520，给顶部主视觉让出空间
-    const panelH = Math.min(screenHeight - 36, 520);
+    // 2026-11-23 半身像放大版：去标题栏，面板 312×520 → 340×600，主视觉占更大面积
+    const panelW = Math.min(screenWidth - 20, 340);
+    const panelH = Math.min(screenHeight - 24, 600);
     return { panelW, panelH, panelX: (screenWidth - panelW) / 2, panelY: (screenHeight - panelH) / 2 };
   }
 
