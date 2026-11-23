@@ -734,6 +734,19 @@ export class Game {
     return RenderSystem.deployLayout(screenW, screenH);
   }
 
+  /**
+   * 布阵图鉴列表的最大滚动量（防止滚过头露出空白）
+   * 与 RenderSystem 列表容器高度同源：内容总高 - 可视高，下限 0。
+   */
+  deployMaxScroll() {
+    const layout = RenderSystem.deployLayout(this.screenWidth, this.screenHeight);
+    const total = DeploymentSystem.getAllUnitCardList().length;
+    const rows = Math.ceil(Math.max(1, total) / Math.max(1, layout.unit.perRow));
+    const contentH = rows * (layout.unit.h + layout.unit.gap) - layout.unit.gap + 16;
+    const viewH = layout.scrollAreaBottom - layout.unit.listY;
+    return Math.max(0, contentH - viewH);
+  }
+
   /** @deprecated 请用 RenderSystem.deployLayout(w, h).slot.w */
   static deployUnitSlotW(screenW) {
     return RenderSystem.deployLayout(screenW, 844).slot.w;
@@ -1045,7 +1058,9 @@ export class Game {
     const unitListY = layout.unit.listY;
 
     // === 固定区（兵种槽位/羁绊槽位/建筑强化/羁绊列表）：不产生拖拽候选，不参与滚动 ===
-    if (y < unitListY - 20) {
+    // 图鉴40张卡后列表变长：滚动区外的卡被clip挡住但命中仍会响应，
+    // 上界裁到 scrollAreaBottom，避免点底部提示带误触「看不见的卡」
+    if (y < unitListY - 20 || y > layout.scrollAreaBottom) {
       return;
     }
 
@@ -1053,19 +1068,19 @@ export class Game {
     this._lastDeployY = y; // 用于滚动计算
     const scrollY = this.metaScrollY || 0;
     if (profile) {
-      const collected = DeploymentSystem.getCollectedUnitList();
+      const unitCards = DeploymentSystem.getAllUnitCardList();
       const deployed = profile?.deployment?.units || [];
       const card = layout.unit;
       const cardStartX = (w - (card.perRow * card.w + (card.perRow - 1) * card.gap)) / 2;
-      for (let i = 0; i < collected.length; i++) {
+      for (let i = 0; i < unitCards.length; i++) {
         const col = i % card.perRow;
         const row = Math.floor(i / card.perRow);
         const cx = cardStartX + col * (card.w + card.gap);
         const cy = unitListY + row * (card.h + card.gap) - scrollY;
         if (x >= cx && x <= cx + card.w && y >= cy && y <= cy + card.h) {
-          // 已上阵的兵种不可拖拽（换位请打开详情用「上阵」按钮）
-          if (!deployed.includes(collected[i].id)) {
-            this._startDeployPress({ type: 'unit', id: collected[i].id, fromSlot: -1, x, y });
+          // 未拥有卡不可拖拽（点击走招募引导）；已上阵卡也不可拖拽（换位请打开详情用「上阵」按钮）
+          if (unitCards[i].owned && !deployed.includes(unitCards[i].id)) {
+            this._startDeployPress({ type: 'unit', id: unitCards[i].id, fromSlot: -1, x, y });
           }
           return;
         }
@@ -1138,7 +1153,8 @@ export class Game {
     } else if (this._lastDeployY != null) {
       // 没有激活的拖拽 → 滚动列表
       const dy = y - this._lastDeployY;
-      this.metaScrollY = Math.max(0, this.metaScrollY - dy); // 上滑 dy<0 → scrollY 增 → 内容上移
+      // 上滑 dy<0 → scrollY 增 → 内容上移；上界 clamp 到图鉴内容高度，避免滚过头露空白
+      this.metaScrollY = Math.min(this.deployMaxScroll(), Math.max(0, this.metaScrollY - dy));
     }
     this._lastDeployY = y;
   }
@@ -1283,19 +1299,29 @@ export class Game {
       }
     }
 
-    // 点击兵种卡(可滚动区) → 打开详情/升级面板
+    // 点击兵种卡(可滚动区) → 已拥有打开详情/升级面板；未拥有引导去招募
     const scrollY = this.metaScrollY || 0;
     const card = layout.unit;
-    const collected = DeploymentSystem.getCollectedUnitList();
+    const unitCards = DeploymentSystem.getAllUnitCardList();
     const unitListY = layout.unit.listY;
     const cardStartX = (w - (card.perRow * card.w + (card.perRow - 1) * card.gap)) / 2;
-    for (let i = 0; i < collected.length; i++) {
+    for (let i = 0; i < unitCards.length; i++) {
       const col = i % card.perRow;
       const row = Math.floor(i / card.perRow);
       const cx = cardStartX + col * (card.w + card.gap);
       const cy = unitListY + row * (card.h + card.gap) - scrollY;
-      if (x >= cx && x <= cx + card.w && y >= cy && y <= cy + card.h) {
-        this._openUnitDetail(collected[i].id);
+      // 可视区外卡片不响应点击（clip遮挡区），避免点底部提示带误触
+      if (y <= layout.scrollAreaBottom && x >= cx && x <= cx + card.w && y >= cy && y <= cy + card.h) {
+        const clicked = unitCards[i];
+        if (clicked.owned) {
+          this._openUnitDetail(clicked.id);
+        } else {
+          this.showToast(`「${clicked.name}」尚未拥有，去招募解锁`, 1.8);
+          this.metaScrollY = 0;
+          this._gachaResults = null;
+          this._gachaRevealIdx = 0;
+          this.screenState = 'gacha';
+        }
         return;
       }
     }
@@ -3260,7 +3286,9 @@ export class Game {
       lastRewards: this._lastRewards,
       newlyUnlockedRace: this._newlyUnlockedRace,
       recruitSummary: this._buildRecruitSummary(),
-      metaScrollY: this.metaScrollY,
+      // 布阵图鉴滚动上界：任何来源的越界值都在此收敛，避免列表滚出可视区露空白
+      metaScrollY: this.screenState === 'deploy_select'
+        ? Math.min(this.metaScrollY, this.deployMaxScroll()) : this.metaScrollY,
       selectedTechBranch: this.selectedTechBranch,
       shopTab: this.shopTab,
       toastText: this._toastText,
@@ -3274,6 +3302,8 @@ export class Game {
       shopItems: this.screenState === 'shop' ? ShopSystem.getShopItems() : null,
       deploymentSummary: (this.screenState === 'deploy_select' || this.screenState === 'lobby') ? DeploymentSystem.getDeploymentSummary() : null,
       collectedUnits: this.screenState === 'deploy_select' ? DeploymentSystem.getCollectedUnitList() : null,
+      // 布阵图鉴：全部40种兵种（已拥有+未拥有），供4列大卡列表渲染
+      unitCards: this.screenState === 'deploy_select' ? DeploymentSystem.getAllUnitCardList() : null,
       // P35：布阵界面不在战斗中，players[0] 为空 → 必须从 deploymentBundle 派生，
       // 否则羁绊栏拿不到数据会回落到英文 style key 与 ? 图标
       autoSynergies: this.screenState === 'deploy_select'

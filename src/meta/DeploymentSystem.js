@@ -551,6 +551,47 @@ export function getCollectedUnitList() {
 }
 
 /**
+ * 获取全部兵种卡列表（布阵界面图鉴：已拥有 + 未拥有统一呈现）
+ *
+ * 排序：已拥有优先（按收集顺序），未拥有随后（按 config.units 配置顺序）。
+ * 每项复用 getCollectedUnitList 的字段结构（详情面板可直接消费），
+ * 额外带 owned 标记与解锁费用，供渲染层区分亮卡/暗卡。
+ * @returns {Array<{id, owned, artIndex, quality, level, unlockCost, affordable, ...}>}
+ */
+export function getAllUnitCardList() {
+  const config = ConfigLoader.getSafe('deployables');
+  const profile = getProfile();
+  if (!config || !profile) return [];
+
+  const owned = getCollectedUnitList();
+  const ownedIds = new Set(owned.map(u => u.id));
+  const result = owned.map(u => Object.assign({}, u, { owned: true }));
+
+  // 未拥有：按配置顺序补齐，带解锁费用与可负担性
+  for (const [unitId, cfg] of Object.entries(config.units || {})) {
+    if (unitId.startsWith('_') || typeof cfg !== 'object') continue;
+    if (ownedIds.has(unitId)) continue;
+    const cost = cfg.unlockCost || { starDust: 0, gold: 0 };
+    result.push({
+      id: unitId,
+      owned: false,
+      artIndex: getUnitArtIndex(unitId),
+      name: cfg.name || unitId,
+      icon: cfg.icon || '?',
+      quality: cfg.quality || 1,
+      level: 0,
+      maxLevel: MAX_UNIT_LEVEL,
+      combatStyles: cfg.combatStyles || [],
+      special: cfg.special || null,
+      attackRange: cfg.attackRange ?? 1,
+      unlockCost: { stardust: cost.starDust || 0, gold: cost.gold || 0 },
+      affordable: profile.stardust >= (cost.starDust || 0) && profile.gold >= (cost.gold || 0),
+    });
+  }
+  return result;
+}
+
+/**
  * 获取可招募兵种列表（未拥有的兵种，含费用信息）
  * @returns {Array<{id, name, icon, combatStyles, special, cost: {starDust, gold}, affordable: boolean}>}
  */
@@ -836,6 +877,7 @@ export default {
   generateBundle,
   getDeploymentSummary,
   getCollectedUnitList,
+  getAllUnitCardList,
   getRecruitableUnits,
   getGachaInfo,
   gachaDraw,
