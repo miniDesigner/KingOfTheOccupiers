@@ -23,8 +23,8 @@ from pathlib import Path
 from bs4 import BeautifulSoup, NavigableString
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "docs" / "BUSINESS-PLAN.html"
-OUT_DIR = ROOT / "docs"
+SRC = ROOT / "docs" / "business" / "BUSINESS-PLAN.html"
+OUT_DIR = ROOT / "docs" / "business"
 
 DOC_TITLE = "《占地之王》商业计划书"
 WATERMARK = "《占地之王》商业计划书 · Confidential"

@@ -30,7 +30,7 @@
 | 图间差异收敛 | ✅ 2026-11 已结案：多 seed 诊断证明 13.5pp 跨度为抽样噪声（非地图缺陷），5 套障碍坐标保持原样，详见坑 12 |
 | 结算界面交互 | ✅ 2026-11：改为「返回大厅」按钮关闭，点击空白不再退出；系统返回键保留，详见坑 13 |
 | 核心玩法设计文档 | ⬜ 待补充（本轮以数值与表现改造为主）|
-| 美术风格规范 | ✅ 2026-11：`docs/ART-STYLE.md` 以幼龙立绘为风格标杆、界面主调定为「晴空乐园」（天蓝/云白/明黄/活力橙）；当前仅幼龙 1 张正式素材，其余仍为半透明占位图 |
+| 美术风格规范 | ✅ 2026-11：`docs/art/ART-STYLE.md` 以幼龙立绘为风格标杆、界面主调定为「晴空乐园」（天蓝/云白/明黄/活力橙）；当前仅幼龙 1 张正式素材，其余仍为半透明占位图 |
 | 正式素材替换 | 🔄 进行中：已完成幼龙 `unit_38.png`；同名覆盖即可，整批到位后统一切 `artAlpha=1` |
 
 ## 快速开始
@@ -85,12 +85,12 @@ kingoftheoccupiers/
 ├── game.json                # 小游戏运行时配置
 ├── project.config.json      # 工程配置（appid / compileType）
 ├── README.md                # 本文件：工程总览 + 历史坑
-├── docs/                    # 非代码文档（美术规范 / 审计 / 计划 / 交付记录 / 商业计划书）
-│   ├── ART-STYLE.md         # 美术风格设计规范（风格标杆=幼龙，界面主调=晴空乐园）
-│   ├── CHECKLIST.md         # 交付与阶段记录
-│   ├── GIT-SYNC.md          # git 同步说明
-│   └── BUSINESS-PLAN.*      # 商业计划书（html 唯一真相源 → pdf/docx）
-├── design/                  # 设计稿 + 申报材料（软著/版署，见 design/doc/README.md）
+├── docs/                    # 全部非代码文档（按主题分类）
+│   ├── art/                 # 美术规范 + 审计/计划（ART-STYLE、ART-*、TILE-*、RESOURCE-*）
+│   ├── ui/                  # 界面文档（UI-LAYOUT-PLAN、UI-SCREENS、UI-VISUAL-AUDIT）
+│   ├── business/            # 商业计划书（BUSINESS-PLAN.html 唯一真相源 → pdf/docx）
+│   ├── project/             # 交付记录（CHECKLIST、GIT-SYNC）
+│   └── design/              # 设计稿 + 申报材料（软著/版署，见 docs/design/doc/README.md）
 ├── preview/                 # 浏览器预览（index.html + wx-shim.js 兼容层）
 ├── preview-server.py        # 本地预览服务器（端口 8890）
 ├── src/                     # 业务代码唯一真相源
@@ -289,7 +289,7 @@ kingoftheoccupiers/
 | 随机 | Mulberry32 确定性种子 RNG |
 | 存档 | localStorage（浏览器）/ wx.setStorageSync（微信）|
 | 依赖 | 零 npm 运行时依赖（测试用 `node:test`）|
-| 美术风格 | Q 版厚涂卡通（风格标杆=幼龙）· 界面主调「晴空乐园」（天蓝/云白/明黄/活力橙），规范见 `docs/ART-STYLE.md` |
+| 美术风格 | Q 版厚涂卡通（风格标杆=幼龙）· 界面主调「晴空乐园」（天蓝/云白/明黄/活力橙），规范见 `docs/art/ART-STYLE.md` |
 | 素材清单 | `assets/PLACEHOLDER-MANIFEST.csv`（331 项，8 大品类）|
 
 ## 待办
@@ -298,8 +298,8 @@ kingoftheoccupiers/
 - [x] 玩法改造（2026-11）：11×7 小图 / 放大表现 / 战力压缩 / 快节奏经营 / 存档兼容，48 测试全绿
 - [x] 节奏回收（2026-11）：产出效率与交战密度压缩约 55%，四档胜率/时长保持基线，200 局基线重生成
 - [ ] 补充核心玩法设计文档（本轮改造以数值与表现为主）
-- [x] 建立美术风格规范 `docs/ART-STYLE.md`（2026-11，以幼龙立绘为基准）
-- [ ] 按 `docs/ART-STYLE.md` 逐批替换正式素材（已完成幼龙；整批到位后统一切 `artAlpha=1`、重生成 manifest、核对包体）
+- [x] 建立美术风格规范 `docs/art/ART-STYLE.md`（2026-11，以幼龙立绘为基准）
+- [ ] 按 `docs/art/ART-STYLE.md` 逐批替换正式素材（已完成幼龙；整批到位后统一切 `artAlpha=1`、重生成 manifest、核对包体）
 - [x] ~~收敛 `twin_canyon` 等布局在压缩后的路径差异~~ —— 已结案：多 seed 诊断证明 13.5pp 为 200 局单 seed 抽样噪声，非地图缺陷；5 套坐标保持原样，避免过拟合（见坑 12）
 - [ ] 微信开发者工具环境自检（wx API 兼容性 / Canvas / 安全区 / 包体）
 - [ ] 建立双工程同步机制（若需要真机验证）

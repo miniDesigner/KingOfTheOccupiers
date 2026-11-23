@@ -4,7 +4,7 @@
 用法:
     python3 tools/process-bg.py INPUT OUTPUT W H [--anchor top|center|bottom] [--quality 92]
 
-设计约束（见 docs/ART-STYLE.md / 项目记忆）:
+设计约束（见 docs/art/ART-STYLE.md / 项目记忆）:
   - 绝不横向拉伸：先按目标宽高比裁切，再 LANCZOS 缩放。
   - 默认 anchor=top（保留顶部天空，从底部裁切）——底部通常是暗底渐隐区，
     且 AI 工具的水印固定在右下角，裁底可一并去除。

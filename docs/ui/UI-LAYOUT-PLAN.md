@@ -2,7 +2,7 @@
 
 > 状态：**主体完成**（M1 栅格 + M2 组件 + P3~P8 全部主界面已落地；9 个主界面均接入统一骨架 `SHELL_SCREENS`，云白卡 + 夜景底 + 深色文字；剩余 P9 覆盖层 / P10 HUD 属后续迭代）
 > 依据：2026-11-18 在 430×932 / 320×568 两档预览实机截图 + `RenderSystem` 几何常量逐条核对。
-> 关联文档：`UI-SCREENS.md`（屏制作排期）、`ART-STYLE.md`（视觉规格）。
+> 关联文档：`UI-SCREENS.md`（屏制作排期）、`../art/ART-STYLE.md`（视觉规格）。
 
 ---
 
@@ -28,9 +28,9 @@
 
 ## 1. 统一纵向栅格 `L-SCALE`（新增，本次方案核心）
 
-> 可视化版本见 `design/layout-grid.html`（11 屏栅格图，含 430×932 基准的逐块 y/h 标注）；静态图 `design/layout-grid.png`。
-> 部件内部格式见 `design/component-grid.html`（列表行 / 卡片 / 节点 / 按钮 / 进度条等 8 类部件的放大栅格）；静态图 `design/component-grid.png`。
-> 未进图的浮层与状态（覆盖层 5 件、弹窗、Toast、空状态等）已单列在 `layout-grid.html` 底部的「遗漏审查」表。
+> 可视化版本见 `../design/layout-grid.html`（11 屏栅格图，含 430×932 基准的逐块 y/h 标注）；静态图 `../design/layout-grid.png`。
+> 部件内部格式见 `../design/component-grid.html`（列表行 / 卡片 / 节点 / 按钮 / 进度条等 8 类部件的放大栅格）；静态图 `../design/component-grid.png`。
+> 未进图的浮层与状态（覆盖层 5 件、弹窗、Toast、空状态等）已单列在 `../design/layout-grid.html` 底部的「遗漏审查」表。
 
 子界面没有底部导航栏（大厅独有），因此不能用大厅那套 0–72% 的窗口模型，需要独立一套：
 

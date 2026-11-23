@@ -225,7 +225,7 @@ console.log('\n=== 5. 工程配置 ===');
   // 2026-11-21 上传瘦身：工作区元数据 / git 历史不得进入微信包体
   check('packOptions 排除 .workbuddy/（437MB 工作区素材）', vals.includes('.workbuddy'));
   check('packOptions 排除 .git/（60MB 提交历史）', vals.includes('.git'));
-  check('packOptions 排除 design/（设计稿）', vals.includes('design'));
+  check('packOptions 排除 docs/（文档 + 设计稿 + 申报材料）', vals.includes('docs'));
 
   // assets/ 整目录拆为美术分包，主包只留代码 + config + boot 图
   check('game.json 配置 art 分包', Array.isArray(gj.subpackages) && gj.subpackages.some(s => s.name === 'art'));
