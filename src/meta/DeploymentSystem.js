@@ -872,6 +872,7 @@ export function gachaMultiDraw() {
 }
 
 export default {
+  getUnitArtIndex,
   getUnitStats,
   unlockUnit,
   upgradeUnit,

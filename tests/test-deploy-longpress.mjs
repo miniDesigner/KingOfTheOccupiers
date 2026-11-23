@@ -235,5 +235,25 @@ console.log('=== 测试11: 渲染冒烟（deploy_select 十帧无异常）===');
   assert(!err, `渲染无异常${err ? ': ' + err.message : ''}`);
 }
 
+console.log('\n=== 测试: 拖动跟随卡立绘序号可从两种导出通道取得 ===');
+{
+  const mod = await import('../src/meta/DeploymentSystem.js');
+  const unitId = collected[0].id;
+  assert(typeof mod.getUnitArtIndex === 'function', '命名导出 getUnitArtIndex 可用（拖动跟随卡依赖）');
+  assert(typeof DeploymentSystem.getUnitArtIndex === 'function', '默认导出 getUnitArtIndex 可用');
+  const idx = mod.getUnitArtIndex(unitId);
+  assert(idx >= 1 && idx <= 40, `${unitId} 立绘序号 ${idx} 落在 1~40`);
+  assert(DeploymentSystem.getUnitArtIndex(unitId) === idx, '两种导出通道结果一致');
+  // 真实拖动状态下渲染一帧，防止拖动渲染路径回归（此前 default 缺方法导致整屏渲染抛错）
+  let err = null;
+  try {
+    game.screenState = 'deploy_select';
+    game._deployDrag = { active: true, type: 'unit', id: unitId, fromSlot: 0, x: 80, y: 120 };
+    game.render();
+    game._deployDrag.active = false;
+  } catch (e) { err = e; }
+  assert(!err, `拖动状态下渲染无异常${err ? ': ' + err.message : ''}`);
+}
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 process.exit(failed > 0 ? 1 : 0);
