@@ -2889,19 +2889,19 @@ export class RenderSystem {
 
     // === 底部提示（开战入口在大厅「开战」按钮，本界面仅布阵） ===
     // 2026-11-21 A 类 P2-7：两行提示收进一个云白操作带，消除悬空文字；去 ⚔ emoji。
-    const tipBandX = 104; // 避开返回按钮(16..96)：右侧起排，与大厅设置按钮同侧留白一致
-    const tipBandW = w - tipBandX - 16;
-    const tipBandY = h - 104;
-    this._cardBg({ x: tipBandX, y: tipBandY, w: tipBandW, h: 48, r: 10 }, {
+    // 2026-11-23：提示带几何收进 deployLayout（与滚动区底边同一真相源），
+    // 底边与返回按钮齐平(距底16)，避免渲染与布局两处硬编码漂移。
+    const tip = L.tipBand;
+    this._cardBg({ x: tip.x, y: tip.y, w: tip.w, h: tip.h, r: 10 }, {
       tint: 'rgba(234,248,255,0.90)', border: 'rgba(43,74,111,0.16)', flat: true,
     });
     ctx.fillStyle = UI_THEME.navy;
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('点击卡片查看详情  |  长按拖动兵种卡上阵', tipBandX + tipBandW / 2, tipBandY + 16);
+    ctx.fillText('点击卡片查看详情  |  长按拖动兵种卡上阵', tip.x + tip.w / 2, tip.y + 16);
     ctx.fillStyle = UI_THEME.navySoft;
-    ctx.fillText('布阵完成后回大厅点「开战」出战', tipBandX + tipBandW / 2, tipBandY + 34);
+    ctx.fillText('布阵完成后回大厅点「开战」出战', tip.x + tip.w / 2, tip.y + 34);
     ctx.textBaseline = 'alphabetic';
 
     // === 拖拽视觉反馈（仅兵种） ===
@@ -3156,12 +3156,13 @@ export class RenderSystem {
         gap: 8,
         perRow: 4,
       },
-      // 2026-11-23 重叠修复：提示带 tipBandY=h-104 高48（占 h-104~h-56）。
-      // 旧值 h-94 让滚动区底边落进提示带内部 10px，最后一行卡被盖住；
-      // 改 h-112 使滚动区在提示带上方 8px 收口，两者不再重叠。
-      scrollAreaBottom: h - 112,
-      tipY1: h - 80,
-      tipY2: h - 64,
+      // 2026-11-23：提示带下移到返回按钮同一行——底边与返回按钮(距底16)齐平。
+      // 返回按钮 y=h-51..h-16，提示带高48 → tipBandY=h-64（占 h-64~h-16）。
+      // 滚动区 h-72 在提示带顶边上方 8px 收口，既不重叠又比旧值 h-112 多出 40px 可视高度。
+      tipBand: { x: 104, y: h - 64, w: w - 104 - 16, h: 48 },
+      scrollAreaBottom: h - 72,
+      tipY1: h - 48,
+      tipY2: h - 32,
     };
   }
 
