@@ -1,6 +1,6 @@
 /**
  * 自动生成，请勿手改。由 tools/gen-art-manifest.mjs 从
- * assets/PLACEHOLDER-MANIFEST.csv 生成，共 339 条。
+ * assets/PLACEHOLDER-MANIFEST.csv 生成，共 337 条。
  *
  * 全量贴图映射：ART_ENTRIES / ART_INDEX / ART_BY_CODE / ART_BINDINGS
  * 界面背景：SCREEN_BG / RESULT_BG / LOADING_BG
@@ -8,7 +8,7 @@
  *
  * 占位图被正式素材「同名覆盖」时本文件无需改动。
  */
-export const ART_COUNT = 339;
+export const ART_COUNT = 337;
 
 export const ART_ENTRIES = [
   {
@@ -957,51 +957,6 @@ export const ART_ENTRIES = [
     "note": ""
   },
   {
-    "key": "effects/achieve_stamp",
-    "code": "UI-27",
-    "path": "effects/achieve_stamp.png",
-    "label": "成就完成盖章",
-    "cat": "effects",
-    "w": 192,
-    "h": 192,
-    "fmt": "PNG",
-    "is9": false,
-    "slice": 0,
-    "quality": "",
-    "source": "占地之王-逐界面素材清单.csv",
-    "note": ""
-  },
-  {
-    "key": "fonts/title.ttf",
-    "code": "FT-01",
-    "path": "fonts/title.ttf.png",
-    "label": "标题字 · 字体占位说明卡",
-    "cat": "fonts",
-    "w": 900,
-    "h": 600,
-    "fmt": "PNG",
-    "is9": false,
-    "slice": 0,
-    "quality": "",
-    "source": "占地之王-逐界面素材清单.csv",
-    "note": "fonts/title.ttf 为字体文件而非图片，后续需提供真实 .ttf；本 PNG 仅为占位预览"
-  },
-  {
-    "key": "fonts/number.ttf",
-    "code": "FT-02",
-    "path": "fonts/number.ttf.png",
-    "label": "数字字 · 字体占位说明卡",
-    "cat": "fonts",
-    "w": 900,
-    "h": 600,
-    "fmt": "PNG",
-    "is9": false,
-    "slice": 0,
-    "quality": "",
-    "source": "占地之王-逐界面素材清单.csv",
-    "note": "fonts/number.ttf 为字体文件而非图片，后续需提供真实 .ttf；本 PNG 仅为占位预览"
-  },
-  {
     "key": "icons/currency_coin",
     "code": "IC-01",
     "path": "icons/currency_coin.png",
@@ -1074,7 +1029,7 @@ export const ART_ENTRIES = [
     "slice": 0,
     "quality": "",
     "source": "占地之王-逐界面素材清单.csv",
-    "note": "AI图生图+程序化抠图去底去水印"
+    "note": "AI图生图+程序化抠图去底/水印；券面纯图形无文字"
   },
   {
     "key": "icons/nav_shop",
@@ -5235,20 +5190,12 @@ export const ART_BY_CODE = {
   "FX-10": [
     "effects/ambient"
   ],
-  "UI-27": [
-    "effects/achieve_stamp"
-  ],
-  "FT-01": [
-    "fonts/title.ttf"
-  ],
-  "FT-02": [
-    "fonts/number.ttf"
-  ],
   "IC-01": [
     "icons/currency_coin",
     "icons/currency_gem",
     "icons/currency_stardust",
-    "icons/currency_trophy"
+    "icons/currency_trophy",
+    "icons/currency_ticket"
   ],
   "IC-02": [
     "icons/nav_shop",
@@ -5727,18 +5674,6 @@ export const ART_BINDINGS = {
       "buildings/ruin"
     ]
   },
-  "FT-01": {
-    "hook": "font",
-    "keys": [
-      "fonts/title.ttf"
-    ]
-  },
-  "FT-02": {
-    "hook": "font",
-    "keys": [
-      "fonts/number.ttf"
-    ]
-  },
   "FX-01": {
     "hook": "effect",
     "keys": [
@@ -5816,7 +5751,8 @@ export const ART_BINDINGS = {
       "icons/currency_coin",
       "icons/currency_gem",
       "icons/currency_stardust",
-      "icons/currency_trophy"
+      "icons/currency_trophy",
+      "icons/currency_ticket"
     ]
   },
   "IC-02": {
@@ -6217,12 +6153,6 @@ export const ART_BINDINGS = {
       "ui/list_item"
     ]
   },
-  "UI-27": {
-    "hook": "effect",
-    "keys": [
-      "effects/achieve_stamp"
-    ]
-  },
   "UI-28": {
     "hook": "widget",
     "keys": [
@@ -6427,7 +6357,6 @@ export const ART_HOOKS = {
   "ruin": "buildings/ruin",
   "medalGold": "icons/medal_gold",
   "settingNotify": "icons/setting_notify",
-  "achieveStamp": "effects/achieve_stamp",
   "firework": "effects/firework",
   "tutorialHalo": "effects/tutorial_halo"
 };

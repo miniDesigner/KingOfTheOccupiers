@@ -389,14 +389,7 @@ def gen_fx():
         x, y = rng.randint(5, w - 5), rng.randint(5, h - 5); s = rng.randint(1, 3)
         d.ellipse((x - s, y - s, x + s, y + s), fill=(255, 255, 255, rng.randint(60, 150)))
     save(im.filter(ImageFilter.GaussianBlur(1)), p); made.append(p)
-    # 成就盖章
-    p = 'effects/achieve_stamp.png'; w, h = size_of(p)
-    im = Image.new('RGBA', (w, h), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
-    d.ellipse((16, 16, w - 16, h - 16), outline=(*ORANGE, 240), width=8)
-    d.ellipse((28, 28, w - 28, h - 28), outline=(*YELLOW, 200), width=3)
-    d.line((w * .32, h / 2, w * .46, h * .64), fill=(*YELLOW, 240), width=7)
-    d.line((w * .46, h * .64, w * .70, h * .36), fill=(*YELLOW, 240), width=7)
-    save(im, p); made.append(p)
+    # 成就盖章（effects/achieve_stamp.png）已于 2026-11-24 清理：零引用，无 draw 调用
     return made
 
 
@@ -481,17 +474,7 @@ def gen_app():
     return made
 
 
-# ============================ 字体说明卡 ============================
-def gen_font():
-    made = []
-    for p, label in [('fonts/title.ttf.png', 'KingTitle'),
-                     ('fonts/number.ttf.png', 'Number')]:
-        w, h = size_of(p)
-        im = Image.new('RGBA', (w, h), (*CLOUD, 255))
-        d = ImageDraw.Draw(im)
-        d.text((w * .1, h * .4), label, font=font(64), fill=(*NAVY, 255))
-        save(im, p); made.append(p)
-    return made
+# 字体说明卡（fonts/*.ttf.png）已于 2026-11-24 清理：真实 .ttf 在主包，说明卡零引用
 
 
 # ============================ 兵种进阶 / 行走 ============================
@@ -557,7 +540,7 @@ def gen_unit():
 
 GROUPS = {
     'ui': gen_ui, 'fx': gen_fx, 'tile': gen_tile, 'bg': gen_bg,
-    'app': gen_app, 'font': gen_font, 'unit': gen_unit,
+    'app': gen_app, 'unit': gen_unit,
 }
 
 

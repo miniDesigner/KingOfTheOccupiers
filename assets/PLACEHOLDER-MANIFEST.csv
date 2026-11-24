@@ -62,9 +62,6 @@ FX-07,effects/build_beam.png,特效,建筑升级光柱,192×768,PNG,,,占地之�
 FX-08,effects/tutorial_halo.png,特效,引导高亮圈,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 FX-09,effects/rank_shine.png,特效,段位徽章流光,384×384,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 FX-10,effects/ambient.png,特效,环境氛围粒子,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-UI-27,effects/achieve_stamp.png,特效,成就完成盖章,192×192,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-FT-01,fonts/title.ttf.png,字体,标题字 · 字体占位说明卡,900×600,PNG,,,占地之王-逐界面素材清单.csv,fonts/title.ttf 为字体文件而非图片，后续需提供真实 .ttf；本 PNG 仅为占位预览,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
-FT-02,fonts/number.ttf.png,字体,数字字 · 字体占位说明卡,900×600,PNG,,,占地之王-逐界面素材清单.csv,fonts/number.ttf 为字体文件而非图片，后续需提供真实 .ttf；本 PNG 仅为占位预览,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 IC-01,icons/currency_coin.png,图标,金币,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 IC-01,icons/currency_gem.png,图标,钻石,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 IC-01,icons/currency_stardust.png,图标,星尘,132×132,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png

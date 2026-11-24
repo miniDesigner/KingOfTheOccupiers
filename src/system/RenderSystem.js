@@ -1612,9 +1612,9 @@ export class RenderSystem {
   }
 
   /**
-   * 杂项 / 特效贴图：集中登记剩余 ART_HOOKS，保证 34 个钩子全部可达。
+   * 杂项 / 特效贴图：集中登记剩余 ART_HOOKS，保证 33 个钩子全部可达。
    * name ∈ hexEmpty / river / ruin / medalGold / settingNotify /
-   *        achieveStamp / firework / tutorialHalo / hudBottom / backPressed
+   *        firework / tutorialHalo / hudBottom / backPressed
    */
   _artFx(name, x, y, w, h, alpha) {
     const FX_KEYS = {
@@ -1623,7 +1623,6 @@ export class RenderSystem {
       ruin: ART_HOOKS.ruin,
       medalGold: ART_HOOKS.medalGold,
       settingNotify: ART_HOOKS.settingNotify,
-      achieveStamp: ART_HOOKS.achieveStamp,
       firework: ART_HOOKS.firework,
       tutorialHalo: ART_HOOKS.tutorialHalo,
       hudBottom: ART_HOOKS.hudBottom,

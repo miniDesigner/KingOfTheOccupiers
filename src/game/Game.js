@@ -2765,7 +2765,7 @@ export class Game {
         if (this.renderSystem._artLayerEnabled) {
           // 装饰层 / 背景层全量预热：避免首次进入某界面时才发起请求导致首帧空白。
           ArtSystem.preload(Object.values(APP_ASSETS));      // icon_432 / splash / share_card
-          ArtSystem.preload(FONT_CARDS);                     // 2 张字体说明卡
+          // 字体说明卡已清理（2026-11-24）：真实 .ttf 在主包由 wx.loadFont 加载
           ArtSystem.preload(RACE_KEYS_ALL);                  // 24 张种族立绘
           ArtSystem.preload(UNIT_SMALL_KEYS_ALL);            // 40 张兵种小图
           ArtSystem.preload([TERRITORY_EDGE]);               // 领土边界纹理

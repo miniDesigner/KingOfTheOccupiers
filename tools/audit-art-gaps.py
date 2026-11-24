@@ -71,7 +71,7 @@ called.add(M['loadingLogo'])
 
 # 3) _artFx('name') 真实调用（只认真实调用，不认登记表）
 FX = {'hexEmpty', 'river', 'ruin', 'medalGold', 'settingNotify',
-      'achieveStamp', 'firework', 'tutorialHalo', 'hudBottom', 'backPressed'}
+      'firework', 'tutorialHalo', 'hudBottom', 'backPressed'}
 for n in set(re.findall(r"_artFx\(\s*'(\w+)'", rs)):
     if n in FX and n in HOOKS:
         called.add(HOOKS[n])
@@ -174,7 +174,7 @@ for name in ZERO_METHODS:
 # ---------------------------------------------------------------- C 类：hooks 实贴
 fx_declared = set(re.findall(r'^\s+(\w+):\s*ART_HOOKS\.', rs, re.M))
 registered = {'hexEmpty', 'river', 'ruin', 'medalGold', 'settingNotify',
-              'achieveStamp', 'firework', 'tutorialHalo', 'hudBottom', 'backPressed'}
+              'firework', 'tutorialHalo', 'hudBottom', 'backPressed'}
 fx_called = set(re.findall(r"_artFx\(\s*'(\w+)'", rs))
 hook_refs = Counter(re.findall(r'ART_HOOKS\.(\w+)', src))
 fx_not_called = sorted(n for n in registered

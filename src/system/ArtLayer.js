@@ -152,10 +152,7 @@ const BIND_LEADERBOARD = [
   ['ui/rank_row_self', 'row', 0.16],
 ];
 
-const BIND_LOADING = [
-  ['fonts/number.ttf', 'icon', 0.18],
-  ['fonts/title.ttf', 'icon', 0.18],
-];
+// 字体说明卡已清理（2026-11-24）：真实 .ttf 在主包，说明卡 PNG 零引用，BIND_LOADING 移除
 
 // 大厅装饰层已清空（2026-11 视觉重构）：
 // 这些条目是占位图审查期「让零引用素材露个脸」的临时机制——把 tab/list_item/bar_cap
@@ -276,8 +273,8 @@ export const APP_ASSETS = {
   shareCard: 'assets/share_card',
 };
 
-/** 字体说明卡：真实字体文件在主包 fonts/title.ttf 与 number.ttf（由 wx.loadFont 加载，不能放 assets 分包） */
-export const FONT_CARDS = ['fonts/title.ttf', 'fonts/number.ttf'];
+/** 字体说明卡已清理（2026-11-24）：真实字体在主包 fonts/title.ttf 与 number.ttf，说明卡 PNG 零引用。保留空数组兼容旧 import。 */
+export const FONT_CARDS = [];
 
 // ===================== 状态变体选择器（供各绘制方法按状态精确取图） =====================
 export function pick_rewardCell(locked, claimed, claimable) { return locked ? 'ui/bp_cell_locked' : claimed ? 'ui/bp_cell_claimed' : claimable ? 'ui/bp_cell_claimable' : 'ui/bp_cell_premium'; }

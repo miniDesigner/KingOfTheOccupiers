@@ -138,7 +138,6 @@ const ART_HOOKS = {
   ruin: 'buildings/ruin',
   medalGold: 'icons/medal_gold',
   settingNotify: 'icons/setting_notify',
-  achieveStamp: 'effects/achieve_stamp',
   firework: 'effects/firework',
   tutorialHalo: 'effects/tutorial_halo',
 };

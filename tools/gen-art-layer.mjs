@@ -28,7 +28,7 @@ const neverSet = new Set(NEVER);
 // ---------------------------------------------------------------- 界面归属
 // 把每个 key 分配到它语义上应出现的界面。分类按「最长前缀 / 具体名」逐条判定。
 const APP_KEYS = ['assets/icon_432', 'assets/splash', 'assets/share_card'];
-const FONT_KEYS = ['fonts/title.ttf', 'fonts/number.ttf'];
+const FONT_KEYS = []; // 字体说明卡 2026-11-24 已清理
 const BG_TONE = /^bg\/battle_tone_/;
 const BG_MISC = new Set(['bg/lobby_fg', 'bg/gacha_circle', 'bg/match_panel',
   'bg/panel_bg', 'bg/bp_banner']);
@@ -153,8 +153,8 @@ L.push(`  splash: 'assets/splash',`);
 L.push(`  shareCard: 'assets/share_card',`);
 L.push(`};`);
 L.push(``);
-L.push(`/** 字体说明卡：真实字体文件在主包 fonts/title.ttf 与 number.ttf（由 wx.loadFont 加载，不能放 assets 分包） */`);
-L.push(`export const FONT_CARDS = ['fonts/title.ttf', 'fonts/number.ttf'];`);
+L.push(`/** 字体说明卡已清理（2026-11-24）：真实字体在主包 fonts/title.ttf 与 number.ttf，说明卡 PNG 零引用。保留空数组兼容旧 import。 */`);
+L.push(`export const FONT_CARDS = [];`);
 L.push(``);
 
 // ---------------------------------------------------------------- 状态选择器
