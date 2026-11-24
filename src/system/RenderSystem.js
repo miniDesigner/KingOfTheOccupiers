@@ -17,9 +17,9 @@ import { drawArtLayer, BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE,
   APP_ASSETS, FONT_CARDS, RACE_KEYS_ALL, UNIT_SMALL_KEYS_ALL,
   pick_rewardCell, pick_questItem, pick_qualityGlow, pick_gachaEpic,
   pick_tab, pick_tabIndicator, pick_switcher, pick_slider, pick_techNode,
-  pick_techLine, pick_rankRow, pick_accountRow, pick_shopCard, pick_result,
-  pick_gachaUi, pick_combatFx, pick_defeatFx, pick_buildBeam,
-  pick_territoryWave, pick_rankShine, pick_ambient, pick_race, pick_unitSmall,
+  pick_techLine, pick_rankRow, pick_accountRow, pick_shopCard,
+  pick_gachaUi, pick_combatFx, pick_buildBeam,
+  pick_territoryWave, pick_ambient, pick_race, pick_unitSmall,
   pick_walkFrame, pick_unitDetail, pick_buildingDetail, pick_tutorialCard,
   pick_tutorialDots, pick_hudHp, pick_hudSynergy, pick_btnHover,
   iconKey, ICON_NAMES } from './ArtLayer.js';
@@ -1848,14 +1848,17 @@ export class RenderSystem {
       this.animManager.renderScreen(ctx);
     }
 
-    // 绘制HUD(不受相机变换影响)
-    this.drawHUD(gameState);
-
-    // 新手引导分步教学叠加（战斗中：高亮第一个可翻格子）
-    this._drawTutorialOverlay(gameState, inputSystem);
+    // 绘制HUD：结算态直接跳过，否则战斗 HUD 会透过半透明结算遮罩在顶部留下
+    // 「PvP对战 vs … / VS / 金币数」等残影（2026-11-24 结算实拍确认）。
+    const isGameOver = gameState.gameStatus !== 'playing';
+    if (!isGameOver) {
+      this.drawHUD(gameState);
+      // 新手引导分步教学叠加（战斗中：高亮第一个可翻格子）；结算时不该再压在结果卡上
+      this._drawTutorialOverlay(gameState, inputSystem);
+    }
 
     // 游戏结束画面（暂停界面已移除：战斗中不再有暂停态）
-    if (gameState.gameStatus !== 'playing') {
+    if (isGameOver) {
       this.drawGameOver(gameState);
     }
   }
@@ -4097,25 +4100,18 @@ export class RenderSystem {
     const cx = this.screenWidth / 2;
     const cy = this.screenHeight / 2;
 
-    // 半透明遮罩（顶栏随后由 renderScreen 原样重绘，不被压暗）
+    // 不透明底：结算态已跳过 HUD，但棋盘 / 战斗粒子仍在底层渲染。
+    // 半透明遮罩会让残留特效以暗斑形式透出（实拍中卡片上方有红色雾斑），
+    // 先铺满不透明夜色底，再叠 alpha 0.7 的结算背景，保证干净的舞台底。
     this._modalDimActive = true;
-    ctx.fillStyle = 'rgba(0,0,0,0.82)';
+    ctx.fillStyle = '#050914';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
     this._art(RESULT_BG[isWin ? 'won' : 'lost'], 0, 0, this.screenWidth, this.screenHeight, { fit: 'cover', alpha: 0.7 });
-    // 结算三态图形（星级 / 晋升 / 摘要）+ 胜负粒子与段位流光。
-    // 这些是占位九宫格/特效素材，自带粉紫框线与「占位图」文字；云白卡已达标，
-    // 低 alpha 装饰反而透出脏底，故由 artResultDecor 开关控制（默认关闭）。
-    // 待同名替换为正式素材后设 artResultDecor=true 即可恢复，几何/命中不变。
-    const _rw = this.screenWidth, _rh = this.screenHeight;
-    if (this._artResultDecor !== false) {
-      this._art(pick_result('star'), _rw / 2 - 120, _rh * 0.30, 240, 54, { alpha: 0.14 });
-      this._art(pick_result('promote'), _rw / 2 - 120, _rh * 0.30 + 58, 240, 54, { alpha: 0.12 });
-      this._art(pick_result('summary'), _rw / 2 - 120, _rh * 0.30 + 116, 240, 54, { alpha: 0.12 });
-      this._art(pick_rankShine(), _rw / 2 - 24, _rh * 0.30 - 40, 48, 48, { alpha: 0.18 });
-      this._art(pick_defeatFx(isWin ? 'debris' : 'flash'), _rw / 2 - 60, _rh * 0.22, 120, 120, { alpha: 0.14 });
-    }
+    // 结算装饰层已移除（2026-11-24）：result_star/promote/summary 是奶黄九宫格，
+    // 以 0.12~0.14 alpha 压在夜色结算页上会变成一张悬浮的灰色空框；rank_shine /
+    // defeat_* 同理只是若隐若现的脏斑。结果卡本身已由下方 _cardBg 完整表达，
+    // 这些低透明度叠层不再绘制。artResultDecor 开关保留兼容，仅控制奖牌。
     if (isWin) {
-      if (this._artResultDecor !== false) this._artFx('firework', cx - 100, cy - 165, 200, 130, 0.45);
       this._artFx('medalGold', cx - 22, cy - 148, 44, 44, 0.65); // 奖牌为本轮正式图，保留
     }
 
@@ -4157,8 +4153,9 @@ export class RenderSystem {
       const up = rewards.trophyDelta >= 0;
       ctx.fillStyle = up ? ON_DARK.green : '#F87171';
       ctx.font = 'bold 14px sans-serif';
+      // 箭头已含方向，数值取绝对值，避免出现「▼-22」双负号
       const arrow = up ? '▲+' : '▼';
-      ctx.fillText(`奖杯 ${arrow}${rewards.trophyDelta}  →  ${rewards.trophies}杯`, cx, cy - 10);
+      ctx.fillText(`奖杯 ${arrow}${Math.abs(rewards.trophyDelta)}  →  ${rewards.trophies}杯`, cx, cy - 10);
       // 段位变动标记
       if (rewards.tierUp) {
         ctx.fillStyle = UI_THEME.gold;

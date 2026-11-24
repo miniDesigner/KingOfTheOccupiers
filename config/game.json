@@ -19,7 +19,7 @@
     "artSubpageBgAlpha": 1,
     "_doc_artSubpageBgAlpha": "子界面背景叠加不透明度（0~1）。子界面已改为直接复用大厅底图 bg/lobby_bg，默认 1；设为 0 会退化为纯夜景渐变（仅调试用）。",
     "artResultDecor": true,
-    "_doc_artResultDecor": "结算装饰层开关。2026-11-23 result_star/promote/summary 九宫格与 defeat 特效已全部替换为正式素材，开启恢复装饰。",
+    "_doc_artResultDecor": "已废弃（2026-11-24）：结算装饰层已移除。result_star/promote/summary 奶黄九宫格与 defeat 特效低透明度压在夜色结算页上会形成悬浮灰框/脏斑；结果卡由 RenderSystem 自绘。键保留兼容，不再生效。",
     "artEffectDecor": true,
     "_doc_artEffectDecor": "特效/界面/行动帧装饰层开关。2026-11-23 effects/* 22 张、ui/* 38 张、tiles/* 5 张、兵种进阶 24 + 行走帧 3 已全部替换为正式素材，开启恢复叠加。",
     "useAudioAssets": true,

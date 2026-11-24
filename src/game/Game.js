@@ -2742,9 +2742,9 @@ export class Game {
       this.renderSystem._artLayerEnabled = _feat.artExtendedLayer !== false;
       this.renderSystem._artLayerAlpha = (typeof _feat.artLayerAlpha === 'number')
         ? Math.max(0, Math.min(1, _feat.artLayerAlpha)) : 1;
-      // 结算装饰层：占位九宫格/特效会在云白卡背后透出粉紫框，默认关闭；
-      // 待 result_star/promote/summary 与 defeat_* 同名替换为正式图后设 true 恢复。
-      this.renderSystem._artResultDecor = _feat.artResultDecor === true;
+      // 结算装饰层已移除（2026-11-24）：result_star/promote/summary 奶黄九宫格压在
+      // 夜色结算页上会变成悬浮灰框，rank_shine/defeat_* 则是若隐若现的脏斑。
+      // config 的 artResultDecor 键保留兼容但不再注入渲染层；结果卡由 RenderSystem 自绘。
       // 占位特效装饰层：effects/* 与 units/* 前缀的占位图带粉紫框/文字，
       // 战斗态叠在棋盘中央会漏水印；默认关闭，待 FX 全系/行动帧出正式图后设 true。
       this.renderSystem._artEffectDecor = _feat.artEffectDecor === true;
