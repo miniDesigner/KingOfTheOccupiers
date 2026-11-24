@@ -140,5 +140,33 @@ console.log('=== 测试5: 点击非按钮区域不误触领取 ===');
   assert(before === after, '空白点击未改变任务状态');
 }
 
+console.log('=== 测试6: 成就内容区与任务屏同口径居中 ===');
+{
+  const a = RenderSystem.achievementLayout([{ id: 'a' }], 0, 430).rects[0];
+  assert(a.x === 16 && a.x + a.w === 414,
+    `430px 成就卡片左右边距 16px（实际 x=${a.x}, right=${a.x + a.w}）`);
+  const q = RenderSystem.questLayout([{ id: 'q' }], [], [], 0, 430).dailyRects[0];
+  assert(q.x === a.x && q.w === a.w, '成就卡片与任务卡片共用同一内容区宽度');
+  const n = RenderSystem.achievementLayout([{ id: 'n' }], 0, 320).rects[0];
+  assert(n.x === 16 && n.x + n.w === 304,
+    `320px 窄屏同样左右 16px（实际 x=${n.x}, right=${n.x + n.w}）`);
+}
+
+console.log('=== 测试7: 条目描述用 top 基线，不压卡片上边框 ===');
+{
+  const src = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
+  const itemSrc = src.slice(src.indexOf('  _drawQuestItem('), src.indexOf('  drawQuest('));
+  assert(itemSrc.includes("this._fitText(String(item.desc || ''), x + 8, y + 6, itemW - 84, 12, 'left', 'top')"),
+    '描述文字以 top 基线从卡片上沿 +6 起排');
+  assert(!/\{\s*x:\s*20,\s*y,/.test(itemSrc), '_drawQuestItem 不再硬编码左边缘 20');
+  assert(itemSrc.includes("ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, x + 8, y + 24)"),
+    '进度与奖励跟随共享 rect 的 x，而非固定 28');
+  const fitSrc = src.slice(src.indexOf('  _fitText('), src.indexOf('  _emptyState('));
+  assert(fitSrc.includes("ctx.textBaseline = baseline || 'middle';"),
+    '_fitText 支持可选 baseline，默认仍是 middle');
+  assert(!fitSrc.includes("ctx.textBaseline = 'alphabetic';"),
+    '_fitText 不再在 restore 后覆写调用方基线');
+}
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 process.exit(failed === 0 ? 0 : 1);

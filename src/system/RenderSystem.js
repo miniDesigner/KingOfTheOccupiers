@@ -1242,8 +1242,9 @@ export class RenderSystem {
   /**
    * 文本按可用宽自动缩放字号，超出则截断（部件页「行内文字不溢出」硬规则的落地）。
    * 只画文字，返回实际使用字号；measureText 不可用时按字宽估算。
+   * @param {string} [baseline] 默认 middle；传 top 时 y 为文字上沿，避免压住卡片上边框
    */
-  _fitText(text, x, y, maxW, size, align) {
+  _fitText(text, x, y, maxW, size, align, baseline) {
     const { ctx } = this;
     if (!text) return size;
     let fs = size;
@@ -1259,7 +1260,7 @@ export class RenderSystem {
     ctx.save();
     ctx.font = `bold ${fs}px sans-serif`;
     ctx.textAlign = align || 'left';
-    ctx.textBaseline = 'middle';
+    ctx.textBaseline = baseline || 'middle';
     // 仍超宽则逐字截断加省略号
     let out = String(text);
     if (measure(out) > maxW && typeof ctx.measureText === 'function') {
@@ -1268,8 +1269,6 @@ export class RenderSystem {
     }
     ctx.fillText(out, x, y);
     ctx.restore();
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
     return fs;
   }
 
@@ -5729,12 +5728,14 @@ export class RenderSystem {
    * 返回: { itemW, itemH, headerY, rects[], claimAllRect }
    */
   static achievementLayout(achievements, scrollY, screenWidth) {
-    const itemW = Math.min(340, screenWidth - 40), itemH = 55, gap = 6;
+    // 与任务屏同口径：SIDE=16 内容区左右对称（旧值 x=20 + itemW≤340 右侧空 70px）
+    const SIDE = 16;
+    const itemW = screenWidth - SIDE * 2, itemH = 55, gap = 6;
     // 起点 68：与任务屏一致，首行 y=90 ≥ 裁剪 topY=88（P7 修复）
     const headerY = 68 - scrollY;
     let y = headerY + 22; // "🏆 成就" 标题占位
     const rects = achievements.map((a) => {
-      const r = { id: a.id, x: 20, y, w: itemW, h: itemH };
+      const r = { id: a.id, x: SIDE, y, w: itemW, h: itemH };
       y += itemH + gap;
       return r;
     });
@@ -5763,13 +5764,14 @@ export class RenderSystem {
 
   /**
    * 绘制单个任务/成就条目（每日/每周/赛季/成就共用）
+   * @param {number} x 卡片左边缘，来自共享 layout rect，与 Game 命中同源
    * @param {string} accent 主题色（边框/领取按钮）
    */
-  _drawQuestItem(ctx, item, y, itemW, itemH, accent) {
-    // 任务/成就条目：云白卡 + 深色三级文字；可领取态左侧亮条。
-    // 行几何（20/y/itemW/itemH）与领取按钮（右下 60×30）均与 Game 命中同源，绝不改动。
+  _drawQuestItem(ctx, item, x, y, itemW, itemH, accent) {
+    // 任务/成就条目：夜色卡 + 浅色三级文字；可领取态左侧亮条。
+    // 行几何（x/y/itemW/itemH）与领取按钮（右下 60×30）均与 Game 命中同源，绝不改动。
     const canClaim = item.complete && !item.claimed;
-    this._cardBg({ x: 20, y, w: itemW, h: itemH, r: 10 }, {
+    this._cardBg({ x, y, w: itemW, h: itemH, r: 10 }, {
       tintGradient: item.claimed ? NIGHT.cardSoft : NIGHT.card,
       tint: NIGHT.solid,
       border: canClaim ? accent : NIGHT.borderDim,
@@ -5781,28 +5783,29 @@ export class RenderSystem {
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    this._fitText(String(item.desc || ''), 28, y + 6, itemW - 84, 12);
+    // 用 top 基线让 12px 描述从卡片上沿 +6 开始，避免 middle 基线把字形压到边框上
+    this._fitText(String(item.desc || ''), x + 8, y + 6, itemW - 84, 12, 'left', 'top');
 
     // 进度
     ctx.fillStyle = NIGHT.body;
     ctx.font = '10px sans-serif';
-    ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, 28, y + 24);
+    ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, x + 8, y + 24);
 
     // 奖励（贴图 + 数字）
-    this._drawCurrencyRun(Object.entries(item.reward || {}), 28, y + 40, {
+    this._drawCurrencyRun(Object.entries(item.reward || {}), x + 8, y + 40, {
       fontSize: 10, iconSize: 11, color: UI_THEME.gold,
     });
 
     // 领取按钮 / 已领（几何不变，领取 CTA 与布阵主按钮同为明黄底 + 深棕字）
     if (canClaim) {
-      this._cardBg({ x: 20 + itemW - 70, y: y + 10, w: 60, h: 30, r: 8 }, {
+      this._cardBg({ x: x + itemW - 70, y: y + 10, w: 60, h: 30, r: 8 }, {
         tint: UI_THEME.gold, border: accent, flat: true,
       });
       ctx.fillStyle = '#4A2A00';
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('领取', 20 + itemW - 40, y + 25);
+      ctx.fillText('领取', x + itemW - 40, y + 25);
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
     } else if (item.claimed) {
@@ -5810,7 +5813,7 @@ export class RenderSystem {
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('✓ 已领', 20 + itemW - 40, y + 25);
+      ctx.fillText('✓ 已领', x + itemW - 40, y + 25);
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
     }
@@ -5852,27 +5855,27 @@ export class RenderSystem {
     drawCatTitle('daily', '每日任务', layout.dailyHeaderY, '#67E8F9');
 
     (gameState.dailyQuests || []).forEach((q, i) => {
-      const { y } = layout.dailyRects[i];
+      const { x, y } = layout.dailyRects[i];
       if (y + itemH < 0 || y > h) return;
-      this._drawQuestItem(ctx, q, y, itemW, itemH, '#06b6d4');
+      this._drawQuestItem(ctx, q, x, y, itemW, itemH, '#06b6d4');
     });
 
     // 每周任务
     drawCatTitle('weekly', '每周任务', layout.weeklyHeaderY, ON_DARK.green);
 
     (gameState.weeklyQuests || []).forEach((q, i) => {
-      const { y } = layout.weeklyRects[i];
+      const { x, y } = layout.weeklyRects[i];
       if (y + itemH < 0 || y > h) return;
-      this._drawQuestItem(ctx, q, y, itemW, itemH, '#10b981');
+      this._drawQuestItem(ctx, q, x, y, itemW, itemH, '#10b981');
     });
 
     // 赛季任务
     drawCatTitle('season', '赛季任务', layout.seasonHeaderY, '#DDD6FE');
 
     (gameState.seasonQuests || []).forEach((q, i) => {
-      const { y } = layout.seasonRects[i];
+      const { x, y } = layout.seasonRects[i];
       if (y + itemH < 0 || y > h) return;
-      this._drawQuestItem(ctx, q, y, itemW, itemH, '#a78bfa');
+      this._drawQuestItem(ctx, q, x, y, itemW, itemH, '#a78bfa');
     });
 
     this._endScrollClip(ctx);
@@ -5909,9 +5912,9 @@ export class RenderSystem {
     ctx.fillText('成就', 20, layout.headerY);
 
     (gameState.achievements || []).forEach((a, i) => {
-      const { y } = layout.rects[i];
+      const { x, y } = layout.rects[i];
       if (y + itemH < 0 || y > h) return;
-      this._drawQuestItem(ctx, a, y, itemW, itemH, '#f59e0b');
+      this._drawQuestItem(ctx, a, x, y, itemW, itemH, '#f59e0b');
     });
 
     this._endScrollClip(ctx);
