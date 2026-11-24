@@ -595,17 +595,21 @@ export class RenderSystem {
     const x = w - rightLimit - pillW;
     const cx = x + pillW / 2;
     const y = cy - pillH / 2;
-    // 缓存本帧标题几何：模态遮罩之后由 _redrawTopChrome 原样重绘，不被压暗
+    // 缓存本帧标题几何：遮罩（资源栏暗条 / 模态层）之后由 redrawTopChrome 原样重绘到最前
     this._lastHeader = { title: text, opts: { ...o, cy, leftLimit, rightLimit } };
 
-    this._drawRaisedCard({ x, y, w: pillW, h: pillH, r: 12 }, () => {
+    const paintHeader = () => {
       ctx.fillStyle = 'rgba(20,38,68,0.94)';
       ctx.fillRect(x, y, pillW, pillH);
       if (o.accent) {
         ctx.fillStyle = o.accent;
         ctx.fillRect(x + 8, y + 9, 4, pillH - 18);
       }
-    });
+    };
+    const headerRect = { x, y, w: pillW, h: pillH, r: 12 };
+    // 遮罩后重绘走无阴影版本，避免与原绘制的抬起阴影叠加把标题底板压成硬块
+    if (o.noShadow) this._drawCard(headerRect, paintHeader);
+    else this._drawRaisedCard(headerRect, paintHeader);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -648,7 +652,8 @@ export class RenderSystem {
     const settingOverlayOpen = !!(state.settingsOpen || state.announceOpen || state.accountOpen);
     if (state.screenState === 'lobby') this._drawLobbySettingButton(settingOverlayOpen);
     const cached = this._lastHeader;
-    if (cached) this._screenHeader(cached.title, cached.opts);
+    // noShadow：遮罩后再画一遍卡面本体即可，抬起阴影只保留首次绘制的那层
+    if (cached) this._screenHeader(cached.title, { ...cached.opts, noShadow: true });
   }
 
   /**
@@ -1721,8 +1726,10 @@ export class RenderSystem {
     if (gameState.compliance && (gameState.compliance.needsNotice || gameState.compliance.blocked)) {
       this._drawComplianceOverlay(gameState);
     }
-    // 模态遮罩之后重绘顶栏：设置按钮与右上角标题保持原亮度，压暗只作用于内容区
-    if (this._modalDimActive) this.redrawTopChrome(gameState);
+    // 顶栏在「资源栏暗条 / 模态遮罩」之后统一重绘一次，保证标题永远位于所有顶部遮罩之前。
+    // 之前仅在 _modalDimActive 时才重绘，导致常驻的资源栏暗条（_drawResourceBar 的 0.55 深条）
+    // 把标题压暗——这才是「标题在遮罩下面」的根因。无模态时也重绘，几何同源、无位移。
+    this.redrawTopChrome(gameState);
     this._modalDimActive = false;
     ctx.restore();
 

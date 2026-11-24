@@ -17,20 +17,26 @@ test('顶栏缓存每帧重建，避免跨界面串台', () => {
     '_screenHeader 缓存本帧标题与解析后的几何');
 });
 
-test('模态遮罩之后重绘顶栏，压暗只作用于内容区', () => {
+test('顶栏无条件在遮罩之后重绘，标题不被资源栏暗条压暗', () => {
   const overlayIdx = screenSrc.indexOf('this._drawComplianceOverlay(gameState);');
-  const redrawIdx = screenSrc.indexOf('if (this._modalDimActive) this.redrawTopChrome(gameState);');
+  const redrawIdx = screenSrc.indexOf('this.redrawTopChrome(gameState);');
   const restoreIdx = screenSrc.indexOf('ctx.restore();');
   assert(redrawIdx > overlayIdx && redrawIdx < restoreIdx,
     '重绘位于所有覆盖层之后、安全区 restore 之前');
+  assert(!screenSrc.includes('if (this._modalDimActive) this.redrawTopChrome(gameState);'),
+    '不再只在模态时重绘：无模态也要重绘，否则资源栏暗条会压暗标题');
+  assert(rsSrc.includes('this._drawResourceBar(gameState);'), '存在常驻资源栏暗条');
+  assert(rsSrc.includes('if (o.flat) this._drawCard(headerRect, paintHeader);') ||
+    rsSrc.includes('if (o.noShadow) this._drawCard(headerRect, paintHeader);'),
+  '标题重绘走无阴影版本，避免阴影二次叠加');
   assert(rsSrc.includes('if (state.screenState === \'lobby\') this._drawLobbySettingButton(settingOverlayOpen);'),
     '大厅设置按钮在遮罩后重绘，设置覆盖层时传 dim 参数');
   assert(rsSrc.includes('const settingOverlayOpen = !!(state.settingsOpen || state.announceOpen || state.accountOpen);'),
     '设置/公告/账号覆盖层被识别为需压暗设置按钮的场景');
   assert(rsSrc.includes('ctx.globalAlpha = 0.6;') && rsSrc.includes('if (dim) ctx.restore();'),
     '设置按钮支持 dim 压暗重绘（仍可见但不喧宾夺主）');
-  assert(rsSrc.includes('if (cached) this._screenHeader(cached.title, cached.opts);'),
-    '右上角标题按缓存几何原样重绘');
+  assert(rsSrc.includes('if (cached) this._screenHeader(cached.title, { ...cached.opts, noShadow: true });'),
+    '右上角标题按缓存几何原样重绘（无阴影版）');
 });
 
 test('设置按钮抽成单一绘制方法，几何与命中不变', () => {
