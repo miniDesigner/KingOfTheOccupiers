@@ -2942,16 +2942,18 @@ export class RenderSystem {
     // 2026-11-21 A 类 P2-7：两行提示收进一个云白操作带，消除悬空文字；去 ⚔ emoji。
     // 2026-11-23：提示带几何收进 deployLayout（与滚动区底边同一真相源），
     // 底边与返回按钮齐平(距底16)，避免渲染与布局两处硬编码漂移。
+    // 2026-11-24：随布阵整体夜色化——去云白纯底，改深靛蓝渐变 + 浅色字，与图鉴卡同族。
     const tip = L.tipBand;
     this._cardBg({ x: tip.x, y: tip.y, w: tip.w, h: tip.h, r: 10 }, {
-      tint: 'rgba(234,248,255,0.90)', border: 'rgba(43,74,111,0.16)', flat: true,
+      tintGradient: ['rgba(46,72,112,0.94)', 'rgba(16,30,54,0.96)'],
+      tint: 'rgba(16,30,54,0.96)', border: 'rgba(126,170,220,0.42)', flat: true,
     });
-    ctx.fillStyle = UI_THEME.navy;
+    ctx.fillStyle = '#EAF8FF';
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('点击卡片查看详情  |  长按拖动兵种卡上阵', tip.x + tip.w / 2, tip.y + 16);
-    ctx.fillStyle = UI_THEME.navySoft;
+    ctx.fillStyle = 'rgba(198,220,244,0.82)';
     ctx.fillText('布阵完成后回大厅点「开战」出战', tip.x + tip.w / 2, tip.y + 34);
     ctx.textBaseline = 'alphabetic';
 
@@ -4575,11 +4577,22 @@ export class RenderSystem {
 
         if (u) {
           const collected = profile.collectedUnits[unitId];
-          // 图标
-          ctx.fillStyle = UI_THEME.navy;
-          ctx.font = '20px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(u.icon || '?', actualX + slotW / 2, y + 22);
+          // 2026-11-23：大厅兵种牌接正式立绘，不再用 config 里的 emoji 字面量。
+          // 取景框固定 174:216 原图比例（与图鉴同口径），避免不同槽宽下角色被裁得不一致。
+          const _artIdx = getUnitArtIndex(unitId);
+          const artH = 38, artW = artH * 174 / 216;
+          let lobbyArtDrawn = false;
+          if (_artIdx >= 1 && _artIdx <= 40) {
+            lobbyArtDrawn = this._artUnit(_artIdx, actualX + slotW / 2 - artW / 2, y - 1,
+              artW, artH, false, { alpha: 0.98, fit: 'cover' });
+          }
+          if (!lobbyArtDrawn) {
+            // 立绘加载失败才回退 emoji，避免与实体立绘叠字
+            ctx.fillStyle = UI_THEME.navy;
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(u.icon || '?', actualX + slotW / 2, y + 22);
+          }
           // 名称：用品质色渲染（保留品质语义，去掉卡片底框）
           ctx.fillStyle = nameColor;
           ctx.font = 'bold 10px sans-serif';
