@@ -82,6 +82,13 @@ const WATERMARK_BG_KEYS = new Set([
   'bg/lobby_fg', 'bg/gacha_circle', 'bg/bp_banner', 'bg/match_panel',
   'bg/panel_bg', 'bg/subpage_bg',
 ]);
+// 仍未替换正式美术的 ui/* 占位图：即使 artEffectDecor=true（其余 ui/effects/tiles 已就绪），
+// 这些也必须在 _art() 处强制拦截，否则水印文字直接画在战斗 HUD / 引导卡上。
+// 2026-11-24 战斗实拍复查确认仍为 PLACEHOLDER：hud_top/bottom/hp/synergy 是深蓝水印条，
+// tutorial_card 是深蓝占位卡（画在棋盘中央会露出白底+四角十字）。逐张替换正式图后从此处移除。
+const UNREPLACED_WATERMARK_KEYS = new Set([
+  'ui/hud_top', 'ui/hud_bottom', 'ui/hud_hp', 'ui/hud_synergy', 'ui/tutorial_card',
+]);
 // 已替换为正式美术的棋盘素材：这些 key 虽属 tiles/ 前缀，但不再是带水印占位图，
 // 必须绕过 WATERMARK_PREFIXES 拦截。每出一版正式图并覆盖 assets/ 就往这里加一项。
 // 注意：这些是「立体石砖」——自带六边形轮廓 + 厚度侧面，_artHex/_art 需走整图不裁剪 + 尺寸标定。
@@ -112,6 +119,7 @@ function solidBoardPlacement(x, y) {
 }
 function isWatermarkArtKey(key) {
   if (typeof key !== 'string') return false;
+  if (UNREPLACED_WATERMARK_KEYS.has(key)) return true;
   if (SOLID_BOARD_KEYS.has(key) || FORMAL_BUILDING_KEYS.has(key)) return false;
   for (let i = 0; i < WATERMARK_PREFIXES.length; i++) {
     if (key.indexOf(WATERMARK_PREFIXES[i]) === 0) return true;
@@ -1371,10 +1379,12 @@ export class RenderSystem {
   /** 画一张贴图，返回是否真的用图片绘制了 */
   _art(key, x, y, w, h, opts) {
     if (!this._artEnabled) return false;
-    // 水印占位图总闸：artEffectDecor 未显式开启时，拦截带水印的占位图前缀，
+    // 水印占位图总闸：未显式开启 artEffectDecor 时，拦截所有带水印的占位图前缀，
     // 让调用方的程序化兜底绘制接管（六边形/建筑汉字/粒子/云白卡等本就完整）。
-    // 正式素材同名覆盖后设 artEffectDecor=true 即恢复，几何/命中全程不变。
-    if (this._artEffectDecor !== true && isWatermarkArtKey(key)) return false;
+    // 例外：UNREPLACED_WATERMARK_KEYS 里的图从未换正式美术，即使开关已开也必须拦，
+    // 否则战斗 HUD / 棋盘中央会透出 PLACEHOLDER 水印（2026-11-24 实拍确认）。
+    // 正式素材同名覆盖后从 UNREPLACED_WATERMARK_KEYS 移除即可恢复显示，几何/命中全程不变。
+    if (UNREPLACED_WATERMARK_KEYS.has(key) || (this._artEffectDecor !== true && isWatermarkArtKey(key))) return false;
     return ArtSystem.draw(this.ctx, key, x, y, w, h, opts);
   }
 

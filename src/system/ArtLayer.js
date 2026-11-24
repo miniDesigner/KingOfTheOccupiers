@@ -172,11 +172,10 @@ const BIND_PLAYING = [
   ['effects/territory_wave', 'center', 0.18],
   // 原 icons/hud_* + icons/tutorial_* 装饰叠层已移除（2026-11-20 HUD 复查）：
   // 它们以 α0.26 横排在状态带左侧，与金币/战士数重叠且功能重复——真实 HUD 图标由
-  // RenderSystem.drawHUD 用正式图标绘制。下方 ui/* + units/* 均为占位层，默认被跳过。
-  ['ui/hud_hp', 'icon', 0.22],
-  ['ui/hud_synergy', 'icon', 0.22],
-  ['ui/tutorial_card', 'card', 0.14],
-  ['ui/tutorial_dots', 'card', 0.14],
+  // RenderSystem.drawHUD 用正式图标绘制。
+  // 2026-11-24 再移除 ui/hud_hp + ui/hud_synergy（icon slot 排在状态带，水印条露脸）、
+  // ui/tutorial_card + ui/tutorial_dots（card slot 画在棋盘中央，露出白底+十字线大矩形）。
+  // 这 4 张是审查期临时装饰；真实 HUD / 引导卡由 RenderSystem 程序化绘制，不再叠加。
   ['units/unit_walk_attack', 'grid', 0.2],
   ['units/unit_walk_loop', 'grid', 0.2],
   ['units/unit_walk_start', 'grid', 0.2],
@@ -469,7 +468,17 @@ export function drawArtLayer(rs, gameState) {
   // 开关默认（未显式 true）时跳过这些前缀，保留 icons/hud_* 等正式图标；
   // 待 FX / UI 九宫格 / 行动帧全部替换为正式素材后设 artEffectDecor=true 恢复。
   const dropPlaceholderFx = rs._artEffectDecor !== true;
-  const isPlaceholder = (key) => key.indexOf('effects/') === 0
+  // 这几张图即使 artEffectDecor=true 也必须在装饰层入口拦掉：
+  //  - ui/* 从未替换正式美术，仍是 PLACEHOLDER 水印（2026-11-24 实拍确认）；
+  //  - combat_crit/combat_hit 是斜线 X（暴击/命中特效），center slot 常驻在棋盘中央
+  //    会形成两条突兀对角线（用户实拍反馈）——瞬时事件特效不该当氛围装饰。
+  // 与 RenderSystem 的 UNREPLACED_WATERMARK_KEYS 对齐水印部分；其余正式图不受影响。
+  const ALWAYS_DROP = new Set([
+    'ui/hud_top', 'ui/hud_bottom', 'ui/hud_hp', 'ui/hud_synergy', 'ui/tutorial_card',
+    'effects/combat_crit', 'effects/combat_hit',
+  ]);
+  const isPlaceholder = (key) => ALWAYS_DROP.has(key)
+    || key.indexOf('effects/') === 0
     || key.indexOf('units/') === 0
     || key.indexOf('ui/') === 0;
   const emit = (list) => {
@@ -477,7 +486,7 @@ export function drawArtLayer(rs, gameState) {
     for (let i = 0; i < list.length; i++) {
       const [key, slot, alpha] = list[i];
       if (!ART_INDEX[key]) continue;
-      if (dropPlaceholderFx && isPlaceholder(key)) continue;
+      if ((dropPlaceholderFx || ALWAYS_DROP.has(key)) && isPlaceholder(key)) continue;
       const [x, y, bw, bh] = rectOf(slots, slot, i, w, h);
       if (bw <= 0 || bh <= 0) continue;
       rs._art(key, x, y, bw, bh, { alpha: alpha * scale });
