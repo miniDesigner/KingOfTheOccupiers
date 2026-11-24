@@ -231,5 +231,20 @@ console.log('=== 测试9: P25 features.battlePass=true 展开路径（验证可�
   _origConfig.features = { ..._origConfig.features, battlePass: false };
 }
 
+console.log('\n=== 测试10: 开战按钮外发光圆角（防直角底图回归） ===');
+{
+  const rsSrc = rf('src/system/RenderSystem.js', 'utf8');
+  const start = rsSrc.indexOf('// === 开战按钮');
+  const end = rsSrc.indexOf('// 新手引导遮罩', start);
+  assert(start > 0 && end > start, '定位到开战按钮绘制块');
+  const block = rsSrc.slice(start, end);
+  const roundIdx = block.indexOf('_roundRectPath(bx - 3, blY - 3');
+  const squareIdx = block.indexOf('ctx.fillRect(bx - 3');
+  assert(roundIdx > 0, '开战按钮外发光走圆角路径（外扩3px、半径15，与主体同心同曲率）');
+  assert(squareIdx < 0 || squareIdx > roundIdx,
+    '直角 fillRect 仅存于老基础库 else 降级分支，圆角为主路径（真机无方角）');
+  console.log('  ✓ 外发光圆角守护：_roundRectPath 主路径在前，直角 fillRect 仅 else 降级');
+}
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 process.exit(failed > 0 ? 1 : 0);

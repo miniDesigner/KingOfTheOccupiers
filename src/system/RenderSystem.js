@@ -4828,9 +4828,16 @@ export class RenderSystem {
     this._drawPressed(battleRect, gameState.press, () => {
       const bx = (w - BL.w) / 2;
       const blPulse = Math.sin(Date.now() / 300) * 0.1 + 0.9;
-      // 外发光：活力橙呼吸光晕
+      // 外发光：活力橙呼吸光晕。四角必须跟随主体圆角——旧直角 fillRect 每边外扩 3px，
+      // 四个方角光晕露在圆角主体外（真机截图可见直角底图），改圆角路径 + 半径同步 +3（12→15）
+      // 保持同心同曲率；老基础库无 arcTo 时退回直角（几何不变，仅视觉降级）。
       ctx.fillStyle = `rgba(255, 140, 66, ${blPulse * 0.35})`;
-      ctx.fillRect(bx - 3, blY - 3, BL.w + 6, BL.h + 6);
+      if (typeof ctx.arcTo === 'function' && typeof ctx.fill === 'function') {
+        this._roundRectPath(bx - 3, blY - 3, BL.w + 6, BL.h + 6, 15);
+        ctx.fill();
+      } else {
+        ctx.fillRect(bx - 3, blY - 3, BL.w + 6, BL.h + 6);
+      }
       // CTA 悬浮投影：海军蓝厚底 + 柔和阴影，让开战按钮从背景中跳出
       if (typeof ctx.arcTo === 'function' && typeof ctx.fill === 'function') {
         ctx.save();
