@@ -723,8 +723,9 @@ export class Game {
    * 玩家在战斗前安排兵种/羁绊上阵
    */
   // === 上阵界面布局常量 ===
-  /** 长按激活拖拽的时长（ms）：原地按住满 1 秒才拿起，与图鉴上下滑动互斥 */
-  static get DEPLOY_LONG_PRESS_MS() { return 1000; }
+  /** 长按激活拖拽的时长（ms）：原地按住满 0.5 秒才拿起，与图鉴上下滑动互斥。
+   *  调节手感只需改这里（如 400/600/800），界面提示文案需同步。 */
+  static get DEPLOY_LONG_PRESS_MS() { return 500; }
 
   /** 按下后位移超过该阈值(px)即判定为「滑动列表」，取消长按候选，绝不再拿起卡片 */
   static get DEPLOY_SCROLL_SLOP() { return 8; }
@@ -1092,7 +1093,7 @@ export class Game {
   }
 
   /**
-   * 启动长按候选：手指原地按住满 DEPLOY_LONG_PRESS_MS(1000ms) 才激活拖拽；
+   * 启动长按候选：手指原地按住满 DEPLOY_LONG_PRESS_MS(500ms) 才激活拖拽；
    * 期间松手或先滑动（位移超 DEPLOY_SCROLL_SLOP）都会取消候选，只走列表滚动/点击。
    */
   _startDeployPress(press) {

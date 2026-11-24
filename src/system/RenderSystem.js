@@ -2529,7 +2529,7 @@ export class RenderSystem {
     const qualityColor = (q) => QUALITY_COLORS[(q || 1) - 1] || '#9ca3af';
 
     // === 兵种槽位 ===
-    this._sectionLabel('兵种槽位', 15, L.slot.labelY, { accent: UI_THEME.skyDeep, hint: '点击详情 · 长按1秒' });
+    this._sectionLabel('兵种槽位', 15, L.slot.labelY, { accent: UI_THEME.skyDeep, hint: '点击详情 · 长按0.5秒' });
 
     const uslot = L.slot;
     const uStartX = (w - (uslot.count * uslot.w + (uslot.count - 1) * uslot.gap)) / 2;
@@ -2768,7 +2768,7 @@ export class RenderSystem {
     const ownedCount = unitCards.filter(u => u.owned !== false).length;
     const totalCount = unitCards.length || 40;
     this._sectionLabel(`兵种图鉴  ${ownedCount}/${totalCount}`, 15, L.unit.labelY, {
-      accent: UI_THEME.skyDeep, hint: '点击详情 · 长按1秒',
+      accent: UI_THEME.skyDeep, hint: '点击详情 · 长按0.5秒',
     });
 
     // === 列表容器底：填满可视区（图鉴40张卡恒超过一屏，不再需要自适应空态） ===
@@ -2975,7 +2975,7 @@ export class RenderSystem {
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('点击卡片查看详情  |  长按1秒后拖动兵种卡上阵', tip.x + tip.w / 2, tip.y + 16);
+    ctx.fillText('点击卡片查看详情  |  长按0.5秒后拖动兵种卡上阵', tip.x + tip.w / 2, tip.y + 16);
     ctx.fillStyle = 'rgba(198,220,244,0.82)';
     ctx.fillText('布阵完成后回大厅点「开战」出战', tip.x + tip.w / 2, tip.y + 34);
     ctx.textBaseline = 'alphabetic';
