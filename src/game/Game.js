@@ -2168,7 +2168,7 @@ export class Game {
     const weeklyQuests = QuestSystem.getWeeklyQuests();
     const seasonQuests = QuestSystem.getSeasonQuests();
     // 与 drawQuest 共享同一布局计算，保证命中区与绘制完全一致
-    const layout = RenderSystem.questLayout(dailyQuests, weeklyQuests, seasonQuests, this.metaScrollY || 0, this.screenWidth);
+    const layout = RenderSystem.questLayout(dailyQuests, weeklyQuests, seasonQuests, this.metaScrollY || 0, this.screenWidth, this.screenHeight);
 
     // 一键领取（每日+每周+赛季）
     const ca = layout.claimAllRect;
@@ -2239,7 +2239,7 @@ export class Game {
 
     const achievements = QuestSystem.getAchievements();
     // 与 drawAchievement 共享同一布局计算
-    const layout = RenderSystem.achievementLayout(achievements, this.metaScrollY || 0, this.screenWidth);
+    const layout = RenderSystem.achievementLayout(achievements, this.metaScrollY || 0, this.screenWidth, this.screenHeight);
 
     // 一键领取
     const ca = layout.claimAllRect;

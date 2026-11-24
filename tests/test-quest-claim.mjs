@@ -84,7 +84,7 @@ console.log('=== 测试2: 每日任务 — 点绘制按钮中心应领取成功 
 
   const goldBefore = profile.gold;
   // 用与渲染一致的共享布局计算按钮位置（每日/每周/赛季三段布局）
-  const layout = RenderSystem.questLayout(refreshed, [], [], game.metaScrollY || 0, game.screenWidth);
+  const layout = RenderSystem.questLayout(refreshed, [], [], game.metaScrollY || 0, game.screenWidth, game.screenHeight);
   const r = layout.dailyRects[0];
   const btnX = r.x + r.w - 70, btnY = r.y + 10;
   // 点击按钮正中心
@@ -108,7 +108,7 @@ console.log('=== 测试3: 成就（独立界面）— 点绘制按钮中心应�
   const done = refreshed.find(a => a.id === target.id);
   if (done && done.complete && !done.claimed) {
     const sdBefore = profile.stardust;
-    const layout = RenderSystem.achievementLayout(refreshed, game.metaScrollY || 0, game.screenWidth);
+    const layout = RenderSystem.achievementLayout(refreshed, game.metaScrollY || 0, game.screenWidth, game.screenHeight);
     const idx = refreshed.findIndex(a => a.id === target.id);
     const r = layout.rects[idx];
     const btnX = r.x + r.w - 70, btnY = r.y + 10;
@@ -188,6 +188,31 @@ console.log('=== 测试8: 任务/成就卡片高度 70，三行文字留白均�
   assert(itemSrc.includes("x + 8, y + 55, {"), '奖励锚点 +55');
   // 几何验算：描述 9..21（12px）、进度 30..40（10px）、奖励 49.5..60.5（11px 图标）
   assert(21 <= 30 && 40 <= 49.5 && 70 - 60.5 >= 9, '三行间距与下留白均 ≥ 9px');
+}
+
+console.log('=== 测试9: 一键领取悬浮右下角，避开返回按钮且在裁剪之上 ===');
+{
+  const W = 430, H = 854;
+  const q = RenderSystem.questLayout([], [], [], 0, W, H);
+  const a = RenderSystem.achievementLayout([], 0, W, H);
+  const ca = q.claimAllRect;
+  assert(ca.x === W - 116 && ca.y === H - 48 && ca.w === 100 && ca.h === 32,
+    `右下角 rect = (${ca.x}, ${ca.y}, ${ca.w}, ${ca.h})`);
+  assert(ca.x + ca.w === W - 16, '右侧留白 16px');
+  assert(ca.y + ca.h === H - 16, '底边与返回按钮齐平（距底 16px）');
+  assert(ca.x > 16 + 80, '与左下返回按钮水平分离（x > 96）');
+  assert(ca.y > H - 16 - 35 - 8, '位于滚动裁剪底之下，不会被列表裁掉');
+  assert(JSON.stringify(a.claimAllRect) === JSON.stringify(ca), '任务与成就共用同一右下角几何');
+  const src = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
+  const questFn = src.slice(src.indexOf('  drawQuest(gameState)'), src.indexOf('  // ==================== 成就面板'));
+  const achFn = src.slice(src.indexOf('  drawAchievement(gameState)'), src.indexOf('  // ==================== 通行证面板'));
+  assert(questFn.indexOf('_endScrollClip') < questFn.indexOf('_drawClaimAllButton'),
+    '任务屏一键领取绘制在滚动裁剪之后');
+  assert(achFn.indexOf('_endScrollClip') < achFn.indexOf('_drawClaimAllButton'),
+    '成就屏一键领取绘制在滚动裁剪之后');
+  const gameSrc = rf(ROOT + 'src/game/Game.js', 'utf-8');
+  assert(gameSrc.includes('this.metaScrollY || 0, this.screenWidth, this.screenHeight'),
+    'Game 命中传入 screenHeight，与绘制同源');
 }
 
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);

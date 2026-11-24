@@ -173,7 +173,7 @@ console.log('=== 测试5: 任务界面一键领取 ===');
   const goldBefore = profile.gold;
   const layout = RenderSystem.questLayout(
     QuestSystem.getDailyQuests(), QuestSystem.getWeeklyQuests(), QuestSystem.getSeasonQuests(),
-    game.metaScrollY || 0, game.screenWidth
+    game.metaScrollY || 0, game.screenWidth, game.screenHeight
   );
   const ca = layout.claimAllRect;
   game.screenState = 'quest';
@@ -193,7 +193,7 @@ console.log('=== 测试6: 成就界面一键领取 ===');
     ProfileManager.save();
   }
   const stardustBefore = profile.stardust;
-  const layout = RenderSystem.achievementLayout(QuestSystem.getAchievements(), game.metaScrollY || 0, game.screenWidth);
+  const layout = RenderSystem.achievementLayout(QuestSystem.getAchievements(), game.metaScrollY || 0, game.screenWidth, game.screenHeight);
   const ca = layout.claimAllRect;
   game.screenState = 'achievement';
   game.handleAchievementClick(ca.x + ca.w / 2, ca.y + ca.h / 2);
@@ -234,7 +234,7 @@ console.log('=== 测试8: 成就界面单个领取（渲染布局命中一致）
     ProfileManager.save();
     const refreshed = QuestSystem.getAchievements();
     const idx = refreshed.findIndex(a => a.id === target.id);
-    const layout = RenderSystem.achievementLayout(refreshed, game.metaScrollY || 0, game.screenWidth);
+    const layout = RenderSystem.achievementLayout(refreshed, game.metaScrollY || 0, game.screenWidth, game.screenHeight);
     const r = layout.rects[idx];
     const btnX = r.x + r.w - 70, btnY = r.y + 10;
     game.screenState = 'achievement';

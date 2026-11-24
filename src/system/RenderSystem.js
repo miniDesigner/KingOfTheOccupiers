@@ -30,6 +30,14 @@ export { SAFE_AREA_MAX } from './SafeArea.js';
 
 // 左下角返回按钮几何（与 Game.BACK_BUTTON 同源）：距左 16、距底 16、宽 80、高 35
 const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
+// 任务/成就一键领取：屏幕右下角，与返回按钮同一条底边（距底 16），右侧留 16。
+// 水平方向 x=W-116..W-16，与返回按钮 x=16..96 相距至少 218px，绝不重叠；
+// 垂直方向落在滚动裁剪底（screenH-59）之下，因此绘制必须放在 _endScrollClip 之后。
+// 命中与绘制共用此函数返回的同一 rect。
+function claimAllButtonLayout(screenW, screenH) {
+  const w = 100, h = 32, edge = 16;
+  return { x: screenW - edge - w, y: screenH - BACK_BTN.bottom - h, w, h };
+}
 // 2026-11-21 栅格收口：子界面顶部页签统一从 CONTENT_TOP=72 起（资源栏带 8..60 + gutter 12）。
 // 渲染与 Game.js 命中共用此常量，杜绝两处硬编码漂移。
 const SUBPAGE_TAB_Y = 72;
@@ -5693,7 +5701,7 @@ export class RenderSystem {
    * 返回: { itemW, itemH, dailyHeaderY, dailyRects[], weeklyHeaderY, weeklyRects[], seasonHeaderY, seasonRects[], claimAllRect }
    * 每个 rect: { id, x, y, w, h }；领取按钮区域 = { x+w-70, y+10, 60, 30 }
    */
-  static questLayout(dailyQuests, weeklyQuests, seasonQuests, scrollY, screenWidth) {
+  static questLayout(dailyQuests, weeklyQuests, seasonQuests, scrollY, screenWidth, screenHeight) {
     // 2026-11-21 边界缝隙收口：统一 SIDE=16 内容区，左右对称（旧值 x=20 + itemW≤340 右侧空 70px）
     const SIDE = 16;
     const itemW = screenWidth - SIDE * 2, itemH = QUEST_ITEM_H, gap = 6;
@@ -5726,7 +5734,7 @@ export class RenderSystem {
       dailyHeaderY, dailyRects,
       weeklyHeaderY, weeklyRects,
       seasonHeaderY, seasonRects,
-      claimAllRect: { x: screenWidth - 120, y: 50, w: 100, h: 32 },
+      claimAllRect: claimAllButtonLayout(screenWidth, screenHeight),
     };
   }
 
@@ -5734,7 +5742,7 @@ export class RenderSystem {
    * 成就面板共享布局（渲染与点击统一使用）
    * 返回: { itemW, itemH, headerY, rects[], claimAllRect }
    */
-  static achievementLayout(achievements, scrollY, screenWidth) {
+  static achievementLayout(achievements, scrollY, screenWidth, screenHeight) {
     // 与任务屏同口径：SIDE=16 内容区左右对称（旧值 x=20 + itemW≤340 右侧空 70px）
     const SIDE = 16;
     const itemW = screenWidth - SIDE * 2, itemH = QUEST_ITEM_H, gap = 6;
@@ -5748,7 +5756,7 @@ export class RenderSystem {
     });
     return {
       itemW, itemH, headerY, rects,
-      claimAllRect: { x: screenWidth - 120, y: 50, w: 100, h: 32 },
+      claimAllRect: claimAllButtonLayout(screenWidth, screenHeight),
     };
   }
 
@@ -5840,14 +5848,11 @@ export class RenderSystem {
 
     const layout = RenderSystem.questLayout(
       gameState.dailyQuests || [], gameState.weeklyQuests || [], gameState.seasonQuests || [],
-      gameState.metaScrollY || 0, w
+      gameState.metaScrollY || 0, w, h
     );
     const { itemW, itemH } = layout;
 
-    // 一键领取（每日+每周+赛季）
-    this._drawClaimAllButton(ctx, layout.claimAllRect);
-
-    // 裁剪：任务列表只在返回按钮/一键领取以下区域显示
+    // 裁剪：任务列表只在返回按钮以上区域显示
     this._beginScrollClip(ctx, w, h, 88);
 
     // 每日任务（分类标题在夜景底上：正式图标 + ON_DARK 浅色文字，几何不变）
@@ -5886,6 +5891,10 @@ export class RenderSystem {
     });
 
     this._endScrollClip(ctx);
+
+    // 一键领取悬浮在右下角：绘制必须晚于滚动裁剪，否则会被 bottom clip 切掉。
+    // 几何与 Game.handleQuestClick 命中共用同一 layout.claimAllRect。
+    this._drawClaimAllButton(ctx, layout.claimAllRect);
   }
 
   // ==================== 成就面板 ====================
@@ -5902,14 +5911,13 @@ export class RenderSystem {
     this._screenHeader('成就', { cy: 25, accent: UI_THEME.gold, leftLimit: aLeftLimit });
 
     const layout = RenderSystem.achievementLayout(
-      gameState.achievements || [], gameState.metaScrollY || 0, w
+      gameState.achievements || [], gameState.metaScrollY || 0, w, h
     );
     const { itemW, itemH } = layout;
 
-    // 一键领取
-    this._drawClaimAllButton(ctx, layout.claimAllRect);
+    // 一键领取改到右下角悬浮，绘制在列表之后（见本方法末尾）
 
-    // 裁剪：成就列表只在返回按钮/一键领取以下区域显示
+    // 裁剪：成就列表只在返回按钮以上区域显示
     this._beginScrollClip(ctx, w, h, 88);
 
     ctx.fillStyle = UI_THEME.gold;
@@ -5925,6 +5933,9 @@ export class RenderSystem {
     });
 
     this._endScrollClip(ctx);
+
+    // 一键领取悬浮在右下角：绘制必须晚于滚动裁剪，命中与 Game 共用同一 rect。
+    this._drawClaimAllButton(ctx, layout.claimAllRect);
   }
 
   // ==================== 通行证面板 ====================
