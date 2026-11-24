@@ -282,5 +282,28 @@ console.log('=== 测试14: 渲染冒烟（drawGacha / _drawBuildingDetailPanel �
   profile.buildingUpgrades.gold_mine = 1;
 }
 
+console.log('\n=== 测试15: 概率卡轮廓 + 金币不足不显示消耗数量 ===');
+{
+  const rsSrc = rf('src/system/RenderSystem.js', 'utf8');
+  const start = rsSrc.indexOf('  drawGacha(gameState)');
+  const end = rsSrc.indexOf('  _drawGachaResult(', start);
+  assert(start > 0 && end > start, '定位到 drawGacha 绘制块');
+  const block = rsSrc.slice(start, end);
+
+  // 概率卡轮廓：不得有 edge 竖条（3px 直线条在 r=14 圆角处露方角尾巴）
+  const rateCard = block.slice(block.indexOf('概率卡（整块居中'), block.indexOf('召唤法阵'));
+  assert(!rateCard.includes('edgeSide:') && !rateCard.includes('edge:'),
+    '概率卡无 edge 竖条，四边统一夜色圆角边框');
+
+  // 单抽 / 十连消耗数量都必须在金币充足分支内（禁用态只留功能文案）
+  const singlePart = block.slice(block.indexOf('const canSingle'), block.indexOf('const canMulti'));
+  assert(/if\s*\(\s*canSingle\s*\)\s*\{[\s\S]*_drawCurrencyRun/.test(singlePart),
+    '单抽消耗数量受 if(canSingle) 保护，金币不足不显示');
+  const multiPart = block.slice(block.indexOf('const canMulti'), block.indexOf('十连优惠提示'));
+  assert(/if\s*\(\s*canMulti\s*\)\s*\{[\s\S]*_drawCurrencyRun/.test(multiPart),
+    '十连消耗数量仍受 if(canMulti) 保护（既有行为不变）');
+  console.log('  ✓ 概率卡纯夜色轮廓 + 两个抽卡按钮禁用态均不显示消耗数量');
+}
+
 console.log(`\n📊 结果: ${passed} 通过 / ${failed} 失败`);
 process.exit(failed > 0 ? 1 : 0);

@@ -6233,10 +6233,11 @@ export class RenderSystem {
     const qualityColors = { 1: '#9CA3AF', 2: '#22C55E', 3: '#3B82F6', 4: '#A855F7', 5: '#F97316', 6: '#EF4444' };
     const rateCardTop = L.rateTitleY - 14;
     const rateCardBottom = L.rateStartY + (info.rates.length - 1) * L.rateStep + 16;
+    // 2026-11-24 轮廓修复：去掉左侧 3px 紫色 edge 竖条——直线条无法贴合 r=14 圆角，
+    // 上下两端会露出方角尾巴且与浅蓝弧线错位（实拍放大可见）。与「图鉴收集」卡统一为
+    // 纯夜色圆角边框；招募主题紫保留在标题 accent，不丢品牌识别。
     this._cardBg({ x: 12, y: rateCardTop, w: w - 24, h: rateCardBottom - rateCardTop, r: 14 }, {
       tintGradient: NIGHT.card, tint: NIGHT.solid, border: NIGHT.border,
-      edge: '#A855F7',
-      edgeSide: 'left',
     });
     ctx.fillStyle = NIGHT.title;
     ctx.font = 'bold 11px sans-serif';
@@ -6297,10 +6298,13 @@ export class RenderSystem {
     ctx.fillStyle = canSingle ? NIGHT.title : NIGHT.hint;
     ctx.font = 'bold 14px sans-serif';
     ctx.fillText('单抽 ×1', L.singleX + L.btnW / 2, L.btnY + 17);
-    this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36, {
-      align: 'center', plus: false, iconSize: 11, fontSize: 12,
-      color: canSingle ? UI_THEME.gold : NIGHT.hint,
-    });
+    // 金币不足时不显示消耗数量（与十连按钮一致）：禁用态只保留功能文案，
+    // 否则灰字 + 金色消耗数会让玩家误以为仍可支付。
+    if (canSingle) {
+      this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36, {
+        align: 'center', plus: false, iconSize: 11, fontSize: 12, color: UI_THEME.gold,
+      });
+    }
 
     const canMulti = info.gold >= info.multiCost;
     this._primaryButton(
