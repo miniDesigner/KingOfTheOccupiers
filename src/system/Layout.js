@@ -199,7 +199,8 @@ const FUNC_BTN_H = 48;           // 功能按钮纵列：正方形边长基准�
 const FUNC_BTN_MIN_H = 38;       // 窄屏下限：320 屏缩小以免挤压赛季区
 const FUNC_BTN_GAP = 6;          // 功能按钮纵列：间距
 const PLAYER_CARD_H = 82;        // 左上玩家信息卡高
-const DEPLOY_CARD_H = 65;        // 上阵卡片高（沿用 v1 的 65，仅位置上移到开战按钮上方）
+/** 上阵兵种槽高（布阵与大厅共用同一真相源，2026-11-24 统一为 100px） */
+export const DEPLOY_UNIT_SLOT_H = 100;
 const DEPLOY_BATTLE_GAP = 12;    // 上阵卡片底 → 开战按钮顶
 
 /** 右上角功能按钮正方形边长（390 基准 48，窄屏线性缩到 38，避免 4 个按钮挤爆赛季区） */
@@ -229,9 +230,18 @@ export function lobbyPlayerCardRect(screenW) {
   return { x: 8, y: LOBBY_TOP_Y, w: Math.round(screenW / 3), h: PLAYER_CARD_H };
 }
 
+const DEPLOY_CARD_H_SMALL = 65;  // 极矮屏（<620）兜底：否则 100px 卡会挤掉段位徽章区
+
+/**
+ * 大厅上阵预览卡高度：常规屏与布阵上阵槽一致(100)，极矮屏退回 65 保住段位区。
+ */
+export function lobbyDeployCardH(screenH) {
+  return screenH < 620 ? DEPLOY_CARD_H_SMALL : DEPLOY_UNIT_SLOT_H;
+}
+
 /** 上阵兵种卡片顶 Y（开战按钮上方） */
 export function lobbyDeployCardY(screenH) {
-  return screenH - 150 - DEPLOY_BATTLE_GAP - DEPLOY_CARD_H;
+  return screenH - 150 - DEPLOY_BATTLE_GAP - lobbyDeployCardH(screenH);
 }
 
 /** 上阵兵种标签中心 Y */
@@ -252,7 +262,7 @@ export function lobbySeasonCombo(screenW, screenH, funcCount = 3) {
   return ladderCombo(top, bottom, screenW);
 }
 
-export const LOBBY_V2 = { LOBBY_TOP_Y, FUNC_BTN_H, FUNC_BTN_GAP, PLAYER_CARD_H, DEPLOY_CARD_H, DEPLOY_BATTLE_GAP };
+export const LOBBY_V2 = { LOBBY_TOP_Y, FUNC_BTN_H, FUNC_BTN_GAP, PLAYER_CARD_H, DEPLOY_CARD_H: DEPLOY_UNIT_SLOT_H, DEPLOY_CARD_H_SMALL, DEPLOY_BATTLE_GAP };
 
 /**
  * 顶部资源栏布局：根据最长货币数字字符串自适应

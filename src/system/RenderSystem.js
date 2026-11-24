@@ -23,7 +23,7 @@ import { drawArtLayer, BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE,
   pick_walkFrame, pick_unitDetail, pick_buildingDetail, pick_tutorialCard,
   pick_tutorialDots, pick_hudHp, pick_hudSynergy, pick_btnHover,
   iconKey, ICON_NAMES } from './ArtLayer.js';
-import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN, lobbyFuncBtnRect, lobbyPlayerCardRect, lobbySeasonCombo, lobbyDeployCardY, lobbyDeployLabelY } from './Layout.js';
+import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN, DEPLOY_UNIT_SLOT_H, lobbyDeployCardH, lobbyFuncBtnRect, lobbyPlayerCardRect, lobbySeasonCombo, lobbyDeployCardY, lobbyDeployLabelY } from './Layout.js';
 
 // 安全区常量的单一真相源在 SafeArea.js，这里 re-export 保持既有引用兼容
 export { SAFE_AREA_MAX } from './SafeArea.js';
@@ -2526,6 +2526,7 @@ export class RenderSystem {
 
     // 品质色（Q1-Q6: 白/绿/蓝/紫/橙/红）—— 槽位与卡片共用
     const QUALITY_COLORS = ['#9ca3af', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ef4444'];
+    const QUALITY_NAMES = ['普通', '精良', '稀有', '史诗', '传说', '神话'];
     const qualityColor = (q) => QUALITY_COLORS[(q || 1) - 1] || '#9ca3af';
 
     // === 兵种槽位 ===
@@ -2810,21 +2811,31 @@ export class RenderSystem {
       const qColor = qualityColor(unit.quality);
       const centerX = cx + card.w / 2;
 
-      // 2026-11-23 夜色卡改造：卡底改用贴合背景的深靛蓝渐变，让立绘与品质色整卡边框
-      // 成为视觉焦点。已拥有=品质色整卡边框（Q1~Q6 一眼可辨）；未拥有=冷灰蓝弱边框。
+      // 2026-11-24：未拥有卡同样表达品质——降透明度的品质色整卡边框 + 信息条品质名。
       // 描边不交给 _cardBg —— 立绘会盖住卡内描边，改到本卡绘制末尾统一补画。
       const cardBorder = isDragging ? UI_THEME.gold
-        : (owned ? qColor : 'rgba(150,180,215,0.58)');
+        : (owned ? qColor : hexToRgba(qColor, 0.66));
       this._cardBg({ x: cx, y: cy, w: card.w, h: card.h, r: 12 }, {
         tintGradient: isDragging ? ['rgba(58,92,140,0.96)', 'rgba(32,54,86,0.96)']
           : (owned ? ['rgba(46,72,112,0.96)', 'rgba(20,36,62,0.97)']
                    : ['rgba(20,34,58,0.94)', 'rgba(10,19,36,0.96)']),
-        edge: owned ? qColor : null,
+        edge: isDragging ? null : (owned ? qColor : hexToRgba(qColor, 0.5)),
         edgeSide: 'left',
         flat: true, // 夜色卡面必须平面底：_drawRaisedCard 预填白柔光会把夜色冲成灰白板
       });
 
-      if (isDragging) continue; // 拖拽中只保留卡底占位
+      // 2026-11-24：抽出补画描边，拖拽中只留卡底占位时也必须走一次，
+      // 否则原卡只剩 _cardBg 的左侧品质色条，四边轮廓断裂（用户截图的空框问题）。
+      const strokeCardBorder = () => {
+        this._roundRectPath(cx + 1.5, cy + 1.5, card.w - 3, card.h - 3, 10.5);
+        ctx.strokeStyle = cardBorder;
+        ctx.lineWidth = 3; // 品质边框加粗到 3px，夜色底上清晰可辨
+        ctx.stroke();
+      };
+      if (isDragging) {
+        strokeCardBorder();
+        continue;
+      }
 
       // ---- 立绘：按卡高放大铺满整卡，圆角裁剪收口；底部信息条随后叠在立绘上 ----
       ctx.save();
@@ -2881,24 +2892,14 @@ export class RenderSystem {
           ctx.fillText(`招募 ${current}/${needed}`, centerX, infoY + 23);
         }
       } else {
-        // 第一行：行动提示（左上角已有「未拥有」胶囊，这里给下一步动作）；第二行：解锁花费贴图
+        // 2026-11-24：图鉴不是招募商店，解锁花费数值放在卡下无决策语境，去掉。
+        // 第一行改为品质名（未拥有也要一眼看出品质），第二行保留行动提示。
         ctx.font = 'bold 10px sans-serif';
-        ctx.fillStyle = 'rgba(234,248,255,0.9)';
-        ctx.fillText('去招募', centerX, infoY + 11);
-        const uc = unit.unlockCost || {};
-        const costEntries = [];
-        if (uc.stardust) costEntries.push(['stardust', uc.stardust]);
-        if (uc.gold) costEntries.push(['gold', uc.gold]);
-        if (costEntries.length) {
-          this._drawCurrencyRun(costEntries, centerX, infoY + 23, {
-            align: 'center', iconSize: 10, fontSize: 9, tokenGap: 8, iconGap: 2,
-            alpha: unit.affordable ? 0.95 : 0.6, plus: false,
-          });
-        } else {
-          ctx.font = '9px sans-serif';
-          ctx.fillStyle = 'rgba(234,248,255,0.7)';
-          ctx.fillText('去招募解锁', centerX, infoY + 23);
-        }
+        ctx.fillStyle = qColor;
+        ctx.fillText(QUALITY_NAMES[(unit.quality || 1) - 1] || '普通', centerX, infoY + 11);
+        ctx.font = '9px sans-serif';
+        ctx.fillStyle = 'rgba(234,248,255,0.72)';
+        ctx.fillText('去招募解锁', centerX, infoY + 23);
       }
       ctx.textBaseline = 'alphabetic';
 
@@ -2952,11 +2953,7 @@ export class RenderSystem {
       }
 
       // ---- 描边补画：立绘与信息条会盖住卡底描边，最后统一描一次保证四边与圆角完整 ----
-      // 3px 内缩 1.5：线宽中心在 cx+1.5，整条落在 cx..cx+3 卡内，不越出圆角。
-      this._roundRectPath(cx + 1.5, cy + 1.5, card.w - 3, card.h - 3, 10.5);
-      ctx.strokeStyle = cardBorder;
-      ctx.lineWidth = 3; // 2026-11-23：品质边框加粗到 3px，夜色底上清晰可辨
-      ctx.stroke();
+      strokeCardBorder();
     }
 
     ctx.restore(); // 恢复 clip（滚动区仅兵种卡列表）
@@ -3226,8 +3223,9 @@ export class RenderSystem {
     // --- 兵种槽位（顶部区域，须避开统一资源栏 0~50 的覆盖带）---
     const slotLabelY = 62;
     const slotY = 72;
-    // 上阵槽（2026-11-23 与图鉴一致化）：立绘放大占主体，去名称，只留品质+Lv 细带
-    const slotH = 100;
+    // 上阵槽（2026-11-23 与图鉴一致化）：立绘放大占主体，去名称，只留品质+Lv 细带。
+    // 2026-11-24：高度提为 Layout 共享常量，大厅预览卡同尺寸。
+    const slotH = DEPLOY_UNIT_SLOT_H;
 
     // --- 羁绊（4 类风格卡，正方形）---
     const synLabelY = slotY + slotH + SECTION_GAP;
@@ -4573,7 +4571,8 @@ export class RenderSystem {
     // === 上阵兵种预览：与布阵上阵槽同款夜色卡（深靛蓝渐变 + 品质色整卡边框 + 立绘铺满 + 深底信息条）===
     const deployY = lobbyDeployLabelY(h);
     const deployCardY = lobbyDeployCardY(h);
-    const deployBox = { x: 8, y: deployY - 15, w: w - 16, h: deployCardY + 65 + 6 - (deployY - 15), r: 12 };
+    const deployCardH = lobbyDeployCardH(h);
+    const deployBox = { x: 8, y: deployY - 15, w: w - 16, h: deployCardY + deployCardH + 6 - (deployY - 15), r: 12 };
     this._cardBg(deployBox, {
       tintGradient: ['rgba(46,72,112,0.90)', 'rgba(16,30,54,0.94)'],
       tint: 'rgba(20,36,62,0.94)', border: 'rgba(126,170,220,0.42)', flat: true,
@@ -4587,10 +4586,12 @@ export class RenderSystem {
       const deployables = ConfigLoader.getSafe('deployables');
       const units = profile.deployment.units || [];
       const slotGap = 5;
-      const slotW = rowItemWidth(units.length, slotGap, w, 8, LAYOUT_MIN.lobbySlot, LAYOUT_DESIGN_MAX.lobbySlot);
+      // 2026-11-24：大厅上阵卡尺寸改为与布阵上阵槽完全一致（宽 42~52、高 100），
+      // 走同一套 unitSlot 约束；deployCardY 由 Layout.DEPLOY_CARD_H 同步上移，命中/渲染同源。
+      const slotW = rowItemWidth(units.length, slotGap, w, 8, LAYOUT_MIN.unitSlot, LAYOUT_DESIGN_MAX.unitSlot);
       const slotStartX = rowStartX(units.length, slotW, slotGap, w);
       const y = deployCardY;
-      const slotH = 65; // 与 Layout.DEPLOY_CARD_H 同源，卡填满 deployBox
+      const slotH = deployCardH;
       const qNames = ['普通', '精良', '稀有', '史诗', '传说', '神话'];
 
       for (let i = 0; i < units.length; i++) {
@@ -4611,13 +4612,14 @@ export class RenderSystem {
           const collected = profile.collectedUnits[unitId];
           // 立绘裁剪铺满卡面上部（固定 174:216 取景，跨屏一致），深底信息条覆盖下缘
           const _artIdx = getUnitArtIndex(unitId);
-          const bandH = 18;
+          const bandH = 17;
           let lobbyArtDrawn = false;
           if (_artIdx >= 1 && _artIdx <= 40) {
             ctx.save();
             this._roundRectPath(actualX, y, slotW, slotH, 9);
             ctx.clip();
-            const artH = slotH - 6, artW = artH * 174 / 216;
+            // 与布阵上阵槽同口径：78 高取景框（slotH-22）、固定 174:216，横向溢出圆角裁剪。
+            const artH = slotH - 22, artW = artH * 174 / 216;
             lobbyArtDrawn = this._artUnit(_artIdx, actualX + slotW / 2 - artW / 2, y + 1,
               artW, artH, false, { alpha: 0.98, fit: 'cover' });
             ctx.restore();
@@ -4628,9 +4630,9 @@ export class RenderSystem {
             ctx.textAlign = 'center';
             ctx.fillText(u.icon || '?', actualX + slotW / 2, y + slotH * 0.46);
           }
-          // 深底信息条：与布阵同款，窄卡只放居中 Lv，宽卡左品质名 + 右 Lv
-          const bandY = y + slotH - bandH - 1;
-          this._roundRectPath(actualX + 2, bandY, slotW - 4, bandH - 2, 5);
+          // 深底信息条：与布阵同款位置（底边上移 20px）；窄卡只放居中 Lv，宽卡左品质名 + 右 Lv
+          const bandY = y + slotH - 20;
+          this._roundRectPath(actualX + 2, bandY, slotW - 4, bandH, 5);
           ctx.fillStyle = 'rgba(6,14,30,0.88)';
           ctx.fill();
           ctx.textBaseline = 'middle';
@@ -4638,16 +4640,16 @@ export class RenderSystem {
             ctx.fillStyle = UI_THEME.gold;
             ctx.font = 'bold 9px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('Lv.' + (collected?.level || 1), actualX + slotW / 2, bandY + (bandH - 2) / 2);
+            ctx.fillText('Lv.' + (collected?.level || 1), actualX + slotW / 2, bandY + bandH / 2);
           } else {
             ctx.fillStyle = qColor;
             ctx.font = 'bold 8px sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(qNames[q - 1] || '普通', actualX + 5, bandY + (bandH - 2) / 2);
+            ctx.fillText(qNames[q - 1] || '普通', actualX + 5, bandY + bandH / 2);
             ctx.fillStyle = UI_THEME.gold;
             ctx.font = 'bold 9px sans-serif';
             ctx.textAlign = 'right';
-            ctx.fillText('Lv.' + (collected?.level || 1), actualX + slotW - 5, bandY + (bandH - 2) / 2);
+            ctx.fillText('Lv.' + (collected?.level || 1), actualX + slotW - 5, bandY + bandH / 2);
           }
           ctx.textBaseline = 'alphabetic';
         } else {

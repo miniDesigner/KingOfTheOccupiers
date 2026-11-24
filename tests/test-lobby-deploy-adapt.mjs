@@ -2,6 +2,7 @@
 // 1) 6 满编在多种屏宽下 slotW 总宽 ≤ 屏宽，且居中不溢出
 // 2) 3 上阵（少编）时 slotW 被 maxW=70 钳制，不拉伸过大
 // 3) lobby 渲染冒烟（6 满编，iPhone 5 320 极窄屏）无异常
+// 4) 2026-11-24：常规屏大厅上阵卡与布阵上阵槽同尺寸，极矮屏退回 65 兜底
 const noop = () => {};
 const ctxProxy = new Proxy({}, {
   get: (t, p) => {
@@ -58,7 +59,7 @@ function assert(cond, msg) {
   else { failed++; console.error('  ❌ ' + msg); }
 }
 
-const { rowItemWidth, rowStartX, LAYOUT_MIN, LAYOUT_DESIGN_MAX } = await import('../src/system/Layout.js');
+const { rowItemWidth, rowStartX, LAYOUT_MIN, LAYOUT_DESIGN_MAX, lobbyDeployCardH, DEPLOY_UNIT_SLOT_H } = await import('../src/system/Layout.js');
 const ConfigLoader = (await import('../src/data/ConfigLoader.js')).default;
 const { Game } = await import('../src/game/Game.js');
 const ProfileManager = (await import('../src/meta/ProfileManager.js')).default;
@@ -103,6 +104,22 @@ console.log('=== 测试3: lobby 渲染冒烟（6 满编，320 屏）===');
   let err = null;
   try { game.render(0.016); } catch (e) { err = e; }
   assert(!err, `6 满编 lobby 渲染无异常${err ? '(' + err.message + ')' : ''}`);
+}
+
+console.log('=== 测试4: 大厅上阵卡与布阵上阵槽同尺寸（极矮屏例外）===');
+{
+  const { RenderSystem } = await import('../src/system/RenderSystem.js');
+  for (const screenH of [667, 812, 932]) {
+    assert(lobbyDeployCardH(screenH) === DEPLOY_UNIT_SLOT_H,
+      `屏高 ${screenH}: 大厅卡高 ${lobbyDeployCardH(screenH)} = 布阵槽高 ${DEPLOY_UNIT_SLOT_H}`);
+    assert(lobbyDeployCardH(screenH) === RenderSystem.deployLayout(375, screenH).slot.h,
+      `屏高 ${screenH}: 大厅卡高与布阵槽高同源`);
+  }
+  assert(lobbyDeployCardH(568) === 65, 'iPhone5 极矮屏仍用 65 兜底，不挤掉段位区');
+  const w = 375;
+  const lobbyW = rowItemWidth(6, 5, w, 8, LAYOUT_MIN.unitSlot, LAYOUT_DESIGN_MAX.unitSlot);
+  assert(Math.abs(lobbyW - RenderSystem.deployLayout(w, 812).slot.w) < 0.01,
+    `大厅槽宽 ${lobbyW.toFixed(1)} 与布阵槽宽一致`);
 }
 
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
