@@ -620,14 +620,13 @@ export class RenderSystem {
 
   /**
    * 大厅右上角设置按钮：几何与 Game 命中（x∈[w-45,w-10], y∈[10,40]）同源。
-   * 抽成独立方法供 drawLobby 与模态后的顶栏重绘共用，保证两处像素完全一致。
-   * @param {boolean} dim 是否压暗重绘（设置/公告/账号覆盖层打开时用，按钮仍可见但不喧宾夺主）
+   * 抽成独立方法供 drawLobby 与遮罩后的顶栏重绘共用，保证两处像素完全一致。
+   * 始终位于所有顶部遮罩之前，任何状态（含设置/公告/账号面板打开）都保持常态亮度。
    */
-  _drawLobbySettingButton(dim) {
+  _drawLobbySettingButton() {
     const { ctx } = this;
     const w = this.screenWidth;
     const rect = { x: w - 45, y: 10, w: 35, h: 30, r: 9 };
-    if (dim) { ctx.save(); ctx.globalAlpha = 0.6; }
     this._cardBg(rect, { tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border });
     if (!this._artIcon(ART_PREFIXES.hud, 'setting', rect.x + rect.w / 2, rect.y + rect.h / 2, 18, 1)) {
       ctx.fillStyle = NIGHT.title;
@@ -636,21 +635,18 @@ export class RenderSystem {
       ctx.textBaseline = 'middle';
       ctx.fillText('⚙', rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
     }
-    if (dim) ctx.restore();
   }
 
   /**
    * 模态遮罩之后重绘顶栏：大厅设置按钮 + 当前界面右上角标题胶囊。
-   * 只重绘本帧已经画过的元素，不改几何、不改命中；无模态时不调用，避免阴影重复叠加。
+   * 只重绘本帧已经画过的元素，不改几何、不改命中；每帧统一调用，避免阴影重复叠加。
    */
   redrawTopChrome(gameState) {
     const state = gameState || {};
-    // 设置/账号/公告覆盖层打开时，右上角设置按钮压暗重绘（globalAlpha 0.6）：
-    // 完全跳过重绘会让按钮被 0.6 遮罩吞掉、看起来像消失；常亮重绘又与面板抢视觉。
-    // 0.6 让按钮明显比正常态暗，但仍可辨认入口还在（贴图暗金色，过低会融进背景看不见）。
-    // 其他模态（招募/羁绊/建筑详情等）仍保持按钮原亮度，避免误以为入口消失。
-    const settingOverlayOpen = !!(state.settingsOpen || state.announceOpen || state.accountOpen);
-    if (state.screenState === 'lobby') this._drawLobbySettingButton(settingOverlayOpen);
+    // 设置按钮与标题同属顶部 chrome，统一置于遮罩之前、保持常态亮度。
+    // 此前设置/公告/账号面板打开时传 dim=true(alpha 0.6) 手动压暗，等于把它退回遮罩之后；
+    // 用户要求「放到遮罩图层前面」——所有模态下一律常亮重绘，入口始终清晰可辨。
+    if (state.screenState === 'lobby') this._drawLobbySettingButton();
     const cached = this._lastHeader;
     // noShadow：遮罩后再画一遍卡面本体即可，抬起阴影只保留首次绘制的那层
     if (cached) this._screenHeader(cached.title, { ...cached.opts, noShadow: true });

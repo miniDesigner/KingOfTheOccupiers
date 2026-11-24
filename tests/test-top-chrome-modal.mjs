@@ -29,19 +29,17 @@ test('顶栏无条件在遮罩之后重绘，标题不被资源栏暗条压暗',
   assert(rsSrc.includes('if (o.flat) this._drawCard(headerRect, paintHeader);') ||
     rsSrc.includes('if (o.noShadow) this._drawCard(headerRect, paintHeader);'),
   '标题重绘走无阴影版本，避免阴影二次叠加');
-  assert(rsSrc.includes('if (state.screenState === \'lobby\') this._drawLobbySettingButton(settingOverlayOpen);'),
-    '大厅设置按钮在遮罩后重绘，设置覆盖层时传 dim 参数');
-  assert(rsSrc.includes('const settingOverlayOpen = !!(state.settingsOpen || state.announceOpen || state.accountOpen);'),
-    '设置/公告/账号覆盖层被识别为需压暗设置按钮的场景');
-  assert(rsSrc.includes('ctx.globalAlpha = 0.6;') && rsSrc.includes('if (dim) ctx.restore();'),
-    '设置按钮支持 dim 压暗重绘（仍可见但不喧宾夺主）');
+  assert(rsSrc.includes('if (state.screenState === \'lobby\') this._drawLobbySettingButton();'),
+    '大厅设置按钮在遮罩后无参重绘（常亮，不再压暗）');
+  assert(!rsSrc.includes('settingOverlayOpen'), '不再按覆盖层状态压暗设置按钮');
+  assert(!rsSrc.includes('ctx.globalAlpha = 0.6;'), '设置按钮绘制不再有 0.6 压暗分支');
   assert(rsSrc.includes('if (cached) this._screenHeader(cached.title, { ...cached.opts, noShadow: true });'),
     '右上角标题按缓存几何原样重绘（无阴影版）');
 });
 
 test('设置按钮抽成单一绘制方法，几何与命中不变', () => {
-  const helperStart = rsSrc.indexOf('  _drawLobbySettingButton(dim) {');
-  assert(helperStart > 0, '存在独立设置按钮绘制方法（含 dim 参数）');
+  const helperStart = rsSrc.indexOf('  _drawLobbySettingButton() {');
+  assert(helperStart > 0, '存在独立设置按钮绘制方法（无压暗参数）');
   const helper = rsSrc.slice(helperStart, rsSrc.indexOf('\n  }', helperStart));
   assert(helper.includes('{ x: w - 45, y: 10, w: 35, h: 30, r: 9 }'), '按钮几何与原版一致');
   assert(!rsSrc.includes('const lobbySet = { x: w - 45'), '旧内联绘制已移除');
