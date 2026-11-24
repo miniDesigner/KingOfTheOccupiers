@@ -6297,10 +6297,12 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillStyle = canSingle ? NIGHT.title : NIGHT.hint;
     ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('单抽 ×1', L.singleX + L.btnW / 2, L.btnY + 17);
+    // 与十连按钮共用垂直居中锚点（_primaryButton 的 y + bh/2 + 1），两按钮内部布局对齐
+    ctx.fillText('单抽 ×1', L.singleX + L.btnW / 2, L.btnY + L.btnH / 2 + 1);
     // 消耗数量始终显示：金币不足时也要让玩家看到单抽需要多少。
     // 不足态用浅蓝灰提示色（暗底可读），充足态用金色强调可支付。
-    this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36, {
+    // 金币行锚点 +41 与十连完全一致，两按钮的文案/资源行高对齐
+    this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 41, {
       align: 'center', plus: false, iconSize: 11, fontSize: 12,
       color: canSingle ? UI_THEME.gold : NIGHT.hint,
     });

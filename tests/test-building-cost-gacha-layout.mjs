@@ -310,7 +310,12 @@ console.log('\n=== 测试15: 概率卡轮廓 + 两个抽卡按钮始终显示消
   assert(!multiPart.includes("'金币不足'"), '十连按钮文案不切换为「金币不足」');
   assert(multiPart.includes("'十连 ×10'"), '十连按钮始终显示功能文案「十连 ×10」');
   assert(!singlePart.includes("'金币不足'"), '单抽按钮文案不切换为「金币不足」');
-  console.log('  ✓ 概率卡纯夜色轮廓 + 两按钮文案与消耗数量在金币不足时均照常显示');
+  // 两按钮内部锚点对齐：文案垂直居中、金币行同为 btnY+41（与 _primaryButton / 十连一致）
+  assert(singlePart.includes("'单抽 ×1', L.singleX + L.btnW / 2, L.btnY + L.btnH / 2 + 1"),
+    '单抽文案与十连同锚点：按钮垂直居中');
+  assert(singlePart.includes("_drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 41"),
+    '单抽金币行与十连同锚点：btnY+41');
+  console.log('  ✓ 概率卡纯夜色轮廓 + 两按钮文案与消耗数量始终可见、内部锚点对齐');
 }
 
 console.log(`\n📊 结果: ${passed} 通过 / ${failed} 失败`);
