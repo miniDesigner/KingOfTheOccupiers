@@ -2599,7 +2599,13 @@ export class Game {
   renderLoadingScreen(progress) {
     const { ctx } = this;
     const w = this.screenWidth;
-    const h = this.screenHeight;
+    // 加载页是全屏独立绘制，不经过 renderScreen 的 safeArea 包裹（translate(0, top)）。
+    // 方案 B 下 this.screenHeight 是「内容区高度」= 物理高 - top - bottom，若拿它当画布高，
+    // 顶部 top + 底部 bottom 两段就画不到，露出兜底天蓝 —— 真机表现为底部一条纯色空缺。
+    // 加载页背景本就该铺满整屏（刘海/home 区由系统与黑底处理），故用物理屏高。
+    // 兼容：Node 测试的 fake 对象只给 screenHeight，回退即可。
+    const h = this.physScreenHeight || this.screenHeight;
+    const safeBottom = this.safeAreaBottom || 0;
 
     // 圆角矩形路径（内联，加载页不依赖 RenderSystem）
     const roundRectPath = (x, y, rw, rh, r) => {
@@ -2678,7 +2684,8 @@ export class Game {
 
     // 4) 健康游戏忠告：标准文案常驻加载页（版号/提审必查项）。
     //    位于底部蒙层内、进度卡下方，浅色小字不遮挡插画主体。
-    drawHealthAdvice(ctx, w, h);
+    //    底边距 = home indicator 高度 + 24px 呼吸位，避免被手势区遮挡。
+    drawHealthAdvice(ctx, w, h, safeBottom + 24);
   }
 
   /**

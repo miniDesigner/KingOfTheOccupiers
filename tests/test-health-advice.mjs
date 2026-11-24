@@ -138,5 +138,49 @@ console.log('=== 测试4: 加载页接线（renderLoadingScreen 实测）===');
   })());
 }
 
+console.log('=== 测试5: 加载页安全区铺满（方案B回归）===');
+{
+  // 真机场景：物理高 812，安全区 top=44/bottom=34 → 逻辑内容高 734。
+  // 修复前 renderLoadingScreen 用 screenHeight(734) 画背景，底部 78px 露兜底天蓝；
+  // 修复后用 physScreenHeight(812) 铺满，忠告按 safeAreaBottom 额外避让 home indicator。
+  const rects = [], texts = [];
+  const ctx2 = {
+    font: '', fillStyle: '', textAlign: '', textBaseline: '',
+    shadowColor: '', shadowBlur: 0, shadowOffsetY: 0,
+    save: noop, restore: noop, beginPath: noop, closePath: noop, clip: noop,
+    moveTo: noop, lineTo: noop, quadraticCurveTo: noop, arc: noop,
+    fill: noop, stroke: noop, strokeRect: noop, drawImage: noop,
+    fillRect(x, y, rw, rh) { rects.push({ x, y, w: rw, h: rh, color: this.fillStyle }); },
+    createLinearGradient: () => ({ addColorStop: noop }),
+    measureText: t => ({ width: String(t).length * 8 }),
+    fillText(t, x, y) { texts.push({ t: String(t), x, y }); },
+  };
+  const PHYS_H = 812, SAFE_TOP = 44, SAFE_BOTTOM = 34, INNER_H = 734;
+  const fake2 = {
+    ctx: ctx2, screenWidth: 375,
+    screenHeight: INNER_H,          // 方案B：内容区高
+    physScreenHeight: PHYS_H,       // 物理高
+    safeAreaBottom: SAFE_BOTTOM,
+  };
+  Game.prototype.renderLoadingScreen.call(fake2, 1);
+
+  // 1) 兜底天蓝背景必须铺满【物理高】，而非内容区高（核心回归断言）
+  const bgFill = rects.find(r => r.y === 0 && r.h === PHYS_H && r.w === 375);
+  check('加载页背景铺满物理屏高 812（非内容区 734）', !!bgFill,
+    `实际 rects=${JSON.stringify(rects.slice(0, 3))}`);
+  check('不再存在只到内容区高的背景块',
+    !rects.some(r => r.y === 0 && r.h === INNER_H));
+
+  // 2) 底部蒙层也从物理高的 52% 起、铺到物理底
+  const veil = rects.find(r => Math.abs(r.y - PHYS_H * 0.52) < 0.01 && Math.abs(r.h - PHYS_H * 0.48) < 0.01);
+  check('底部蒙层按物理高铺到底部', !!veil);
+
+  // 3) 健康忠告按物理高 + safeBottom 定位（底边 = 812 - (34+24) = 754）
+  const L5 = healthAdviceLayout(375, PHYS_H, SAFE_BOTTOM + 24);
+  check('忠告面板底边 = 物理高 - (safeBottom+24)', Math.abs((L5.panel.y + L5.panel.h) - (PHYS_H - SAFE_BOTTOM - 24)) < 0.01);
+  check('忠告底边在 home indicator 上方（避开手势区）', (L5.panel.y + L5.panel.h) <= PHYS_H - SAFE_BOTTOM);
+  check('忠告四句在测试中已绘制', EXPECTED_LINES.every(s => texts.some(t => t.t === s)));
+}
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 process.exit(failed ? 1 : 0);
