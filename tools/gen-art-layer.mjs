@@ -54,12 +54,12 @@ function screenOf(key) {
   if (/^ui\/rank_/.test(key)) return 'leaderboard';
   if (/^ui\/tech_/.test(key)) return 'tech_panel';
   if (/^ui\/account_row_|^icons\/account_/.test(key)) return 'account';
-  if (/^ui\/switch_|^ui\/slider_|^icons\/setting_/.test(key)) return 'settings';
+  // settings 组已移除（2026-11-24）：setting_* / state_* / switch_* / slider_* 曾在
+  // 设置面板打开时于左上角排出 8 个奇怪图标，属审查期临时机制，不再生成装饰组。
   if (/^ui\/result_/.test(key)) return 'result';
   if (/^icons\/tutorial_|^ui\/tutorial_/.test(key)) return 'playing';
   if (/^ui\/unit_detail|^ui\/building_detail/.test(key)) return 'deploy_select';
   if (/^ui\/hud_|^icons\/hud_/.test(key)) return 'playing';
-  if (/^icons\/state_/.test(key)) return 'settings';
   if (/^icons\/lobby_/.test(key)) return 'lobby';
   // 剩余 ui 公共状态变体 → lobby（大厅是最常被浏览的界面）
   return 'lobby';
@@ -319,9 +319,8 @@ L.push(`      rs._art(key, x, y, bw, bh, { alpha: alpha * scale });`);
 L.push(`      n++;`);
 L.push(`    }`);
 L.push(`  };`);
-L.push(`  // 当前界面专属 + 设置/账号覆盖层打开时叠加对应组`);
+L.push(`  // 当前界面专属装饰层（settings 组已移除：设置面板左上角奇怪图标来源）`);
 L.push(`  emit(SCREEN_BINDINGS[screen]);`);
-L.push(`  if (gameState && gameState.settingsOpen) emit(SCREEN_BINDINGS.settings);`);
 L.push(`  if (gameState && gameState.accountOpen) emit(SCREEN_BINDINGS.account);`);
 L.push(`  // 结算态叠加胜负素材`);
 L.push(`  if (gameState && gameState.gameStatus && gameState.gameStatus !== 'playing') {`);

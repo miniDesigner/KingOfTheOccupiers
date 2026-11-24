@@ -218,21 +218,6 @@ const BIND_RESULT = [
   ['ui/result_summary', 'card', 0.14],
 ];
 
-const BIND_SETTINGS = [
-  ['icons/setting_vibrate', 'icon', 0.26],
-  ['icons/state_ad', 'icon', 0.26],
-  ['icons/state_close', 'icon', 0.26],
-  ['icons/state_delete', 'icon', 0.26],
-  ['icons/state_lock', 'icon', 0.26],
-  ['icons/state_skill', 'icon', 0.26],
-  ['icons/state_stardust', 'icon', 0.26],
-  ['icons/state_upgrade', 'icon', 0.26],
-  ['ui/slider_bgm', 'row', 0.16],
-  ['ui/slider_sfx', 'row', 0.16],
-  ['ui/switch_off', 'row', 0.16],
-  ['ui/switch_on', 'row', 0.16],
-];
-
 const BIND_SHOP = [
   ['ui/shop_card_free', 'row', 0.16],
   ['ui/shop_card_normal', 'row', 0.16],
@@ -421,7 +406,6 @@ const SCREEN_BINDINGS = {
   'playing': BIND_PLAYING,
   'quest': BIND_QUEST,
   'result': BIND_RESULT,
-  'settings': BIND_SETTINGS,
   'shop': BIND_SHOP,
   'tech_panel': BIND_TECH_PANEL,
 };
@@ -500,9 +484,11 @@ export function drawArtLayer(rs, gameState) {
       n++;
     }
   };
-  // 当前界面专属 + 设置/账号覆盖层打开时叠加对应组
+  // 当前界面专属装饰层。
+  // 设置覆盖层不再 emit 专属装饰组：BIND_SETTINGS 是审查期「让零引用素材露脸」的
+  // 临时机制，会在左上角资源栏右侧排出 setting_vibrate/state_* 等 8 个奇怪图标；
+  // 设置面板本身已有正式图标与控件，叠加只产生噪点（2026-11-24 移除）。
   emit(SCREEN_BINDINGS[screen]);
-  if (gameState && gameState.settingsOpen) emit(SCREEN_BINDINGS.settings);
   if (gameState && gameState.accountOpen) emit(SCREEN_BINDINGS.account);
   // 结算态叠加胜负素材
   if (gameState && gameState.gameStatus && gameState.gameStatus !== 'playing') {

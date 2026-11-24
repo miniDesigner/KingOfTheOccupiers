@@ -23,15 +23,19 @@ test('模态遮罩之后重绘顶栏，压暗只作用于内容区', () => {
   const restoreIdx = screenSrc.indexOf('ctx.restore();');
   assert(redrawIdx > overlayIdx && redrawIdx < restoreIdx,
     '重绘位于所有覆盖层之后、安全区 restore 之前');
-  assert(rsSrc.includes('if (state.screenState === \'lobby\') this._drawLobbySettingButton();'),
-    '大厅设置按钮在遮罩后重绘');
+  assert(rsSrc.includes('if (state.screenState === \'lobby\') this._drawLobbySettingButton(settingOverlayOpen);'),
+    '大厅设置按钮在遮罩后重绘，设置覆盖层时传 dim 参数');
+  assert(rsSrc.includes('const settingOverlayOpen = !!(state.settingsOpen || state.announceOpen || state.accountOpen);'),
+    '设置/公告/账号覆盖层被识别为需压暗设置按钮的场景');
+  assert(rsSrc.includes('ctx.globalAlpha = 0.6;') && rsSrc.includes('if (dim) ctx.restore();'),
+    '设置按钮支持 dim 压暗重绘（仍可见但不喧宾夺主）');
   assert(rsSrc.includes('if (cached) this._screenHeader(cached.title, cached.opts);'),
     '右上角标题按缓存几何原样重绘');
 });
 
-test('设置按钮抽成单一绘制方法，绘制与重绘像素一致且命中不变', () => {
-  const helperStart = rsSrc.indexOf('  _drawLobbySettingButton()');
-  assert(helperStart > 0, '存在独立设置按钮绘制方法');
+test('设置按钮抽成单一绘制方法，几何与命中不变', () => {
+  const helperStart = rsSrc.indexOf('  _drawLobbySettingButton(dim) {');
+  assert(helperStart > 0, '存在独立设置按钮绘制方法（含 dim 参数）');
   const helper = rsSrc.slice(helperStart, rsSrc.indexOf('\n  }', helperStart));
   assert(helper.includes('{ x: w - 45, y: 10, w: 35, h: 30, r: 9 }'), '按钮几何与原版一致');
   assert(!rsSrc.includes('const lobbySet = { x: w - 45'), '旧内联绘制已移除');
@@ -61,4 +65,29 @@ test('匹配 overlay 在 renderScreen 之后绘制，由 Game 手动补回顶栏
   assert(gameSrc.includes('this._drawMatchOverlay();') && gameSrc.includes(
     'this.renderSystem.redrawTopChrome({ screenState: this.screenState });'),
   'Game 在匹配遮罩后调用顶栏重绘');
+});
+
+test('设置界面标题图标为齿轮，不再用音符', () => {
+  // _drawSettingsOverlay 里 _modalShell 的图标参数
+  const settingsStart = rsSrc.indexOf('  _drawSettingsOverlay(gameState)');
+  const settingsSrc = rsSrc.slice(settingsStart, rsSrc.indexOf('\n  }', settingsStart));
+  assert(settingsSrc.includes("this._modalShell(p, cb, '设置', {"),
+    '设置面板使用 _modalShell');
+  assert(settingsSrc.includes('iconPrefix: ART_PREFIXES.hud, iconName: \'setting\''),
+    '标题图标用 hud/setting（齿轮）');
+  assert(!settingsSrc.includes('iconName: \'music\''),
+    '不再用 setting/music（音符）作标题图标');
+});
+
+test('设置覆盖层不再 emit BIND_SETTINGS 装饰层（左上角奇怪图标来源）', () => {
+  const alSrc = readFileSync(new URL('../src/system/ArtLayer.js', import.meta.url), 'utf-8');
+  assert(!alSrc.includes('emit(SCREEN_BINDINGS.settings)'),
+    'drawArtLayer 不再绘制设置装饰组');
+  assert(!alSrc.includes('const BIND_SETTINGS'),
+    'BIND_SETTINGS 死代码已删除');
+  assert(!alSrc.includes("'settings': BIND_SETTINGS"),
+    'SCREEN_BINDINGS 不再注册 settings 组');
+  const genSrc = readFileSync(new URL('../tools/gen-art-layer.mjs', import.meta.url), 'utf-8');
+  assert(!genSrc.includes("emit(SCREEN_BINDINGS.settings)"),
+    '生成脚本同步移除 settings emit');
 });

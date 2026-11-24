@@ -609,11 +609,13 @@ export class RenderSystem {
   /**
    * 大厅右上角设置按钮：几何与 Game 命中（x∈[w-45,w-10], y∈[10,40]）同源。
    * 抽成独立方法供 drawLobby 与模态后的顶栏重绘共用，保证两处像素完全一致。
+   * @param {boolean} dim 是否压暗重绘（设置/公告/账号覆盖层打开时用，按钮仍可见但不喧宾夺主）
    */
-  _drawLobbySettingButton() {
+  _drawLobbySettingButton(dim) {
     const { ctx } = this;
     const w = this.screenWidth;
     const rect = { x: w - 45, y: 10, w: 35, h: 30, r: 9 };
+    if (dim) { ctx.save(); ctx.globalAlpha = 0.6; }
     this._cardBg(rect, { tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border });
     if (!this._artIcon(ART_PREFIXES.hud, 'setting', rect.x + rect.w / 2, rect.y + rect.h / 2, 18, 1)) {
       ctx.fillStyle = NIGHT.title;
@@ -622,6 +624,7 @@ export class RenderSystem {
       ctx.textBaseline = 'middle';
       ctx.fillText('⚙', rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
     }
+    if (dim) ctx.restore();
   }
 
   /**
@@ -630,7 +633,12 @@ export class RenderSystem {
    */
   redrawTopChrome(gameState) {
     const state = gameState || {};
-    if (state.screenState === 'lobby') this._drawLobbySettingButton();
+    // 设置/账号/公告覆盖层打开时，右上角设置按钮压暗重绘（globalAlpha 0.6）：
+    // 完全跳过重绘会让按钮被 0.6 遮罩吞掉、看起来像消失；常亮重绘又与面板抢视觉。
+    // 0.6 让按钮明显比正常态暗，但仍可辨认入口还在（贴图暗金色，过低会融进背景看不见）。
+    // 其他模态（招募/羁绊/建筑详情等）仍保持按钮原亮度，避免误以为入口消失。
+    const settingOverlayOpen = !!(state.settingsOpen || state.announceOpen || state.accountOpen);
+    if (state.screenState === 'lobby') this._drawLobbySettingButton(settingOverlayOpen);
     const cached = this._lastHeader;
     if (cached) this._screenHeader(cached.title, cached.opts);
   }
@@ -6982,7 +6990,7 @@ export class RenderSystem {
     // 面板 + 标题 + 关闭钮：统一 ModalShell 云白皮肤（几何来自 Game.SETTINGS_LAYOUT，不变）
     const cb = { x: p.x + p.w - L.closeSize - 8, y: p.y + 8, w: L.closeSize, h: L.closeSize };
     this._modalShell(p, cb, '设置', {
-      iconPrefix: ART_PREFIXES.setting, iconName: 'music',
+      iconPrefix: ART_PREFIXES.hud, iconName: 'setting',
     });
 
     // 行按钮：0=音效 1=音乐 2=震动 3=公告 4=实名认证 5=青少年模式
