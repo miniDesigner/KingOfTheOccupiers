@@ -129,6 +129,16 @@ export function techTabWidth(screenW) {
 }
 
 /**
+ * 科技树节点高度（渲染与点击同源）。旧值 70 内容顶格，放大到 86 留足上下呼吸。
+ */
+export const TECH_NODE_H = 86;
+
+/**
+ * 科技节点内容内边距（旧值 5 太贴边，统一 10）。
+ */
+export const TECH_NODE_PAD = 10;
+
+/**
  * 大厅段位进度条高度（城堡下方，居中表现）
  */
 export const LADDER_BAR_H = 20;

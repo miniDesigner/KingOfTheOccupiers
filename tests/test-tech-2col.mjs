@@ -59,7 +59,11 @@ function assert(cond, msg) {
   else { failed++; console.error('  ❌ ' + msg); }
 }
 
-const { techNodeWidth, techTabWidth, rowStartX } = await import('../src/system/Layout.js');
+const { techNodeWidth, techTabWidth, rowStartX, TECH_NODE_H, TECH_NODE_PAD } = await import('../src/system/Layout.js');
+const { readFileSync: rf } = await import('node:fs');
+const { dirname, join } = await import('node:path');
+const { fileURLToPath: fURL } = await import('node:url');
+const ROOT = dirname(dirname(fURL(import.meta.url)));
 const ConfigLoader = (await import('../src/data/ConfigLoader.js')).default;
 const { Game } = await import('../src/game/Game.js');
 
@@ -119,6 +123,22 @@ console.log('=== 测试4: tech_panel 4 分支渲染冒烟 ===');
     try { game.render(0.016); } catch (e) { err = e; }
     assert(!err, `分支 ${bk} 渲染无异常${err ? '(' + err.message + ')' : ''}`);
   }
+}
+
+console.log('=== 测试5: 节点框体放大且渲染/命中共享高度常量 ===');
+{
+  assert(TECH_NODE_H >= 84, `节点高度已放大（实际 ${TECH_NODE_H}，旧值 70）`);
+  assert(TECH_NODE_PAD >= 10, `内容内边距已加宽（实际 ${TECH_NODE_PAD}，旧值 5）`);
+  const rsSrc = rf(join(ROOT, 'src/system/RenderSystem.js'), 'utf-8');
+  const gameSrc = rf(join(ROOT, 'src/game/Game.js'), 'utf-8');
+  assert(rsSrc.includes('const nodeW = techNodeWidth(w), nodeH = TECH_NODE_H, nodeGap = 10'),
+    'RenderSystem 节点高度走共享常量');
+  assert(gameSrc.includes('const nodeW = techNodeWidth(this.screenWidth), nodeH = TECH_NODE_H, nodeGap = 10'),
+    'Game 命中高度走同一共享常量');
+  assert(!gameSrc.includes('nodeH = 70') && !rsSrc.includes(', nodeH = 70,'),
+    '两处都不再硬编码 70');
+  assert(rsSrc.includes('x + pad, y + pad + 17') && rsSrc.includes('x + pad, y + pad + 46'),
+    '描述与等级文字按 10px 内边距排布，不再贴边');
 }
 
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);

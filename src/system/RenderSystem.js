@@ -23,7 +23,7 @@ import { drawArtLayer, BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE,
   pick_walkFrame, pick_unitDetail, pick_buildingDetail, pick_tutorialCard,
   pick_tutorialDots, pick_hudHp, pick_hudSynergy, pick_btnHover,
   iconKey, ICON_NAMES } from './ArtLayer.js';
-import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN, DEPLOY_UNIT_SLOT_H, lobbyDeployCardH, lobbyFuncBtnRect, lobbyPlayerCardRect, lobbySeasonCombo, lobbyDeployCardY, lobbyDeployLabelY } from './Layout.js';
+import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, TECH_NODE_H, TECH_NODE_PAD, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN, DEPLOY_UNIT_SLOT_H, lobbyDeployCardH, lobbyFuncBtnRect, lobbyPlayerCardRect, lobbySeasonCombo, lobbyDeployCardY, lobbyDeployLabelY } from './Layout.js';
 
 // 安全区常量的单一真相源在 SafeArea.js，这里 re-export 保持既有引用兼容
 export { SAFE_AREA_MAX } from './SafeArea.js';
@@ -4999,7 +4999,8 @@ export class RenderSystem {
     const branch = techConfig.branches[selectedBranch];
     if (!branch) return;
 
-    const nodeW = techNodeWidth(w), nodeH = 70, nodeGap = 10;
+    const nodeW = techNodeWidth(w), nodeH = TECH_NODE_H, nodeGap = 10;
+    const pad = TECH_NODE_PAD;
     const nodeStartX = rowStartX(2, nodeW, nodeGap, w);
     // 2026-11-21：跟随 SUBPAGE_TAB_Y=72 同步下移（原 100 与页签底 107 重叠），留 12px gutter
     const nodesStartY = TECH_NODES_Y - (gameState.metaScrollY || 0);
@@ -5062,54 +5063,54 @@ export class RenderSystem {
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.fillText(node.name, x + 5, y + 5);
+      ctx.fillText(node.name, x + pad, y + pad);
 
       // 描述
       ctx.fillStyle = !hasPrereq ? NIGHT.hint : NIGHT.body;
       ctx.font = '9px sans-serif';
-      ctx.fillText(node.description, x + 5, y + 22);
+      ctx.fillText(node.description, x + pad, y + pad + 17);
 
       // 等级条
-      const barY = y + 38;
-      const barW = nodeW - 10;
+      const barY = y + pad + 33;
+      const barW = nodeW - pad * 2;
       const barH2 = 6;
       ctx.fillStyle = 'rgba(90,130,175,0.30)';
-      ctx.fillRect(x + 5, barY, barW, barH2);
+      ctx.fillRect(x + pad, barY, barW, barH2);
       ctx.fillStyle = isMax ? ON_DARK.green : branch.color;
-      ctx.fillRect(x + 5, barY, barW * (level / node.maxLevel), barH2);
+      ctx.fillRect(x + pad, barY, barW * (level / node.maxLevel), barH2);
 
       // 等级文字
       ctx.fillStyle = isMax ? ON_DARK.green : (level > 0 ? NIGHT.body : NIGHT.hint);
       ctx.font = '9px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('Lv.' + level + '/' + node.maxLevel, x + 5, y + 48);
+      ctx.fillText('Lv.' + level + '/' + node.maxLevel, x + pad, y + pad + 46);
 
       // 消耗：星尘前缀改用正式资源图标（与顶部资源栏同源），图片未就绪时回退 ✦ 文本
       if (!isMax && hasPrereq) {
         const costStr = String(nextCost);
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'right';
-        const numRight = x + nodeW - 5;
+        const numRight = x + nodeW - pad;
         const numW = ctx.measureText(costStr).width;
         const iconSize = 10;
         const iconX = numRight - numW - 2 - iconSize;
-        if (!this._art(ART_PREFIXES.currency + 'stardust', iconX, y + 47, iconSize, iconSize, { alpha: 0.95 })) {
+        if (!this._art(ART_PREFIXES.currency + 'stardust', iconX, y + pad + 45, iconSize, iconSize, { alpha: 0.95 })) {
           ctx.fillStyle = canAfford ? UI_THEME.gold : '#F87171';
-          ctx.fillText('✦', iconX + iconSize, y + 48);
+          ctx.fillText('✦', iconX + iconSize, y + pad + 46);
         }
         ctx.fillStyle = canAfford ? UI_THEME.gold : '#F87171';
-        ctx.fillText(costStr, numRight, y + 48);
+        ctx.fillText(costStr, numRight, y + pad + 46);
       } else if (!hasPrereq) {
         const prereqNode = branch.nodes.find(n => n.id === node.prerequisite.node);
         ctx.fillStyle = NIGHT.hint;
         ctx.font = '8px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText('需' + (prereqNode?.name || '?') + node.prerequisite.level + '级', x + nodeW - 5, y + 48);
+        ctx.fillText('需' + (prereqNode?.name || '?') + node.prerequisite.level + '级', x + nodeW - pad, y + pad + 46);
       } else {
         ctx.fillStyle = ON_DARK.green;
         ctx.font = 'bold 9px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText('MAX', x + nodeW - 5, y + 48);
+        ctx.fillText('MAX', x + nodeW - pad, y + pad + 46);
       }
 
       // 可升级标记
@@ -5117,7 +5118,7 @@ export class RenderSystem {
         ctx.fillStyle = ON_DARK.green;
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText('↑', x + nodeW - 5, y + 5);
+        ctx.fillText('↑', x + nodeW - pad, y + pad);
       }
     }
 

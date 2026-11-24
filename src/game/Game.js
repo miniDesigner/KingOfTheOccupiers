@@ -44,7 +44,7 @@ import { syncRaces, RACES } from '../data/races.js';
 import ConfigLoader from '../data/ConfigLoader.js';
 import { pixelToHex, hexToPixel } from '../world/HexMath.js';
 import { setBattleRng, createRng } from '../utils/rng.js';
-import { rowItemWidth, rowStartX, techNodeWidth, techTabWidth, ladderBarWidth, LAYOUT_DESIGN_MAX, LAYOUT_MIN, lobbyFuncBtnRect as layoutFuncBtnRect, lobbyFuncBottom, lobbyPlayerCardRect as layoutPlayerCardRect, lobbySeasonTop, lobbySeasonCombo as layoutSeasonCombo, lobbyDeployCardY as layoutDeployCardY, lobbyDeployLabelY as layoutDeployLabelY } from '../system/Layout.js';
+import { rowItemWidth, rowStartX, techNodeWidth, techTabWidth, TECH_NODE_H, ladderBarWidth, LAYOUT_DESIGN_MAX, LAYOUT_MIN, lobbyFuncBtnRect as layoutFuncBtnRect, lobbyFuncBottom, lobbyPlayerCardRect as layoutPlayerCardRect, lobbySeasonTop, lobbySeasonCombo as layoutSeasonCombo, lobbyDeployCardY as layoutDeployCardY, lobbyDeployLabelY as layoutDeployLabelY } from '../system/Layout.js';
 
 // 局外养成系统
 import ProfileManager from '../meta/ProfileManager.js';
@@ -2525,7 +2525,7 @@ export class Game {
     // 科技节点点击（先裁底部：点击返回按钮下方空白区不误命中被裁剪节点）
     if (screenY > Game.scrollViewportBottom(this.screenHeight)) return;
     const nodes = TechTreeSystem.getBranchNodes(this.selectedTechBranch);
-    const nodeW = techNodeWidth(this.screenWidth), nodeH = 70, nodeGap = 10;
+    const nodeW = techNodeWidth(this.screenWidth), nodeH = TECH_NODE_H, nodeGap = 10;
     const nodeStartX = rowStartX(2, nodeW, nodeGap, this.screenWidth);
     // 与 RenderSystem.drawTechPanel 同源（页签底 107 + 12 gutter）
     const nodesStartY = TECH_NODES_Y - this.metaScrollY;
