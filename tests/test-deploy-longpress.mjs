@@ -73,7 +73,9 @@ const L = RenderSystem.deployLayout(game.screenWidth, game.screenHeight);
 const w = game.screenWidth;
 
 // 2026-09-09 改造：getCollectedSynergyList 已移除，unitListY 不再依赖羁绊
-const collected = DeploymentSystem.getCollectedUnitList();
+// 2026-11-24 图鉴改为「拥有 > 品质 > 序号」排序：坐标取样必须走渲染层实际消费的
+// getAllUnitCardList()，不能再按 getCollectedUnitList() 的收集顺序取第一张。
+const collected = DeploymentSystem.getAllUnitCardList();
 const unitListY = L.unit.listY;
 const card = L.unit;
 const cardStartX = (w - (card.perRow * card.w + (card.perRow - 1) * card.gap)) / 2;
@@ -284,6 +286,40 @@ console.log('\n=== 测试: 拖动跟随卡立绘序号可从两种导出通道�
     game._deployDrag.active = false;
   } catch (e) { err = e; }
   assert(!err, `拖动状态下渲染无异常${err ? ': ' + err.message : ''}`);
+}
+
+console.log('\n=== 测试: 图鉴排序 = 拥有优先 > 品质降序 > 序号升序 ===');
+{
+  const p = ProfileManager.get();
+  const savedCollected = JSON.parse(JSON.stringify(p.collectedUnits));
+  try {
+    // 故意以「低品质先收集、高品质后收集」的乱序注入，验证排序不依赖收集顺序
+    p.collectedUnits = {
+      archer: { level: 1 },          // q1 / 02
+      swordsman: { level: 1 },       // q1 / 01
+      dragonling: { level: 1 },      // q6 / 38
+      paladin: { level: 1 },         // q4 / 26
+    };
+    const list = DeploymentSystem.getAllUnitCardList();
+    assert(list.length === 40, `图鉴仍是全量 40 张卡（实际 ${list.length}）`);
+    assert(list.slice(0, 4).map(u => u.id).join(',') === 'dragonling,paladin,swordsman,archer',
+      '已拥有区按品质降序、同品质按序号升序（与前40序号对应）');
+    assert(list.slice(0, 4).every(u => u.owned) && list.slice(4).every(u => !u.owned),
+      '全部已拥有卡排在全部未拥有卡之前');
+    assert(list.slice(4, 6).map(u => u.id).join(',') === 'war_titan,archdragon',
+      '未拥有区同样按品质降序、同品质按序号升序');
+    // 全量不变量检查：任意相邻两张都满足三级排序
+    let ordered = true;
+    for (let i = 1; i < list.length; i++) {
+      const a = list[i - 1], b = list[i];
+      if (a.owned !== b.owned) { if (!a.owned) ordered = false; continue; }
+      if (a.quality !== b.quality) { if (a.quality < b.quality) ordered = false; continue; }
+      if (a.artIndex > b.artIndex) ordered = false;
+    }
+    assert(ordered, '全量 40 张卡满足三级排序不变量');
+  } finally {
+    p.collectedUnits = savedCollected;
+  }
 }
 
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);

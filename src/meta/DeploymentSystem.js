@@ -553,7 +553,10 @@ export function getCollectedUnitList() {
 /**
  * 获取全部兵种卡列表（布阵界面图鉴：已拥有 + 未拥有统一呈现）
  *
- * 排序：已拥有优先（按收集顺序），未拥有随后（按 config.units 配置顺序）。
+ * 排序优先级（2026-11-24）：
+ *   1. 是否拥有（owned=true 排前）
+ *   2. 品质高低（quality 降序）
+ *   3. 同品质按兵种序号（artIndex 升序，即 unit_01~unit_40）
  * 每项复用 getCollectedUnitList 的字段结构（详情面板可直接消费），
  * 额外带 owned 标记与解锁费用，供渲染层区分亮卡/暗卡。
  * @returns {Array<{id, owned, artIndex, quality, level, unlockCost, affordable, ...}>}
@@ -596,6 +599,15 @@ export function getAllUnitCardList() {
       affordable: profile.stardust >= (cost.starDust || 0) && profile.gold >= (cost.gold || 0),
     });
   }
+
+  // 图鉴排序：拥有 > 品质降序 > 兵种序号升序。
+  // 使用 Array.prototype.sort（ES2019+ 稳定排序），不依赖收集顺序/配置插入顺序。
+  // 序号缺失（理论上不会出现）排到同品质末尾，避免 undefined 参与比较。
+  result.sort((a, b) => {
+    if (a.owned !== b.owned) return a.owned ? -1 : 1;
+    if (a.quality !== b.quality) return (b.quality || 0) - (a.quality || 0);
+    return (a.artIndex || 9999) - (b.artIndex || 9999);
+  });
   return result;
 }
 

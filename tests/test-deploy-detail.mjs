@@ -85,7 +85,8 @@ ProfileManager.save();
 console.log('=== 测试2: 点击兵种卡 → 打开详情（不再自动上阵）===');
 {
   const profile = ProfileManager.get();
-  const collected = DeploymentSystem.getCollectedUnitList();
+  // 2026-11-24 图鉴按「拥有 > 品质 > 序号」排序，坐标必须取渲染层实际消费的列表
+  const collected = DeploymentSystem.getAllUnitCardList().filter(u => u.owned);
   // 选一个未上阵的兵种
   const deployed = profile.deployment.units;
   const target = collected.find(u => !deployed.includes(u.id)) || collected[0];
