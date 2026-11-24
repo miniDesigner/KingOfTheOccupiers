@@ -9,7 +9,7 @@ const drawLb = rsSrc.slice(rsSrc.indexOf('  drawLeaderboard(gameState)'), rsSrc.
 
 test('排行榜行高收口到共享常量 32px，不再硬编码 24', () => {
   assert(rsSrc.includes('const LEADERBOARD_ROW_H = 32;'), '存在 32px 行高常量');
-  assert(rsSrc.includes('LEADERBOARD_LIST_Y, LEADERBOARD_ROW_H };'), '常量已导出供测试与调用方复用');
+  assert(rsSrc.includes('LEADERBOARD_LIST_Y, LEADERBOARD_ROW_H,'), '常量已导出供测试与调用方复用');
   assert(drawLb.includes('const rowH = LEADERBOARD_ROW_H;'), '绘制使用共享常量');
   assert(!drawLb.includes('const rowH = 24;'), '旧的 24px 硬编码已移除');
 });

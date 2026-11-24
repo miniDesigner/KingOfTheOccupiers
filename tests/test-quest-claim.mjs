@@ -156,16 +156,38 @@ console.log('=== 测试7: 条目描述用 top 基线，不压卡片上边框 ===
 {
   const src = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
   const itemSrc = src.slice(src.indexOf('  _drawQuestItem('), src.indexOf('  drawQuest('));
-  assert(itemSrc.includes("this._fitText(String(item.desc || ''), x + 8, y + 6, itemW - 84, 12, 'left', 'top')"),
-    '描述文字以 top 基线从卡片上沿 +6 起排');
+  assert(itemSrc.includes("this._fitText(String(item.desc || ''), x + 8, y + 9, itemW - 84, 12, 'left', 'top')"),
+    '描述文字以 top 基线从卡片上沿 +9 起排');
   assert(!/\{\s*x:\s*20,\s*y,/.test(itemSrc), '_drawQuestItem 不再硬编码左边缘 20');
-  assert(itemSrc.includes("ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, x + 8, y + 24)"),
+  assert(itemSrc.includes("ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, x + 8, y + 30)"),
     '进度与奖励跟随共享 rect 的 x，而非固定 28');
   const fitSrc = src.slice(src.indexOf('  _fitText('), src.indexOf('  _emptyState('));
   assert(fitSrc.includes("ctx.textBaseline = baseline || 'middle';"),
     '_fitText 支持可选 baseline，默认仍是 middle');
   assert(!fitSrc.includes("ctx.textBaseline = 'alphabetic';"),
     '_fitText 不再在 restore 后覆写调用方基线');
+}
+
+console.log('=== 测试8: 任务/成就卡片高度 70，三行文字留白均匀 ===');
+{
+  const src = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
+  assert(src.includes('const QUEST_ITEM_H = 70;'), '存在 70px 条目高度常量');
+  assert(src.includes('LEADERBOARD_ROW_H, QUEST_ITEM_H };'), '常量已导出供测试复用');
+  const questSrc = src.slice(src.indexOf('  static questLayout('), src.indexOf('  /**\n   * 成就面板共享布局'));
+  const achSrc = src.slice(src.indexOf('  static achievementLayout('), src.indexOf('  /**\n   * 绘制一键领取按钮'));
+  assert(questSrc.includes('itemH = QUEST_ITEM_H') && achSrc.includes('itemH = QUEST_ITEM_H'),
+    '任务与成就布局共用同一高度常量');
+  assert(!/itemH = 55/.test(src), '旧的 55px 硬编码已移除');
+  const q = RenderSystem.questLayout([{ id: 'q' }], [], [], 0, 430);
+  const a = RenderSystem.achievementLayout([{ id: 'a' }], 0, 430);
+  assert(q.itemH === 70 && q.dailyRects[0].h === 70, `任务卡片高度 70（实际 ${q.itemH}）`);
+  assert(a.itemH === 70 && a.rects[0].h === 70, `成就卡片高度 70（实际 ${a.itemH}）`);
+  const itemSrc = src.slice(src.indexOf('  _drawQuestItem('), src.indexOf('  drawQuest('));
+  assert(itemSrc.includes("x + 8, y + 9, itemW - 84, 12, 'left', 'top'"), '描述上留白 +9');
+  assert(itemSrc.includes('x + 8, y + 30)'), '进度锚点 +30');
+  assert(itemSrc.includes("x + 8, y + 55, {"), '奖励锚点 +55');
+  // 几何验算：描述 9..21（12px）、进度 30..40（10px）、奖励 49.5..60.5（11px 图标）
+  assert(21 <= 30 && 40 <= 49.5 && 70 - 60.5 >= 9, '三行间距与下留白均 ≥ 9px');
 }
 
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);

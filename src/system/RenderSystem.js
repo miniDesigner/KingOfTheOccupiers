@@ -40,7 +40,10 @@ const LEADERBOARD_LIST_Y = SUBPAGE_TAB_Y + 30 + 12 + 10;   // 124
 // 排行榜行高：24 → 32。原 24px 下 12px 文字上下仅约 5px，视觉顶格；
 // 32px 让文字上下留白约 9px，20 行铺完仍高于玩家排名胶囊（末行底 747 < 胶囊顶 788）。
 const LEADERBOARD_ROW_H = 32;
-export { SUBPAGE_TAB_Y, TECH_NODES_Y, LEADERBOARD_LIST_Y, LEADERBOARD_ROW_H };
+// 任务/成就条目高度：55 → 70。原 55px 下描述距上边框仅 6px、进度底几乎贴住奖励行。
+// 70px 让描述/进度/奖励三行各得约 9~11px 均匀留白；渲染与 Game 命中共用同一 layout.itemH。
+const QUEST_ITEM_H = 70;
+export { SUBPAGE_TAB_Y, TECH_NODES_Y, LEADERBOARD_LIST_Y, LEADERBOARD_ROW_H, QUEST_ITEM_H };
 
 // === 合规提示层布局（_drawComplianceOverlay 与 Game._handleComplianceTap 共用） ===
 // 单一真相源：渲染与命中不能各写一套坐标，否则安全区/不同屏宽下会错位。
@@ -5693,7 +5696,7 @@ export class RenderSystem {
   static questLayout(dailyQuests, weeklyQuests, seasonQuests, scrollY, screenWidth) {
     // 2026-11-21 边界缝隙收口：统一 SIDE=16 内容区，左右对称（旧值 x=20 + itemW≤340 右侧空 70px）
     const SIDE = 16;
-    const itemW = screenWidth - SIDE * 2, itemH = 55, gap = 6;
+    const itemW = screenWidth - SIDE * 2, itemH = QUEST_ITEM_H, gap = 6;
     // 起点 68：首行 y=90 ≥ 裁剪 topY=88，避免云白卡顶边与文字被裁（P7 修复）
     const dailyHeaderY = 68 - scrollY;
     let y = dailyHeaderY + 22; // "📋 每日任务" 标题占位
@@ -5734,7 +5737,7 @@ export class RenderSystem {
   static achievementLayout(achievements, scrollY, screenWidth) {
     // 与任务屏同口径：SIDE=16 内容区左右对称（旧值 x=20 + itemW≤340 右侧空 70px）
     const SIDE = 16;
-    const itemW = screenWidth - SIDE * 2, itemH = 55, gap = 6;
+    const itemW = screenWidth - SIDE * 2, itemH = QUEST_ITEM_H, gap = 6;
     // 起点 68：与任务屏一致，首行 y=90 ≥ 裁剪 topY=88（P7 修复）
     const headerY = 68 - scrollY;
     let y = headerY + 22; // "🏆 成就" 标题占位
@@ -5787,16 +5790,16 @@ export class RenderSystem {
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    // 用 top 基线让 12px 描述从卡片上沿 +6 开始，避免 middle 基线把字形压到边框上
-    this._fitText(String(item.desc || ''), x + 8, y + 6, itemW - 84, 12, 'left', 'top');
+    // 用 top 基线让 12px 描述从卡片上沿 +9 开始（原 +6 太贴边），均匀留白约 9px
+    this._fitText(String(item.desc || ''), x + 8, y + 9, itemW - 84, 12, 'left', 'top');
 
-    // 进度
+    // 进度：与描述底（约 y+21）间隔约 9px
     ctx.fillStyle = NIGHT.body;
     ctx.font = '10px sans-serif';
-    ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, x + 8, y + 24);
+    ctx.fillText(`进度: ${Math.min(item.progress, item.target)}/${item.target}`, x + 8, y + 30);
 
-    // 奖励（贴图 + 数字）
-    this._drawCurrencyRun(Object.entries(item.reward || {}), x + 8, y + 40, {
+    // 奖励（贴图 + 数字）：中心 +55，图标上沿约 y+49.5，与进度底约 y+40 间隔约 9px
+    this._drawCurrencyRun(Object.entries(item.reward || {}), x + 8, y + 55, {
       fontSize: 10, iconSize: 11, color: UI_THEME.gold,
     });
 
