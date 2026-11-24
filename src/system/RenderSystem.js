@@ -34,10 +34,13 @@ const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 };
 // 渲染与 Game.js 命中共用此常量，杜绝两处硬编码漂移。
 const SUBPAGE_TAB_Y = 72;
 // 内容首行起点 = 页签底 + 12px gutter。科技页签高 35、排行榜页签高 30。
-// 排行榜 listStartY 是「行中心」，其卡片顶 = listStartY - 10，故再 +10。
+// 排行榜 listStartY 是「行中心」，其卡片顶 = listStartY - ROW_H/2 + 1。
 const TECH_NODES_Y = SUBPAGE_TAB_Y + 35 + 12;              // 119
 const LEADERBOARD_LIST_Y = SUBPAGE_TAB_Y + 30 + 12 + 10;   // 124
-export { SUBPAGE_TAB_Y, TECH_NODES_Y, LEADERBOARD_LIST_Y };
+// 排行榜行高：24 → 32。原 24px 下 12px 文字上下仅约 5px，视觉顶格；
+// 32px 让文字上下留白约 9px，20 行铺完仍高于玩家排名胶囊（末行底 747 < 胶囊顶 788）。
+const LEADERBOARD_ROW_H = 32;
+export { SUBPAGE_TAB_Y, TECH_NODES_Y, LEADERBOARD_LIST_Y, LEADERBOARD_ROW_H };
 
 // === 合规提示层布局（_drawComplianceOverlay 与 Game._handleComplianceTap 共用） ===
 // 单一真相源：渲染与命中不能各写一套坐标，否则安全区/不同屏宽下会错位。
@@ -6084,7 +6087,7 @@ export class RenderSystem {
     const unit = data.board.unit;
     // 2026-11-21：原 100 使首行卡片顶(90)被页签底(102)压住；改为页签底+12 gutter 的行中心
     const listStartY = LEADERBOARD_LIST_Y;
-    const rowH = 24;
+    const rowH = LEADERBOARD_ROW_H;
 
     ctx.font = '12px sans-serif';
     for (let i = 0; i < data.entries.length; i++) {
@@ -6092,7 +6095,8 @@ export class RenderSystem {
       const y = listStartY + i * rowH;
       if (y > h - 90) break;
 
-      // 榜单行：夜色卡 + 浅色文字；前三金银铜章、自己行明黄竖条
+      // 榜单行：夜色卡 + 浅色文字；前三名用正式奖牌资源图标，自己行明黄竖条
+      const medalKey = i === 0 ? 'gold' : (i === 1 ? 'silver' : (i === 2 ? 'bronze' : null));
       const medalFill = i === 0 ? '#FFD23F' : (i === 1 ? '#C0C8D0' : (i === 2 ? '#D9884A' : null));
       const rankColor = i < 3 ? '#5A3E00' : NIGHT.body;
       this._cardBg({ x: 16, y: y - rowH / 2 + 1, w: w - 32, h: rowH - 2, r: 8 }, {
@@ -6103,29 +6107,48 @@ export class RenderSystem {
         edgeSide: 'left',
         flat: true,
       });
-      // 名次：前三加金银铜圆章（名次数字位置不变，只加承载底）
-      if (medalFill) {
-        const mc = 26, mx = 20, my = y - mc / 2;
-        if (typeof ctx.arc === 'function') {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(mx + mc / 2, y, mc / 2, 0, Math.PI * 2);
-          ctx.fillStyle = medalFill;
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          ctx.restore();
-        } else {
-          ctx.fillStyle = medalFill;
-          ctx.fillRect(mx, my, mc, mc);
-        }
+      // 名次：前三名替换为正式 medal_* 资源图标（程序化金银铜圆章仅作未加载兜底）
+      let medalArt = false;
+      if (medalKey) {
+        medalArt = this._artIcon(ART_PREFIXES.medal, medalKey, 33, y, 22, 1);
       }
-      ctx.fillStyle = rankColor;
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`${i + 1}`, 28, y);
+      if (medalArt) {
+        // 图标本身不带数字，右下角补 9px 角标，金银铜底上都能读出名次
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const badgeX = 43, badgeY = y + 7;
+        if (typeof ctx.strokeText === 'function') {
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = 'rgba(18,28,46,0.9)';
+          ctx.strokeText(String(i + 1), badgeX, badgeY);
+        }
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(String(i + 1), badgeX, badgeY);
+      } else {
+        if (medalFill) {
+          const mc = 26, mx = 20, my = y - mc / 2;
+          if (typeof ctx.arc === 'function') {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(mx + mc / 2, y, mc / 2, 0, Math.PI * 2);
+            ctx.fillStyle = medalFill;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.restore();
+          } else {
+            ctx.fillStyle = medalFill;
+            ctx.fillRect(mx, my, mc, mc);
+          }
+        }
+        ctx.fillStyle = rankColor;
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${i + 1}`, 28, y);
+      }
       // 名字
       ctx.fillStyle = e.isPlayer ? UI_THEME.gold : NIGHT.title;
       ctx.font = e.isPlayer ? 'bold 12px sans-serif' : '12px sans-serif';
