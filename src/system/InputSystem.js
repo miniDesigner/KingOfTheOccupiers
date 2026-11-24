@@ -26,10 +26,9 @@ export class InputSystem {
     // 双指缩放
     this.lastDistance = 0;
 
-    // P8 机型适配：纵向缩放系数（由 Game 注入 safeAreaScaleY，默认 1 = 无缩放）。
-    // 渲染层把内容压缩了 scaleY 倍，手指在屏幕上移动 dy 像素时，内容需要移动
-    // dy / scaleY 个 inner 像素才跟手。不除会让地图拖拽 / 菜单滚动「慢半拍」
-    // （scaleY=0.89 时手指拖 100px 内容只走 89px）。
+    // 方案 B：内容区 1:1 不缩放，该系数恒为 1（保留字段兼容旧引用）。
+    // 旧方案（非等比压缩）下手指移动 dy 需换算 dy / scaleY 才跟手；
+    // 新方案下内容不缩放，delta 天然 1:1，除法退化为除 1（无影响）。
     this.touchScaleY = 1;
     // P36：安全区顶部偏移（由 Game 注入 safeAreaTop）。相机工作在 inner 坐标系，
     // 而触摸事件拿到的是屏幕坐标，双指中心必须换算回 inner 才能当缩放锚点。
@@ -315,7 +314,7 @@ export class InputSystem {
 
   /**
    * 双指中心 → inner 坐标（与 cameraX/cameraY 同一坐标系）
-   * 渲染层把 inner [0, h] 映射到屏幕 [top, h-bottom]，故 inner_y = (screen_y - top) / scaleY
+   * 方案 B：渲染层只 translate(top)，故 inner_y = screen_y - top（touchScaleY 恒 1）
    */
   _innerCenter(touches) {
     const c = this.getTouchCenter(touches);

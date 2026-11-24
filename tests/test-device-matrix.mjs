@@ -3,10 +3,10 @@
  *
  * 目的：在不开 IDE / 不连真机的前提下，用主流机型的真实 (screenWidth, screenHeight, safeArea)
  *      驱动 RenderSystem + Game，量化每种机型的适配风险：
- *        1) scaleY 计算是否正确（inner [0,h] 完整映射到屏幕 [top, h-bottom]）
- *        2) 纵向变形率 = 1 - scaleY（非等比压缩会让文字/圆角纵向压扁）
- *        3) 关键 UI 锚点（顶部 y=0 / 中部 y=h/2 / 底部按钮 / 最深 h-16）是否落在安全区内
- *        4) 点击坐标往返一致性（screen → inner → screen）
+ *        1) 方案 B：逻辑屏高 innerH = h - top - bottom，Game/Render/Input 三处同步
+ *        2) 纵向变形率恒为 0（渲染无 ctx.scale，图片零变形）
+ *        3) 关键 UI 锚点（顶部 y=0 / 中部 y=innerH/2 / 底部按钮 / 最深 innerH-16）是否落在安全区内
+ *        4) 点击坐标往返一致性：inner_y = screen_y - top（1:1 等距映射）
  *        5) 极端 / 伪造 safeArea 的防御性表现
  *
  * 机型数据为逻辑像素（微信小游戏 window size 即逻辑分辨率，safeArea 同为逻辑像素）。
@@ -85,7 +85,7 @@ function grade(distortion) {
 const mockCanvas = { addEventListener() {}, removeEventListener() {} };
 
 console.log('\n=========== 机型适配矩阵（' + DEVICES.length + ' 款）===========\n');
-console.log('机型'.padEnd(20) + '分辨率'.padEnd(12) + 'safeT/B'.padEnd(10) + 'scaleY'.padEnd(9) + '变形'.padEnd(8) + '评级');
+console.log('机型'.padEnd(20) + '分辨率'.padEnd(12) + 'safeT/B'.padEnd(10) + 'innerH'.padEnd(9) + '变形'.padEnd(8) + '评级');
 console.log('-'.repeat(70));
 
 const results = [];
@@ -105,47 +105,47 @@ for (const d of DEVICES) {
       `[${d.name}] 真实设备 safeArea 未被误钳`);
   }
 
-  // --- 1. scaleY 计算（用钳制后的有效值）---
-  const expectScaleY = (d.h - effTop - effBottom) / d.h;
-  assertNear(game.safeAreaScaleY, expectScaleY, 1e-9, `[${d.name}] Game.safeAreaScaleY`);
-  assertNear(rs.safeAreaScaleY, expectScaleY, 1e-9, `[${d.name}] RenderSystem.safeAreaScaleY`);
-  // 关键：Game 与 RenderSystem 必须同一个 scaleY（否则点击反推与渲染映射漂移）
+  // --- 1. 方案 B：逻辑屏高 = 物理高 - top - bottom，三处同步 ---
+  const innerH = d.h - effTop - effBottom;
+  assertEq(game.safeAreaScaleY, 1, `[${d.name}] Game.safeAreaScaleY 恒 1（无压缩）`);
+  assertEq(rs.safeAreaScaleY, 1, `[${d.name}] RenderSystem.safeAreaScaleY 恒 1`);
+  assertEq(game.screenHeight, innerH, `[${d.name}] Game 逻辑屏高 = ${innerH}`);
+  assertEq(rs.screenHeight, innerH, `[${d.name}] RenderSystem 逻辑屏高一致`);
+  assertEq(game.inputSystem.screenHeight, innerH, `[${d.name}] InputSystem 逻辑屏高一致`);
   assert(game.safeAreaScaleY === rs.safeAreaScaleY, `[${d.name}] Game/RenderSystem scaleY 一致`);
-  assert(rs.safeAreaScaleY > 0, `[${d.name}] scaleY > 0`);
-  assert(rs.safeAreaScaleY <= 1, `[${d.name}] scaleY <= 1`);
 
-  const scaleY = rs.safeAreaScaleY;
-  const distortion = 1 - scaleY;
+  const scaleY = rs.safeAreaScaleY; // = 1
+  const distortion = 1 - scaleY;    // = 0：方案 B 零变形
 
-  // --- 2. 锚点映射：inner [0, h] → screen [top, h-bottom] ---
-  const toScreen = (innerY) => effTop + innerY * scaleY;
+  // --- 2. 锚点映射：inner [0, innerH] → screen [top, h-bottom]，1:1 无缩放 ---
+  const toScreen = (innerY) => effTop + innerY;
 
-  // 顶部：inner 0 应落在刘海下沿
   assertNear(toScreen(0), effTop, 1e-9, `[${d.name}] inner y=0 → screen ${effTop}`);
-  // 底部：inner h 应落在 home indicator 上沿
-  assertNear(toScreen(d.h), d.h - effBottom, 1e-6, `[${d.name}] inner y=h → screen ${d.h - effBottom}`);
+  assertNear(toScreen(innerH), d.h - effBottom, 1e-6, `[${d.name}] inner y=innerH → screen ${d.h - effBottom}`);
+  // 等距性：相邻 100px 映射后仍是 100px（旧方案会被压成 90.4px）
+  assertNear(toScreen(200) - toScreen(100), 100, 1e-9, `[${d.name}] 100px 间距映射后仍 100px（零变形）`);
 
   // 所有真实底部锚点都必须落在安全区内
   let anchorOverflow = 0;
   for (const off of BOTTOM_ANCHORS) {
-    const sy = toScreen(d.h - off);
+    if (off > innerH) continue;
+    const sy = toScreen(innerH - off);
     if (sy < effTop - 0.001 || sy > d.h - effBottom + 0.001) anchorOverflow++;
   }
   assert(anchorOverflow === 0, `[${d.name}] 底部锚点全部在安全区内（溢出 ${anchorOverflow} 个）`);
 
-  // --- 3. 底部最深元素 h-16 的屏幕余量（距 home indicator 上沿）---
-  const deepestScreen = toScreen(d.h - 16);
+  // --- 3. 底部最深元素 innerH-16 的屏幕余量（距 home indicator 上沿）---
+  const deepestScreen = toScreen(innerH - 16);
   const margin = (d.h - effBottom) - deepestScreen;
-  assert(margin >= 0, `[${d.name}] 最深元素 h-16 未被 indicator 吃掉（余量 ${margin.toFixed(1)}px）`);
+  assert(margin >= 0, `[${d.name}] 最深元素 innerH-16 未被 indicator 吃掉（余量 ${margin.toFixed(1)}px）`);
 
   // --- 4. 点击往返一致性 ---
   let clickOk = true;
-  for (const innerY of [0, d.h / 2, d.h - 80, d.h - 16, d.h]) {
+  for (const innerY of [0, innerH / 2, innerH - 80, innerH - 16, innerH]) {
     const screenY = toScreen(innerY);
-    let got = null;
     game.inputSystem.onTileClick(d.w / 2, screenY);
     // handleScreenClick 被 mock 环境吞掉，这里直接验证反推公式
-    const back = (screenY - game.safeAreaTop) / game.safeAreaScaleY;
+    const back = screenY - game.safeAreaTop;
     if (Math.abs(back - innerY) > 1e-6) clickOk = false;
   }
   assert(clickOk, `[${d.name}] 点击坐标往返一致`);
@@ -163,7 +163,7 @@ for (const d of DEVICES) {
     d.name.padEnd(20) +
     `${d.w}x${d.h}`.padEnd(12) +
     (`${effTop}/${effBottom}` + clamped).padEnd(10) +
-    scaleY.toFixed(4).padEnd(9) +
+    String(innerH).padEnd(9) +
     (distortion * 100).toFixed(1).padEnd(7) + '%  ' +
     g
   );
@@ -193,8 +193,9 @@ console.log('\n=========== 覆盖层安全区保护（P8 BUG 修复验证）====
   }
 
   const H = 852, TOP = 59, BOTTOM = 34; // iPhone 14 Pro
+  const INNER = H - TOP - BOTTOM;
   const ctx = createCtx();
-  const rs = new RenderSystem(ctx, 393, H);
+  const rs = new RenderSystem(ctx, 393, INNER); // 产品路径：Game 传逻辑高
   rs.setSafeArea({ top: TOP, bottom: BOTTOM, left: 0, right: 0 });
 
   // 开启两个覆盖层
@@ -216,7 +217,7 @@ console.log('\n=========== 覆盖层安全区保护（P8 BUG 修复验证）====
   const firstSave = calls.findIndex(c => c.op === 'save');
   const lastRestore = calls.map((c, i) => (c.op === 'restore' ? i : -1)).filter(i => i >= 0).pop();
   const blackTop = calls.findIndex(c => c.op === 'fillRect' && c.y === 0 && c.h === TOP);
-  const blackBottom = calls.findIndex(c => c.op === 'fillRect' && c.y === H - BOTTOM && c.h === BOTTOM);
+  const blackBottom = calls.findIndex(c => c.op === 'fillRect' && c.y === TOP + INNER && c.h === BOTTOM);
 
   // 覆盖层绘制必须在 restore 之前（即受 translate/scale 包裹）
   // 判据：在 save 与最后一个 restore 之间，fillRect 的调用次数 > 0，且黑底都在 restore 之后
@@ -237,10 +238,15 @@ console.log('\n=========== 异常 safeArea 防御钳制 ===========\n');
   rs.setSafeArea({ top: 120, bottom: 80 });
   assert(rs.safeAreaTop === SAFE_AREA_MAX.top, `top 120 钳到 ${SAFE_AREA_MAX.top}（got ${rs.safeAreaTop}）`);
   assert(rs.safeAreaBottom === SAFE_AREA_MAX.bottom, `bottom 80 钳到 ${SAFE_AREA_MAX.bottom}（got ${rs.safeAreaBottom}）`);
-  const rawScaleY = (667 - 120 - 80) / 667;      // 0.700 → 30% 压扁
-  const clampedScaleY = rs.safeAreaScaleY;
-  assert(clampedScaleY > rawScaleY, `钳制后 scaleY 提升：${rawScaleY.toFixed(4)} → ${clampedScaleY.toFixed(4)}`);
-  console.log(`  ✓ 异常 safeArea 30.0% 压扁 → 钳制后 ${((1 - clampedScaleY) * 100).toFixed(1)}%`);
+  const rawInner = 667 - 120 - 80; // 未钳制时内容区仅 467px
+  // 钳制价值：限制伪造 safeArea 的避让量，保住内容区高度；图片始终零变形
+  const gameExtreme = new Game(mockCanvas, null, 375, 667, { top: 120, bottom: 80 });
+  const clampedInner = gameExtreme.screenHeight;
+  assertEq(clampedInner, 667 - SAFE_AREA_MAX.top - SAFE_AREA_MAX.bottom,
+    `钳制后逻辑高 = 667 - ${SAFE_AREA_MAX.top} - ${SAFE_AREA_MAX.bottom}（未钳制仅 ${rawInner}）`);
+  assert(clampedInner > rawInner, '钳制后内容区更高（防御伪造 safeArea）');
+  assertEq(gameExtreme.safeAreaScaleY, 1, '方案 B：钳制不改变 scaleY（恒 1）');
+  console.log(`  ✓ 异常 safeArea 被钳制：内容区 ${rawInner} → ${clampedInner}px，图片始终零变形`);
 
   // 负值 / NaN 防御
   rs.setSafeArea({ top: -10, bottom: -5 });
@@ -258,16 +264,16 @@ console.log('\n=========== 输入层适配（P8 第二批修复）===========\n'
   const scaleY = game.safeAreaScaleY;
 
   // --- 按压坐标反推：RenderSystem._drawPressed 拿 press.y 比 Scene 内 rect.y ---
-  // 用户按在屏幕 y=300（对应 inner (300-59)/scaleY ≈ 270.5）
+  // 方案 B：用户按在屏幕 y=300 → inner = 300 - 59 = 241（无除法）
   game.inputSystem.onPress(200, 300);
   const press = game._press;
   assert(press !== null, 'onPress 记录了按压状态');
-  assertNear(press.y, (300 - TOP) / scaleY, 1e-9, `按压 y 已反推到 inner（got ${press.y.toFixed(2)}）`);
+  assertNear(press.y, 300 - TOP, 1e-9, `按压 y 已反推到 inner（got ${press.y.toFixed(2)}）`);
   assert(press.x === 200, '按压 x 不缩放（横向无 safeArea 压缩）');
   console.log(`  ✓ 按压坐标反推：屏幕 300 → inner ${press.y.toFixed(1)}（未修前会存 300，偏差 59px）`);
 
-  // --- 拖拽增量换算：手指移 dy 屏幕像素，内容应移动 dy/scaleY 个 inner 像素 ---
-  assert(game.inputSystem.touchScaleY === scaleY, `touchScaleY 已注入（${game.inputSystem.touchScaleY.toFixed(4)}）`);
+  // --- 拖拽增量：方案 B 内容 1:1，手指移 dy 内容就走 dy ---
+  assert(game.inputSystem.touchScaleY === 1, `touchScaleY 恒 1（got ${game.inputSystem.touchScaleY.toFixed(4)}）`);
   const input = game.inputSystem;
   input.cameraEnabled = true;
   input.onDeployTouchMove = null;
@@ -277,9 +283,9 @@ console.log('\n=========== 输入层适配（P8 第二批修复）===========\n'
   input.cameraY = 0;
   input.isDragging = true;
   input._onTouchMove({ touches: [{ clientX: 100, clientY: 500 }] });
-  // 手指下移 100 屏幕像素 → 相机应移动 100 / scaleY ≈ 112.3 inner 像素（跟手）
-  assertNear(input.cameraY, 100 / scaleY, 1e-6, `拖拽增量已换算（got ${input.cameraY.toFixed(2)}）`);
-  console.log(`  ✓ 拖拽跟手：手指 100px → 内容 ${input.cameraY.toFixed(1)}px（未修前只有 100px，慢 ${((1 - scaleY) * 100).toFixed(1)}%）`);
+  // 手指下移 100 屏幕像素 → 相机应移动 100 inner 像素（1:1 跟手）
+  assertNear(input.cameraY, 100, 1e-6, `拖拽增量 1:1（got ${input.cameraY.toFixed(2)}）`);
+  console.log(`  ✓ 拖拽跟手：手指 100px → 内容 ${input.cameraY.toFixed(1)}px（方案 B 全程 1:1）`);
   input.cameraEnabled = false;
 }
 
@@ -387,7 +393,7 @@ for (const r of results) byGrade[r.grade] = (byGrade[r.grade] || 0) + 1;
 console.log('评级分布：', JSON.stringify(byGrade));
 
 const worst = results.slice().sort((a, b) => b.distortion - a.distortion)[0];
-console.log(`最大变形：${worst.name} ${(worst.distortion * 100).toFixed(1)}%（scaleY=${worst.scaleY.toFixed(4)}）`);
+console.log(`最大变形：${worst.name} ${(worst.distortion * 100).toFixed(1)}%（方案 B 恒 0，无 ctx.scale 非等比压缩）`);
 
 const minMargin = results.slice().sort((a, b) => a.margin - b.margin)[0];
 console.log(`最小底部余量：${minMargin.name} ${minMargin.margin.toFixed(1)}px`);

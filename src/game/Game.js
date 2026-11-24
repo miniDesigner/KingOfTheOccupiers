@@ -22,6 +22,7 @@ import { TowerSystem } from '../system/TowerSystem.js';
 import { SynergySystem } from '../system/SynergySystem.js';
 import { SkillSystem } from '../system/SkillSystem.js';
 import { InputSystem } from '../system/InputSystem.js';
+import { clampSafeArea } from '../system/SafeArea.js';
 import { RenderSystem, SUBPAGE_TAB_Y, TECH_NODES_Y, complianceButtonLayout } from '../system/RenderSystem.js';
 import { ArtSystem } from '../system/ArtSystem.js';
 import { FontSystem } from '../system/FontSystem.js';
@@ -74,46 +75,30 @@ export class Game {
     this.canvas = canvas;
     this.ctx = ctx;
     this.screenWidth = screenWidth;
-    this.screenHeight = screenHeight;
 
-    // ===== 安全区适配（iPhone 刘海 / Android 状态栏 / home indicator） =====
-    // Phase 7 P7：微信小游戏渲染全屏 Canvas，但部分设备顶部有刘海、底部有 home indicator。
-    // 解决方案：RenderSystem 用 ctx.translate(0, top) + ctx.scale(1, scaleY) 把 inner 坐标系
-    //          [0, h] 线性映射到屏幕 [top, h-bottom]，所有 Scene 按全屏 h 设计的锚点
-    //          （顶部状态栏 y=0、底部按钮 y=h-80）渲染后恰好落在刘海下沿与 home indicator 上沿之间。
-    //          顶部 [0, top] + 底部 [h-bottom, h] 各画一道黑底覆盖；
-    //          点击命中由 Game 端对 clientY 反推 (y - top) / scaleY 命中 Scene 坐标。
-    // 浏览器环境（safari/iframe 预览）safeArea 全为 0，scaleY = 1，等同无刘海，行为不变。
-    this.safeArea = safeArea || { top: 0, bottom: 0, left: 0, right: 0 };
+    // ===== 安全区适配（方案 B：全局不压缩布局）=====
+    // 微信全屏 Canvas 有刘海 / home indicator 物理遮挡。方案 B 把「逻辑屏幕」直接定义为
+    // 可见内容区：逻辑屏高 = 物理高 - top - bottom。此后所有布局 / 命中都读 this.screenHeight，
+    // 天然按内容区排布，无需逐个改锚点；渲染只 translate(0, top)，图片 1:1 零变形。
+    // 浏览器环境 safeArea 全 0 → 逻辑屏高 = 物理屏高，行为完全等同未启用安全区。
+    this.applySafeArea(safeArea, screenHeight);
 
-    // 系统
-    this.inputSystem = new InputSystem(canvas, screenWidth, screenHeight);
-    this.renderSystem = new RenderSystem(ctx, screenWidth, screenHeight);
-    // P8：RenderSystem 是安全区的单一真相源 —— 内部做防御钳制（SAFE_AREA_MAX）并算出 scaleY。
-    // 这里回读钳制后的值，保证「点击反推」与「渲染映射」用同一个 scaleY，两边绝不会漂移。
+    // 系统（统一用逻辑屏高构造，布局与命中天然对齐）
+    this.inputSystem = new InputSystem(canvas, screenWidth, this.screenHeight);
+    this.renderSystem = new RenderSystem(ctx, screenWidth, this.screenHeight);
     this.renderSystem.setSafeArea(this.safeArea);
-    this.safeAreaTop = this.renderSystem.safeAreaTop;
-    this.safeAreaBottom = this.renderSystem.safeAreaBottom;
-    this.safeAreaScaleY = this.renderSystem.safeAreaScaleY;
-    // P8：同步给输入层 —— 地图拖拽 / 菜单滚动的增量需要换算回 inner 坐标系才跟手
-    this.inputSystem.touchScaleY = this.safeAreaScaleY;
-    // P36：top 偏移一并同步 —— 双指缩放要以「双指中心」为锚点，中心点是屏幕坐标，
-    // 必须按 inner_y = (screen_y - top) / scaleY 折算后才能与 cameraY 同一坐标系运算。
     this.inputSystem.touchTop = this.safeAreaTop;
+    this.inputSystem.touchScaleY = 1; // 方案 B：内容不缩放，拖拽 delta 天然 1:1
 
     // 始终绑定点击事件（handleScreenClick 内部根据 screenState 分发，不存在时机冲突）
-    // 安全区适配：RenderSystem 用 translate(0, top) + scale(1, scaleY) 把 inner [0, h] 映射到屏幕
-    // [top, h-bottom]，点击坐标反推 inner_y = (screenY - top) / scaleY 命中 Scene 内 rect.y
+    // 方案 B：输入反推 inner_y = screen_y - top（无除法），与渲染 translate 对称
     this.inputSystem.onTileClick = (screenX, screenY) => {
-      this.handleScreenClick(screenX, (screenY - this.safeAreaTop) / this.safeAreaScaleY);
+      this.handleScreenClick(screenX, screenY - this.safeAreaTop);
     };
     // 按压状态（按钮按压缩放反馈：记录按下位置与时间，渲染层据此轻微缩放）
     this._press = null;
-    // P8：按压坐标同样要反推到 inner 坐标系 —— RenderSystem._drawPressed 拿 press.y 去比
-    // Scene 内 rect.y，若不反推，刘海机上会偏差 safeAreaTop(≈59px)，表现为
-    // 「点 A 按钮、B 按钮缩放」的按压反馈错位。
     this.inputSystem.onPress = (x, y) => {
-      this._press = { x, y: (y - this.safeAreaTop) / this.safeAreaScaleY, t: Date.now() };
+      this._press = { x, y: y - this.safeAreaTop, t: Date.now() };
     };
     this.inputSystem.onRelease = () => { if (this._press) this._press.t = Date.now(); };
     this.pathfindingSystem = PathfindingSystem;
@@ -219,6 +204,33 @@ export class Game {
 
     // 合规提示层：适龄提示 / 实名引导 / 未成年人保护（前端状态，不收集个人信息）
     ComplianceSystem.init();
+  }
+
+  /**
+   * 应用安全区并换算逻辑屏高（方案 B 的单一入口）。
+   * - 构造期调用：把物理屏高换算为内容区高度，之后所有布局/命中都读 this.screenHeight。
+   * - 运行时也可调用：自动化截图模拟刘海时，统一刷新渲染层的 top/bottom 与输入层偏移。
+   * @param {object|null|undefined} rawSafeArea 原始安全区（top/bottom 为避让量，逻辑像素）
+   * @param {number} physHeight 设备物理屏高（全屏高度）
+   */
+  applySafeArea(rawSafeArea, physHeight) {
+    this.safeArea = rawSafeArea || { top: 0, bottom: 0, left: 0, right: 0 };
+    const clamped = clampSafeArea(this.safeArea, physHeight);
+    this.safeAreaTop = clamped.top;
+    this.safeAreaBottom = clamped.bottom;
+    this.safeAreaScaleY = 1;          // 方案 B：恒无缩放（兼容字段）
+    this.physScreenHeight = physHeight; // 物理屏高，仅黑底覆盖/调试用
+    this.screenHeight = clamped.innerHeight; // 逻辑屏高 = 内容区高度
+
+    if (this.renderSystem) {
+      this.renderSystem.screenHeight = clamped.innerHeight; // 渲染布局基准同步（运行时切换安全区也一致）
+      this.renderSystem.setSafeArea(this.safeArea);
+    }
+    if (this.inputSystem) {
+      this.inputSystem.touchTop = clamped.top;
+      this.inputSystem.touchScaleY = 1;
+      this.inputSystem.screenHeight = clamped.innerHeight;
+    }
   }
 
   /**
@@ -1578,7 +1590,7 @@ export class Game {
   _handleComplianceTap(screenX, screenY, status) {
     const w = this.screenWidth;
     const h = this.screenHeight;
-    const innerY = (screenY - this.safeAreaTop) / (this.safeAreaScaleY || 1);
+    const innerY = screenY - this.safeAreaTop;
     const hit = (r) => screenX >= r.x && screenX <= r.x + r.w && innerY >= r.y && innerY <= r.y + r.h;
     const main = complianceButtonLayout(w, h, 1);
 
@@ -3248,11 +3260,11 @@ export class Game {
         }
       : null;
 
-    // deploy_select 界面的拖拽回调（safeArea 适配：UI 经 translate+scaleY 映射，点击反推 inner_y）
+    // deploy_select 界面的拖拽回调（方案 B：UI 只 translate(top)，点击反推 inner_y = y - top）
     if (this.screenState === 'deploy_select') {
-      this.inputSystem.onDeployTouchStart = (x, y) => this._handleDeployDragStart(x, (y - this.safeAreaTop) / this.safeAreaScaleY);
-      this.inputSystem.onDeployTouchMove = (x, y) => this._handleDeployDragMove(x, (y - this.safeAreaTop) / this.safeAreaScaleY);
-      this.inputSystem.onDeployTouchEnd = (x, y, isDrag) => this._handleDeployDragEnd(x, (y - this.safeAreaTop) / this.safeAreaScaleY, isDrag);
+      this.inputSystem.onDeployTouchStart = (x, y) => this._handleDeployDragStart(x, y - this.safeAreaTop);
+      this.inputSystem.onDeployTouchMove = (x, y) => this._handleDeployDragMove(x, y - this.safeAreaTop);
+      this.inputSystem.onDeployTouchEnd = (x, y, isDrag) => this._handleDeployDragEnd(x, y - this.safeAreaTop, isDrag);
     } else {
       this.inputSystem.onDeployTouchStart = null;
       this.inputSystem.onDeployTouchMove = null;

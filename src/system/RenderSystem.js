@@ -206,15 +206,15 @@ export class RenderSystem {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
 
-    // === 安全区适配（Phase 7 P7）===
-    // 默认 0（浏览器环境）；微信小游戏由 Game 构造期 setSafeArea() 注入。
-    // 渲染策略：renderScreen 把所有 UI 画在 (0, safeAreaTop) ~ (w, h-bottom) 区间；
-    //          顶部 [0, safeAreaTop] 与底部 [h-bottom, h] 各画一道黑底覆盖刘海/home indicator；
-    //          点击命中由 Game 端对 clientY 减 topOffset 抵消，详见 Game 构造器注释。
+    // === 安全区适配（方案 B：内容区 1:1 不压缩）===
+    // 本实例的 screenHeight 是「内容区逻辑高度」= 物理屏高 - top - bottom，
+    // 由 Game 构造期换算后传入；浏览器环境 safeArea=0，等于物理屏高。
+    // 渲染策略：renderScreen 只 ctx.translate(0, top)，不做任何缩放；
+    //          顶部 [0, top] 与底部 [top+h, 物理h] 各画一道黑底覆盖刘海/home indicator。
+    //          输入反推 inner_y = screen_y - top（见 Game 构造器）。
     this.safeAreaTop = 0;
     this.safeAreaBottom = 0;
-    // inner [0, h] → 屏幕 [top, h-bottom] 的纵向缩放比例（默认 1，浏览器环境无缩放）
-    // 例：iPhone 14 Pro top=47 bottom=34 h=1334 → scaleY = (1334-81)/1334 ≈ 0.939
+    // 兼容字段：方案 B 恒为 1，渲染与输入都不再使用它做变换
     this.safeAreaScaleY = 1;
 
     // 战斗特效列表(旧系统，保留向后兼容)
@@ -255,13 +255,13 @@ export class RenderSystem {
    */
   setSafeArea(safeArea) {
     if (!safeArea) return;
-    // P8：钳制 + scaleY 计算统一走 SafeArea.clampSafeArea（Game 端回读同一份结果，
-    // 保证「渲染映射」与「点击反推」永不漂移）。依据真机极值：灵动岛 top≤59、
-    // Android 虚拟导航栏 bottom≤48，真实设备永不触发钳制，纯防御。
+    // 方案 B：只取钳制后的 top/bottom 用于「顶部平移 + 底部黑底」；
+    // 逻辑屏高由 Game 在构造期按 (物理高 - top - bottom) 换算后传入构造器，
+    // 缩放系数恒为 1（不再缩放内容，图片零变形）。
     const clamped = clampSafeArea(safeArea, this.screenHeight);
     this.safeAreaTop = clamped.top;
     this.safeAreaBottom = clamped.bottom;
-    this.safeAreaScaleY = clamped.scaleY;
+    this.safeAreaScaleY = 1;
   }
 
   /**
@@ -1600,22 +1600,21 @@ export class RenderSystem {
 
   /**
    * 按屏幕状态渲染对应界面。
-   * 顶层 wrap：用 ctx.translate(0, top) + ctx.scale(1, scaleY) 把 inner 坐标系 [0, h]
-   *          线性映射到屏幕 [top, h-bottom]（见 setSafeArea 公式推导）：
-   *            screen_y = top + inner_y * scaleY
-   *          所有 Scene 按全屏 h 设计的锚点（顶部状态栏 y=0、底部按钮 y=h-80 等），
-   *          渲染后恰好落在刘海下沿与 home indicator 上沿之间的可见区。
-   *          顶部刘海与底部 home indicator 区在 Scene 画完后用两道黑底 fillRect 覆盖。
-   *          输入坐标由 Game 端对称反推 (screenY - top) / scaleY，命中 Scene 内 rect.y。
-   *          浏览器环境 safeAreaTop/Bottom 均为 0，scaleY = 1，行为完全等同未启用安全区。
+   * 顶层 wrap（方案 B：内容区 1:1 不压缩）：
+   *   this.screenHeight 已是「内容区逻辑高度」hInner = 物理高 - top - bottom，
+   *   所有 Scene 按 hInner 布局（顶部 y=0、底部按钮 y=hInner-80 等）。
+   *   渲染只做 ctx.translate(0, top)，把 inner [0, hInner] 直接落在屏幕 [top, 物理高-bottom]，
+   *   不做任何 scale —— 图片零变形（圆不变椭圆、立绘不变矮）。
+   *   顶部刘海与底部 home indicator 区在 Scene 画完后用两道黑底 fillRect 覆盖。
+   *   输入坐标由 Game 端对称反推 inner_y = screen_y - top，命中 Scene 内 rect.y。
+   *   浏览器环境 top/bottom 均为 0，translate(0,0) 略过，行为完全等同未启用安全区。
    */
   renderScreen(gameState, inputSystem, dt) {
     const { ctx } = this;
     const w = this.screenWidth;
-    const h = this.screenHeight;
+    const h = this.screenHeight; // 内容区逻辑高度 hInner
     const top = this.safeAreaTop;
     const bottom = this.safeAreaBottom;
-    const scaleY = this.safeAreaScaleY || 1;
     // 记录当前界面 / 战斗结果，供美术资源层选择底图
     this._curScreen = (gameState && gameState.screenState) || 'playing';
     this._curGameStatus = (gameState && gameState.gameStatus) || 'playing';
@@ -1629,12 +1628,9 @@ export class RenderSystem {
       _bp.y >= _bpy && _bp.y <= _bpy + BACK_BTN.h &&
       Date.now() - (_bp.t || 0) < 250);
 
-    // 安全区包裹：translate(0, top) + scale(1, scaleY)
+    // 安全区包裹（方案 B）：只 translate(0, top)，不做非等比缩放
     ctx.save();
-    if (top > 0 || scaleY !== 1) {
-      if (top > 0) ctx.translate(0, top);
-      if (scaleY !== 1) ctx.scale(1, scaleY);
-    }
+    if (top > 0) ctx.translate(0, top);
     this._renderScreenInner(gameState, inputSystem, dt);
 
     // 美术装饰层：把上一轮审查判定「有素材但零引用」的占位图按界面语义叠加。
@@ -1666,10 +1662,10 @@ export class RenderSystem {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, w, top);
     }
-    // home indicator 黑底（底部）
+    // home indicator 黑底（底部）：内容区底 = top + hInner，物理屏底再往下 bottom 像素
     if (bottom > 0) {
       ctx.fillStyle = '#000';
-      ctx.fillRect(0, h - bottom, w, bottom);
+      ctx.fillRect(0, top + h, w, bottom);
     }
   }
 

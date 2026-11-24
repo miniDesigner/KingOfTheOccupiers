@@ -69,20 +69,30 @@ export function normalizeSafeAreaUnit(sa, screenWidth, screenHeight, pixelRatio)
 }
 
 /**
- * 钳制安全区并算出纵向缩放系数
- * scaleY 把 inner 坐标系 [0, h] 线性映射到屏幕 [top, h-bottom]：
- *   screen_y = top + inner_y * scaleY
- *   inner_y  = (screen_y - top) / scaleY   （输入端反推，见 Game.onTileClick 等）
+ * 钳制安全区并算出「内容区逻辑高度」（方案 B：全局不压缩布局）
+ *
+ * 方案 B 的坐标系约定（与 renderScreen / Game 输入反推共用同一份结果）：
+ *   逻辑屏高 hInner = screenHeight - top - bottom   ← 所有界面布局、命中都用这个高度
+ *   屏幕 y = top + inner_y                          ← 渲染只做 translate，无缩放
+ *   inner_y = screen_y - top                        ← 输入端只减 top，无除法
+ *
+ * 与旧方案（方案 A：ctx.scale(1, scaleY) 非等比压缩）的区别：
+ *   旧方案 inner 高度 = 全屏 h，靠 scaleY 压进可见区 → 图片被纵向压扁；
+ *   新方案 inner 高度 = 可见区高度，1:1 映射 → 图片零变形。
+ *
+ * scaleY 字段保留为 1  purely for 向后兼容（测试 / 外部若引用不会 NaN），
+ * 但渲染与输入都不再使用它做变换。
  *
  * @param {{top:number, bottom:number}|null|undefined} safeArea
- * @param {number} screenHeight 逻辑屏高
- * @returns {{top:number, bottom:number, scaleY:number}}
+ * @param {number} screenHeight 逻辑屏高（设备全屏高度）
+ * @returns {{top:number, bottom:number, innerHeight:number, scaleY:number}}
  */
 export function clampSafeArea(safeArea, screenHeight) {
   const top = Math.min(Math.max(0, (safeArea && safeArea.top) || 0), SAFE_AREA_MAX.top);
   const bottom = Math.min(Math.max(0, (safeArea && safeArea.bottom) || 0), SAFE_AREA_MAX.bottom);
-  const usableH = Math.max(1, screenHeight - top - bottom);
-  return { top, bottom, scaleY: usableH / screenHeight };
+  const innerHeight = Math.max(1, screenHeight - top - bottom);
+  // 方案 B：不做非等比缩放，恒为 1（保留字段兼容旧引用）
+  return { top, bottom, innerHeight, scaleY: 1 };
 }
 
 export default { SAFE_AREA_MAX, normalizeSafeAreaUnit, clampSafeArea };
