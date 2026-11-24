@@ -6298,13 +6298,12 @@ export class RenderSystem {
     ctx.fillStyle = canSingle ? NIGHT.title : NIGHT.hint;
     ctx.font = 'bold 14px sans-serif';
     ctx.fillText('单抽 ×1', L.singleX + L.btnW / 2, L.btnY + 17);
-    // 金币不足时不显示消耗数量（与十连按钮一致）：禁用态只保留功能文案，
-    // 否则灰字 + 金色消耗数会让玩家误以为仍可支付。
-    if (canSingle) {
-      this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36, {
-        align: 'center', plus: false, iconSize: 11, fontSize: 12, color: UI_THEME.gold,
-      });
-    }
+    // 消耗数量始终显示：金币不足时也要让玩家看到单抽需要多少。
+    // 不足态用浅蓝灰提示色（暗底可读），充足态用金色强调可支付。
+    this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36, {
+      align: 'center', plus: false, iconSize: 11, fontSize: 12,
+      color: canSingle ? UI_THEME.gold : NIGHT.hint,
+    });
 
     const canMulti = info.gold >= info.multiCost;
     this._primaryButton(
@@ -6312,11 +6311,13 @@ export class RenderSystem {
       canMulti ? '十连 ×10' : '金币不足',
       { disabled: !canMulti }
     );
-    if (canMulti) {
-      this._drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 34, {
-        align: 'center', plus: false, iconSize: 11, fontSize: 12, color: '#4A2A00',
-      });
-    }
+    // 消耗数量始终显示（与单抽一致）：禁用态也要告诉玩家「十连需要多少」。
+    // 充足态深棕字配明黄底；不足态按钮变暗，改浅蓝灰字保证可读。
+    // 中心大字 16px 下沿约在 btnY+34，消耗数字下移到 +41 避免与「金币不足」重叠
+    this._drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 41, {
+      align: 'center', plus: false, iconSize: 11, fontSize: 12,
+      color: canMulti ? '#4A2A00' : NIGHT.hint,
+    });
 
     // 十连优惠提示（按钮下方，与广告按钮保持间隙）
     ctx.fillStyle = UI_THEME.gold;
