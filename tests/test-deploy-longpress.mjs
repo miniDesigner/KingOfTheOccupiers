@@ -1,5 +1,6 @@
 // 测试: 兵种长按拖拽 + 羁绊无拖拽（上阵/卸下全部走详情面板）
-// (交互规则: 轻点=查看详情；按住 DEPLOY_LONG_PRESS_MS 或按住拖动>10px=拿起拖拽；拿起后松手=放回，不弹详情；列表滚动从卡片间隙/空白起手)
+// (交互规则: 轻点=查看详情；原地按住 DEPLOY_LONG_PRESS_MS(1000ms)=拿起拖拽；
+//  按下即滑动=滚动列表且取消长按候选，绝不与上下滑动冲突；拿起后松手=放回，不弹详情)
 const noop = () => {};
 const ctxProxy = new Proxy({}, {
   get: (t, p) => {
@@ -113,13 +114,15 @@ console.log('=== 测试2: 按住未上阵兵种卡超过阈值 → 激活拖拽�
   // 拖到空槽位松开 → 上阵
   const uStartX = (w - (L.slot.count * L.slot.w + (L.slot.count - 1) * L.slot.gap)) / 2;
   const slotX = uStartX + emptySlotIdx * (L.slot.w + L.slot.gap) + L.slot.w / 2;
+  const scrollBefore = game.metaScrollY || 0;
   game._handleDeployDragMove(slotX, L.slot.y + L.slot.h / 2);
+  assert((game.metaScrollY || 0) === scrollBefore, '拿起后拖动不滚动图鉴列表');
   game._handleDeployDragEnd(slotX, L.slot.y + L.slot.h / 2, true);
   assert(ProfileManager.get().deployment.units[emptySlotIdx] === unit0.id, `拖拽放置成功上阵到 #${emptySlotIdx + 1}`);
   assert(game._deployDrag.active === false, '松开后拖拽复位');
 }
 
-console.log('=== 测试3: 按住未满阈值时拖动 15px → 立即拿起拖拽 ===');
+console.log('=== 测试3: 按住未满1秒即滑动 → 取消长按候选、滚动列表、绝不拿起 ===');
 {
   // 测试2把 unit0 留在了槽位上，先腾空（已上阵的卡不产生拖拽候选）
   const pre = ProfileManager.get();
@@ -127,17 +130,20 @@ console.log('=== 测试3: 按住未满阈值时拖动 15px → 立即拿起拖�
   if (preSlot >= 0) pre.deployment.units[preSlot] = null;
   game._unitDetailId = null;
   game._deployDrag.active = false;
+  game.metaScrollY = 0;
   game._handleDeployDragStart(c0x + 10, c0y + 10);
-  game._handleDeployDragMove(c0x + 25, c0y + 10); // 移动15px（超过10px阈值，未满长按时间）
-  assert(game._deployDrag.active === true, '按住拖动超阈值立即激活拖拽');
-  assert(game._deployDrag.type === 'unit' && game._deployDrag.id === unit0.id, '拖拽对象正确');
-  assert(game._deployPress === null && game._deployPressTimer === null, '候选与计时器已清理');
-  // 拖到空槽位松开 → 上阵成功（按住拖拽路径完整可用）
-  const uStartX = (w - (L.slot.count * L.slot.w + (L.slot.count - 1) * L.slot.gap)) / 2;
-  const slotX = uStartX + emptySlotIdx * (L.slot.w + L.slot.gap) + L.slot.w / 2;
-  game._handleDeployDragMove(slotX, L.slot.y + L.slot.h / 2);
-  game._handleDeployDragEnd(slotX, L.slot.y + L.slot.h / 2, true);
-  assert(ProfileManager.get().deployment.units[emptySlotIdx] === unit0.id, '按住拖动放置成功上阵');
+  assert(game._deployPress !== null && game._deployPressTimer !== null, '按下产生长按候选与计时器');
+  game._handleDeployDragMove(c0x + 10, c0y - 5); // 向上滑15px（超过 8px slop）
+  assert(game._deployPress === null && game._deployPressTimer === null, '滑动后候选与计时器被取消');
+  assert(game._deployDrag.active === false, '滑动不激活拖拽');
+  assert((game.metaScrollY || 0) > 0, `从卡片上起手滑动即滚列表(scrollY=${game.metaScrollY})`);
+  // 关键回归：即使继续按住超过 1 秒，也不能在滑动之后突然拿起卡片
+  await sleep(Game.DEPLOY_LONG_PRESS_MS + 60);
+  assert(game._deployDrag.active === false, '滑动取消后继续按住超过1秒也不会突然拿起');
+  game._handleDeployDragEnd(c0x + 10, c0y - 5, true);
+  assert(game._deployDrag.active === false, '松手后拖拽保持复位');
+  assert(game._unitDetailId === null, '滚动手势不误开兵种详情');
+  game.metaScrollY = 0;
   // 腾空恢复现场，供后续测试使用
   const p = ProfileManager.get();
   const slot = p.deployment.units.indexOf(unit0.id);

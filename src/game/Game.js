@@ -723,8 +723,11 @@ export class Game {
    * 玩家在战斗前安排兵种/羁绊上阵
    */
   // === 上阵界面布局常量 ===
-  /** 长按激活拖拽的时长（ms），从按下起持续超过该时长即拿起 */
-  static get DEPLOY_LONG_PRESS_MS() { return 200; }
+  /** 长按激活拖拽的时长（ms）：原地按住满 1 秒才拿起，与图鉴上下滑动互斥 */
+  static get DEPLOY_LONG_PRESS_MS() { return 1000; }
+
+  /** 按下后位移超过该阈值(px)即判定为「滑动列表」，取消长按候选，绝不再拿起卡片 */
+  static get DEPLOY_SCROLL_SLOP() { return 8; }
 
   // === 上阵界面布局 ===
   // P36：垂直锚点（slot/synergy/building/unit 的 y 与 labelY）与横排宽度全部由
@@ -1018,7 +1021,7 @@ export class Game {
         lines: [
           '兵种卡显示品质外框与上阵角标',
           '羁绊列表固定显示，不随兵种列表滚动',
-          '长按或按住拖动兵种卡即可拿起上阵',
+          '长按兵种卡 1 秒即可拿起上阵',
         ],
       },
     ];
@@ -1035,7 +1038,7 @@ export class Game {
   /**
    * 上阵界面触摸按下
    * - 兵种槽位/羁绊槽位/建筑区/羁绊列表：固定区，无拖拽不滚动，轻点在 DragEnd 中开详情
-   * - 兵种卡（未上阵）：记录长按候选，DEPLOY_LONG_PRESS_MS 后激活拖拽；按住并移动超阈值也立即拿起
+   * - 兵种卡（未上阵）：原地按住满 1 秒才拿起；先滑动则取消候选只滚列表（与上下滑动互斥）
    * - 已上阵兵种卡：不可拖拽（轻点仍可查看详情，换位请用详情内「上阵」按钮）
    */
   _handleDeployDragStart(x, y) {
@@ -1089,8 +1092,8 @@ export class Game {
   }
 
   /**
-   * 启动长按候选：按住 DEPLOY_LONG_PRESS_MS 后激活拖拽；
-   * 期间松手取消候选；按住并移动超过阈值 → 立即激活拖拽（按住拖拽也可拿起）
+   * 启动长按候选：手指原地按住满 DEPLOY_LONG_PRESS_MS(1000ms) 才激活拖拽；
+   * 期间松手或先滑动（位移超 DEPLOY_SCROLL_SLOP）都会取消候选，只走列表滚动/点击。
    */
   _startDeployPress(press) {
     this._deployPress = press;
@@ -1101,7 +1104,7 @@ export class Game {
   }
 
   /**
-   * 激活拖拽（长按到时 / 按住移动超阈值 两条路径共用）
+   * 激活拖拽（唯一路径：原地长按到时）
    */
   _activateDeployDrag() {
     if (!this._deployPress) return;
@@ -1120,7 +1123,7 @@ export class Game {
   }
 
   /**
-   * 取消长按候选（松手/移动/离开界面时调用）
+   * 取消长按候选（松手 / 判定为滑动列表 / 离开界面时调用）
    */
   _cancelDeployPress() {
     if (this._deployPressTimer) {
@@ -1134,17 +1137,14 @@ export class Game {
    * 上阵界面拖拽移动
    */
   _handleDeployDragMove(x, y) {
-    // 长按未激活前移动超过10px → 立即拿起（按住拖拽也可上阵）；
-    // 列表滚动仅从卡片间隙/空白处起手触发
+    // 2026-11-24：滑动与拖拽互斥——长按未激活前一旦位移超过 slop，
+    // 立刻取消长按候选并转入列表滚动（从卡片上起手也能滑），绝不再拿起卡片。
+    // 这样「按住 1 秒」是拿起卡片的唯一入口，不会与图鉴上下滑动冲突。
     if (this._deployPress && !this._deployDrag.active) {
       const dx = Math.abs(x - this._deployPress.x);
       const dy = Math.abs(y - this._deployPress.y);
-      if (dx > 10 || dy > 10) {
-        if (this._deployPressTimer) {
-          clearTimeout(this._deployPressTimer);
-          this._deployPressTimer = null;
-        }
-        this._activateDeployDrag();
+      if (dx > Game.DEPLOY_SCROLL_SLOP || dy > Game.DEPLOY_SCROLL_SLOP) {
+        this._cancelDeployPress();
       }
     }
     if (this._deployDrag.active) {
