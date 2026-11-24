@@ -127,8 +127,8 @@ console.log('=== 测试2: 上移后其余栏位仍保持间隙 ===');
   assert(ok, `13 栏全部无重叠${bad ? ' — ' + bad : ''}`);
 }
 
-// ==================== 2. 大厅品质色（名称文字表达） ====================
-console.log('=== 测试3: 大厅上阵兵种名称按品质着色（牌去底框） ===');
+// ==================== 2. 大厅品质色（布阵同款夜色卡信息条表达） ====================
+console.log('=== 测试3: 大厅上阵兵种品质名按品质着色（布阵同款夜色卡） ===');
 {
   const rs = new RenderSystem(ctxProxy, 400, 700);
   const profile = ProfileManager.get();
@@ -146,21 +146,23 @@ console.log('=== 测试3: 大厅上阵兵种名称按品质着色（牌去底框
   ctxProxy.__calls.length = 0;
   rs.drawLobby({ profile, accountInfo: null, powerInfo: null, lobbyBadges: {} });
 
-  // 兵种牌已去底框：品质色改由单位名称 fillText 的 fillStyle 表达
-  // 收集所有 fillText 调用的 (文字, 颜色) 供断言
+  // 2026-11-24：大厅上阵槽改布阵同款夜色卡——品质色改由信息条左侧品质名 fillText 表达
+  // （宽屏 slotW>=50 走品质名 + Lv 分支；品质色同时在整卡边框，但代理不记录 ctx.stroke，故断言文字色）
   const nameTexts = ctxProxy.__calls
     .filter((c) => c.op === 'fillText' && typeof c.args[0] === 'string')
     .map((c) => ({ text: c.args[0], color: c.state.fillStyle }));
 
+  const Q_NAMES = ['普通', '精良', '稀有', '史诗', '传说', '神话'];
   let allMatch = true;
   for (let i = 0; i < 3; i++) {
     const unitCfg = cfg.units[picked[i]];
     const q = unitCfg.quality || 1;
     const expect = QUALITY_COLORS[q - 1];
-    const hit = nameTexts.some((t) => t.text === unitCfg.name && t.color === expect);
-    if (!hit) { allMatch = false; console.log(`      (缺少 ${picked[i]} Q${q} 期望名称色 ${expect})`); }
+    const expectName = Q_NAMES[q - 1] || '普通';
+    const hit = nameTexts.some((t) => t.text === expectName && t.color === expect);
+    if (!hit) { allMatch = false; console.log(`      (缺少 ${picked[i]} Q${q} 品质名「${expectName}」色 ${expect})`); }
   }
-  assert(allMatch, '每个上阵兵种名称文字色 = 其品质色（去底框后以文字表达品质）');
+  assert(allMatch, '每个上阵兵种夜色卡信息条品质名文字色 = 其品质色（布阵同款）');
 
   // 还原上阵数据（临时兵种可能未收集，会让 bundle 为空）
   profile.deployment.units = origUnits;

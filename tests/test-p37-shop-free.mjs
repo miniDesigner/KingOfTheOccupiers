@@ -223,7 +223,7 @@ console.log('=== 测试9: 分页布局自适应（5 个分页窄屏不溢出）=
   }
 }
 
-console.log('=== 测试10: 免费卡片渲染 —— 云白「免费」按钮 + 正式广告图标 + 次数文案 ===');
+console.log('=== 测试10: 免费卡片渲染 —— 夜色「免费」按钮 + 正式广告图标 + 次数文案 ===');
 {
   resetFreeClaims();
   const items = ShopSystem.getShopItems();
@@ -237,15 +237,18 @@ console.log('=== 测试10: 免费卡片渲染 —— 云白「免费」按钮 + 
   };
   const texts = (calls) => calls.filter(c => c.op === 'fillText').map(c => String(c.args[0]));
 
-  // 10a 首次：按钮文案「免费」，云白底/深蓝描边，无广告图标
+  // 10a 首次：按钮文案「免费」，夜色渐变底/浅天蓝字，无广告图标
   let calls = drawAndCapture();
   let ts = texts(calls);
   assert(ts.includes('免费'), '首次：按钮文案含「免费」');
   assert(!ts.some(t => t.includes('\u{1F4FA}')), '首次：按钮无广告播放 emoji');
-  const secondaryBtn = calls.some(c => c.op === 'fillRect' && c.fillStyle === 'rgba(214,238,251,0.96)');
-  assert(secondaryBtn, '按钮底色为云白体系浅蓝 rgba(214,238,251,0.96)');
-  const navyText = calls.some(c => c.op === 'fillText' && c.fillStyle === '#2B4A6F' && String(c.args[0]) === '免费');
-  assert(navyText, '「免费」文字为海军蓝 #2B4A6F');
+  // 2026-11-24 夜色统一：旧云白按钮底 rgba(214,238,251,0.96) 必须消失
+  const cloudWhiteBtn = calls.some(c => c.op === 'fillRect' && c.fillStyle === 'rgba(214,238,251,0.96)');
+  assert(!cloudWhiteBtn, '免费按钮不再使用云白体系浅蓝底（已改夜色渐变）');
+  const nightGradient = calls.some(c => c.op === 'fillRect' && c.fillStyle && typeof c.fillStyle === 'object');
+  assert(nightGradient, '免费按钮使用夜色渐变底（NIGHT.cardSoft）');
+  const navyText = calls.some(c => c.op === 'fillText' && c.fillStyle === '#7DD3FC' && String(c.args[0]) === '免费');
+  assert(navyText, '「免费」文字为浅天蓝 #7DD3FC（夜色卡上的浅色阶）');
   assert(ts.some(t => t === '已领 0/5'), '显示「已领 0/5」');
   assert(ts.some(t => t.includes('还可领 5 次')), '显示「还可领 5 次」');
   assert(ts.some(t => t.includes('首次直接领取')), '提示首次无需广告');
