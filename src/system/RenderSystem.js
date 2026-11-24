@@ -6308,12 +6308,12 @@ export class RenderSystem {
     const canMulti = info.gold >= info.multiCost;
     this._primaryButton(
       { x: L.multiX, y: L.btnY, w: L.btnW, h: L.btnH, r: 13 },
-      canMulti ? '十连 ×10' : '金币不足',
+      '十连 ×10',
       { disabled: !canMulti }
     );
     // 消耗数量始终显示（与单抽一致）：禁用态也要告诉玩家「十连需要多少」。
     // 充足态深棕字配明黄底；不足态按钮变暗，改浅蓝灰字保证可读。
-    // 中心大字 16px 下沿约在 btnY+34，消耗数字下移到 +41 避免与「金币不足」重叠
+    // 中心大字 16px 下沿约在 btnY+34，消耗数字下移到 +41 避免与按钮文案重叠
     this._drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 41, {
       align: 'center', plus: false, iconSize: 11, fontSize: 12,
       color: canMulti ? '#4A2A00' : NIGHT.hint,

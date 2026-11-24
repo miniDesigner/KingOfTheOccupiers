@@ -306,7 +306,11 @@ console.log('\n=== 测试15: 概率卡轮廓 + 两个抽卡按钮始终显示消
     '十连消耗数量始终绘制');
   assert(!/if\s*\(\s*canMulti\s*\)\s*\{[\s\S]*?_drawCurrencyRun/.test(multiPart),
     '十连消耗数量不受 if(canMulti) 包裹（任何状态都显示）');
-  console.log('  ✓ 概率卡纯夜色轮廓 + 两个抽卡按钮消耗数量始终可见（含金币不足态）');
+  // 按钮文案不随金币状态切换：禁用态靠灰化表达，仍显示功能名（注释里的说明不算）
+  assert(!multiPart.includes("'金币不足'"), '十连按钮文案不切换为「金币不足」');
+  assert(multiPart.includes("'十连 ×10'"), '十连按钮始终显示功能文案「十连 ×10」');
+  assert(!singlePart.includes("'金币不足'"), '单抽按钮文案不切换为「金币不足」');
+  console.log('  ✓ 概率卡纯夜色轮廓 + 两按钮文案与消耗数量在金币不足时均照常显示');
 }
 
 console.log(`\n📊 结果: ${passed} 通过 / ${failed} 失败`);
