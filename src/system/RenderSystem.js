@@ -693,13 +693,14 @@ export class RenderSystem {
    * 主 CTA 按钮：明黄→活力橙竖渐变 + 云白描边 + 深棕文字。
    * @param {{x:number,y:number,w:number,h:number,r?:number}} rect
    * @param {string} label
-   * @param {{disabled?:boolean}} [opts]
+   * @param {{disabled?:boolean, labelY?:number}} [opts] labelY 为文案中心相对按钮顶部的偏移，默认垂直居中
    */
   _primaryButton(rect, label, opts) {
     const { ctx } = this;
     const o = opts || {};
     const r = rect.r === undefined ? 14 : rect.r;
     const x = rect.x, y = rect.y, bw = rect.w, bh = rect.h;
+    const labelY = o.labelY === undefined ? y + bh / 2 + 1 : y + o.labelY;
     if (o.disabled) {
       // 禁用态用平面暗块：亮灰块在夜景底上会显得"可点"，与语义相反
       this._cardBg({ x, y, w: bw, h: bh, r }, {
@@ -711,7 +712,7 @@ export class RenderSystem {
       ctx.font = 'bold 16px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);
+      ctx.fillText(label, x + bw / 2, labelY);
       return;
     }
     this._drawRaisedCard(rect, () => {
@@ -744,7 +745,7 @@ export class RenderSystem {
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);
+    ctx.fillText(label, x + bw / 2, labelY);
   }
 
   /**
@@ -6297,26 +6298,26 @@ export class RenderSystem {
     ctx.textBaseline = 'middle';
     ctx.fillStyle = canSingle ? NIGHT.title : NIGHT.hint;
     ctx.font = 'bold 14px sans-serif';
-    // 与十连按钮共用垂直居中锚点（_primaryButton 的 y + bh/2 + 1），两按钮内部布局对齐
-    ctx.fillText('单抽 ×1', L.singleX + L.btnW / 2, L.btnY + L.btnH / 2 + 1);
+    // 以旧单抽表现统一两按钮内部锚点：文案 +17、金币 +36（相对按钮顶部）
+    ctx.fillText('单抽 ×1', L.singleX + L.btnW / 2, L.btnY + 17);
     // 消耗数量始终显示：金币不足时也要让玩家看到单抽需要多少。
     // 不足态用浅蓝灰提示色（暗底可读），充足态用金色强调可支付。
-    // 金币行锚点 +41 与十连完全一致，两按钮的文案/资源行高对齐
-    this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 41, {
+    this._drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36, {
       align: 'center', plus: false, iconSize: 11, fontSize: 12,
       color: canSingle ? UI_THEME.gold : NIGHT.hint,
     });
 
     const canMulti = info.gold >= info.multiCost;
+    // 十连文案沿用旧单抽锚点 +17：两按钮文案同一水平线，金色主 CTA 只靠底色/字号区分层级
     this._primaryButton(
       { x: L.multiX, y: L.btnY, w: L.btnW, h: L.btnH, r: 13 },
       '十连 ×10',
-      { disabled: !canMulti }
+      { disabled: !canMulti, labelY: 17 }
     );
     // 消耗数量始终显示（与单抽一致）：禁用态也要告诉玩家「十连需要多少」。
     // 充足态深棕字配明黄底；不足态按钮变暗，改浅蓝灰字保证可读。
-    // 中心大字 16px 下沿约在 btnY+34，消耗数字下移到 +41 避免与按钮文案重叠
-    this._drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 41, {
+    // 金币行 +36 与单抽完全同锚点；16px 文案底约 +25，与 11px 金币图标不重叠
+    this._drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 36, {
       align: 'center', plus: false, iconSize: 11, fontSize: 12,
       color: canMulti ? '#4A2A00' : NIGHT.hint,
     });

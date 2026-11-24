@@ -310,12 +310,21 @@ console.log('\n=== 测试15: 概率卡轮廓 + 两个抽卡按钮始终显示消
   assert(!multiPart.includes("'金币不足'"), '十连按钮文案不切换为「金币不足」');
   assert(multiPart.includes("'十连 ×10'"), '十连按钮始终显示功能文案「十连 ×10」');
   assert(!singlePart.includes("'金币不足'"), '单抽按钮文案不切换为「金币不足」');
-  // 两按钮内部锚点对齐：文案垂直居中、金币行同为 btnY+41（与 _primaryButton / 十连一致）
-  assert(singlePart.includes("'单抽 ×1', L.singleX + L.btnW / 2, L.btnY + L.btnH / 2 + 1"),
-    '单抽文案与十连同锚点：按钮垂直居中');
-  assert(singlePart.includes("_drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 41"),
-    '单抽金币行与十连同锚点：btnY+41');
-  console.log('  ✓ 概率卡纯夜色轮廓 + 两按钮文案与消耗数量始终可见、内部锚点对齐');
+  // 两按钮内部锚点统一为旧单抽表现：文案 +17、金币 +36（相对按钮顶部）
+  assert(singlePart.includes("'单抽 ×1', L.singleX + L.btnW / 2, L.btnY + 17"),
+    '单抽文案锚点恢复为旧表现 btnY+17');
+  assert(singlePart.includes("_drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36"),
+    '单抽金币行锚点恢复为旧表现 btnY+36');
+  assert(multiPart.includes("{ disabled: !canMulti, labelY: 17 }"),
+    '十连文案沿用旧单抽锚点 labelY:17');
+  assert(multiPart.includes("_drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 36"),
+    '十连金币行与单抽同锚点 btnY+36');
+  const primarySrc = rsSrc.slice(rsSrc.indexOf('  _primaryButton('), rsSrc.indexOf('  _secondaryButton('));
+  assert(primarySrc.includes('const labelY = o.labelY === undefined ? y + bh / 2 + 1 : y + o.labelY;'),
+    '_primaryButton 支持 labelY 覆盖且默认居中不变');
+  assert(!primarySrc.includes('ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);'),
+    '_primaryButton 文案统一走 labelY 变量');
+  console.log('  ✓ 概率卡纯夜色轮廓 + 两按钮文案与消耗数量始终可见、内部锚点统一为旧单抽表现');
 }
 
 console.log(`\n📊 结果: ${passed} 通过 / ${failed} 失败`);
