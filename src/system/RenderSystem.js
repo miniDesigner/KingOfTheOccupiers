@@ -587,6 +587,8 @@ export class RenderSystem {
     const x = w - rightLimit - pillW;
     const cx = x + pillW / 2;
     const y = cy - pillH / 2;
+    // 缓存本帧标题几何：模态遮罩之后由 _redrawTopChrome 原样重绘，不被压暗
+    this._lastHeader = { title: text, opts: { ...o, cy, leftLimit, rightLimit } };
 
     this._drawRaisedCard({ x, y, w: pillW, h: pillH, r: 12 }, () => {
       ctx.fillStyle = 'rgba(20,38,68,0.94)';
@@ -602,6 +604,35 @@ export class RenderSystem {
     ctx.fillStyle = NIGHT.title;
     ctx.font = font;
     ctx.fillText(text, cx + (o.accent ? 4 : 0), cy + 1);
+  }
+
+  /**
+   * 大厅右上角设置按钮：几何与 Game 命中（x∈[w-45,w-10], y∈[10,40]）同源。
+   * 抽成独立方法供 drawLobby 与模态后的顶栏重绘共用，保证两处像素完全一致。
+   */
+  _drawLobbySettingButton() {
+    const { ctx } = this;
+    const w = this.screenWidth;
+    const rect = { x: w - 45, y: 10, w: 35, h: 30, r: 9 };
+    this._cardBg(rect, { tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border });
+    if (!this._artIcon(ART_PREFIXES.hud, 'setting', rect.x + rect.w / 2, rect.y + rect.h / 2, 18, 1)) {
+      ctx.fillStyle = NIGHT.title;
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚙', rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
+    }
+  }
+
+  /**
+   * 模态遮罩之后重绘顶栏：大厅设置按钮 + 当前界面右上角标题胶囊。
+   * 只重绘本帧已经画过的元素，不改几何、不改命中；无模态时不调用，避免阴影重复叠加。
+   */
+  redrawTopChrome(gameState) {
+    const state = gameState || {};
+    if (state.screenState === 'lobby') this._drawLobbySettingButton();
+    const cached = this._lastHeader;
+    if (cached) this._screenHeader(cached.title, cached.opts);
   }
 
   /**
@@ -1635,6 +1666,9 @@ export class RenderSystem {
     this._curGameStatus = (gameState && gameState.gameStatus) || 'playing';
     // 本局棋盘布局 id（供 bg/battle_tone_* 与 tiles/territory_tone_* 5 套色调选图）
     this._layoutId = (gameState && gameState.layoutId) || 'plains';
+    // 顶栏重绘缓存每帧清零：模态遮罩之后按本帧实际绘制结果重画，跨界面不串台
+    this._lastHeader = null;
+    this._modalDimActive = false;
     // 返回按钮按下态：与 UI-08/09 两态贴图配套，几何与 BACK_BTN 同源（不改命中）
     const _bp = (gameState && gameState.press) || null;
     const _bpy = this.screenHeight - BACK_BTN.bottom - BACK_BTN.h;
@@ -1670,6 +1704,9 @@ export class RenderSystem {
     if (gameState.compliance && (gameState.compliance.needsNotice || gameState.compliance.blocked)) {
       this._drawComplianceOverlay(gameState);
     }
+    // 模态遮罩之后重绘顶栏：设置按钮与右上角标题保持原亮度，压暗只作用于内容区
+    if (this._modalDimActive) this.redrawTopChrome(gameState);
+    this._modalDimActive = false;
     ctx.restore();
 
     // 刘海黑底（顶部）
@@ -3079,7 +3116,8 @@ export class RenderSystem {
     const profile = gameState.profile;
     const recruitable = gameState.recruitableUnits || [];
 
-    // 遮罩
+    // 遮罩（顶栏随后由 renderScreen 原样重绘，不被压暗）
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
 
@@ -3305,7 +3343,8 @@ export class RenderSystem {
     const d = gameState.synergyDetailData;
     if (!d) return;
 
-    // 遮罩
+    // 遮罩（顶栏随后由 renderScreen 原样重绘，不被压暗）
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
 
@@ -3479,7 +3518,8 @@ export class RenderSystem {
     const bld = gameState.buildingDetailData;
     if (!bld) return;
 
-    // 遮罩
+    // 遮罩（顶栏随后由 renderScreen 原样重绘，不被压暗）
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
 
@@ -3621,7 +3661,8 @@ export class RenderSystem {
     const profile = gameState.profile;
     const isOwned = unit.owned !== false;
 
-    // 遮罩
+    // 遮罩（顶栏随后由 renderScreen 原样重绘，不被压暗）
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
 
@@ -4039,7 +4080,8 @@ export class RenderSystem {
     const cx = this.screenWidth / 2;
     const cy = this.screenHeight / 2;
 
-    // 半透明遮罩
+    // 半透明遮罩（顶栏随后由 renderScreen 原样重绘，不被压暗）
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(0,0,0,0.82)';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
     this._art(RESULT_BG[isWin ? 'won' : 'lost'], 0, 0, this.screenWidth, this.screenHeight, { fit: 'cover', alpha: 0.7 });
@@ -4521,16 +4563,8 @@ export class RenderSystem {
     // 大厅不再居中式横排。ladderTier 仍在此读取，供下方徽章/进度条使用。
     const ladderTier = gameState.ladderTier;
 
-    // 设置按钮（右上角小图标，打开设置窗口）——夜色圆角卡 + 正式设置图标
-    const lobbySet = { x: w - 45, y: 10, w: 35, h: 30, r: 9 };
-    this._cardBg(lobbySet, { tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border });
-    if (!this._artIcon(ART_PREFIXES.hud, 'setting', lobbySet.x + lobbySet.w / 2, lobbySet.y + lobbySet.h / 2, 18, 1)) {
-      ctx.fillStyle = NIGHT.title;
-      ctx.font = 'bold 15px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚙', lobbySet.x + lobbySet.w / 2, lobbySet.y + lobbySet.h / 2 + 1);
-    }
+    // 设置按钮（右上角小图标，打开设置窗口）——与模态后重绘共用同一绘制方法
+    this._drawLobbySettingButton();
 
     // v2 布局：已移除「占地之王」大标题与副标题，页面重心交给玩家卡 / 赛季区 / 上阵区。
 
@@ -6632,6 +6666,8 @@ export class RenderSystem {
     const { ctx } = this;
     const { panel, cancelBtn } = RenderSystem.matchOverlayLayout(this.screenWidth, this.screenHeight);
 
+    // 该覆盖层在 Game.render 末段绘制，标记后由 Game 调用 redrawTopChrome 补回顶栏
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(6,14,28,0.62)';
     ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
     this._modalShell(panel, null, '对战匹配', { showClose: false });
@@ -6897,11 +6933,10 @@ export class RenderSystem {
     // = Game.SETTINGS_LAYOUT（6 行：多出实名认证 / 青少年模式）
     const L = { panelW: 290, panelH: 432, rowW: 232, rowH: 44, rowGap: 14, rowStartOffset: 64, closeSize: 30 };
 
-    // 半透明遮罩
+    // 半透明遮罩（顶栏由 renderScreen 在遮罩后原样重绘，不再画半透明假图标）
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
-    this._artIcon(ART_PREFIXES.setting, 'music', w - 22, 22, 18, 0.6);
-    this._artFx('settingNotify', w - 46, 18, 18, 18, 0.6);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -7001,10 +7036,10 @@ export class RenderSystem {
     // = Game.ACCOUNT_LAYOUT（与 Game.js 同源约定）
     const L = { panelW: 300, panelH: 340, rowH: 46, rowGap: 8, rowStartOffset: 54, maxRows: 3, btnH: 46, btnGap: 8, closeSize: 30 };
 
-    // 半透明遮罩
+    // 半透明遮罩（顶栏由 renderScreen 在遮罩后原样重绘，不再画半透明假图标）
+    this._modalDimActive = true;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, w, h);
-    this._artIcon(ART_PREFIXES.account, 'switch', w - 22, 22, 18, 0.6);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -7107,6 +7142,8 @@ export class RenderSystem {
     const p = complianceCardLayout(w, h);
     const blocked = !!c.blocked;
 
+    // 遮罩（顶栏随后由 renderScreen 原样重绘，不被压暗）
+    this._modalDimActive = true;
     ctx.save();
     ctx.fillStyle = 'rgba(8,15,30,0.78)';
     ctx.fillRect(0, 0, w, h);

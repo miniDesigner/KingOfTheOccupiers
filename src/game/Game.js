@@ -3400,6 +3400,10 @@ export class Game {
     // 在最上层绘制 Toast 提示
     this.renderSystem.drawToast(gameState);
     // 异步对战匹配中 overlay（最顶层，取消或匹配成功后自动消失）
-    if (this._asyncState === 'searching') this._drawMatchOverlay();
+    if (this._asyncState === 'searching') {
+      this._drawMatchOverlay();
+      // 该 overlay 在 renderScreen 之后绘制，需手动补回顶栏，避免设置/标题被压暗
+      this.renderSystem.redrawTopChrome({ screenState: this.screenState });
+    }
   }
 }
