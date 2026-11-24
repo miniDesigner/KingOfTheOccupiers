@@ -693,7 +693,7 @@ export class RenderSystem {
    * 主 CTA 按钮：明黄→活力橙竖渐变 + 云白描边 + 深棕文字。
    * @param {{x:number,y:number,w:number,h:number,r?:number}} rect
    * @param {string} label
-   * @param {{disabled?:boolean, labelY?:number}} [opts] labelY 为文案中心相对按钮顶部的偏移，默认垂直居中
+   * @param {{disabled?:boolean, labelY?:number, labelFontSize?:number}} [opts] labelY 为文案中心相对按钮顶部的偏移（默认垂直居中）；labelFontSize 默认 16
    */
   _primaryButton(rect, label, opts) {
     const { ctx } = this;
@@ -701,6 +701,7 @@ export class RenderSystem {
     const r = rect.r === undefined ? 14 : rect.r;
     const x = rect.x, y = rect.y, bw = rect.w, bh = rect.h;
     const labelY = o.labelY === undefined ? y + bh / 2 + 1 : y + o.labelY;
+    const labelFont = o.labelFontSize === undefined ? 16 : o.labelFontSize;
     if (o.disabled) {
       // 禁用态用平面暗块：亮灰块在夜景底上会显得"可点"，与语义相反
       this._cardBg({ x, y, w: bw, h: bh, r }, {
@@ -709,7 +710,7 @@ export class RenderSystem {
         flat: true,
       });
       ctx.fillStyle = 'rgba(234,248,255,0.45)';
-      ctx.font = 'bold 16px sans-serif';
+      ctx.font = `bold ${labelFont}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(label, x + bw / 2, labelY);
@@ -742,7 +743,7 @@ export class RenderSystem {
     }
     ctx.restore();
     ctx.fillStyle = '#4A2A00';
-    ctx.font = 'bold 16px sans-serif';
+    ctx.font = `bold ${labelFont}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, x + bw / 2, labelY);
@@ -6308,15 +6309,15 @@ export class RenderSystem {
     });
 
     const canMulti = info.gold >= info.multiCost;
-    // 十连文案沿用旧单抽锚点 +17：两按钮文案同一水平线，金色主 CTA 只靠底色/字号区分层级
+    // 十连文案沿用旧单抽锚点 +17 与字号 14px：两按钮文案同线同号，金色主 CTA 只靠底色区分层级
     this._primaryButton(
       { x: L.multiX, y: L.btnY, w: L.btnW, h: L.btnH, r: 13 },
       '十连 ×10',
-      { disabled: !canMulti, labelY: 17 }
+      { disabled: !canMulti, labelY: 17, labelFontSize: 14 }
     );
     // 消耗数量始终显示（与单抽一致）：禁用态也要告诉玩家「十连需要多少」。
     // 充足态深棕字配明黄底；不足态按钮变暗，改浅蓝灰字保证可读。
-    // 金币行 +36 与单抽完全同锚点；16px 文案底约 +25，与 11px 金币图标不重叠
+    // 金币行 +36 与单抽完全同锚点；14px 文案底约 +24，与 11px 金币图标不重叠
     this._drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 36, {
       align: 'center', plus: false, iconSize: 11, fontSize: 12,
       color: canMulti ? '#4A2A00' : NIGHT.hint,

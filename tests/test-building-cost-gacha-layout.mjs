@@ -310,21 +310,29 @@ console.log('\n=== 测试15: 概率卡轮廓 + 两个抽卡按钮始终显示消
   assert(!multiPart.includes("'金币不足'"), '十连按钮文案不切换为「金币不足」');
   assert(multiPart.includes("'十连 ×10'"), '十连按钮始终显示功能文案「十连 ×10」');
   assert(!singlePart.includes("'金币不足'"), '单抽按钮文案不切换为「金币不足」');
-  // 两按钮内部锚点统一为旧单抽表现：文案 +17、金币 +36（相对按钮顶部）
+  // 两按钮内部锚点统一为旧单抽表现：文案 +17、金币 +36（相对按钮顶部），字号同为 14px
+  assert(singlePart.includes("ctx.font = 'bold 14px sans-serif';"),
+    '单抽文案字号为 14px');
   assert(singlePart.includes("'单抽 ×1', L.singleX + L.btnW / 2, L.btnY + 17"),
     '单抽文案锚点恢复为旧表现 btnY+17');
   assert(singlePart.includes("_drawCurrencyRun([['gold', info.singleCost]], L.singleX + L.btnW / 2, L.btnY + 36"),
     '单抽金币行锚点恢复为旧表现 btnY+36');
-  assert(multiPart.includes("{ disabled: !canMulti, labelY: 17 }"),
-    '十连文案沿用旧单抽锚点 labelY:17');
+  assert(multiPart.includes("{ disabled: !canMulti, labelY: 17, labelFontSize: 14 }"),
+    '十连文案沿用旧单抽锚点 labelY:17 且字号同为 14px');
   assert(multiPart.includes("_drawCurrencyRun([['gold', info.multiCost]], L.multiX + L.btnW / 2, L.btnY + 36"),
     '十连金币行与单抽同锚点 btnY+36');
   const primarySrc = rsSrc.slice(rsSrc.indexOf('  _primaryButton('), rsSrc.indexOf('  _secondaryButton('));
   assert(primarySrc.includes('const labelY = o.labelY === undefined ? y + bh / 2 + 1 : y + o.labelY;'),
     '_primaryButton 支持 labelY 覆盖且默认居中不变');
+  assert(primarySrc.includes('const labelFont = o.labelFontSize === undefined ? 16 : o.labelFontSize;'),
+    '_primaryButton 支持 labelFontSize 覆盖且默认 16px 不变');
+  assert((primarySrc.match(/ctx\.font = `bold \$\{labelFont\}px sans-serif`;/g) || []).length === 2,
+    '_primaryButton 充足/禁用两态文案均使用 labelFont');
+  assert(!primarySrc.includes("ctx.font = 'bold 16px sans-serif';"),
+    '_primaryButton 不再硬编码 16px 文案字号');
   assert(!primarySrc.includes('ctx.fillText(label, x + bw / 2, y + bh / 2 + 1);'),
     '_primaryButton 文案统一走 labelY 变量');
-  console.log('  ✓ 概率卡纯夜色轮廓 + 两按钮文案与消耗数量始终可见、内部锚点统一为旧单抽表现');
+  console.log('  ✓ 概率卡纯夜色轮廓 + 两按钮文案与消耗数量始终可见、锚点与字号统一为旧单抽表现');
 }
 
 console.log(`\n📊 结果: ${passed} 通过 / ${failed} 失败`);
