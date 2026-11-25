@@ -1505,6 +1505,52 @@ export class RenderSystem {
   }
 
   /**
+   * 统一关闭按钮：图片优先（icons/state_close，透明底金色 X），失败时回落到各调用点原程序化样式。
+   * rect 由调用方给定，与点击命中同源，绝不改动几何。
+   * @param {{x:number,y:number,w:number,h:number}} rect
+   * @param {{style?:'night'|'detail'|'card'|'round', fontSize?:number, color?:string, glyph?:string}} [opts]
+   */
+  _drawCloseButton(rect, opts) {
+    const o = opts || {};
+    const { ctx } = this;
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h / 2;
+    ctx.save();
+    // 留 8% 内边距：贴图自带高光描边，贴满会让圆底边缘显脏
+    if (this._artIcon(ART_PREFIXES.state, 'close', cx, cy, Math.min(rect.w, rect.h) * 0.92, 1)) {
+      ctx.restore();
+      return;
+    }
+
+    const style = o.style || 'round';
+    const r = Math.min(rect.w, rect.h) / 2;
+    if (style === 'round') {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(40,64,102,0.95)';
+      ctx.fill();
+      ctx.strokeStyle = NIGHT.border;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      const bg = {
+        night: { tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border },
+        detail: { tint: 'rgba(8,18,38,0.92)', border: 'rgba(234,248,255,0.34)' },
+        card: { tint: 'rgba(8,18,38,0.6)', border: 'rgba(234,248,255,0.32)' },
+      }[style] || {};
+      this._cardBg(rect, { r, flat: true, ...bg });
+    }
+    ctx.fillStyle = o.color || (style === 'night' ? NIGHT.title : UI_THEME.cloud);
+    ctx.font = `bold ${o.fontSize || 14}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(o.glyph || '✕', cx, cy + 1);
+    ctx.restore();
+  }
+
+  /**
    * 资源串：图标 + 数字，统一把奖励/消耗行从裸符号升级成正式贴图。
    * 贴图未加载/失败时逐个回落文字符号（◆✧✦券¥），保证任何环境可读。
    * 只负责画，不改任何 Layout 几何与点击命中。
@@ -3169,16 +3215,11 @@ export class RenderSystem {
     this._drawCurrencyRun([['gold', profile?.gold || 0], ['stardust', profile?.stardust || 0]],
       panelX + 14, panelY + 38, { plus: false, iconSize: 11, fontSize: 10, color: NIGHT.body });
 
-    // 关闭按钮（几何不变）
-    const closeX = panelX + panelW - 35;
-    const closeY = panelY + 5;
-    this._cardBg({ x: closeX, y: closeY, w: 30, h: 30, r: 15 }, {
-      r: 15, tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border, flat: true,
-    });
-    ctx.fillStyle = NIGHT.title;
-    ctx.font = 'bold 16px sans-serif';
+    // 关闭按钮：图片优先，几何不变（与 Game 命中同源）
+    this._drawCloseButton({ x: panelX + panelW - 35, y: panelY + 5, w: 30, h: 30 },
+      { style: 'night', fontSize: 16, glyph: '×' });
     ctx.textAlign = 'center';
-    ctx.fillText('×', closeX + 15, closeY + 15);
+    ctx.textBaseline = 'middle';
 
     // 兵种卡片列表
     const cardW = 140, cardH = 85, cardGap = 8;
@@ -3385,13 +3426,11 @@ export class RenderSystem {
 
     ctx.textBaseline = 'middle';
 
-    // 关闭按钮（几何不变，与 Game._handleSynergyDetailTap 命中同源）
-    const synClose = { x: panelX + panelW - 36, y: panelY + 10, w: 26, h: 26 };
-    this._cardBg(synClose, { r: 13, tint: 'rgba(8,18,38,0.92)', border: 'rgba(234,248,255,0.34)', flat: true });
-    ctx.fillStyle = UI_THEME.cloud;
-    ctx.font = 'bold 15px sans-serif';
+    // 关闭按钮：图片优先，几何不变（与 Game._handleSynergyDetailTap 命中同源）
+    this._drawCloseButton({ x: panelX + panelW - 36, y: panelY + 10, w: 26, h: 26 },
+      { style: 'detail', fontSize: 15 });
     ctx.textAlign = 'center';
-    ctx.fillText('✕', panelX + panelW - 20, panelY + 20);
+    ctx.textBaseline = 'middle';
 
     // 大图标主视觉：风格色径向光晕 + 正式 synergy 贴图（未激活压暗）
     const heroCX = panelX + panelW / 2, heroCY = panelY + 90, heroSpan = 112;
@@ -3561,13 +3600,11 @@ export class RenderSystem {
 
     ctx.textBaseline = 'middle';
 
-    // 关闭按钮（几何不变）
-    const bldClose = { x: L.panelX + L.panelW - 36, y: L.panelY + 10, w: 26, h: 26 };
-    this._cardBg(bldClose, { r: 13, tint: 'rgba(8,18,38,0.92)', border: 'rgba(234,248,255,0.34)', flat: true });
-    ctx.fillStyle = UI_THEME.cloud;
-    ctx.font = 'bold 15px sans-serif';
+    // 关闭按钮：图片优先，几何不变（与 Game 命中同源）
+    this._drawCloseButton({ x: L.panelX + L.panelW - 36, y: L.panelY + 10, w: 26, h: 26 },
+      { style: 'detail', fontSize: 15 });
     ctx.textAlign = 'center';
-    ctx.fillText('✕', L.panelX + L.panelW - 20, L.panelY + 20);
+    ctx.textBaseline = 'middle';
 
     // 大图标主视觉：橙色径向光晕 + 正式 building_up 贴图
     const heroCX = L.panelX + L.panelW / 2, heroCY = L.panelY + 84, heroSpan = 106;
@@ -3709,15 +3746,9 @@ export class RenderSystem {
 
     // 2026-11-23：去掉「兵种详情」标题栏，顶部空间全部让给半身像主视觉
 
-    // 关闭按钮（夜色软底 + 云白 ✕）
-    const closeX = panelX + panelW - 35;
-    const closeY = panelY + 4;
-    this._cardBg({ x: closeX, y: closeY, w: 28, h: 28, r: 14 }, {
-      r: 14, tint: 'rgba(8,18,38,0.6)', border: 'rgba(234,248,255,0.32)', flat: true,
-    });
-    ctx.fillStyle = UI_THEME.cloud;
-    ctx.font = 'bold 17px sans-serif';
-    ctx.fillText('×', closeX + 14, closeY + 14);
+    // 关闭按钮：图片优先（原夜色软底仅作图片加载失败兜底），几何不变
+    this._drawCloseButton({ x: panelX + panelW - 35, y: panelY + 4, w: 28, h: 28 },
+      { style: 'card', fontSize: 17, glyph: '×' });
 
     // === 半身像主视觉区（2026-11-23 放大版）===
     // 去掉标题后整块顶部让给立绘：用源矩形裁剪只取原图上方 65%（头+胸+腰），
@@ -6818,31 +6849,10 @@ export class RenderSystem {
       ctx.fillText(title, panel.x + panel.w / 2, titleY);
     }
 
-    // 圆形关闭钮：深底 + 浅蓝描边 + 浅色 ✕
-    // 无关闭语义的模态（如匹配等待）可传 showClose:false，避免画出一个不可点的假按钮。
+    // 关闭按钮：图片优先；无关闭语义的模态（如匹配等待）传 showClose:false 不画假按钮
     if (closeRect && o.showClose !== false) {
-      const cx = closeRect.x + closeRect.w / 2;
-      const cy = closeRect.y + closeRect.h / 2;
-      const cr = Math.min(closeRect.w, closeRect.h) / 2;
-      if (typeof ctx.arc === 'function') {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, cr, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(40,64,102,0.95)';
-        ctx.fill();
-        ctx.strokeStyle = NIGHT.border;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
-      } else {
-        ctx.fillStyle = 'rgba(40,64,102,0.95)';
-        ctx.fillRect(closeRect.x, closeRect.y, closeRect.w, closeRect.h);
-      }
-      ctx.fillStyle = NIGHT.title;
-      ctx.font = 'bold 14px sans-serif';
+      this._drawCloseButton(closeRect, { style: 'round', fontSize: 14, color: NIGHT.title });
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('✕', cx, cy + 1);
       ctx.textBaseline = 'alphabetic';
     }
   }
