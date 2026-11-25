@@ -5085,9 +5085,15 @@ export class RenderSystem {
       this._cardBg({ x: barX, y: barY, w: barW, h: barH, r: 6 }, {
         tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: ladderTier.color, flat: true,
       });
-      // 进度填充（最高段位满条）
+      // 进度填充（最高段位满条）：与外框同款 r:6 圆角，避免直角填充盖住边框圆角。
+      // 最小宽度取一个条高，半径按实际宽度 clamp，进度很小时也不会画成变形圆角。
+      const barFillW = Math.max(barH, barW * (ladderProgress.next ? ladderProgress.ratio : 1));
+      const barFillR = Math.min(6, barFillW / 2, barH / 2);
+      ctx.save();
+      this._roundRectPath(barX, barY, barFillW, barH, barFillR);
       ctx.fillStyle = ladderTier.color + '88';
-      ctx.fillRect(barX, barY, barW * (ladderProgress.next ? ladderProgress.ratio : 1), barH);
+      ctx.fill();
+      ctx.restore();
       // 进度条内文字（居中）：当前杯 / 升级需要杯数（升级需求直接表达在进度条上，不再写下一级段位名）
       ctx.font = 'bold 11px sans-serif';
       ctx.textBaseline = 'middle';
