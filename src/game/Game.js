@@ -1711,6 +1711,10 @@ export class Game {
       if (hit(L.back)) {
         this.audioManager.playButtonClick();
         this.screenState = 'lobby';
+        // 同步重置战斗状态：gameStatus 若残留 won/lost，装饰层会按「结算态」继续把
+        // ui/result_* 九宫格与 defeat_* 特效叠到大厅中央，形成半透明虚影（实拍确认）。
+        // initBattle 每局也会置 playing，此处补齐保证离开结算后状态立刻归位。
+        this.gameStatus = 'playing';
         return;
       }
 

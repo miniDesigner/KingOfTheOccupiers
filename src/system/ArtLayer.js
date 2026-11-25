@@ -499,8 +499,11 @@ export function drawArtLayer(rs, gameState) {
   // 设置面板本身已有正式图标与控件，叠加只产生噪点（2026-11-24 移除）。
   emit(SCREEN_BINDINGS[screen]);
   if (gameState && gameState.accountOpen) emit(SCREEN_BINDINGS.account);
-  // 结算态叠加胜负素材
-  if (gameState && gameState.gameStatus && gameState.gameStatus !== 'playing') {
+  // 结算态叠加胜负素材：必须同时处于战斗界面（screen==='playing'）。
+  // 只判 gameStatus 不够——返回大厅时若该值残留 won/lost，result_promote/star/summary
+  // 九宫格会持续叠在大厅中央形成半透明虚影（2026-11-25 实拍确认）。界面维度兜底，
+  // 保证结算装饰永不越界到其它界面；Game 返回大厅时也会重置 gameStatus 双保险。
+  if (screen === 'playing' && gameState && gameState.gameStatus && gameState.gameStatus !== 'playing') {
     emit(SCREEN_BINDINGS.result);
   }
   return n;
