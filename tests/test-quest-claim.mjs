@@ -245,5 +245,27 @@ console.log('=== 测试10: 无可领取项时隐藏一键领取按钮（绘制�
     '隐藏后不再弹出「暂无可领取」提示');
 }
 
+console.log('=== 测试11: 每日任务标题完整落在滚动裁剪区之内 ===');
+{
+  const clipTop = 88; // RenderSystem.drawQuest -> _beginScrollClip(ctx, w, h, 88)
+  const q = RenderSystem.questLayout([{ id: 'q' }], [], [], 0, 430);
+  assert(q.dailyHeaderY >= clipTop,
+    `每日标题 y=${q.dailyHeaderY} 不小于裁剪顶部 ${clipTop}`);
+  assert(q.dailyHeaderY + 9 >= clipTop && q.dailyHeaderY + 25 <= clipTop + 40,
+    '每日标题图标（y+9..y+25）完整可见、不越过标题区');
+  assert(q.dailyRects[0].y === q.dailyHeaderY + 22 && q.dailyRects[0].y >= clipTop,
+    '首行卡片随布局下移 22px，仍在裁剪区之内');
+
+  const src = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
+  const layoutFn = src.slice(src.indexOf('  static questLayout('), src.indexOf('  /**\n   * 成就面板共享布局'));
+  assert(layoutFn.includes('const dailyHeaderY = 90 - scrollY'),
+    '每日标题起点 90，不再使用被裁掉的 68');
+  const questFn = src.slice(src.indexOf('  drawQuest(gameState)'), src.indexOf('  // ==================== 成就面板'));
+  assert(questFn.includes('this._beginScrollClip(ctx, w, h, 88)'),
+    '任务列表裁剪顶部仍为 88');
+  assert(questFn.includes("drawCatTitle('daily', '每日任务', layout.dailyHeaderY"),
+    '每日标题使用共享 layout 的 y，绘制与卡片命中同源');
+}
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 process.exit(failed === 0 ? 0 : 1);

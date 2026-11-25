@@ -5764,8 +5764,9 @@ export class RenderSystem {
     // 2026-11-21 边界缝隙收口：统一 SIDE=16 内容区，左右对称（旧值 x=20 + itemW≤340 右侧空 70px）
     const SIDE = 16;
     const itemW = screenWidth - SIDE * 2, itemH = QUEST_ITEM_H, gap = 6;
-    // 起点 68：首行 y=90 ≥ 裁剪 topY=88，避免云白卡顶边与文字被裁（P7 修复）
-    const dailyHeaderY = 68 - scrollY;
+    // 起点 90：每日分类标题（y=90..104，图标 y=99..115）完整落在裁剪 topY=88 之后；
+    // 旧值 68 会让标题被裁掉，只留下首行卡片。首行卡片随之 y=112，绘制/命中共用本布局。
+    const dailyHeaderY = 90 - scrollY;
     let y = dailyHeaderY + 22; // "📋 每日任务" 标题占位
     const dailyRects = dailyQuests.map((q) => {
       const r = { id: q.id, x: SIDE, y, w: itemW, h: itemH };
