@@ -29,7 +29,8 @@ test('段位进度条填充段与外框同为圆角，无直角残留', () => {
   // 段位进度条绘制位于 _drawLobbyLadderZone 内，取含 ladderBarWidth 的函数体
   const fnStart = src.indexOf('ladderBarWidth(w)');
   assert(fnStart >= 0, '找不到段位进度条绘制段落');
-  const block = src.slice(fnStart, fnStart + 1800);
+  // 2026-11-25：新增轨道底图绘制后该段变长，窗口扩到 3600 才能覆盖填充段
+  const block = src.slice(fnStart, fnStart + 3600);
 
   assert(block.includes("_cardBg({ x: barX, y: barY, w: barW, h: barH, r: 6 }"),
     '底色/边框仍是 r:6 圆角');

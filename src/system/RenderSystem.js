@@ -5098,29 +5098,66 @@ export class RenderSystem {
         ctx.restore();
       }
       this._artIcon(ART_PREFIXES.rankBadge, rankKey, miniCx, miniCy, miniSize, 1);
-      // 底色（夜色轨道 + 段位色描边，圆角）
+      // 外框改中性冷蓝，与段位色填充拉开色相：原来两者同为 ladderTier.color（仅差 53% 透明度），
+      // 边框与进度糊成一片，0 进度时几乎读不出槽体边界。
       this._cardBg({ x: barX, y: barY, w: barW, h: barH, r: 6 }, {
-        tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: ladderTier.color, flat: true,
+        tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border, flat: true,
       });
+      // 轨道底图（程序化，零图片资源）：深靛槽底 + 10 格刻度 + 顶高光 + 底内阴影。
+      // 未填充区域不再是纯色空槽，玩家能读出「可累积的格子」；亮度压在 L30 以下，不抢填充。
+      ctx.save();
+      this._roundRectPath(barX + 2, barY + 2, barW - 4, barH - 4, 4);
+      ctx.fillStyle = 'rgba(6,14,30,0.86)';
+      ctx.fill();
+      ctx.clip();
+      const tickW = (barW - 4) / 10;
+      for (let i = 1; i < 10; i++) {
+        ctx.fillStyle = i % 5 === 0 ? 'rgba(126,170,220,0.30)' : 'rgba(126,170,220,0.16)';
+        ctx.fillRect(barX + 2 + Math.round(tickW * i), barY + 3, 1, barH - 6);
+      }
+      ctx.fillStyle = 'rgba(234,248,255,0.10)';
+      ctx.fillRect(barX + 3, barY + 2, barW - 6, 1);
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.fillRect(barX + 3, barY + barH - 3, barW - 6, 1);
+      ctx.restore();
       // 进度填充（最高段位满条）：与外框同款 r:6 圆角，避免直角填充盖住边框圆角。
       // 最小宽度取一个条高，半径按实际宽度 clamp，进度很小时也不会画成变形圆角。
+      // 填充用段位色不透明 + 顶部提亮渐变，与冷蓝边框形成「蓝框 / 段位色进度」的明确区分。
       const barFillW = Math.max(barH, barW * (ladderProgress.next ? ladderProgress.ratio : 1));
       const barFillR = Math.min(6, barFillW / 2, barH / 2);
       ctx.save();
       this._roundRectPath(barX, barY, barFillW, barH, barFillR);
-      ctx.fillStyle = ladderTier.color + '88';
+      ctx.fillStyle = ladderTier.color;
+      if (typeof ctx.createLinearGradient === 'function') {
+        const fillGrad = ctx.createLinearGradient(0, barY, 0, barY + barH);
+        fillGrad.addColorStop(0, tintOf(ladderTier.color, 0.55));
+        fillGrad.addColorStop(0.42, ladderTier.color);
+        fillGrad.addColorStop(1, ladderTier.color);
+        ctx.fillStyle = fillGrad;
+      }
       ctx.fill();
+      // 填充内部顶部高光 + 右端亮封边，强化「已走完的部分」体积感
+      ctx.clip();
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      ctx.fillRect(barX + 1, barY + 1, Math.max(0, barFillW - 2), 2);
+      ctx.fillStyle = tintOf(ladderTier.color, 0.66);
+      ctx.fillRect(Math.max(barX, barX + barFillW - 3), barY + 1, 2, barH - 2);
       ctx.restore();
       // 进度条内文字（居中）：当前杯 / 升级需要杯数（升级需求直接表达在进度条上，不再写下一级段位名）
+      ctx.save();
       ctx.font = 'bold 11px sans-serif';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.fillStyle = NIGHT.title;
+      // 深色描边式阴影：填充变成不透明段位色后，云白字在黄金/铂金等亮色段位上仍需拉开对比
+      ctx.shadowColor = 'rgba(6,14,30,0.95)';
+      ctx.shadowBlur = 3;
       if (ladderProgress.next) {
         ctx.fillText(`${ladderProgress.cur} / ${ladderProgress.need} 杯`, w / 2, barY + barH / 2);
       } else {
         ctx.fillText('巅峰王者 · 已满级', w / 2, barY + barH / 2);
       }
+      ctx.restore();
       // 进度条下文字：统一用段位色表达「赛季剩余时间」（与进度条同一色彩语义）
       // 与进度条的间距由 Layout.LADDER_SEASON_TEXT_OFFSET 统一控制（已拉开，不再贴条）
       ctx.font = '10px sans-serif';
