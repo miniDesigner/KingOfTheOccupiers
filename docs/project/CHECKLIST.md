@@ -17,7 +17,7 @@
 
 ```
 依赖完整性    ALL IMPORTS VALID ✅ (47 files)
-全量回归      48 个测试 / 48 通过 / 0 失败 / 退出码 0
+全量回归      110 个测试 / 110 通过 / 0 失败 / 退出码 0
 确定性基线    22 通过 / 0 失败
 微信入口      26 通过 / 0 失败
 平衡模拟      200 局 × 4 难度 × 5 地图，零超时；胜率 95.9/47.6/40.7/24.5%
@@ -172,7 +172,7 @@ node tests/sim-balance-phase6.mjs --games 200   # 平衡基线（写入 sim-resu
 ```
 test-defeat-click.mjs     24 断言 / 0 失败（空白不关闭×16 点、按钮命中、1px 边界、
                           分享语义、失败态无炫耀入口、系统返回键、战斗中暂停已移除）
-node --test tests/test-*.mjs   48 通过 / 0 失败
+node --test tests/test-*.mjs   110 通过 / 0 失败
 test-battle-layouts.mjs  59 通过 / 0 失败
 test-determinism.mjs     22 通过 / 0 失败
 check-imports.mjs        ALL IMPORTS VALID (47 files)
