@@ -20,7 +20,7 @@ import { drawArtLayer, BATTLE_TONE_BY_LAYOUT, BG_BY_SCREEN, TERRITORY_EDGE,
   pick_techLine, pick_rankRow, pick_accountRow, pick_shopCard,
   pick_gachaUi, pick_combatFx, pick_buildBeam,
   pick_territoryWave, pick_ambient, pick_race, pick_unitSmall,
-  pick_walkFrame, pick_unitDetail, pick_buildingDetail, pick_tutorialCard,
+  pick_unitDetail, pick_buildingDetail, pick_tutorialCard,
   pick_tutorialDots, pick_hudHp, pick_hudSynergy, pick_btnHover,
   iconKey, ICON_NAMES } from './ArtLayer.js';
 import { rowItemWidth, rowStartX, adaptiveFontSize, techNodeWidth, techTabWidth, TECH_NODE_H, TECH_NODE_PAD, ladderBarWidth, resourceBarLayout, LAYOUT_DESIGN_MAX, LAYOUT_MIN, DEPLOY_UNIT_SLOT_H, lobbyDeployCardH, lobbyFuncBtnRect, lobbyPlayerCardRect, lobbySeasonCombo, lobbyDeployCardY, lobbyDeployLabelY } from './Layout.js';
@@ -185,6 +185,15 @@ const SHOP_CAT_KEYS = ['coin', 'gem', 'unit', 'item', 'ad'];
 // 注意：这是功能色，独立于界面主调（docs/art/ART-STYLE.md 2.4），不要随晴空乐园配色改动。
 const QUALITY_COLORS = ['#9ca3af', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ef4444'];
 
+// === 战斗兵种角色动画规格（渲染层常量，与 docs/art/ART-UNIT-BATTLE-ANIMATION.md 同步）===
+// 角色主体用现有 40 张 unit_small_XX.png（真实兵种立绘裁切），不再叠通用红衣行走帧——
+// 通用帧与 40 个兵种不是同族素材，叠上去就是拼凑感。动作由渲染层对真实角色图做变换实现。
+const UNIT_ACTOR_SIZE = 46;       // 世界坐标下的角色贴图边长（≈0.9 格，直径不超格心距）
+const UNIT_SPAWN_MS = 420;        // 出生：缩放弹入 + 淡入 + 阵营色扩散环
+const UNIT_ATTACK_MS = 520;       // 攻击：前冲 → 回位的一个完整节奏
+const UNIT_DEATH_MS = 560;        // 死亡：下沉 + 淡出 + 轻微旋转
+const UNIT_ANIM_TERMINAL = new Set(['destroyed', 'disbanded', 'arrived']);
+
 // 界面主调「晴空乐园」——与 docs/art/ART-STYLE.md 2.1 同源。
 // 用于程序化绘制的 UI（按钮/卡片/文字），与贴图素材保持同一视觉语言；
 // 只影响「看起来」，不改任何 Layout 几何与点击命中。
@@ -252,6 +261,11 @@ export class RenderSystem {
 
     // 战斗特效列表(旧系统，保留向后兼容)
     this.effects = [];
+
+    // 兵种角色动画状态（渲染层私有，绝不写回 MarchGroup 数据）：
+    //   _unitActors: group.id → { bornAt, stateAt, state, shot }；_deathGhosts: 已离场队伍的消散快照
+    this._unitActors = new Map();
+    this._deathGhosts = [];
 
     // AnimationManager 引用(由 Game 设置)
     this.animManager = null;
@@ -2050,16 +2064,21 @@ export class RenderSystem {
   }
 
   /**
-   * 绘制障碍格(山脉/河流)：直接贴一张自包含的障碍砖块贴图（冷灰石砖 + 顶面刻入山纹），
-   * 几何与 hex_bright 完全一致，无阵营色、不可占据/不可通行。
-   * 程序化深色兜底保留：贴图未就绪时仍是一块中性石砖，不露天。
+   * 绘制障碍格(山脉/河流)：与已翻开格共用同一套表达——
+   *   同款立体石砖(mountain.png 与 hex_bright.png 同为 312² 同角度石砖，placement 一致)
+   * + 贴图之上的半透明染色层 + 3px 描边（_drawTileOwnerTint）。
+   * 差异只在颜色语义：已占格用敌我蓝/红，障碍格用中性岩灰 #64748b，
+   * 于是障碍读起来是「翻开后不可占据的地块」，而不是一块脱离棋盘体系的亮色卡片。
+   * 贴图未就绪时程序化兜底仍是六边形石砖，不露天。
    */
   drawObstacleTile(tile, x, y) {
     const { ctx } = this;
     this.drawHexShape(x, y, HEX_SIZE);
-    ctx.fillStyle = '#334155';
+    ctx.fillStyle = this.lightenColor('#475569', 0.15);
     ctx.fill();
     this._artHex(ART_HOOKS.mountain, x, y);
+    // 同一染色管线、中性色：alpha 0.45 + 3px 描边，明度带压到与翻开格一致
+    this._drawTileOwnerTint(x, y, '#64748b');
   }
 
   /**
@@ -2333,47 +2352,165 @@ export class RenderSystem {
     ctx.restore();
   }
 
+  /** 每局开局清空角色动画状态，避免上一局残留队伍被误判为死亡出虚影 */
+  resetUnitActors() {
+    this._unitActors.clear();
+    this._deathGhosts.length = 0;
+  }
+
+  /** 取（或初始化）队伍的动画状态；状态切换时重置该态计时 */
+  _unitActorState(group, now) {
+    let st = this._unitActors.get(group.id);
+    if (!st) {
+      st = { bornAt: now, stateAt: now, state: group.state, shot: null };
+      this._unitActors.set(group.id, st);
+    }
+    if (st.state !== group.state) {
+      st.state = group.state;
+      st.stateAt = now;
+    }
+    return st;
+  }
+
+  /** 角色外观快照：队伍从 marchGroups 移除后，死亡动画仍需要这些外观数据 */
+  _unitActorShot(group, playerColor, qColor) {
+    return {
+      x: group.pixelX, y: group.pixelY,
+      unitId: group._unitId || 1,
+      ownerId: group.owner,
+      playerColor, qColor,
+    };
+  }
+
+  /** 以角色中心为原点画兵种立绘；外层已完成 translate / rotate / scale */
+  _drawUnitSprite(shot, alpha) {
+    const id = typeof shot.unitId === 'number' ? shot.unitId : 1;
+    const s = UNIT_ACTOR_SIZE;
+    return this._art(pick_unitSmall(id), -s / 2, -s / 2, s, s, { alpha });
+  }
+
+  /** 出生扩散环：阵营色圆环由小放大并淡出，0.42s */
+  _drawSpawnRing(x, y, color, p) {
+    const { ctx } = this;
+    ctx.save();
+    ctx.globalAlpha = (1 - p) * 0.7;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(x, y, UNIT_ACTOR_SIZE * (0.34 + 0.42 * p), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /** 死亡消散：已离场队伍的下沉 + 淡出 + 轻微旋转，0.56s */
+  _drawUnitDeathGhosts(now) {
+    const { ctx } = this;
+    const kept = [];
+    for (const gh of this._deathGhosts) {
+      const p = (now - gh.diedAt) / UNIT_DEATH_MS;
+      if (p >= 1) continue;
+      kept.push(gh);
+      ctx.save();
+      ctx.translate(gh.x, gh.y + p * 14);
+      ctx.rotate((gh.ownerId === 1 ? 1 : -1) * p * 0.45);
+      ctx.scale(1 - 0.18 * p, 1 - 0.18 * p);
+      this._drawUnitSprite(gh, 0.85 * (1 - p));
+      ctx.restore();
+      // 三点尘屑：自上向下散开，强化"消散"而不是"瞬间消失"
+      ctx.save();
+      ctx.globalAlpha = 0.5 * (1 - p);
+      ctx.fillStyle = gh.qColor;
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2 + p * 1.2;
+        ctx.beginPath();
+        ctx.arc(gh.x + Math.cos(a) * (7 + 12 * p), gh.y + Math.sin(a) * (5 + 8 * p),
+          2.2 * (1 - p) + 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    this._deathGhosts = kept;
+  }
+
   /**
    * 绘制行军队伍
    */
   drawMarchGroups(marchGroups, map, gameState) {
     const { ctx } = this;
-    const QUALITY_COLORS = ['#9ca3af', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ef4444'];
+    const now = Date.now();
+    const seen = new Set();
 
     for (const group of marchGroups) {
+      // 先登记再裁剪：屏外队伍不生成死亡虚影，屏内队伍离场才生成
+      seen.add(group.id);
       if (!group.isAlive() && group.state !== 'fighting_building' && group.state !== 'fighting_warrior') continue;
 
       const x = group.pixelX;
       const y = group.pixelY;
-
       if (!this.isVisible(x, y)) continue;
 
+      const st = this._unitActorState(group, now);
       const playerColor = this._ownerColor(group.owner, gameState);
       const quality = group._quality || 1;
       const qColor = QUALITY_COLORS[quality - 1] || '#9ca3af';
-      const icon = group._unitIcon || '';
+      st.shot = this._unitActorShot(group, playerColor, qColor);
+
       const attackRange = group.getAttackRange ? group.getAttackRange() : 1;
       const isRanged = attackRange > 1;
       const combatStyles = group._combatStyles || group.combatStyles || ['melee'];
       const isMagic = combatStyles.includes('magic');
       const isDefense = combatStyles.includes('defense');
+      const fighting = group.state === 'fighting_warrior' || group.state === 'fighting_building';
 
-      // 基础半径：战士数 + 品质加成（高品质兵种略大）
-      // 2026-11 玩法改造：格子 32→52，兵种圆盘同步放大（直径≤42px < 格心距 78px，多队堆叠不重叠）
+      // 基础半径：战士数 + 品质加成（高品质兵种略大）——与圆盘/命中格心距约束同源
       const baseRadius = 10 + Math.min(8, group.warriors / 4) + (quality - 1) * 0.6;
 
-      // === 远程兵种：外圈虚线环 ===
+      // === 四态时序：出生 > 攻击 > 移动 ===
+      const spawnP = (now - st.bornAt) / UNIT_SPAWN_MS;
+      const isSpawn = spawnP < 1;
+      const attackP = ((now - st.stateAt) % UNIT_ATTACK_MS) / UNIT_ATTACK_MS;
+
+      // 朝向：优先交战目标，其次行军目标；用于攻击前冲与移动倾斜
+      const ft = group.fightTarget;
+      const tx = ft && Number.isFinite(ft.pixelX) ? ft.pixelX : group.targetPixelX;
+      const ty = ft && Number.isFinite(ft.pixelY) ? ft.pixelY : group.targetPixelY;
+      const ddx = (Number.isFinite(tx) ? tx : x) - x;
+      const ddy = (Number.isFinite(ty) ? ty : y) - y;
+      const dlen = Math.hypot(ddx, ddy) || 1;
+      const dirX = ddx / dlen, dirY = ddy / dlen;
+
+      // === 落地投影：让角色立在底盘上，而不是贴纸飘着 ===
+      ctx.save();
+      ctx.fillStyle = 'rgba(10,18,32,0.32)';
+      ctx.beginPath();
+      ctx.ellipse(x, y + baseRadius * 0.62, UNIT_ACTOR_SIZE * 0.32, UNIT_ACTOR_SIZE * 0.09, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // === 阵营底盘 + 品质描边（保留编队辨识，角色立在其上） ===
+      ctx.save();
+      ctx.globalAlpha = 0.82;
+      ctx.fillStyle = playerColor;
+      ctx.beginPath();
+      ctx.arc(x, y, baseRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = qColor;
+      ctx.lineWidth = isDefense ? 3 : 2;
+      ctx.stroke();
+      ctx.restore();
+
+      // === 远程虚线环 / 法术光晕（底盘层，不盖住角色） ===
       if (isRanged) {
+        ctx.save();
         ctx.strokeStyle = isMagic ? 'rgba(192, 132, 252, 0.6)' : 'rgba(96, 165, 250, 0.6)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([3, 2]);
         ctx.beginPath();
         ctx.arc(x, y, baseRadius + 7, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.restore();
       }
-
-      // === 法术兵种：紫色光晕 ===
       if (isMagic) {
         const gradient = ctx.createRadialGradient(x, y, baseRadius, x, y, baseRadius + 10);
         gradient.addColorStop(0, 'rgba(168, 85, 247, 0.25)');
@@ -2384,53 +2521,72 @@ export class RenderSystem {
         ctx.fill();
       }
 
-      // === 主圆点（玩家颜色） ===
-      ctx.fillStyle = playerColor;
-      ctx.beginPath();
-      ctx.arc(x, y, baseRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // === 品质边框（防御型更粗） ===
-      ctx.strokeStyle = qColor;
-      ctx.lineWidth = isDefense ? 3 : 2;
-      ctx.stroke();
-
-      // === 兵种小头像 / 行走序列帧 / 品质光晕（占位素材真实贴图） ===
-      const _uid = group._unitId || 1;
-      const _smallKey = pick_unitSmall(typeof _uid === 'number' ? _uid : 1);
-      this._art(_smallKey, x - baseRadius, y - baseRadius - 22,
-        baseRadius * 2, baseRadius * 2, { alpha: 0.30 });
-      // 序列帧播放：行军时 start/loop 按时间轮播，交战时切 attack 帧
-      const _fighting = group.state === 'fighting_warrior' || group.state === 'fighting_building';
-      const _walkState = _fighting ? 'attack'
-        : (Math.floor((Date.now() + (group.owner || 0) * 60) / 140) % 2 === 0 ? 'start' : 'loop');
-      this._art(pick_walkFrame(_walkState), x - 14, y - 14, 28, 28, { alpha: 0.18 });
-      this._art(pick_qualityGlow(quality), x - baseRadius - 8, y - baseRadius - 8,
-        baseRadius * 2 + 16, baseRadius * 2 + 16, { alpha: 0.14 });
-
-      // === 兵种图标（显示在圆点上方） ===
-      if (icon) {
-        ctx.font = `${Math.floor(baseRadius * 1.5)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(icon, x, y - baseRadius - 10);
+      // === 角色本体：四态变换（只动渲染，不改 MarchGroup 任何字段） ===
+      let scale = 1, alpha = 1, ox = 0, oy = 0, rot = 0;
+      if (isSpawn) {
+        // 出生：back-ease 弹入 + 淡入 + 从下往上落位
+        const e = 1 + 2.2 * Math.pow(spawnP - 1, 3) + 1.2 * Math.pow(spawnP - 1, 2);
+        scale = 0.55 + 0.45 * Math.max(0, Math.min(1.08, e));
+        alpha = Math.min(1, spawnP * 2.6);
+        oy = (1 - spawnP) * 8;
+      } else if (fighting) {
+        // 攻击：前 22% 前冲 + 放大，后 78% 回位；节奏每 520ms 一轮
+        const lunge = attackP < 0.22 ? Math.sin((attackP / 0.22) * Math.PI) : 0;
+        ox = dirX * lunge * 7;
+        oy = dirY * lunge * 5 - 2;
+        scale = 1 + lunge * 0.12;
+      } else {
+        // 移动：上下踏步 + 朝行进方向轻微倾斜（不改变世界坐标与命中）
+        const step = Math.sin(now / 135 + group.id * 0.7);
+        oy = step * 2.2 - 2;
+        scale = 1 + Math.abs(step) * 0.025;
+        rot = dirX * 0.08;
       }
+      ctx.save();
+      ctx.translate(x + ox, y + oy);
+      if (rot) ctx.rotate(rot);
+      if (scale !== 1) ctx.scale(scale, scale);
+      this._drawUnitSprite(st.shot, alpha);
+      ctx.restore();
+
+      // 出生扩散环画在角色之上，0.42s 内消失
+      if (isSpawn) this._drawSpawnRing(x, y, playerColor, spawnP);
+
+      // === 品质光晕：极弱，只做边缘提亮，不盖角色 ===
+      this._art(pick_qualityGlow(quality), x - UNIT_ACTOR_SIZE / 2 - 6, y - UNIT_ACTOR_SIZE / 2 - 10,
+        UNIT_ACTOR_SIZE + 12, UNIT_ACTOR_SIZE + 12, { alpha: 0.12 });
+
+      // === 队伍血条（新增）：比例口径 warriors / max(_initialWarriors, 当前) ===
+      const hpMax = Math.max(1, group._initialWarriors || group.warriors || 1);
+      const hpRatio = Math.max(0, Math.min(1, (group.warriors || 0) / hpMax));
+      this.drawUnitHPBar(x, y - UNIT_ACTOR_SIZE - 4, hpRatio, baseRadius * 2 + 8, qColor);
 
       // === 有效生命值（战士数 × 生命系数，反映兵种耐久差异） ===
       const effectiveHP = Math.round(group.warriors * (group.hpCoeff || 1.0));
-      ctx.fillStyle = '#fff';
+      ctx.save();
       ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(effectiveHP, x, y);
-
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(10,18,32,0.9)';
+      ctx.strokeText(effectiveHP, x, y + baseRadius + 9);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(effectiveHP, x, y + baseRadius + 9);
       // === 战斗状态标记 ===
-      if (group.state === 'fighting_building' || group.state === 'fighting_warrior') {
+      if (fighting) {
         ctx.fillStyle = '#f87171';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('⚔', x + baseRadius + 2, y - baseRadius - 2);
+        ctx.fillText('⚔', x + baseRadius + 8, y - UNIT_ACTOR_SIZE - 1);
       }
+      ctx.restore();
     }
+
+    // 本帧未出现的已登记队伍 → 生成死亡/离场消散动画（数据层已移除，这里只做表现）
+    for (const [id, st] of this._unitActors) {
+      if (seen.has(id)) continue;
+      if (st.shot) this._deathGhosts.push({ ...st.shot, diedAt: now });
+      this._unitActors.delete(id);
+    }
+    this._drawUnitDeathGhosts(now);
   }
 
   /**
@@ -2447,6 +2603,28 @@ export class RenderSystem {
     ctx.fillStyle = ratio > 0.5 ? '#4ade80' : ratio > 0.25 ? '#fbbf24' : '#f87171';
     ctx.fillRect(startX, y, width * ratio, height);
     this._artBar(startX, y, width, height, ratio);
+  }
+
+  /**
+   * 行军队伍血条：建筑血条(3px)的战斗强化版——4px + 深色外框 + 品质色描边，
+   * 在 430 宽屏上缩小后仍有 2~3px 可读高度。颜色阈值与 drawHPBar 完全一致。
+   */
+  drawUnitHPBar(x, y, ratio, width, edgeColor) {
+    const { ctx } = this;
+    const h = 4, startX = x - width / 2;
+    ctx.save();
+    ctx.fillStyle = 'rgba(10,18,32,0.88)';
+    ctx.fillRect(startX - 1, y - 1, width + 2, h + 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    ctx.fillRect(startX, y, width, h);
+    ctx.fillStyle = ratio > 0.5 ? '#4ade80' : ratio > 0.25 ? '#fbbf24' : '#f87171';
+    ctx.fillRect(startX, y, width * Math.max(0, Math.min(1, ratio)), h);
+    if (edgeColor) {
+      ctx.strokeStyle = edgeColor;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(startX - 1, y - 1, width + 2, h + 2);
+    }
+    ctx.restore();
   }
 
   /**

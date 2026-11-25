@@ -287,6 +287,8 @@ export class Game {
 
     // 清除上一局的所有特效
     this.animManager.clear();
+    // 角色动画状态属于渲染层私有数据：开局清零，防止上一局队伍被误判为死亡出虚影
+    this.renderSystem.resetUnitActors();
 
     // 播放BGM
     this.audioManager.playBGM();

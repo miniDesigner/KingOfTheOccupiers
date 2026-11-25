@@ -93,7 +93,14 @@ console.log('=== 测试5: 渲染字号放大常量 ===');
   assert(src.includes('bold 30px sans-serif'), '建筑图标兜底字号 30（正式图放大到 72 同步，旧 26/24/15）');
   assert(src.includes("'13px sans-serif'"), '建筑等级字号 13（旧 9）');
   assert(src.includes('bold 14px sans-serif'), '兵种有效生命值字号 14（旧 10）');
-  assert(src.includes('baseRadius * 1.5'), '兵种图标字号倍率 ×1.5（旧 ×1.3）');
+  // 2026-11-25：兵种改为真实立绘角色 + 四态动画，旧的 emoji 图标与通用行走帧叠图已移除
+  assert(src.includes('const UNIT_ACTOR_SIZE = 46'), '兵种角色贴图世界尺寸 46（≈0.9 格）');
+  assert(src.includes('const UNIT_SPAWN_MS = 420'), '出生动画 420ms');
+  assert(src.includes('const UNIT_ATTACK_MS = 520'), '攻击动画 520ms/轮');
+  assert(src.includes('const UNIT_DEATH_MS = 560'), '死亡消散 560ms');
+  assert(src.includes('drawUnitHPBar('), '兵种队伍血条已接入');
+  assert(src.includes('_drawUnitDeathGhosts('), '离场队伍死亡消散已接入');
+  assert(!src.includes('pick_walkFrame'), '渲染系统不再叠通用红衣行走帧（与40兵种非同族）');
   const srcGame = rf(ROOT + 'src/game/Game.js', 'utf-8');
   assert(srcGame.includes('Math.max(0.5, Math.min(2.0, fitScale * 1.5))'), 'Game.js 默认倍率 ×1.5 且钳制 0.5~2.0');
   const srcInput = rf(ROOT + 'src/system/InputSystem.js', 'utf-8');
