@@ -37,6 +37,15 @@ test('障碍格与翻开格共用同一石砖与染色管线', () => {
   assert(!obs.includes("'#334155'"), '旧的深色直角兜底已移除');
 });
 
+test('障碍格染色降权保住卡通山峰明暗，翻开格不受影响', () => {
+  const tint = bodyOf(rsSrc, '_drawTileOwnerTint(x, y, color, alpha = 0.45) {');
+  const obs = bodyOf(rsSrc, 'drawObstacleTile(tile, x, y) {');
+  assert(tint.includes('ctx.globalAlpha = alpha'), '染色函数使用可配置 alpha');
+  assert(tint.includes("'_drawTileOwnerTint'") === false, '染色函数自身无递归');
+  assert(obs.includes("_drawTileOwnerTint(x, y, '#64748b', 0.18)"),
+    '障碍格传 0.18 保留 2.5D 厚涂明暗，不再用 0.45 压闷');
+});
+
 test('兵种四态动画与血条已接入渲染层', () => {
   const march = bodyOf(rsSrc, 'drawMarchGroups(marchGroups, map, gameState) {');
   assert(march.includes('spawnP = (now - st.bornAt) / UNIT_SPAWN_MS'), '出生态按 bornAt 计时');

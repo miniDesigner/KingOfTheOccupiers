@@ -338,12 +338,13 @@ export class RenderSystem {
    * @param {number} x 中心 x
    * @param {number} y 中心 y
    * @param {string} color 阵营色
+   * @param {number} alpha 染色强度，默认 0.45（翻开格敌我色）；障碍格传 0.18 保留卡通山峰明暗
    */
-  _drawTileOwnerTint(x, y, color) {
+  _drawTileOwnerTint(x, y, color, alpha = 0.45) {
     const { ctx } = this;
     ctx.save();
     this.drawHexShape(x, y, HEX_SIZE);
-    ctx.globalAlpha = 0.45;
+    ctx.globalAlpha = alpha;
     ctx.fillStyle = color;
     ctx.fill();
     ctx.globalAlpha = 1;
@@ -2077,8 +2078,9 @@ export class RenderSystem {
     ctx.fillStyle = this.lightenColor('#475569', 0.15);
     ctx.fill();
     this._artHex(ART_HOOKS.mountain, x, y);
-    // 同一染色管线、中性色：alpha 0.45 + 3px 描边，明度带压到与翻开格一致
-    this._drawTileOwnerTint(x, y, '#64748b');
+    // 同一染色管线、中性色：alpha 0.18（障碍格专用，保留 2.5D 卡通山峰的厚涂明暗，
+    // 0.45 会把雪顶与山体阴影压差掉 45% 变闷）+ 3px 描边维持与翻开格同族的边界
+    this._drawTileOwnerTint(x, y, '#64748b', 0.18);
   }
 
   /**
