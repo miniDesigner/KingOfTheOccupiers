@@ -34,9 +34,9 @@ test('段位进度条填充段与外框同为圆角，无直角残留', () => {
 
   assert(block.includes("_cardBg({ x: barX, y: barY, w: barW, h: barH, r: 6 }"),
     '底色/边框仍是 r:6 圆角');
-  assert(block.includes('this._roundRectPath(barX, barY, barFillW, barH, barFillR)'),
-    '进度填充改用同款圆角路径');
-  assert(block.includes('const barFillR = Math.min(6, barFillW / 2, barH / 2)'),
-    '圆角半径按填充宽度与条高 clamp，小进度不变形');
+  assert(block.includes('this._roundRectPath(fillX, fillY, barFillW, fillH, barFillR)'),
+    '进度填充在轨道内缩区走圆角路径，不盖住外框');
+  assert(block.includes('const barFillR = Math.min(3, barFillW / 2, fillH / 2)'),
+    '圆角半径按内缩后的填充宽度与高度 clamp，小进度不变形');
   assert(!/ctx\.fillRect\(barX, barY/.test(block), '旧的直角 fillRect 已移除');
 });
