@@ -125,8 +125,10 @@
 
 ### 段 1 · 风格锚点（固定，逐字复用）
 
+> **2026-11-25 强化版**：上次纯文生剑士形态对了但风格漂移成冷灰蓝薄涂。本版加入具体暖色色号与「禁止冷灰/风化/线稿」的硬排除，专治纯文生图无参考图时的风格漂移。**4 张基准与后续 36 张必须逐字复用本段，一字不改。**
+
 ```
-Painterly 2.5D isometric game building, high three-quarter view showing roof, front and right side in one frame, chunky rounded volumes with soft thick-paint shading and smooth brush transitions, no hard outlines, no lineart. Warm wood and cream stone palette with soft golden highlights, matching an established hand-painted casual mobile game art style. Consistent left-top key light: brightest roof plane, mid-tone front face, darker right side. The building sits on the same small elliptical crushed-stone pedestal used by the whole building family. Premium cartoon mobile game asset, clean readable shapes.
+Painterly 2.5D isometric game building, high three-quarter view showing roof, front and right side in one frame, chunky rounded volumes with soft thick-paint shading and smooth brush transitions, no hard outlines, no lineart. STRICTLY WARM PALETTE: golden honey wood, warm amber timber, creamy ivory stone, soft golden highlights and warm brown shadows; the whole asset reads warm and sunny. Never cool grey, never desaturated, never bluish, never weathered or dirty. Consistent left-top key light: brightest warm cream roof plane, mid-tone honey front face, darker warm brown right side. The building sits on the same small elliptical crushed-stone pedestal used by the whole building family, made of warm cream stones. Premium hand-painted cartoon mobile game asset, thick rounded brushwork, plump soft forms, clean readable shapes, cheerful candy-like finish.
 ```
 
 ### 段 2 · 主体描述（每图替换槽位）
@@ -157,10 +159,12 @@ Pure solid magenta #FF00FF background only, no gradient, no floor shadow cast on
 **Negative prompt（整段复用）**
 
 ```
-text, letter, number, logo, glow, neon, beam, ray, aurora, hard outline, black lineart, realistic, photo, gradient background, floor shadow, white background, pure white, pure black, sci-fi, cyber, generic wooden hut, same building different color, tiny emblem, small ornament as main identifier, multiple competing focal objects, signature object hidden by flag
+text, letter, number, logo, glow, neon, beam, ray, aurora, hard outline, black lineart, realistic, photo, gradient background, floor shadow, white background, pure white, pure black, sci-fi, cyber, generic wooden hut, same building different color, tiny emblem, small ornament as main identifier, multiple competing focal objects, signature object hidden by flag, cold grey, desaturated, bluish tone, washed out, weathered wood, dirty grime, thin flat cel shading, sketchy linework, visible plank gaps, dark cracks
 ```
 
-**参考图**：`assets/buildings/barracks_1.png`（仅作风格语言参考：厚涂、圆润、无描边、底座与光照；**不得照抄木屋形态**）
+**出图路线（2026-11-25 用户拍板：纯文生图 B）**：不传任何参考图（上次 `input_fidelity=medium` 图生图把旧木屋骨架带回来了），纯靠提示词驱动形态。风格统一由「段 1 强化锚点 + Negative 排除冷灰」保证，4 张基准逐字复用同一风格段，只替换 `{BUILDING}` / `{SIGNATURE}` / `{MATERIAL}` / `{ACCENT}` / `{PROP}` 五个槽位。
+
+**参考图（不用于本次出图）**：`assets/buildings/barracks_1.png`（风格标杆，仅供人工目检比对暖色厚涂是否到位；**不出图时不传入，避免带走木屋形态**）
 **后处理**：`python tools/remove-bg-connected.py <input.png> --output <output.png>`（禁用全局阈值脚本，浅色雪顶/骨白/石基会被挖穿）
 
 ---
