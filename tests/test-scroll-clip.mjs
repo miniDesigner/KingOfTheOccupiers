@@ -83,20 +83,20 @@ console.log('=== 测试2: 滚动裁剪结构守护（begin/end 成对 + topY 正
   const src = (await import('node:fs')).readFileSync(
     new URL('../src/system/RenderSystem.js', import.meta.url), 'utf-8'
   );
-  // 每个滚动界面的裁剪 topY 约定
-  const expected = [
-    { label: '科技树节点', topY: 107 },
-    { label: '商店商品', topY: 88 },
+  // 2026-11-25：商店/科技页签下移到底部，列表内容顶统一 88，裁剪底用 subpageClipBottom(h)
+  const subpageClip = 'this._beginScrollClip(ctx, w, h, SUBPAGE_CONTENT_TOP, subpageClipBottom(h))';
+  const subpageCount = src.split(subpageClip).length - 1;
+  assert(subpageCount === 2, `商店/科技两处底部分页裁剪（实际 ${subpageCount}）`);
+  // 其它滚动界面裁剪起点不变
+  for (const { label, topY } of [
     { label: '任务列表', topY: 88 },
     { label: '成就列表', topY: 88 },
     { label: '通行证奖励', topY: 100 },
-  ];
-  for (const { label, topY } of expected) {
-    assert(src.includes(`_beginScrollClip(ctx, w, h, ${topY})`),
+  ]) {
+    assert(src.includes(`this._beginScrollClip(ctx, w, h, ${topY})`),
       `${label} 裁剪 topY=${topY} 存在`);
   }
-  // 只统计"调用点"（带 this. 前缀 + 数字参数），排除方法定义本身
-  const begins = (src.match(/this\._beginScrollClip\(ctx, w, h, \d+\)/g) || []).length;
+  const begins = (src.match(/this\._beginScrollClip\(/g) || []).length;
   const ends = (src.match(/this\._endScrollClip\(ctx\);/g) || []).length;
   assert(begins === ends, `begin(${begins}) 与 end(${ends}) 成对`);
   assert(begins === 5, `共 5 个滚动界面启用裁剪（实际 ${begins}）`);
@@ -104,15 +104,19 @@ console.log('=== 测试2: 滚动裁剪结构守护（begin/end 成对 + topY 正
   // P21：底部裁剪——滚动内容不进入左下角返回按钮区域（修复与返回按钮重叠）
   assert(src.includes('const BACK_BTN = { x: 16, w: 80, h: 35, bottom: 16 }'),
     '返回按钮几何抽为模块常量（单一真相源）');
-  assert(src.includes('const bottomY = h - BACK_BTN.bottom - BACK_BTN.h - SCROLL_BOTTOM_GAP'),
-    '_beginScrollClip 含底部边界裁剪');
+  assert(src.includes('const bottomY = bottomOverride == null'),
+    '_beginScrollClip 支持底部分页界面的 bottomOverride 裁剪底');
+  assert(src.includes('function subpageClipBottom(screenH)'),
+    '底部分页裁剪底 subpageClipBottom 为单一真相源');
 
-  // Game 命中同步：scrollViewportBottom 定义 1 处 + 5 个滚动界面各调用 1 处
+  // Game 命中同步：通用列表仍用 scrollViewportBottom，商店/科技改用 subpageViewportBottom
   const gameSrc = (await import('node:fs')).readFileSync(
     new URL('../src/game/Game.js', import.meta.url), 'utf-8'
   );
   const vpCount = (gameSrc.match(/scrollViewportBottom/g) || []).length;
-  assert(vpCount >= 6, `Game.scrollViewportBottom 定义+5处调用（实际 ${vpCount}）`);
+  assert(vpCount >= 4, `Game.scrollViewportBottom 定义+3处通用调用（实际 ${vpCount}）`);
+  const svpCount = (gameSrc.match(/subpageViewportBottom/g) || []).length;
+  assert(svpCount >= 3, `Game.subpageViewportBottom 定义+商店/科技2处调用（实际 ${svpCount}）`);
 }
 
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);

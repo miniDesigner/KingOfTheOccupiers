@@ -38,20 +38,31 @@ function claimAllButtonLayout(screenW, screenH) {
   const w = 100, h = 32, edge = 16;
   return { x: screenW - edge - w, y: screenH - BACK_BTN.bottom - h, w, h };
 }
-// 2026-11-21 栅格收口：子界面顶部页签统一从 CONTENT_TOP=72 起（资源栏带 8..60 + gutter 12）。
-// 渲染与 Game.js 命中共用此常量，杜绝两处硬编码漂移。
-const SUBPAGE_TAB_Y = 72;
-// 内容首行起点 = 页签底 + 12px gutter。科技页签高 35、排行榜页签高 30。
-// 排行榜 listStartY 是「行中心」，其卡片顶 = listStartY - ROW_H/2 + 1。
-const TECH_NODES_Y = SUBPAGE_TAB_Y + 35 + 12;              // 119
-const LEADERBOARD_LIST_Y = SUBPAGE_TAB_Y + 30 + 12 + 10;   // 124
+// 2026-11-25 底部分页：商店/科技/排行榜的分页按钮统一放到返回按钮上方一条带。
+// 分页按钮底边与返回按钮顶边留 8px，既不重叠又与底部操作带形成一组。
+const SUBPAGE_TAB_Y = 72;                 // 兼容旧引用（新布局不再使用，勿删）
+const SUBPAGE_TAB_H = 30;                 // 三处分页按钮统一高度
+const SUBPAGE_TAB_BACK_GAP = 8;           // 分页按钮底边 ↔ 返回按钮顶边
+const SUBPAGE_CONTENT_TOP = 88;           // 页签下移后，列表/网格统一从资源栏下方 88 起
+/** 底部分页按钮顶边 y（渲染与 Game 命中共用） */
+function subpageTabY(screenH) {
+  return screenH - BACK_BTN.bottom - BACK_BTN.h - SUBPAGE_TAB_BACK_GAP - SUBPAGE_TAB_H;
+}
+/** 底部分页按钮的列表裁剪底边：分页按钮上方再留 8px，列表不压页签 */
+function subpageClipBottom(screenH) {
+  return subpageTabY(screenH) - 8;
+}
 // 排行榜行高：24 → 32。原 24px 下 12px 文字上下仅约 5px，视觉顶格；
-// 32px 让文字上下留白约 9px，20 行铺完仍高于玩家排名胶囊（末行底 747 < 胶囊顶 788）。
+// 32px 让文字上下留白约 9px，20 行铺完仍高于玩家排名胶囊。
 const LEADERBOARD_ROW_H = 32;
+// 内容首行起点：页签下移后统一 88；排行榜 listStartY 为「行中心」，卡片顶 = listStartY - ROW_H/2 + 1。
+const TECH_NODES_Y = SUBPAGE_CONTENT_TOP;                              // 88
+const LEADERBOARD_LIST_Y = SUBPAGE_CONTENT_TOP + LEADERBOARD_ROW_H / 2 - 1; // 103
 // 任务/成就条目高度：55 → 70。原 55px 下描述距上边框仅 6px、进度底几乎贴住奖励行。
 // 70px 让描述/进度/奖励三行各得约 9~11px 均匀留白；渲染与 Game 命中共用同一 layout.itemH。
 const QUEST_ITEM_H = 70;
-export { SUBPAGE_TAB_Y, TECH_NODES_Y, LEADERBOARD_LIST_Y, LEADERBOARD_ROW_H, QUEST_ITEM_H };
+export { SUBPAGE_TAB_Y, SUBPAGE_TAB_H, subpageTabY, subpageClipBottom, SUBPAGE_CONTENT_TOP,
+  TECH_NODES_Y, LEADERBOARD_LIST_Y, LEADERBOARD_ROW_H, QUEST_ITEM_H };
 
 // === 合规提示层布局（_drawComplianceOverlay 与 Game._handleComplianceTap 共用） ===
 // 单一真相源：渲染与命中不能各写一套坐标，否则安全区/不同屏宽下会错位。
@@ -5064,9 +5075,10 @@ export class RenderSystem {
     }
 
     const branchKeys = Object.keys(techConfig.branches);
-    const tabW = techTabWidth(w), tabH = 35, tabGap = 4;
+    const tabW = techTabWidth(w), tabH = SUBPAGE_TAB_H, tabGap = 4;
     const tabStartX = rowStartX(branchKeys.length, tabW, tabGap, w);
-    const tabY = SUBPAGE_TAB_Y;
+    // 2026-11-25：分支页签与商店/排行榜统一放底部（返回按钮上方一条带）
+    const tabY = subpageTabY(h);
     const selectedBranch = gameState.selectedTechBranch || 'military';
 
     for (let i = 0; i < branchKeys.length; i++) {
@@ -5075,7 +5087,7 @@ export class RenderSystem {
       const x = tabStartX + i * (tabW + tabGap);
       const isSelected = key === selectedBranch;
 
-      // 分支页签：夜色卡 + 分支色强调；x/tabW/tabY/tabH 几何不动（命中同源）
+      // 分支页签：夜色卡 + 分支色强调；x/tabW/tabY/tabH 与 Game 命中共用同一口径
       this._cardBg({ x, y: tabY, w: tabW, h: tabH, r: 9 }, {
         tintGradient: isSelected ? NIGHT.card : NIGHT.cardSoft,
         tint: NIGHT.solid,
@@ -5098,11 +5110,11 @@ export class RenderSystem {
     const nodeW = techNodeWidth(w), nodeH = TECH_NODE_H, nodeGap = 10;
     const pad = TECH_NODE_PAD;
     const nodeStartX = rowStartX(2, nodeW, nodeGap, w);
-    // 2026-11-21：跟随 SUBPAGE_TAB_Y=72 同步下移（原 100 与页签底 107 重叠），留 12px gutter
+    // 2026-11-25：页签已下移到底部，节点网格从内容顶 88 起
     const nodesStartY = TECH_NODES_Y - (gameState.metaScrollY || 0);
 
-    // 裁剪：节点只在分支标签以下区域显示，上滚不盖页签（107 = 页签底 72+35）
-    this._beginScrollClip(ctx, w, h, 107);
+    // 裁剪：节点从内容顶 88 开始，底部停在底部分页按钮之上
+    this._beginScrollClip(ctx, w, h, SUBPAGE_CONTENT_TOP, subpageClipBottom(h));
 
     // 节点连线（A 类 P2-2）：前置节点 → 当前节点的 2px 折线，画在节点下层。
     // 纯视觉、不参与命中；解锁态用分支色，未解锁用弱灰蓝，均为半透明避免盖过云白卡。
@@ -5116,7 +5128,7 @@ export class RenderSystem {
       const y1 = nodesStartY + pre.position.row * (nodeH + nodeGap) + nodeH / 2;
       const x2 = nodeStartX + Math.min(node.position.col, 1) * (nodeW + nodeGap) + nodeW / 2;
       const y2 = nodesStartY + node.position.row * (nodeH + nodeGap) + nodeH / 2;
-      if (Math.max(y1, y2) < 90 || Math.min(y1, y2) > h) continue;
+      if (Math.max(y1, y2) < SUBPAGE_CONTENT_TOP || Math.min(y1, y2) > h) continue;
       const unlocked = (profile?.getTechNodeLevel(pre.id) || 0) >= node.prerequisite.level;
       ctx.strokeStyle = unlocked ? hexToRgba(branch.color, 0.65) : 'rgba(126,170,220,0.28)';
       ctx.beginPath();
@@ -5135,7 +5147,7 @@ export class RenderSystem {
       const y = nodesStartY + node.position.row * (nodeH + nodeGap);
 
       // 视口裁剪
-      if (y > h || y + nodeH < 90) continue;
+      if (y > h || y + nodeH < SUBPAGE_CONTENT_TOP) continue;
 
       const level = profile?.getTechNodeLevel(node.id) || 0;
       const isMax = level >= node.maxLevel;
@@ -5424,17 +5436,15 @@ export class RenderSystem {
    * @param {number} screenWidth
    * @param {number} tabCount 分页数量（钻石充值分页被 features.shopDiamondTab 隐藏时会变）
    */
-  static shopLayout(screenWidth, tabCount = 4) {
+  static shopLayout(screenWidth, tabCount = 4, screenHeight = 734) {
     const n = Math.max(1, tabCount || 1);
     const tabGap = 4;
-    const tabH = 30;
-    // 2026-11-21 边界缝隙收口：统一走 L_SCALE 的 SIDE=16 内容区，
-    // 页签/卡片左右对称铺满（旧值 tabStartX=20 + tabW≤70 + itemW≤340 在 430 屏右侧空 55~118px）
+    const tabH = SUBPAGE_TAB_H;
+    // 边界缝隙收口：统一走 L_SCALE 的 SIDE=16 内容区，页签/卡片左右对称铺满。
     const SIDE = 16;
     const tabStartX = SIDE;
-    // 2026-11-21 栅格收口：内容顶统一 L_SCALE.CONTENT_TOP=72（资源栏带 8..60 + gutter 12），
-    // 旧值 tabY=50 压在资源栏上、listStartY=95 又与页签脱节。
-    const tabY = 72;
+    // 2026-11-25：页签统一移到底部（返回按钮上方一条带），列表顶回到资源栏下方 88。
+    const tabY = subpageTabY(screenHeight);
     const avail = screenWidth - SIDE * 2;
     const tabW = Math.max(38, Math.floor((avail - (n - 1) * tabGap) / n));
 
@@ -5442,7 +5452,7 @@ export class RenderSystem {
     const itemW = avail;
     const itemH = 70;
     const gap = 8;
-    const listStartY = tabY + tabH + 7; // 页签底 102 → 列表顶 109，gutter 7
+    const listStartY = SUBPAGE_CONTENT_TOP; // 88，顶部页签已下移
 
     const btnW = 60;
     const btnH = 30;
@@ -5475,13 +5485,26 @@ export class RenderSystem {
 
     // 货币已由统一顶部资源栏显示（renderScreen 尾部叠加）
 
-    // 分类标签（P37：含「免费」分页，宽度自适应）
-    // 视觉改用统一页签（明黄选中 + 云白未选），但 tx/tabW/tabY/tabH 几何与 Game 命中保持同源不变。
+    // 分类标签（含「免费」分页，宽度自适应）+ 2026-11-25 与科技树/排行榜同款夜色卡页签：
+    // 选中态明黄边框 + 顶部强调条，未选为夜色软底。几何仍与 Game 命中共用 shopLayout。
     const items = gameState.shopItems || [];
-    const L = RenderSystem.shopLayout(w, items.length);
-    const tabRect = { x: L.tabStartX, y: L.tabY, w: L.tabW * items.length + L.tabGap * (items.length - 1), h: L.tabH };
-    if (items.length > 0) {
-      this._tabs(tabRect, items.map(it => it.categoryName), gameState.shopTab || 0, { accent: UI_THEME.gold });
+    const L = RenderSystem.shopLayout(w, items.length, h);
+    for (let i = 0; i < items.length; i++) {
+      const x = L.tabStartX + i * (L.tabW + L.tabGap);
+      const active = (gameState.shopTab || 0) === i;
+      this._cardBg({ x, y: L.tabY, w: L.tabW, h: L.tabH, r: 9 }, {
+        tintGradient: active ? NIGHT.card : NIGHT.cardSoft,
+        tint: NIGHT.solid,
+        border: active ? UI_THEME.gold : NIGHT.borderDim,
+        edge: active ? UI_THEME.gold : null,
+        edgeSide: 'top',
+        flat: true,
+      });
+      ctx.fillStyle = active ? UI_THEME.gold : NIGHT.hint;
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(items[i].categoryName, x + L.tabW / 2, L.tabY + L.tabH / 2);
     }
 
     // 商品列表
@@ -5490,15 +5513,15 @@ export class RenderSystem {
     const { cardX, itemW, itemH, gap, btnW, btnH } = L;
     const startY = RenderSystem.shopItemTop(0, gameState.metaScrollY || 0, L);
 
-    // 裁剪：商品列表只在返回按钮/分类标签以下区域显示
-    this._beginScrollClip(ctx, w, h, 88);
+    // 裁剪：商品列表在资源栏下方开始、底部停在上移后的分页按钮之上
+    this._beginScrollClip(ctx, w, h, SUBPAGE_CONTENT_TOP, subpageClipBottom(h));
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     for (let i = 0; i < cat.items.length; i++) {
       const item = cat.items[i];
       const iy = startY + i * (itemH + gap);
-      if (iy + itemH < 90 || iy > h) continue;
+      if (iy + itemH < SUBPAGE_CONTENT_TOP || iy > h) continue;
 
       // 卡片背景：2026-11-24 夜色统一，与布阵卡同族；免费栏顶部加明黄亮条区分。
       // 几何/文案/命中不变，只换容器底色、边框与文字色阶。
@@ -6185,9 +6208,10 @@ export class RenderSystem {
     // 榜单标签（与 handleLeaderboardClick 命中框一致；tabW/tabH/tabGap/tabY/tabStartX 几何不动）
     const boards = gameState.leaderboardBoards || [];
     const tabCount = Math.min(boards.length, 4);
-    const tabW = 80, tabH = 30, tabGap = 8;
+    const tabW = 80, tabH = SUBPAGE_TAB_H, tabGap = 8;
     const tabStartX = (w - (tabCount * tabW + (tabCount - 1) * tabGap)) / 2;
-    const tabY = SUBPAGE_TAB_Y;
+    // 2026-11-25：榜单页签与商店/科技统一放底部
+    const tabY = subpageTabY(h);
     for (let i = 0; i < tabCount; i++) {
       const x = tabStartX + i * (tabW + tabGap);
       const active = gameState.leaderboardTab === i;
@@ -6226,7 +6250,8 @@ export class RenderSystem {
     for (let i = 0; i < data.entries.length; i++) {
       const e = data.entries[i];
       const y = listStartY + i * rowH;
-      if (y > h - 90) break;
+      // 末行卡片底不进入底部分页按钮区域
+      if (y + rowH / 2 > subpageClipBottom(h)) break;
 
       // 榜单行：夜色卡 + 浅色文字；前三名用正式奖牌资源图标，自己行明黄竖条
       const medalKey = i === 0 ? 'gold' : (i === 1 ? 'silver' : (i === 2 ? 'bronze' : null));
@@ -6296,10 +6321,12 @@ export class RenderSystem {
 
       // 玩家排名提示：吸底金色夜胶囊
       if (data.playerRank > 0) {
-      // 胶囊放到返回按钮右侧，避开左下角返回（16..96）：窄屏下也绝不与返回重叠
+      // 胶囊放到返回按钮右侧，避开左下角返回（16..96）：窄屏下也绝不与返回重叠。
+      // 2026-11-25：页签下移到底部后，胶囊改与返回按钮同一行（原 h-66 会压住页签下缘 7px）。
       const backRight = 16 + 80;
       const tipW = Math.min(240, w - backRight - 24);
-      const tipX = backRight + 8 + (w - backRight - 8 - tipW) / 2, tipY = h - 66;
+      const tipX = backRight + 8 + (w - backRight - 8 - tipW) / 2;
+      const tipY = h - BACK_BTN.bottom - 34;
       this._cardBg({ x: tipX, y: tipY, w: tipW, h: 34, r: 17 }, {
         tintGradient: ['rgba(78,66,36,0.96)', 'rgba(40,34,20,0.97)'],
         tint: 'rgba(40,34,20,0.97)', border: UI_THEME.gold, flat: true,
@@ -6312,11 +6339,11 @@ export class RenderSystem {
       ctx.textBaseline = 'alphabetic';
     }
 
-    // 底部说明
+    // 底部说明：移到分页按钮上方（列表末行与页签之间的空隙），避免与下移后的排名胶囊争用底行
     ctx.fillStyle = ON_DARK.hint;
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('微信好友排行榜将在小游戏版接入', w / 2, h - 20);
+    ctx.fillText('微信好友排行榜将在小游戏版接入', w / 2, subpageTabY(h) - 12);
   }
 
   // ==================== 抽卡面板 ====================
@@ -6944,8 +6971,12 @@ export class RenderSystem {
    * 防止列表上滚盖住顶部按钮、下滚与返回按钮重叠（P14 顶部 + P21 底部）。与 _endScrollClip 成对使用。
    * @param {number} topY 顶部固定区下边界（滚动内容可见区起点）
    */
-  _beginScrollClip(ctx, w, h, topY) {
-    const bottomY = h - BACK_BTN.bottom - BACK_BTN.h - SCROLL_BOTTOM_GAP;
+  _beginScrollClip(ctx, w, h, topY, bottomOverride) {
+    // bottomOverride：底部分页界面（商店/科技）传 subpageClipBottom(h)，让列表停在分页按钮上方；
+    // 不传则沿用返回按钮上方的通用底边（任务/成就/通行证不受影响）。
+    const bottomY = bottomOverride == null
+      ? h - BACK_BTN.bottom - BACK_BTN.h - SCROLL_BOTTOM_GAP
+      : bottomOverride;
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, topY, w, bottomY - topY);

@@ -23,7 +23,7 @@ import { SynergySystem } from '../system/SynergySystem.js';
 import { SkillSystem } from '../system/SkillSystem.js';
 import { InputSystem } from '../system/InputSystem.js';
 import { clampSafeArea } from '../system/SafeArea.js';
-import { RenderSystem, SUBPAGE_TAB_Y, TECH_NODES_Y, complianceButtonLayout } from '../system/RenderSystem.js';
+import { RenderSystem, SUBPAGE_TAB_Y, SUBPAGE_TAB_H, subpageTabY, subpageClipBottom, TECH_NODES_Y, complianceButtonLayout } from '../system/RenderSystem.js';
 import { ArtSystem } from '../system/ArtSystem.js';
 import { FontSystem } from '../system/FontSystem.js';
 import { SCREEN_BG, LOADING_BG, RESULT_BG,
@@ -903,6 +903,11 @@ export class Game {
   static scrollViewportBottom(screenH) {
     const b = Game.BACK_BUTTON;
     return screenH - b.bottomOffset - b.h - 8;
+  }
+
+  /** 底部分页界面（商店/科技）列表命中底边：与 RenderSystem.subpageClipBottom 同源，不压分页按钮 */
+  static subpageViewportBottom(screenH) {
+    return subpageClipBottom(screenH);
   }
 
   // === 设置窗口布局常量（_handleSettingsTap 与 RenderSystem._drawSettingsOverlay 同源使用） ===
@@ -2060,9 +2065,9 @@ export class Game {
       return;
     }
 
-    // 分类标签（P37：与 drawShop 共用 shopLayout，5 个分页窄屏也不溢出）
+    // 分类标签（与 drawShop 共用 shopLayout，5 个分页窄屏也不溢出；页签已下移到底部）
     const cats = ShopSystem.getCategoryNames();
-    const L = RenderSystem.shopLayout(this.screenWidth, cats.length);
+    const L = RenderSystem.shopLayout(this.screenWidth, cats.length, this.screenHeight);
     for (let i = 0; i < cats.length; i++) {
       const tx = L.tabStartX + i * (L.tabW + L.tabGap);
       if (screenX >= tx && screenX <= tx + L.tabW && screenY >= L.tabY && screenY <= L.tabY + L.tabH) {
@@ -2073,8 +2078,8 @@ export class Game {
       }
     }
 
-    // 商品列表点击（先裁底部：点击返回按钮下方空白区不误命中被裁剪的列表项）
-    if (screenY > Game.scrollViewportBottom(this.screenHeight)) return;
+    // 商品列表点击（先裁底部：点击底部分页按钮/返回按钮区不误命中被裁剪的列表项）
+    if (screenY > Game.subpageViewportBottom(this.screenHeight)) return;
     const items = ShopSystem.getShopItems();
     const cat = items[this.shopTab];
     if (!cat) return;
@@ -2343,12 +2348,12 @@ export class Game {
       return;
     }
 
-    // 榜单标签切换（与 drawLeaderboard 绘制坐标一致；tab数随榜单定义，最多4）
-    const tabW = 80, tabH = 30, tabGap = 8;
+    // 榜单标签切换（与 drawLeaderboard 绘制坐标一致；tab数随榜单定义，最多4，已下移到底部）
+    const tabW = 80, tabH = SUBPAGE_TAB_H, tabGap = 8;
     const tabCount = Math.min(LeaderboardSystem.BOARDS.length, 4);
     const totalTabW = tabCount * tabW + (tabCount - 1) * tabGap;
     const tabStartX = (w - totalTabW) / 2;
-    const tabY = SUBPAGE_TAB_Y;
+    const tabY = subpageTabY(this.screenHeight);
     for (let i = 0; i < tabCount; i++) {
       const x = tabStartX + i * (tabW + tabGap);
       if (screenX >= x && screenX <= x + tabW &&
@@ -2506,11 +2511,11 @@ export class Game {
       return;
     }
 
-    // 分支切换标签
+    // 分支切换标签（与 drawTechPanel 同源，已下移到底部）
     const branches = TechTreeSystem.getBranches();
-    const tabW = techTabWidth(this.screenWidth), tabH = 35, tabGap = 4;
+    const tabW = techTabWidth(this.screenWidth), tabH = SUBPAGE_TAB_H, tabGap = 4;
     const tabStartX = rowStartX(Object.keys(branches).length, tabW, tabGap, this.screenWidth);
-    const tabY = SUBPAGE_TAB_Y;
+    const tabY = subpageTabY(this.screenHeight);
     const branchKeys = Object.keys(branches);
 
     for (let i = 0; i < branchKeys.length; i++) {
@@ -2524,8 +2529,8 @@ export class Game {
       }
     }
 
-    // 科技节点点击（先裁底部：点击返回按钮下方空白区不误命中被裁剪节点）
-    if (screenY > Game.scrollViewportBottom(this.screenHeight)) return;
+    // 科技节点点击（先裁底部：点击底部分页按钮/返回按钮区不误命中被裁剪节点）
+    if (screenY > Game.subpageViewportBottom(this.screenHeight)) return;
     const nodes = TechTreeSystem.getBranchNodes(this.selectedTechBranch);
     const nodeW = techNodeWidth(this.screenWidth), nodeH = TECH_NODE_H, nodeGap = 10;
     const nodeStartX = rowStartX(2, nodeW, nodeGap, this.screenWidth);

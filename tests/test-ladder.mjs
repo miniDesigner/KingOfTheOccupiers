@@ -322,8 +322,9 @@ console.log('=== 测试11: Game 集成与渲染冒烟 ===');
   game.leaderboardTab = 0;
   const tabW = 80, tabGap = 8, tabCount = 4;
   const tabStartX = (400 - (tabCount * tabW + (tabCount - 1) * tabGap)) / 2;
-  const { SUBPAGE_TAB_Y } = await import('../src/system/RenderSystem.js');
-  game.handleLeaderboardClick(tabStartX + 3 * (tabW + tabGap) + tabW / 2, SUBPAGE_TAB_Y + 15);
+  // 2026-11-25：榜单页签下移到底部，命中 y 由 subpageTabY(屏高) 给出
+  const { subpageTabY } = await import('../src/system/RenderSystem.js');
+  game.handleLeaderboardClick(tabStartX + 3 * (tabW + tabGap) + tabW / 2, subpageTabY(game.screenHeight) + 15);
   assert(game.leaderboardTab === 3, '第4个tab（收集榜）可切换');
 }
 

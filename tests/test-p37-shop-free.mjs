@@ -289,7 +289,8 @@ console.log('=== 测试11: Game 默认进商店停在「免费」分页 + 分页
   assert(game.shopTab === 0, `构造后 shopTab = ${game.shopTab}（默认免费分页）`);
   game.screenState = 'shop';
   const cats = ShopSystem.getCategoryNames();
-  const L = RenderSystem.shopLayout(400, cats.length);
+  // 2026-11-25：页签移到底部，tabY 依赖屏高，命中测试必须传与 Game 相同的 screenHeight
+  const L = RenderSystem.shopLayout(400, cats.length, game.screenHeight);
   game.handleShopClick(L.tabStartX + L.tabW / 2, L.tabY + L.tabH / 2);
   assert(game.shopTab === 0, '点击第 1 个分页 → shopTab=0（免费）');
   game.handleShopClick(L.tabStartX + (L.tabW + L.tabGap) + L.tabW / 2, L.tabY + L.tabH / 2);
