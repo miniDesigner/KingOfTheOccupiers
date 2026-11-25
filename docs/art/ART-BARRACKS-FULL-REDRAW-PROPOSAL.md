@@ -54,7 +54,7 @@
 
 | 变化层 | 要求 |
 |---|---|
-| **巨型特征物（最高优先级）** | **每座建筑有且只有一个压倒性特征物，占建筑高度 ≥35%、画布宽 ≥20%（≥62px/312），置于屋顶或正面上方；10% 缩略图下仍可辨轮廓。详见第四节 `{SIGNATURE}` 列。** |
+| **巨型特征物（最高优先级）** | **每座建筑有且只有一个压倒性特征物，占建筑高度 ≥35%、画布宽 ≥20%（≥62px/312）；10% 缩略图下仍可辨轮廓。摆放分两种：① 默认「悬空独立」——浮在屋顶上方、与建筑本体有明显空隙、不接触不嵌合（2026-11-25 用户确认剑士/弩手用此式，避免标志物混在房屋上）；② 例外「门楣嵌合」——仅战象保留象头石雕嵌在门楣。详见第四节 `{SIGNATURE}` 列。** |
 | 建筑本体剪影 | 屋顶形制、主体高宽比、层数由兵种决定；40 张至少 32 张剪影互不相同。特征物必须参与剪影，不能贴在上面当标签 |
 | 结构类型 | 棚 / 塔 / 堡 / 厩 / 工坊 / 巢 / 窟 / 殿 / 台 / 船 / 车库 / 兽舍 等，不只木屋 |
 | 材质 | 木、茅草、石、铁、冰、骨、青铜、树皮、岩石按兵种选；同族内材质可混搭 |
@@ -73,7 +73,7 @@
 
 | # | 兵种 | 建筑本体（一句话可执行） | 巨型特征物 `{SIGNATURE}`（最大最显眼） | 材质 | 识别色 | 次要陈设 | 批次 |
 |---|---|---|---|---|---|---|---|
-| 01 | 剑士 | 双柄巨剑交叉作屋顶的矮训练棚 | 屋顶交叉的巨型长剑，剑格与剑柄清晰 | 暖木 + 钢 | 钢灰 | 木人靶、剑架 | A |
+| 01 | 剑士 | 带完整坡顶的木训练棚（剑不再作屋顶） | 悬空于屋顶上方的交叉巨型长剑，剑格与剑柄清晰，与建筑有明显空隙不接触 | 暖木 + 钢 | 钢灰 | 木人靶、剑架 | A（重出） |
 | 02 | 弓箭手 | 细高木箭楼，草檐顶，三面箭窗 | 横跨屋顶的巨型长弓，弓弦作屋脊线 | 木 + 茅草 | 深绿 | 箭袋、靶心 | 1 |
 | 03 | 枪兵 | 长枪斜靠成栅栏顶的狭长枪械棚 | 斜插屋顶的巨型长枪，枪尖 + 红缨 | 木 + 钢 | 赭红 | 成排短枪 | 1 |
 | 04 | 斥候 | 细腿树顶瞭望台，帆布小顶 | 塔顶巨型黄铜罗盘，指针明显 | 木 + 帆布 | 土黄 | 风旗、号角 | 1 |
@@ -89,7 +89,7 @@
 | 14 | 牧师 | 小白礼拜堂，单钟楼，花窗 | 钟楼巨型铜钟 | 白石 + 木 | 奶白 + 金 | 花窗、圣杯 | 2 |
 | 15 | 卫兵 | 厚石门楼，顶部垛口，旁设岗亭 | 屋顶巨型长戟 | 灰石 | 石灰 | 闸栅 | 2 |
 | 16 | 海盗 | 翻覆船体作屋顶的船形营，桅杆旗 | 正面巨型船锚 | 旧木 + 缆绳 | 海蓝 | 木桶、缆绳 | 2 |
-| 17 | 弩手 | 屋顶装巨型弩机的木工坊 | 屋顶巨型弩机，弩臂与弩箭清晰 | 木 + 钢 | 深橄榄 | 弩箭箱 | B |
+| 17 | 弩手 | 带完整坡顶的木工坊（弩机不再作屋顶） | 悬空于屋顶上方的巨型弩机，弩臂、弩弦与弩箭清晰，与建筑有明显空隙不接触 | 木 + 钢 | 深橄榄 | 弩箭箱 | B（重出） |
 | 18 | 游侠 | 树叶顶林中隐庐，藤蔓缠柱 | 屋顶巨型长弓 + 斜挂箭袋 | 木 + 树叶 | 森绿 | 藤蔓 | B |
 | 19 | 长枪兵 | 高挑枪林屋顶的方塔 | 屋顶三支巨型枪尖呈扇形排列 | 木 + 钢 | 青铜 | 盾牌 | B |
 | 20 | 神射手 | 窄高靶塔，多层靶心，顶置风旗 | 塔顶巨型靶心（红白同心圆） | 石 + 木 | 亮金 | 观测台 | B |
@@ -114,7 +114,9 @@
 | 39 | 战争泰坦 | 巨岩基座 + 巨足石阶，非完整人像 | 基座侧面巨型石拳撑住平台 | 巨岩 | 花岗岩灰 | 断柱 | 4 |
 | 40 | 古龙 | 巨大龙脊神殿，脊椎尖顶 + 石翼浮雕 | 殿顶巨型龙首石雕 | 古石 + 铜 | 青铜 + 暗金 | 石翼、龙蛋 | 4 |
 
-**批次 A（基准 4 张）**：01 剑士（木棚 + 交叉巨剑）、17 弩手（机械工坊 + 巨型弩机）、21 冰法师（法塔 + 六角冰晶）、36 战象（异形兽舍 + 象头长牙）。这 4 张覆盖「木 / 铁 / 冰 / 异形」四种结构与四种特征物类型（武器 / 机械 / 元素 / 动物），既验证风格锚点，也验证「棋盘小尺寸下特征物是否一眼可辨」。
+**批次 A（基准 4 张）**：01 剑士（坡顶训练棚 + **悬空交叉巨剑**）、17 弩手（坡顶木工坊 + **悬空巨型弩机**）、21 冰法师（法塔 + 六角冰晶）、36 战象（重绘粗木兽栏 + 象头仍嵌门楣）。这 4 张覆盖「木 / 铁 / 冰 / 异形」四种结构与四种特征物类型（武器 / 机械 / 元素 / 动物），既验证风格锚点，也验证「棋盘小尺寸下特征物是否一眼可辨」。
+
+**2026-11-25 二次修订（用户评审第一批后确认）**：① 01/17 的标志物不再与房屋混为一体（不做屋顶、不嵌墙），改为**悬空于屋顶上方、有明显空隙**；② 36 战象保留象头嵌门楣，只重绘房屋本体（去橙瓦农舍感，改粗木巨兽棚）；③ 21 冰法师表现通过，**不重出、沿用 v3**。重出 01/17/36 共 3 张。
 
 ---
 
@@ -134,20 +136,24 @@ Painterly 2.5D isometric game building, high three-quarter view showing roof, fr
 ### 段 2 · 主体描述（每图替换槽位）
 
 ```
-A {BUILDING} for a fantasy unit barracks. Constructed from {MATERIAL}, with {ACCENT} as the dominant accent color covering roof and signage. One dominant oversized signature object dominates the building: {SIGNATURE}. This single signature object must occupy at least 35 percent of the building height and at least 20 percent of the canvas width, placed on the roof or upper front facade; it must read clearly when the image is scaled down to 10 percent. All other details, including {PROP}, are secondary and must stay visually quieter and smaller than the signature object. The architecture itself must clearly express this unit's role, not just a color swap on a generic wooden hut. Distinctive silhouette compared to other barracks in the same family.
+A {BUILDING} for a fantasy unit barracks. Constructed from {MATERIAL}, with {ACCENT} as the dominant accent color. One dominant oversized signature object dominates the scene: {SIGNATURE}. This single signature object must occupy at least 35 percent of the building height and at least 20 percent of the canvas width; it must read clearly when the image is scaled down to 10 percent. All other details, including {PROP}, are secondary and must stay visually quieter and smaller than the signature object. The architecture itself must clearly express this unit's role, not just a color swap on a generic wooden hut. Distinctive silhouette compared to other barracks in the same family.
+
+**标志物摆放二选一（按槽位 `PLACEMENT` 填，逐字复用）：**
+- `FLOAT`（剑士/弩手默认）：The signature object floats in the air above the roof, clearly separated from the building by a visible empty gap; it must NOT touch, rest on, merge into, or form any part of the roof or walls. The building underneath has a complete ordinary sloped roof of its own.
+- `LINTEL`（战象例外）：The signature object is mounted above the entrance on the front facade as a carved stone lintel ornament, integrated into the building facade.
 ```
 
 > `{BUILDING}` / `{SIGNATURE}` 英文写法示例（基准批，逐字使用）：
-> - 01: `low training shed` / `two giant crossed longswords with clearly visible crossguards and hilts forming the roof ridge`
-> - 17: `wooden workshop with a giant crossbow mechanism mounted as the roof` / `an oversized crossbow with visible limbs and loaded bolt`
+> - 01: `low complete sloped-roof timber training shed` / `two giant crossed longswords with clearly visible crossguards and hilts, floating as one piece above the roof` — PLACEMENT: FLOAT
+> - 17: `complete sloped-roof timber workshop` / `an oversized crossbow with visible limbs, string and loaded bolt, floating as one piece above the roof` — PLACEMENT: FLOAT
 > - 21: `tall ice-spire mage tower with frosted stone base` / `a giant six-pointed ice crystal at the tower peak`
-> - 36: `oversized arched beast stable with thick timber rails` / `a massive stone elephant head with two long tusks above the entrance`
+> - 36: `heavy open-sided timber beast stable with rough logs and wide arched entrance, no clay roof tiles` / `a massive stone elephant head with two long tusks mounted above the entrance` — PLACEMENT: LINTEL
 > - 07（用户指定范例）: `small study hut with sloped roof` / `one giant open book resting on the roof ridge, pages and spine clearly readable`
 
 ### 段 3 · 画布与构图（固定）
 
 ```
-Square 1:1 canvas, building centered slightly low, full building including the elliptical stone base fills about 82 percent of canvas width, 8 to 10 percent clean margin on all sides, no cropping, no perspective drift, flat even framing. The single signature object stays fully inside the frame and is never hidden by flags, banners or roof decorations.
+Square 1:1 canvas, building centered slightly low, full building including the elliptical stone base fills about 82 percent of canvas width, 8 to 10 percent clean margin on all sides, no cropping, no perspective drift, flat even framing. The single signature object stays fully inside the frame, keeps a visible empty gap from the building when PLACEMENT is FLOAT, and is never hidden by flags, banners or roof decorations.
 ```
 
 ### 段 4 · 技术约束与禁忌（固定）
@@ -159,7 +165,7 @@ Pure solid magenta #FF00FF background only, no gradient, no floor shadow cast on
 **Negative prompt（整段复用）**
 
 ```
-text, letter, number, logo, glow, neon, beam, ray, aurora, hard outline, black lineart, realistic, photo, gradient background, floor shadow, white background, pure white, pure black, sci-fi, cyber, generic wooden hut, same building different color, tiny emblem, small ornament as main identifier, multiple competing focal objects, signature object hidden by flag, cold grey, desaturated, bluish tone, washed out, weathered wood, dirty grime, thin flat cel shading, sketchy linework, visible plank gaps, dark cracks
+text, letter, number, logo, glow, neon, beam, ray, aurora, hard outline, black lineart, realistic, photo, gradient background, floor shadow, white background, pure white, pure black, sci-fi, cyber, generic wooden hut, same building different color, tiny emblem, small ornament as main identifier, multiple competing focal objects, signature object hidden by flag, signature object merged into roof, signature object resting on roof, weapon forming the roof, crossbow forming the roof, cold grey, desaturated, bluish tone, washed out, weathered wood, dirty grime, thin flat cel shading, sketchy linework, visible plank gaps, dark cracks, orange clay roof tiles, farm barn
 ```
 
 **出图路线（2026-11-25 用户拍板：纯文生图 B）**：不传任何参考图（上次 `input_fidelity=medium` 图生图把旧木屋骨架带回来了），纯靠提示词驱动形态。风格统一由「段 1 强化锚点 + Negative 排除冷灰」保证，4 张基准逐字复用同一风格段，只替换 `{BUILDING}` / `{SIGNATURE}` / `{MATERIAL}` / `{ACCENT}` / `{PROP}` 五个槽位。
