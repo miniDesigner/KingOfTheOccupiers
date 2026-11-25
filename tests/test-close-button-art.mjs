@@ -15,7 +15,7 @@ function check(cond, msg) {
 console.log('=== 测试1: 统一关闭按钮绘制方法 ===');
 check(rs.includes('_drawCloseButton(rect, opts) {'), '存在统一关闭按钮方法');
 check(rs.includes("this._artIcon(ART_PREFIXES.state, 'close', cx, cy,"),
-  '图片优先使用 icons/state_close（透明底金色 X）');
+  '图片优先使用 icons/state_close（透明底纯红 X）');
 check(rs.includes("Math.min(rect.w, rect.h) * 0.92, 1)"),
   '图片以居中 92% 尺寸、不透明绘制');
 check(rs.includes("ctx.save();") && rs.includes('if (this._artIcon(ART_PREFIXES.state'),
