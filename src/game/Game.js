@@ -2170,17 +2170,17 @@ export class Game {
     // 与 drawQuest 共享同一布局计算，保证命中区与绘制完全一致
     const layout = RenderSystem.questLayout(dailyQuests, weeklyQuests, seasonQuests, this.metaScrollY || 0, this.screenWidth, this.screenHeight);
 
-    // 一键领取（每日+每周+赛季）
+    // 一键领取（每日+每周+赛季）：与绘制同源，无可领取项时按钮隐藏且不响应点击
+    const claimable = RenderSystem.hasClaimable(dailyQuests) ||
+      RenderSystem.hasClaimable(weeklyQuests) ||
+      RenderSystem.hasClaimable(seasonQuests);
     const ca = layout.claimAllRect;
-    if (screenX >= ca.x && screenX <= ca.x + ca.w && screenY >= ca.y && screenY <= ca.y + ca.h) {
+    if (claimable && screenX >= ca.x && screenX <= ca.x + ca.w && screenY >= ca.y && screenY <= ca.y + ca.h) {
       const result = QuestSystem.claimAllQuests();
       if (result.count > 0) {
         this.audioManager.playSynergy();
         this.animManager.flashScreen('#ffd700', 0.2);
         this.showToast(`已领取 ${result.count} 项任务奖励`, 2);
-      } else {
-        this.audioManager.playButtonClick();
-        this.showToast('暂无可领取的任务', 1.5);
       }
       return;
     }
@@ -2241,17 +2241,15 @@ export class Game {
     // 与 drawAchievement 共享同一布局计算
     const layout = RenderSystem.achievementLayout(achievements, this.metaScrollY || 0, this.screenWidth, this.screenHeight);
 
-    // 一键领取
+    // 一键领取：与绘制同源，无可领取成就时按钮隐藏且不响应点击
+    const claimable = RenderSystem.hasClaimable(achievements);
     const ca = layout.claimAllRect;
-    if (screenX >= ca.x && screenX <= ca.x + ca.w && screenY >= ca.y && screenY <= ca.y + ca.h) {
+    if (claimable && screenX >= ca.x && screenX <= ca.x + ca.w && screenY >= ca.y && screenY <= ca.y + ca.h) {
       const result = QuestSystem.claimAllAchievements();
       if (result.count > 0) {
         this.audioManager.playSynergy();
         this.animManager.flashScreen('#ffd700', 0.2);
         this.showToast(`已领取 ${result.count} 项成就奖励`, 2);
-      } else {
-        this.audioManager.playButtonClick();
-        this.showToast('暂无可领取的成就', 1.5);
       }
       return;
     }

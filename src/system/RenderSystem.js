@@ -5748,6 +5748,14 @@ export class RenderSystem {
 
   // ==================== 任务面板 ====================
   /**
+   * 是否存在可领取的任务/成就项（complete && !claimed）。
+   * 绘制与点击命中共用此判定：无可领取项时一键领取按钮隐藏，也不响应点击。
+   */
+  static hasClaimable(items) {
+    return (items || []).some((it) => !!(it && it.complete && !it.claimed));
+  }
+
+  /**
    * 任务面板共享布局（渲染与点击统一使用，防止命中区与绘制偏移）
    * 返回: { itemW, itemH, dailyHeaderY, dailyRects[], weeklyHeaderY, weeklyRects[], seasonHeaderY, seasonRects[], claimAllRect }
    * 每个 rect: { id, x, y, w, h }；领取按钮区域 = { x+w-70, y+10, 60, 30 }
@@ -5944,8 +5952,11 @@ export class RenderSystem {
     this._endScrollClip(ctx);
 
     // 一键领取悬浮在右下角：绘制必须晚于滚动裁剪，否则会被 bottom clip 切掉。
-    // 几何与 Game.handleQuestClick 命中共用同一 layout.claimAllRect。
-    this._drawClaimAllButton(ctx, layout.claimAllRect);
+    // 无可领取项时整体隐藏；几何与 Game.handleQuestClick 命中共用同一 layout.claimAllRect。
+    const hasClaimable = RenderSystem.hasClaimable(gameState.dailyQuests) ||
+      RenderSystem.hasClaimable(gameState.weeklyQuests) ||
+      RenderSystem.hasClaimable(gameState.seasonQuests);
+    if (hasClaimable) this._drawClaimAllButton(ctx, layout.claimAllRect);
   }
 
   // ==================== 成就面板 ====================
@@ -5986,7 +5997,10 @@ export class RenderSystem {
     this._endScrollClip(ctx);
 
     // 一键领取悬浮在右下角：绘制必须晚于滚动裁剪，命中与 Game 共用同一 rect。
-    this._drawClaimAllButton(ctx, layout.claimAllRect);
+    // 无可领取成就时整体隐藏。
+    if (RenderSystem.hasClaimable(gameState.achievements)) {
+      this._drawClaimAllButton(ctx, layout.claimAllRect);
+    }
   }
 
   // ==================== 通行证面板 ====================

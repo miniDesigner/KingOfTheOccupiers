@@ -215,5 +215,35 @@ console.log('=== 测试9: 一键领取悬浮右下角，避开返回按钮且在
     'Game 命中传入 screenHeight，与绘制同源');
 }
 
+console.log('=== 测试10: 无可领取项时隐藏一键领取按钮（绘制与命中同源）===');
+{
+  // 判定口径：complete && !claimed；三组任务任一可领即显示，成就独立判定
+  assert(RenderSystem.hasClaimable([{ complete: true, claimed: false }]) === true, '可领取项判定为真');
+  assert(RenderSystem.hasClaimable([{ complete: true, claimed: true }]) === false, '已领取不算可领取');
+  assert(RenderSystem.hasClaimable([{ complete: false, claimed: false }]) === false, '进行中不算可领取');
+  assert(RenderSystem.hasClaimable([]) === false, '空列表无可领取');
+  assert(RenderSystem.hasClaimable(undefined) === false, '未传列表也安全返回否');
+
+  const src = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
+  const questFn = src.slice(src.indexOf('  drawQuest(gameState)'), src.indexOf('  // ==================== 成就面板'));
+  const achFn = src.slice(src.indexOf('  drawAchievement(gameState)'), src.indexOf('  // ==================== 通行证面板'));
+  assert(questFn.includes('if (hasClaimable) this._drawClaimAllButton(ctx, layout.claimAllRect);'),
+    '任务屏仅在有可领取项时绘制按钮');
+  assert(questFn.includes('RenderSystem.hasClaimable(gameState.dailyQuests)') &&
+    questFn.includes('RenderSystem.hasClaimable(gameState.weeklyQuests)') &&
+    questFn.includes('RenderSystem.hasClaimable(gameState.seasonQuests)'),
+  '任务屏覆盖每日/每周/赛季三组');
+  assert(achFn.includes('if (RenderSystem.hasClaimable(gameState.achievements))'),
+    '成就屏仅在有可领取成就时绘制按钮');
+
+  const gameSrc = rf(ROOT + 'src/game/Game.js', 'utf-8');
+  const qClick = gameSrc.slice(gameSrc.indexOf('  handleQuestClick('), gameSrc.indexOf('  /**\n   * 成就界面点击'));
+  const aClick = gameSrc.slice(gameSrc.indexOf('  handleAchievementClick('), gameSrc.indexOf('  /**\n   * 通行证面板点击'));
+  assert(qClick.includes('if (claimable && screenX >= ca.x'), '任务命中先判定可领取，隐藏时不响应');
+  assert(aClick.includes('if (claimable && screenX >= ca.x'), '成就命中先判定可领取，隐藏时不响应');
+  assert(!qClick.includes('暂无可领取的任务') && !aClick.includes('暂无可领取的成就'),
+    '隐藏后不再弹出「暂无可领取」提示');
+}
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 process.exit(failed === 0 ? 0 : 1);
