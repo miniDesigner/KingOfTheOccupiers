@@ -132,6 +132,8 @@ function isWatermarkArtKey(key) {
   if (typeof key !== 'string') return false;
   if (UNREPLACED_WATERMARK_KEYS.has(key)) return true;
   if (SOLID_BOARD_KEYS.has(key) || FORMAL_BUILDING_KEYS.has(key)) return false;
+  // 40 张兵种专属兵营图（barracks_unit_01~40）为正式素材，整前缀放行
+  if (key.indexOf('buildings/barracks_unit_') === 0) return false;
   for (let i = 0; i < WATERMARK_PREFIXES.length; i++) {
     if (key.indexOf(WATERMARK_PREFIXES[i]) === 0) return true;
   }
@@ -1471,10 +1473,22 @@ export class RenderSystem {
     return ok;
   }
 
-  /** 建筑贴图：按 type/level 精确构造 key，不做模糊匹配 */
-  _artBuilding(type, level, isEnemy, x, y, size) {
+  /**
+   * 建筑贴图：按 type/level 精确构造 key，不做模糊匹配。
+   * 兵营若有 unitId（玩家上阵抽中 / 敌方补映射），优先显示该兵种专属兵营图；
+   * 无 unitId 时回落 Lv1~4 通用骨架图。
+   * @param {string} unitId 兵种 id（字符串，如 swordsman），可选
+   */
+  _artBuilding(type, level, isEnemy, x, y, size, unitId) {
     let key;
-    if (type === 'barracks') key = ART_PREFIXES.barracks + String(Math.max(1, Math.min(4, level || 1)));
+    if (type === 'barracks') {
+      const artIdx = unitId ? (getUnitArtIndex(unitId) || 0) : 0;
+      if (artIdx >= 1 && artIdx <= 40) {
+        key = ART_PREFIXES.barracksUnit + String(artIdx).padStart(2, '0');
+      } else {
+        key = ART_PREFIXES.barracks + String(Math.max(1, Math.min(4, level || 1)));
+      }
+    }
     else if (type === 'arrow_tower') key = ART_HOOKS.tower;
     else if (type === 'gold_mine') key = ART_HOOKS.mine;
     else if (type === 'headquarters') key = isEnemy ? ART_HOOKS.hqEnemy : ART_HOOKS.hqAlly;
@@ -2199,7 +2213,8 @@ export class RenderSystem {
       // 先落投影再贴图：投影接触点在建筑底部
       this._drawBuildingGroundShadow(x, ART_CY + ART_SIZE * 0.42, ART_SIZE);
       // 贴图优先：BL-01/02 建筑图标
-      if (!this._artBuilding(building.type, building.level, false, x, ART_CY, ART_SIZE)) {
+      const _bldUnitId = building.unitData && building.unitData.unitId;
+      if (!this._artBuilding(building.type, building.level, false, x, ART_CY, ART_SIZE, _bldUnitId)) {
         ctx.fillText(icon, x, ART_CY);
       }
 

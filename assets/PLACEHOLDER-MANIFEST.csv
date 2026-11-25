@@ -336,3 +336,43 @@ UN-03,units/race_dragon_lv4.png,兵种,古龙,96×96,PNG,,#a855f7,占地之王-�
 UN-04,units/unit_walk_start.png,兵种,行走序列·起步,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 UN-04,units/unit_walk_loop.png,兵种,行走序列·行走,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
 UN-04,units/unit_walk_attack.png,兵种,行走序列·攻击前冲,144×144,PNG,,,占地之王-逐界面素材清单.csv,,用同尺寸正式素材同名覆盖；字体项需改为真实 .ttf 并删除 .ttf.png
+BU-01,buildings/barracks_unit_01.png,建筑,兵种专属兵营·剑士 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-02,buildings/barracks_unit_02.png,建筑,兵种专属兵营·弓箭手 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-03,buildings/barracks_unit_03.png,建筑,兵种专属兵营·枪兵 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-04,buildings/barracks_unit_04.png,建筑,兵种专属兵营·斥候 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-05,buildings/barracks_unit_05.png,建筑,兵种专属兵营·民兵 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-06,buildings/barracks_unit_06.png,建筑,兵种专属兵营·投石兵 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-07,buildings/barracks_unit_07.png,建筑,兵种专属兵营·学徒 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-08,buildings/barracks_unit_08.png,建筑,兵种专属兵营·盾兵 Q1,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-09,buildings/barracks_unit_09.png,建筑,兵种专属兵营·骑士 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-10,buildings/barracks_unit_10.png,建筑,兵种专属兵营·狂战士 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-11,buildings/barracks_unit_11.png,建筑,兵种专属兵营·骷髅兵 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-12,buildings/barracks_unit_12.png,建筑,兵种专属兵营·战士 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-13,buildings/barracks_unit_13.png,建筑,兵种专属兵营·猎人 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-14,buildings/barracks_unit_14.png,建筑,兵种专属兵营·牧师 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-15,buildings/barracks_unit_15.png,建筑,兵种专属兵营·卫兵 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-16,buildings/barracks_unit_16.png,建筑,兵种专属兵营·海盗 Q2,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-17,buildings/barracks_unit_17.png,建筑,兵种专属兵营·弩手 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-18,buildings/barracks_unit_18.png,建筑,兵种专属兵营·游侠 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-19,buildings/barracks_unit_19.png,建筑,兵种专属兵营·长枪兵 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-20,buildings/barracks_unit_20.png,建筑,兵种专属兵营·神射手 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-21,buildings/barracks_unit_21.png,建筑,兵种专属兵营·冰法师 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-22,buildings/barracks_unit_22.png,建筑,兵种专属兵营·圣堂武士 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-23,buildings/barracks_unit_23.png,建筑,兵种专属兵营·战车 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-24,buildings/barracks_unit_24.png,建筑,兵种专属兵营·驯兽师 Q3,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-25,buildings/barracks_unit_25.png,建筑,兵种专属兵营·法师 Q4,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-26,buildings/barracks_unit_26.png,建筑,兵种专属兵营·圣骑士 Q4,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-27,buildings/barracks_unit_27.png,建筑,兵种专属兵营·刽子手 Q4,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-28,buildings/barracks_unit_28.png,建筑,兵种专属兵营·战斗法师 Q4,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-29,buildings/barracks_unit_29.png,建筑,兵种专属兵营·大法师 Q4,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-30,buildings/barracks_unit_30.png,建筑,兵种专属兵营·十字军 Q4,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-31,buildings/barracks_unit_31.png,建筑,兵种专属兵营·死灵法师 Q4,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-32,buildings/barracks_unit_32.png,建筑,兵种专属兵营·吸血鬼 Q5,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-33,buildings/barracks_unit_33.png,建筑,兵种专属兵营·蒸汽坦克 Q5,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-34,buildings/barracks_unit_34.png,建筑,兵种专属兵营·死亡骑士 Q5,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-35,buildings/barracks_unit_35.png,建筑,兵种专属兵营·风暴法师 Q5,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-36,buildings/barracks_unit_36.png,建筑,兵种专属兵营·战象 Q5,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-37,buildings/barracks_unit_37.png,建筑,兵种专属兵营·凤凰 Q5,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-38,buildings/barracks_unit_38.png,建筑,兵种专属兵营·幼龙 Q6,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-39,buildings/barracks_unit_39.png,建筑,兵种专属兵营·战争泰坦 Q6,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材
+BU-40,buildings/barracks_unit_40.png,建筑,兵种专属兵营·古龙 Q6,312×312,PNG,,,ART-BARRACKS-PER-UNIT-PROPOSAL.md,40兵种独立兵营图,正式素材

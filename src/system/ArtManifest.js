@@ -1,6 +1,6 @@
 /**
  * 自动生成，请勿手改。由 tools/gen-art-manifest.mjs 从
- * assets/PLACEHOLDER-MANIFEST.csv 生成，共 337 条。
+ * assets/PLACEHOLDER-MANIFEST.csv 生成，共 377 条。
  *
  * 全量贴图映射：ART_ENTRIES / ART_INDEX / ART_BY_CODE / ART_BINDINGS
  * 界面背景：SCREEN_BG / RESULT_BG / LOADING_BG
@@ -8,7 +8,7 @@
  *
  * 占位图被正式素材「同名覆盖」时本文件无需改动。
  */
-export const ART_COUNT = 337;
+export const ART_COUNT = 377;
 
 export const ART_ENTRIES = [
   {
@@ -5065,6 +5065,606 @@ export const ART_ENTRIES = [
     "quality": "",
     "source": "占地之王-逐界面素材清单.csv",
     "note": ""
+  },
+  {
+    "key": "buildings/barracks_unit_01",
+    "code": "BU-01",
+    "path": "buildings/barracks_unit_01.png",
+    "label": "兵种专属兵营·剑士 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_02",
+    "code": "BU-02",
+    "path": "buildings/barracks_unit_02.png",
+    "label": "兵种专属兵营·弓箭手 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_03",
+    "code": "BU-03",
+    "path": "buildings/barracks_unit_03.png",
+    "label": "兵种专属兵营·枪兵 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_04",
+    "code": "BU-04",
+    "path": "buildings/barracks_unit_04.png",
+    "label": "兵种专属兵营·斥候 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_05",
+    "code": "BU-05",
+    "path": "buildings/barracks_unit_05.png",
+    "label": "兵种专属兵营·民兵 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_06",
+    "code": "BU-06",
+    "path": "buildings/barracks_unit_06.png",
+    "label": "兵种专属兵营·投石兵 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_07",
+    "code": "BU-07",
+    "path": "buildings/barracks_unit_07.png",
+    "label": "兵种专属兵营·学徒 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_08",
+    "code": "BU-08",
+    "path": "buildings/barracks_unit_08.png",
+    "label": "兵种专属兵营·盾兵 Q1",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_09",
+    "code": "BU-09",
+    "path": "buildings/barracks_unit_09.png",
+    "label": "兵种专属兵营·骑士 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_10",
+    "code": "BU-10",
+    "path": "buildings/barracks_unit_10.png",
+    "label": "兵种专属兵营·狂战士 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_11",
+    "code": "BU-11",
+    "path": "buildings/barracks_unit_11.png",
+    "label": "兵种专属兵营·骷髅兵 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_12",
+    "code": "BU-12",
+    "path": "buildings/barracks_unit_12.png",
+    "label": "兵种专属兵营·战士 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_13",
+    "code": "BU-13",
+    "path": "buildings/barracks_unit_13.png",
+    "label": "兵种专属兵营·猎人 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_14",
+    "code": "BU-14",
+    "path": "buildings/barracks_unit_14.png",
+    "label": "兵种专属兵营·牧师 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_15",
+    "code": "BU-15",
+    "path": "buildings/barracks_unit_15.png",
+    "label": "兵种专属兵营·卫兵 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_16",
+    "code": "BU-16",
+    "path": "buildings/barracks_unit_16.png",
+    "label": "兵种专属兵营·海盗 Q2",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_17",
+    "code": "BU-17",
+    "path": "buildings/barracks_unit_17.png",
+    "label": "兵种专属兵营·弩手 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_18",
+    "code": "BU-18",
+    "path": "buildings/barracks_unit_18.png",
+    "label": "兵种专属兵营·游侠 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_19",
+    "code": "BU-19",
+    "path": "buildings/barracks_unit_19.png",
+    "label": "兵种专属兵营·长枪兵 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_20",
+    "code": "BU-20",
+    "path": "buildings/barracks_unit_20.png",
+    "label": "兵种专属兵营·神射手 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_21",
+    "code": "BU-21",
+    "path": "buildings/barracks_unit_21.png",
+    "label": "兵种专属兵营·冰法师 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_22",
+    "code": "BU-22",
+    "path": "buildings/barracks_unit_22.png",
+    "label": "兵种专属兵营·圣堂武士 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_23",
+    "code": "BU-23",
+    "path": "buildings/barracks_unit_23.png",
+    "label": "兵种专属兵营·战车 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_24",
+    "code": "BU-24",
+    "path": "buildings/barracks_unit_24.png",
+    "label": "兵种专属兵营·驯兽师 Q3",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_25",
+    "code": "BU-25",
+    "path": "buildings/barracks_unit_25.png",
+    "label": "兵种专属兵营·法师 Q4",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_26",
+    "code": "BU-26",
+    "path": "buildings/barracks_unit_26.png",
+    "label": "兵种专属兵营·圣骑士 Q4",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_27",
+    "code": "BU-27",
+    "path": "buildings/barracks_unit_27.png",
+    "label": "兵种专属兵营·刽子手 Q4",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_28",
+    "code": "BU-28",
+    "path": "buildings/barracks_unit_28.png",
+    "label": "兵种专属兵营·战斗法师 Q4",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_29",
+    "code": "BU-29",
+    "path": "buildings/barracks_unit_29.png",
+    "label": "兵种专属兵营·大法师 Q4",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_30",
+    "code": "BU-30",
+    "path": "buildings/barracks_unit_30.png",
+    "label": "兵种专属兵营·十字军 Q4",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_31",
+    "code": "BU-31",
+    "path": "buildings/barracks_unit_31.png",
+    "label": "兵种专属兵营·死灵法师 Q4",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_32",
+    "code": "BU-32",
+    "path": "buildings/barracks_unit_32.png",
+    "label": "兵种专属兵营·吸血鬼 Q5",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_33",
+    "code": "BU-33",
+    "path": "buildings/barracks_unit_33.png",
+    "label": "兵种专属兵营·蒸汽坦克 Q5",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_34",
+    "code": "BU-34",
+    "path": "buildings/barracks_unit_34.png",
+    "label": "兵种专属兵营·死亡骑士 Q5",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_35",
+    "code": "BU-35",
+    "path": "buildings/barracks_unit_35.png",
+    "label": "兵种专属兵营·风暴法师 Q5",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_36",
+    "code": "BU-36",
+    "path": "buildings/barracks_unit_36.png",
+    "label": "兵种专属兵营·战象 Q5",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_37",
+    "code": "BU-37",
+    "path": "buildings/barracks_unit_37.png",
+    "label": "兵种专属兵营·凤凰 Q5",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_38",
+    "code": "BU-38",
+    "path": "buildings/barracks_unit_38.png",
+    "label": "兵种专属兵营·幼龙 Q6",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_39",
+    "code": "BU-39",
+    "path": "buildings/barracks_unit_39.png",
+    "label": "兵种专属兵营·战争泰坦 Q6",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
+  },
+  {
+    "key": "buildings/barracks_unit_40",
+    "code": "BU-40",
+    "path": "buildings/barracks_unit_40.png",
+    "label": "兵种专属兵营·古龙 Q6",
+    "cat": "buildings",
+    "w": 312,
+    "h": 312,
+    "fmt": "PNG",
+    "is9": false,
+    "slice": 0,
+    "quality": "",
+    "source": "ART-BARRACKS-PER-UNIT-PROPOSAL.md",
+    "note": "40兵种独立兵营图"
   }
 ];
 
@@ -5565,6 +6165,126 @@ export const ART_BY_CODE = {
     "units/unit_walk_start",
     "units/unit_walk_loop",
     "units/unit_walk_attack"
+  ],
+  "BU-01": [
+    "buildings/barracks_unit_01"
+  ],
+  "BU-02": [
+    "buildings/barracks_unit_02"
+  ],
+  "BU-03": [
+    "buildings/barracks_unit_03"
+  ],
+  "BU-04": [
+    "buildings/barracks_unit_04"
+  ],
+  "BU-05": [
+    "buildings/barracks_unit_05"
+  ],
+  "BU-06": [
+    "buildings/barracks_unit_06"
+  ],
+  "BU-07": [
+    "buildings/barracks_unit_07"
+  ],
+  "BU-08": [
+    "buildings/barracks_unit_08"
+  ],
+  "BU-09": [
+    "buildings/barracks_unit_09"
+  ],
+  "BU-10": [
+    "buildings/barracks_unit_10"
+  ],
+  "BU-11": [
+    "buildings/barracks_unit_11"
+  ],
+  "BU-12": [
+    "buildings/barracks_unit_12"
+  ],
+  "BU-13": [
+    "buildings/barracks_unit_13"
+  ],
+  "BU-14": [
+    "buildings/barracks_unit_14"
+  ],
+  "BU-15": [
+    "buildings/barracks_unit_15"
+  ],
+  "BU-16": [
+    "buildings/barracks_unit_16"
+  ],
+  "BU-17": [
+    "buildings/barracks_unit_17"
+  ],
+  "BU-18": [
+    "buildings/barracks_unit_18"
+  ],
+  "BU-19": [
+    "buildings/barracks_unit_19"
+  ],
+  "BU-20": [
+    "buildings/barracks_unit_20"
+  ],
+  "BU-21": [
+    "buildings/barracks_unit_21"
+  ],
+  "BU-22": [
+    "buildings/barracks_unit_22"
+  ],
+  "BU-23": [
+    "buildings/barracks_unit_23"
+  ],
+  "BU-24": [
+    "buildings/barracks_unit_24"
+  ],
+  "BU-25": [
+    "buildings/barracks_unit_25"
+  ],
+  "BU-26": [
+    "buildings/barracks_unit_26"
+  ],
+  "BU-27": [
+    "buildings/barracks_unit_27"
+  ],
+  "BU-28": [
+    "buildings/barracks_unit_28"
+  ],
+  "BU-29": [
+    "buildings/barracks_unit_29"
+  ],
+  "BU-30": [
+    "buildings/barracks_unit_30"
+  ],
+  "BU-31": [
+    "buildings/barracks_unit_31"
+  ],
+  "BU-32": [
+    "buildings/barracks_unit_32"
+  ],
+  "BU-33": [
+    "buildings/barracks_unit_33"
+  ],
+  "BU-34": [
+    "buildings/barracks_unit_34"
+  ],
+  "BU-35": [
+    "buildings/barracks_unit_35"
+  ],
+  "BU-36": [
+    "buildings/barracks_unit_36"
+  ],
+  "BU-37": [
+    "buildings/barracks_unit_37"
+  ],
+  "BU-38": [
+    "buildings/barracks_unit_38"
+  ],
+  "BU-39": [
+    "buildings/barracks_unit_39"
+  ],
+  "BU-40": [
+    "buildings/barracks_unit_40"
   ]
 };
 
@@ -5672,6 +6392,246 @@ export const ART_BINDINGS = {
     "hook": "building",
     "keys": [
       "buildings/ruin"
+    ]
+  },
+  "BU-01": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_01"
+    ]
+  },
+  "BU-02": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_02"
+    ]
+  },
+  "BU-03": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_03"
+    ]
+  },
+  "BU-04": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_04"
+    ]
+  },
+  "BU-05": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_05"
+    ]
+  },
+  "BU-06": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_06"
+    ]
+  },
+  "BU-07": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_07"
+    ]
+  },
+  "BU-08": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_08"
+    ]
+  },
+  "BU-09": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_09"
+    ]
+  },
+  "BU-10": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_10"
+    ]
+  },
+  "BU-11": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_11"
+    ]
+  },
+  "BU-12": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_12"
+    ]
+  },
+  "BU-13": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_13"
+    ]
+  },
+  "BU-14": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_14"
+    ]
+  },
+  "BU-15": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_15"
+    ]
+  },
+  "BU-16": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_16"
+    ]
+  },
+  "BU-17": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_17"
+    ]
+  },
+  "BU-18": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_18"
+    ]
+  },
+  "BU-19": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_19"
+    ]
+  },
+  "BU-20": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_20"
+    ]
+  },
+  "BU-21": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_21"
+    ]
+  },
+  "BU-22": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_22"
+    ]
+  },
+  "BU-23": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_23"
+    ]
+  },
+  "BU-24": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_24"
+    ]
+  },
+  "BU-25": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_25"
+    ]
+  },
+  "BU-26": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_26"
+    ]
+  },
+  "BU-27": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_27"
+    ]
+  },
+  "BU-28": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_28"
+    ]
+  },
+  "BU-29": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_29"
+    ]
+  },
+  "BU-30": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_30"
+    ]
+  },
+  "BU-31": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_31"
+    ]
+  },
+  "BU-32": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_32"
+    ]
+  },
+  "BU-33": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_33"
+    ]
+  },
+  "BU-34": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_34"
+    ]
+  },
+  "BU-35": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_35"
+    ]
+  },
+  "BU-36": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_36"
+    ]
+  },
+  "BU-37": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_37"
+    ]
+  },
+  "BU-38": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_38"
+    ]
+  },
+  "BU-39": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_39"
+    ]
+  },
+  "BU-40": {
+    "hook": "building",
+    "keys": [
+      "buildings/barracks_unit_40"
     ]
   },
   "FX-01": {
@@ -6364,6 +7324,7 @@ export const ART_HOOKS = {
 export const ART_PREFIXES = {
   "quality": "ui/quality_q",
   "barracks": "buildings/barracks_",
+  "barracksUnit": "buildings/barracks_unit_",
   "unit": "units/unit_",
   "unitSmall": "units/unit_small_",
   "race": "units/race_",

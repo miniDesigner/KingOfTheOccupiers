@@ -146,6 +146,7 @@ const ART_HOOKS = {
 const ART_PREFIXES = {
   quality: 'ui/quality_q',
   barracks: 'buildings/barracks_',
+  barracksUnit: 'buildings/barracks_unit_',
   unit: 'units/unit_',
   unitSmall: 'units/unit_small_',
   race: 'units/race_',
