@@ -66,3 +66,13 @@ test('兵种角色素材存在且尺寸合规', () => {
   assert(existsSync(ROOT + 'assets/units/unit_small_01.png'), '兵种小图 01 存在');
   assert(existsSync(ROOT + 'assets/units/unit_small_40.png'), '兵种小图 40 存在');
 });
+
+test('字符串兵种id正确映射到立绘序号，不再全部回落01', () => {
+  const sprite = bodyOf(rsSrc, '_drawUnitSprite(shot, alpha) {');
+  assert(sprite.includes("typeof shot.unitId === 'number'"), '数字序号仍直用');
+  assert(sprite.includes('getUnitArtIndex(shot.unitId)'), '字符串id走统一映射函数');
+  assert(sprite.includes('|| 1'), '未命中id有安全兜底');
+  assert(!/const id = typeof shot\.unitId === 'number' \? shot\.unitId : 1;/.test(sprite),
+    '旧的"非数字一律回落01"判断已移除');
+  assert(rsSrc.includes('getUnitArtIndex }'), '映射函数已在渲染系统导入');
+});

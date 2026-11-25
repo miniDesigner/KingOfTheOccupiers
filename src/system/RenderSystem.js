@@ -2382,9 +2382,16 @@ export class RenderSystem {
     };
   }
 
-  /** 以角色中心为原点画兵种立绘；外层已完成 translate / rotate / scale */
+  /**
+   * 以角色中心为原点画兵种立绘；外层已完成 translate / rotate / scale。
+   * unitId 有两种来源：敌方/旧数据给数字序号；玩家兵营走 deploymentBundle，
+   * 从 getUnitStats() 继承的是字符串 id（如 'swordsman'）。字符串必须经
+   * getUnitArtIndex 映射到 1~40，否则全部回落 01 号，战斗里看不出上阵差异。
+   */
   _drawUnitSprite(shot, alpha) {
-    const id = typeof shot.unitId === 'number' ? shot.unitId : 1;
+    const id = typeof shot.unitId === 'number'
+      ? shot.unitId
+      : (getUnitArtIndex(shot.unitId) || 1);
     const s = UNIT_ACTOR_SIZE;
     return this._art(pick_unitSmall(id), -s / 2, -s / 2, s, s, { alpha });
   }
