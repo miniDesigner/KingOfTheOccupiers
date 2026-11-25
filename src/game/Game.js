@@ -3268,8 +3268,8 @@ export class Game {
       }
     }
 
-    // 任务/成就列表滚动上界：最后一张卡片贴到可视区底就停，避免继续滚到空白。
-    // 其他可滚界面（科技/商店/通行证）保持无上界的原有行为。
+    // 任务/成就/商店列表滚动上界：最后一张卡片贴到可视区底就停，避免继续滚到空白。
+    // 其他可滚界面（科技/通行证）保持无上界的原有行为。
     let metaMaxScroll = Infinity;
     if (this.screenState === 'quest') {
       metaMaxScroll = RenderSystem.questMaxScroll(
@@ -3278,6 +3278,9 @@ export class Game {
     } else if (this.screenState === 'achievement') {
       metaMaxScroll = RenderSystem.achievementMaxScroll(
         QuestSystem.getAchievements(), this.screenWidth, this.screenHeight);
+    } else if (this.screenState === 'shop') {
+      metaMaxScroll = RenderSystem.shopMaxScroll(
+        ShopSystem.getShopItems(), this.shopTab, this.screenWidth, this.screenHeight);
     }
 
     // 设置输入系统模式

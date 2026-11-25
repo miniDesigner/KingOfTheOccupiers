@@ -5649,6 +5649,28 @@ export class RenderSystem {
     return L.listStartY - (scrollY || 0) + index * (L.itemH + L.gap);
   }
 
+  /**
+   * 商店列表滚动上界：最后一张卡片底边贴到可视区底就停，避免列表被一路推走只剩背景。
+   * 口径与 questMaxScroll / achievementMaxScroll 一致（Game.onMenuScroll 与 gameState 双处收敛）。
+   * 短列表（≤3 件）下方会补「每日福利日历」说明卡，它也是可见内容，需纳入上界。
+   */
+  static shopMaxScroll(shopItems, tabIndex, screenWidth, screenHeight) {
+    const cats = shopItems || [];
+    const cat = cats[tabIndex || 0];
+    if (!cat || !cat.items || !cat.items.length) return 0;
+    const L = RenderSystem.shopLayout(screenWidth, cats.length, screenHeight);
+    let contentBottom = L.listStartY + (cat.items.length - 1) * (L.itemH + L.gap) + L.itemH;
+    // 与 drawShop 的填充卡条件逐字对应：≤3 件且卡片完整落在可视区内才绘制
+    if (cat.items.length <= 3) {
+      const emptyY = contentBottom + L.gap + 8;
+      const emptyH = 200;
+      if (emptyY + emptyH < screenHeight - 60) {
+        contentBottom = Math.max(contentBottom, emptyY + emptyH);
+      }
+    }
+    return Math.max(0, contentBottom - subpageClipBottom(screenHeight));
+  }
+
   drawShop(gameState) {
     const { ctx } = this;
     const w = this.screenWidth;
