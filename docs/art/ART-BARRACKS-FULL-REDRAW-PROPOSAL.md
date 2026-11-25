@@ -108,7 +108,7 @@
 | 33 | 蒸汽坦克 | 铆钉铁工坊，双烟囱，外露齿轮 | 屋顶两个咬合的巨型齿轮 | 铁 + 铜 | 青铜 + 煤灰 | 蒸汽白雾 | 4 |
 | 34 | 死亡骑士 | 黑铁骸堡，断剑旗，骨饰屋檐 | 屋顶巨型带角头盔 | 黑铁 + 骨 | 墨黑 + 暗红 | 断剑 | 4 |
 | 35 | 风暴法师 | 层叠旋涡状石塔，铜风铃 | 塔顶巨型四叶风车 | 灰石 + 铜 | storm 青灰 | 风铃 | 4 |
-| 36 | 战象 | 超大拱形兽舍，象牙形门柱，粗木栏 | 正面巨型象头石雕与一对长牙 | 粗木 + 石 | 象牙白 + 土棕 | 鞍具、草料 | A |
+| 36 | 战象 | **驯象苑**：粗木+石门楼接半开放围栏，含石沿泥浴池/高架草料架/拴象桩+铁链/遮阳草棚；地面湿泥脚印、散落草料、柱挂象鞍象钩。**不出现真象**（2026-11-25 用户裁决，保持纯建筑资产） | **保留例外并加大**：象头石雕嵌门楣上方，雕出卷鼻+长牙+耳廓，占建筑高约 40% | 粗木 + 石 | 象牙白 + 土棕 | 泥浴池、草料架、铁链、象鞍 | A（三次重出） |
 | 37 | 凤凰 | 树枝巨巢，火焰形屋顶，巢中蛋 | 巢中一枚巨型火纹蛋 + 火焰羽冠 | 树枝 + 铜 | 暖橙红 | 火纹瓦 | 4 |
 | 38 | 幼龙 | 山洞形石窟，龙鳞瓦，洞内宝藏 | 洞口上方巨型龙鳞蛋 | 岩石 + 金 | 翠绿 + 金 | 金币堆 | 4 |
 | 39 | 战争泰坦 | 巨岩基座 + 巨足石阶，非完整人像 | 基座侧面巨型石拳撑住平台 | 巨岩 | 花岗岩灰 | 断柱 | 4 |
@@ -147,7 +147,7 @@ A {BUILDING} for a fantasy unit barracks. Constructed from {MATERIAL}, with {ACC
 > - 01: `low complete sloped-roof timber training shed` / `two giant crossed longswords with clearly visible crossguards and hilts, floating as one piece above the roof` — PLACEMENT: FLOAT
 > - 17: `complete sloped-roof timber workshop` / `an oversized crossbow with visible limbs, string and loaded bolt, floating as one piece above the roof` — PLACEMENT: FLOAT
 > - 21: `tall ice-spire mage tower with frosted stone base` / `a giant six-pointed ice crystal at the tower peak`
-> - 36: `heavy open-sided timber beast stable with rough logs and wide arched entrance, no clay roof tiles` / `a massive stone elephant head with two long tusks mounted above the entrance` — PLACEMENT: LINTEL
+> - 36: `an elephant-rearing yard: a rough timber-and-stone gatehouse opening onto a half-open fenced corral, with a stone-rimmed mud wallow pool, a raised hay rack with hay stacks, tethering posts with hanging chains and a small shade canopy; wet muddy footprints and scattered hay on the ground, elephant saddles and hooks hanging on the posts; NO elephant animal present` / `a massive carved stone elephant head with a curled trunk, long ivory tusks and broad ears mounted above the gatehouse entrance, enlarged to about 40 percent of the building height` — PLACEMENT: LINTEL
 > - 07（用户指定范例）: `small study hut with sloped roof` / `one giant open book resting on the roof ridge, pages and spine clearly readable`
 
 ### 段 3 · 画布与构图（固定）
