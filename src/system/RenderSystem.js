@@ -5098,51 +5098,61 @@ export class RenderSystem {
         ctx.restore();
       }
       this._artIcon(ART_PREFIXES.rankBadge, rankKey, miniCx, miniCy, miniSize, 1);
-      // 外框改中性冷蓝，与段位色填充拉开色相：原来两者同为 ladderTier.color（仅差 53% 透明度），
-      // 边框与进度糊成一片，0 进度时几乎读不出槽体边界。
-      // 描边专用提亮：_cardBg 的 border 路径内缩 1.5px + 2.5px 线宽，常规 NIGHT.border(0.42)
-      // 在深底上圆角几乎读不出来；段位条是主信息条，单独提高不透明度让轮廓弧度可见。
-      this._cardBg({ x: barX, y: barY, w: barW, h: barH, r: 6 }, {
-        tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: 'rgba(168,208,242,0.72)', flat: true,
-      });
-      // 轨道底图（程序化，零图片资源）：深靛槽底 + 10 格刻度 + 顶高光 + 底内阴影。
-      // 圆角口径（2026-11-25 定稿）：外框 r6 描边内沿等效 r3.25，轨道 r3，两者圆心同在
-      // (barX+6, barY+6)。填充不再单独画一个小圆角块（那样左端弧线短、顶边平直、看着不平行），
-      // 而是复用轨道的 clip + 与轨道相同的起点/半径 r3，填充左端弧线与轨道左端弧线完全重合。
-      const trackX = barX + 3, trackY = barY + 3;
-      const trackW = barW - 6, trackH = barH - 6;
+      // === 圆角几何（2026-11-25 终版）：内部所有层复用最外层轮廓的 clip ===
+      // 用户要求「根据最外层轮廓的圆角表现做内面背景和橙色进度」。
+      // 做法：先画外框圆角路径并 ctx.clip()，槽底与橙进度都填满该路径、再按进度裁宽。
+      // 圆角形状由外框唯一决定，内层不再各自算半径——橙进度左端弧线就是外框左端弧线本身，
+      // 三层无论圆角大小还是弧线位置都完全重合，不存在「外框圆、里面方」的观感差。
+      const barR = 8;
       ctx.save();
-      this._roundRectPath(trackX, trackY, trackW, trackH, 3);
-      ctx.fillStyle = 'rgba(6,14,30,0.86)';
+      this._roundRectPath(barX, barY, barW, barH, barR);
+      if (NIGHT.cardSoft && NIGHT.cardSoft.length >= 2 && typeof ctx.createLinearGradient === 'function') {
+        const frameGrad = ctx.createLinearGradient(0, barY, 0, barY + barH);
+        frameGrad.addColorStop(0, NIGHT.cardSoft[0]);
+        frameGrad.addColorStop(1, NIGHT.cardSoft[1]);
+        ctx.fillStyle = frameGrad;
+      } else {
+        ctx.fillStyle = NIGHT.solid;
+      }
       ctx.fill();
       ctx.clip();
-      const tickW = trackW / 10;
+      // 轨道底图（程序化，零图片资源）：深靛槽底 + 10 格刻度 + 顶高光 + 底内阴影。
+      // 填满整个外框区域，圆角完全继承外框 clip。
+      ctx.fillStyle = 'rgba(6,14,30,0.86)';
+      ctx.fillRect(barX, barY, barW, barH);
+      const tickW = barW / 10;
       for (let i = 1; i < 10; i++) {
         ctx.fillStyle = i % 5 === 0 ? 'rgba(126,170,220,0.30)' : 'rgba(126,170,220,0.16)';
-        ctx.fillRect(trackX + Math.round(tickW * i), trackY + 1, 1, trackH - 2);
+        ctx.fillRect(barX + Math.round(tickW * i), barY + 1, 1, barH - 2);
       }
       ctx.fillStyle = 'rgba(234,248,255,0.10)';
-      ctx.fillRect(trackX + 1, trackY, trackW - 2, 1);
+      ctx.fillRect(barX + 1, barY + 1, barW - 2, 1);
       ctx.fillStyle = 'rgba(0,0,0,0.30)';
-      ctx.fillRect(trackX + 1, trackY + trackH - 1, trackW - 2, 1);
-      // 进度填充：与轨道同起点 (trackX,trackY)、同高 trackH、同圆角 r3。
-      // 左端弧线因此和轨道左端弧线是同一条，与外框描边内沿同心；右端单独 r3 收口。
-      const fillW = Math.max(trackH, trackW * (ladderProgress.next ? ladderProgress.ratio : 1));
+      ctx.fillRect(barX + 1, barY + barH - 2, barW - 2, 1);
+      // 橙进度：从左端 fillRect 到进度宽度，左端被外框圆角裁切，弧线与轮廓是同一条。
+      const fillW = Math.max(barH, barW * (ladderProgress.next ? ladderProgress.ratio : 1));
       ctx.fillStyle = ladderTier.color;
       if (typeof ctx.createLinearGradient === 'function') {
-        const fillGrad = ctx.createLinearGradient(0, trackY, 0, trackY + trackH);
+        const fillGrad = ctx.createLinearGradient(0, barY, 0, barY + barH);
         fillGrad.addColorStop(0, tintOf(ladderTier.color, 0.55));
         fillGrad.addColorStop(0.42, ladderTier.color);
         fillGrad.addColorStop(1, ladderTier.color);
         ctx.fillStyle = fillGrad;
       }
-      this._roundRectPath(trackX, trackY, fillW, trackH, 3);
-      ctx.fill();
+      ctx.fillRect(barX, barY, fillW, barH);
       // 填充内部顶部高光 + 右端亮封边，强化「已走完的部分」体积感
       ctx.fillStyle = 'rgba(255,255,255,0.16)';
-      ctx.fillRect(trackX + 1, trackY + 1, Math.max(0, fillW - 2), 2);
+      ctx.fillRect(barX + 2, barY + 2, Math.max(0, fillW - 4), 2);
       ctx.fillStyle = tintOf(ladderTier.color, 0.66);
-      ctx.fillRect(trackX + fillW - 3, trackY + 1, 2, trackH - 2);
+      ctx.fillRect(barX + fillW - 3, barY + 2, 2, barH - 4);
+      ctx.restore();
+      // 外框描边最后画：路径内缩 1.5px + 2.5px 线宽，圆心仍在 (barX+barR, barY+barR)，
+      // 与内部槽底/橙进度弧线严格同心；提亮冷蓝让轮廓弧度在深底上可读。
+      ctx.save();
+      this._roundRectPath(barX + 1.5, barY + 1.5, barW - 3, barH - 3, barR - 1.5);
+      ctx.strokeStyle = 'rgba(168,208,242,0.72)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
       ctx.restore();
       // 进度条内文字（居中）：当前杯 / 升级需要杯数（升级需求直接表达在进度条上，不再写下一级段位名）
       ctx.save();
