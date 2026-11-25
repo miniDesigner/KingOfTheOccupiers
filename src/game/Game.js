@@ -3257,11 +3257,23 @@ export class Game {
       }
     }
 
+    // 任务/成就列表滚动上界：最后一张卡片贴到可视区底就停，避免继续滚到空白。
+    // 其他可滚界面（科技/商店/通行证）保持无上界的原有行为。
+    let metaMaxScroll = Infinity;
+    if (this.screenState === 'quest') {
+      metaMaxScroll = RenderSystem.questMaxScroll(
+        QuestSystem.getDailyQuests(), QuestSystem.getWeeklyQuests(), QuestSystem.getSeasonQuests(),
+        this.screenWidth, this.screenHeight);
+    } else if (this.screenState === 'achievement') {
+      metaMaxScroll = RenderSystem.achievementMaxScroll(
+        QuestSystem.getAchievements(), this.screenWidth, this.screenHeight);
+    }
+
     // 设置输入系统模式
     this.inputSystem.cameraEnabled = (this.screenState === 'playing' && !this.paused);
     this.inputSystem.onMenuScroll = (this.screenState === 'tech_panel' || this.screenState === 'shop' || this.screenState === 'quest' || this.screenState === 'achievement' || this.screenState === 'battle_pass')
       ? (dy) => {
-          this.metaScrollY = Math.max(0, this.metaScrollY + dy);
+          this.metaScrollY = Math.min(metaMaxScroll, Math.max(0, this.metaScrollY + dy));
         }
       : null;
 
@@ -3310,9 +3322,9 @@ export class Game {
       lastRewards: this._lastRewards,
       newlyUnlockedRace: this._newlyUnlockedRace,
       recruitSummary: this._buildRecruitSummary(),
-      // 布阵图鉴滚动上界：任何来源的越界值都在此收敛，避免列表滚出可视区露空白
-      metaScrollY: this.screenState === 'deploy_select'
-        ? Math.min(this.metaScrollY, this.deployMaxScroll()) : this.metaScrollY,
+      // 滚动上界：布阵图鉴 / 任务 / 成就都在此收敛，任何来源的越界值都不会让列表滚出可视区露空白
+      metaScrollY: Math.min(this.metaScrollY,
+        this.screenState === 'deploy_select' ? this.deployMaxScroll() : metaMaxScroll),
       selectedTechBranch: this.selectedTechBranch,
       shopTab: this.shopTab,
       toastText: this._toastText,

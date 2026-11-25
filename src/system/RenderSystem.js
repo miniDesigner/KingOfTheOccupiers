@@ -5798,6 +5798,20 @@ export class RenderSystem {
     };
   }
 
+  /** 滚动列表可见区底边：与 _beginScrollClip 同源（返回按钮顶部再留 8px） */
+  static scrollClipBottom(screenHeight) {
+    return screenHeight - BACK_BTN.bottom - BACK_BTN.h - SCROLL_BOTTOM_GAP;
+  }
+
+  /** 任务列表滚动上界：最后一张卡片底边刚好贴到可视区底，再滚只会露空白 */
+  static questMaxScroll(dailyQuests, weeklyQuests, seasonQuests, screenWidth, screenHeight) {
+    const L = RenderSystem.questLayout(dailyQuests || [], weeklyQuests || [], seasonQuests || [], 0, screenWidth, screenHeight);
+    const rects = [...L.dailyRects, ...L.weeklyRects, ...L.seasonRects];
+    if (!rects.length) return 0;
+    const contentBottom = Math.max(...rects.map((r) => r.y + r.h));
+    return Math.max(0, contentBottom - RenderSystem.scrollClipBottom(screenHeight));
+  }
+
   /**
    * 成就面板共享布局（渲染与点击统一使用）
    * 返回: { itemW, itemH, headerY, rects[], claimAllRect }
@@ -5818,6 +5832,14 @@ export class RenderSystem {
       itemW, itemH, headerY, rects,
       claimAllRect: claimAllButtonLayout(screenWidth, screenHeight),
     };
+  }
+
+  /** 成就列表滚动上界：口径与任务列表一致（最后一张卡片贴可视区底） */
+  static achievementMaxScroll(achievements, screenWidth, screenHeight) {
+    const L = RenderSystem.achievementLayout(achievements || [], 0, screenWidth, screenHeight);
+    if (!L.rects.length) return 0;
+    const contentBottom = Math.max(...L.rects.map((r) => r.y + r.h));
+    return Math.max(0, contentBottom - RenderSystem.scrollClipBottom(screenHeight));
   }
 
   /**

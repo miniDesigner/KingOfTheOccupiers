@@ -267,5 +267,42 @@ console.log('=== 测试11: 每日任务标题完整落在滚动裁剪区之内 =
     '每日标题使用共享 layout 的 y，绘制与卡片命中同源');
 }
 
+console.log('=== 测试12: 任务/成就滚动上界贴底，不会一路滚到空白 ===');
+{
+  const W = 430, H = 854;
+  const clipBottom = RenderSystem.scrollClipBottom(H);
+  const mk = (n, p) => Array.from({ length: n }, (_, i) => ({ id: `${p}${i}` }));
+
+  const daily = mk(12, 'd');
+  const maxScroll = RenderSystem.questMaxScroll(daily, [], [], W, H);
+  assert(maxScroll > 0, `长任务列表存在可滚范围（实际 ${maxScroll}）`);
+  const atEnd = RenderSystem.questLayout(daily, [], [], maxScroll, W, H);
+  const lastDaily = atEnd.dailyRects[atEnd.dailyRects.length - 1];
+  assert(Math.abs(lastDaily.y + lastDaily.h - clipBottom) < 0.001,
+    `滚到上界时最后一张每日卡片贴可视区底（实际 ${lastDaily.y + lastDaily.h} / ${clipBottom}）`);
+  assert(RenderSystem.questMaxScroll(mk(1, 'd'), [], [], W, H) === 0,
+    '短列表不需要滚动，上界为 0');
+
+  const ach = mk(20, 'a');
+  const aMax = RenderSystem.achievementMaxScroll(ach, W, H);
+  assert(aMax > 0, `长成就列表存在可滚范围（实际 ${aMax}）`);
+  const aEnd = RenderSystem.achievementLayout(ach, aMax, W, H);
+  const lastAch = aEnd.rects[aEnd.rects.length - 1];
+  assert(Math.abs(lastAch.y + lastAch.h - clipBottom) < 0.001,
+    '成就滚到上界时最后一张卡片同样贴可视区底');
+  assert(RenderSystem.achievementMaxScroll([], W, H) === 0, '空成就列表上界为 0');
+
+  const gameSrc = rf(ROOT + 'src/game/Game.js', 'utf-8');
+  assert(gameSrc.includes('Math.min(metaMaxScroll, Math.max(0, this.metaScrollY + dy))'),
+    '滚动增量按 metaMaxScroll 收敛');
+  assert(gameSrc.includes('this.screenState === \'deploy_select\' ? this.deployMaxScroll() : metaMaxScroll'),
+    'gameState 的 metaScrollY 对任务/成就同样收敛（防越界来源）');
+  assert(gameSrc.includes('RenderSystem.questMaxScroll(') && gameSrc.includes('RenderSystem.achievementMaxScroll('),
+    '任务与成就各自按内容高度计算上界');
+  const rsSrc = rf(ROOT + 'src/system/RenderSystem.js', 'utf-8');
+  assert(rsSrc.includes('return screenHeight - BACK_BTN.bottom - BACK_BTN.h - SCROLL_BOTTOM_GAP;'),
+    '上界计算与 _beginScrollClip 共用同一底边口径');
+}
+
 console.log(`\n结果: ${passed} 通过, ${failed} 失败`);
 process.exit(failed === 0 ? 0 : 1);
