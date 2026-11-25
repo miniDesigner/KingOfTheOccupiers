@@ -5106,10 +5106,9 @@ export class RenderSystem {
         tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: 'rgba(168,208,242,0.72)', flat: true,
       });
       // 轨道底图（程序化，零图片资源）：深靛槽底 + 10 格刻度 + 顶高光 + 底内阴影。
-      // 层级铁律：外框 > 轨道底图 > 进度填充，逐层内缩 3px / 1px。
-      // 圆角同心口径：_cardBg 描边路径内缩 1.5px、线宽 2.5px，描边内沿等效 r=6-1.5-1.25=3.25；
-      // 轨道内缩 3px 取 r3（≈内沿再收 0.25），填充再内缩 1px 取 r2，三层曲率一致不互压。
-      // 旧版轨道内缩 2px/r4、填充 r3，相对描边内沿不是同心收缩，放大后圆角一大一小。
+      // 圆角口径（2026-11-25 定稿）：外框 r6 描边内沿等效 r3.25，轨道 r3，两者圆心同在
+      // (barX+6, barY+6)。填充不再单独画一个小圆角块（那样左端弧线短、顶边平直、看着不平行），
+      // 而是复用轨道的 clip + 与轨道相同的起点/半径 r3，填充左端弧线与轨道左端弧线完全重合。
       const trackX = barX + 3, trackY = barY + 3;
       const trackW = barW - 6, trackH = barH - 6;
       ctx.save();
@@ -5126,30 +5125,24 @@ export class RenderSystem {
       ctx.fillRect(trackX + 1, trackY, trackW - 2, 1);
       ctx.fillStyle = 'rgba(0,0,0,0.30)';
       ctx.fillRect(trackX + 1, trackY + trackH - 1, trackW - 2, 1);
-      ctx.restore();
-      // 进度填充：再内缩 1px，圆角 r2 与轨道 r3、描边内沿 r3.25 同心；上下各留 1px 让底图边缘露出，
-      // 冷蓝轮廓始终完整可见，不再被填充切断。最小宽度取一个填充高度，小进度不变形。
-      const fillX = trackX + 1, fillY = trackY + 1;
-      const fillMaxW = trackW - 2, fillH = trackH - 2;
-      const barFillW = Math.max(fillH, fillMaxW * (ladderProgress.next ? ladderProgress.ratio : 1));
-      const barFillR = Math.min(2, barFillW / 2, fillH / 2);
-      ctx.save();
-      this._roundRectPath(fillX, fillY, barFillW, fillH, barFillR);
+      // 进度填充：与轨道同起点 (trackX,trackY)、同高 trackH、同圆角 r3。
+      // 左端弧线因此和轨道左端弧线是同一条，与外框描边内沿同心；右端单独 r3 收口。
+      const fillW = Math.max(trackH, trackW * (ladderProgress.next ? ladderProgress.ratio : 1));
       ctx.fillStyle = ladderTier.color;
       if (typeof ctx.createLinearGradient === 'function') {
-        const fillGrad = ctx.createLinearGradient(0, fillY, 0, fillY + fillH);
+        const fillGrad = ctx.createLinearGradient(0, trackY, 0, trackY + trackH);
         fillGrad.addColorStop(0, tintOf(ladderTier.color, 0.55));
         fillGrad.addColorStop(0.42, ladderTier.color);
         fillGrad.addColorStop(1, ladderTier.color);
         ctx.fillStyle = fillGrad;
       }
+      this._roundRectPath(trackX, trackY, fillW, trackH, 3);
       ctx.fill();
       // 填充内部顶部高光 + 右端亮封边，强化「已走完的部分」体积感
-      ctx.clip();
       ctx.fillStyle = 'rgba(255,255,255,0.16)';
-      ctx.fillRect(fillX + 1, fillY, Math.max(0, barFillW - 2), 2);
+      ctx.fillRect(trackX + 1, trackY + 1, Math.max(0, fillW - 2), 2);
       ctx.fillStyle = tintOf(ladderTier.color, 0.66);
-      ctx.fillRect(Math.max(fillX, fillX + barFillW - 3), fillY + 1, 2, fillH - 2);
+      ctx.fillRect(trackX + fillW - 3, trackY + 1, 2, trackH - 2);
       ctx.restore();
       // 进度条内文字（居中）：当前杯 / 升级需要杯数（升级需求直接表达在进度条上，不再写下一级段位名）
       ctx.save();
