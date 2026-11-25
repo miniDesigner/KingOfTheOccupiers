@@ -108,7 +108,7 @@
 | 33 | 蒸汽坦克 | 铆钉铁工坊，双烟囱，外露齿轮 | 屋顶两个咬合的巨型齿轮 | 铁 + 铜 | 青铜 + 煤灰 | 蒸汽白雾 | 4 |
 | 34 | 死亡骑士 | 黑铁骸堡，断剑旗，骨饰屋檐 | 屋顶巨型带角头盔 | 黑铁 + 骨 | 墨黑 + 暗红 | 断剑 | 4 |
 | 35 | 风暴法师 | 层叠旋涡状石塔，铜风铃 | 塔顶巨型四叶风车 | 灰石 + 铜 | storm 青灰 | 风铃 | 4 |
-| 36 | 战象 | **驯象苑**：粗木+石门楼接半开放围栏，含石沿泥浴池/高架草料架/拴象桩+铁链/遮阳草棚；地面湿泥脚印、散落草料、柱挂象鞍象钩。**不出现真象**（2026-11-25 用户裁决，保持纯建筑资产） | **保留例外并加大**：象头石雕嵌门楣上方，雕出卷鼻+长牙+耳廓，占建筑高约 40% | 粗木 + 石 | 象牙白 + 土棕 | 泥浴池、草料架、铁链、象鞍 | A（三次重出） |
+| 36 | 战象 | **驯象苑**：石板灰门楼接半开放围栏，含石沿泥浴池/高架草料架/拴象桩+铁链/遮阳草棚；地面湿泥脚印、散落草料、柱挂象鞍象钩。**不出现真象**（2026-11-25 用户裁决，保持纯建筑资产） | **保留例外并加大**：象头石雕嵌门楣上方，雕出卷鼻+长牙+耳廓，占建筑高约 40% | 石板灰 + 暖木辅助 | **石板象灰**（2026-11-25 用户裁决换色，色相特例，详见 §5 战象特例） | 泥浴池、草料架、铁链、象鞍 | A（四次重出） |
 | 37 | 凤凰 | 树枝巨巢，火焰形屋顶，巢中蛋 | 巢中一枚巨型火纹蛋 + 火焰羽冠 | 树枝 + 铜 | 暖橙红 | 火纹瓦 | 4 |
 | 38 | 幼龙 | 山洞形石窟，龙鳞瓦，洞内宝藏 | 洞口上方巨型龙鳞蛋 | 岩石 + 金 | 翠绿 + 金 | 金币堆 | 4 |
 | 39 | 战争泰坦 | 巨岩基座 + 巨足石阶，非完整人像 | 基座侧面巨型石拳撑住平台 | 巨岩 | 花岗岩灰 | 断柱 | 4 |
@@ -168,7 +168,17 @@ Pure solid magenta #FF00FF background only, no gradient, no floor shadow cast on
 text, letter, number, logo, glow, neon, beam, ray, aurora, hard outline, black lineart, realistic, photo, gradient background, floor shadow, white background, pure white, pure black, sci-fi, cyber, generic wooden hut, same building different color, tiny emblem, small ornament as main identifier, multiple competing focal objects, signature object hidden by flag, signature object merged into roof, signature object resting on roof, weapon forming the roof, crossbow forming the roof, cold grey, desaturated, bluish tone, washed out, weathered wood, dirty grime, thin flat cel shading, sketchy linework, visible plank gaps, dark cracks, orange clay roof tiles, farm barn
 ```
 
-**出图路线（2026-11-25 用户拍板：纯文生图 B）**：不传任何参考图（上次 `input_fidelity=medium` 图生图把旧木屋骨架带回来了），纯靠提示词驱动形态。风格统一由「段 1 强化锚点 + Negative 排除冷灰」保证，4 张基准逐字复用同一风格段，只替换 `{BUILDING}` / `{SIGNATURE}` / `{MATERIAL}` / `{ACCENT}` / `{PROP}` 五个槽位。
+### 段 1 特例 · 战象石板象灰（仅 36 号，禁止外推）
+
+> **2026-11-25 用户裁决**：战象主题色改「石板象灰」，让它和象有关。用户已知并接受「这张会跟其余暖木色资产不同族」的取舍。**本特例只替换段 1 的色相句，其余全部逐字不变**（视角/占画比例/底座/光照/明度阶梯/厚涂笔触/卡通质感）。后续 36 张除用户另行指定外，一律用回通用暖色段 1，不得引用本特例。
+
+```
+Painterly 2.5D isometric game building, high three-quarter view showing roof, front and right side in one frame, chunky rounded volumes with soft thick-paint shading and smooth brush transitions, no hard outlines, no lineart. SLATE ELEPHANT GREY PALETTE, the special elephant theme color: cool blue-grey slate stone and weathered elephant-hide grey cover the gatehouse, the carved elephant head and the corral posts; warm honey wood, amber timber and straw are kept ONLY as small secondary accents on the hay rack, shade canopy roof and equipment. The whole asset reads as a cool grey stone elephant yard with warm accents, clearly evoking an elephant. Consistent left-top key light: brightest pale slate plane, mid-tone stone grey front face, darker blue-grey right side. The building sits on the same small elliptical crushed-stone pedestal used by the whole building family, made of warm cream stones (unchanged). Premium hand-painted cartoon mobile game asset, thick rounded brushwork, plump soft forms, clean readable shapes, cheerful candy-like finish. Same brushwork, lighting direction and architectural language as the warm-wood barracks family; ONLY the color scheme differs.
+```
+
+> 战象 Negative 调整：从通用段删除 `cold grey, desaturated, bluish tone, weathered wood`，改为 `warm orange wood dominating, orange clay roof tiles, farm barn, dirty grime, thin flat cel shading, sketchy linework, visible plank gaps, dark cracks`。底座明度仍按冻结值，暖米石基必须保留以维持家族一致性。
+
+**出图路线（2026-11-25 用户拍板：纯文生图 B）**：不传任何参考图（上次 `input_fidelity=medium` 图生图把旧木屋骨架带回来了），纯靠提示词驱动形态。风格统一由「段 1 强化锚点 + Negative 排除冷灰」保证，4 张基准逐字复用同一风格段，只替换 `{BUILDING}` / `{SIGNATURE}` / `{MATERIAL}` / `{ACCENT}` / `{PROP}` 五个槽位。**唯一例外：36 号战象按上方「段 1 特例」换色相。**
 
 **参考图（不用于本次出图）**：`assets/buildings/barracks_1.png`（风格标杆，仅供人工目检比对暖色厚涂是否到位；**不出图时不传入，避免带走木屋形态**）
 **后处理**：`python tools/remove-bg-connected.py <input.png> --output <output.png>`（禁用全局阈值脚本，浅色雪顶/骨白/石基会被挖穿）
