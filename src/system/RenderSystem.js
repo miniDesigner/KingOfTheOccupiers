@@ -5100,16 +5100,20 @@ export class RenderSystem {
       this._artIcon(ART_PREFIXES.rankBadge, rankKey, miniCx, miniCy, miniSize, 1);
       // 外框改中性冷蓝，与段位色填充拉开色相：原来两者同为 ladderTier.color（仅差 53% 透明度），
       // 边框与进度糊成一片，0 进度时几乎读不出槽体边界。
+      // 描边专用提亮：_cardBg 的 border 路径内缩 1.5px + 2.5px 线宽，常规 NIGHT.border(0.42)
+      // 在深底上圆角几乎读不出来；段位条是主信息条，单独提高不透明度让轮廓弧度可见。
       this._cardBg({ x: barX, y: barY, w: barW, h: barH, r: 6 }, {
-        tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: NIGHT.border, flat: true,
+        tintGradient: NIGHT.cardSoft, tint: NIGHT.solid, border: 'rgba(168,208,242,0.72)', flat: true,
       });
       // 轨道底图（程序化，零图片资源）：深靛槽底 + 10 格刻度 + 顶高光 + 底内阴影。
-      // 层级铁律：外框 > 轨道底图 > 进度填充，逐层内缩 2px / 1px。
-      // 旧版填充从 barX,barY 起画且高=barH，直接把冷蓝轮廓左端盖掉，三层互相压成一团。
-      const trackX = barX + 2, trackY = barY + 2;
-      const trackW = barW - 4, trackH = barH - 4;
+      // 层级铁律：外框 > 轨道底图 > 进度填充，逐层内缩 3px / 1px。
+      // 圆角同心口径：_cardBg 描边路径内缩 1.5px、线宽 2.5px，描边内沿等效 r=6-1.5-1.25=3.25；
+      // 轨道内缩 3px 取 r3（≈内沿再收 0.25），填充再内缩 1px 取 r2，三层曲率一致不互压。
+      // 旧版轨道内缩 2px/r4、填充 r3，相对描边内沿不是同心收缩，放大后圆角一大一小。
+      const trackX = barX + 3, trackY = barY + 3;
+      const trackW = barW - 6, trackH = barH - 6;
       ctx.save();
-      this._roundRectPath(trackX, trackY, trackW, trackH, 4);
+      this._roundRectPath(trackX, trackY, trackW, trackH, 3);
       ctx.fillStyle = 'rgba(6,14,30,0.86)';
       ctx.fill();
       ctx.clip();
@@ -5123,12 +5127,12 @@ export class RenderSystem {
       ctx.fillStyle = 'rgba(0,0,0,0.30)';
       ctx.fillRect(trackX + 1, trackY + trackH - 1, trackW - 2, 1);
       ctx.restore();
-      // 进度填充：再内缩 1px，圆角 r3 与底图 r4 同轴；上下各留 1px 让底图边缘露出，
+      // 进度填充：再内缩 1px，圆角 r2 与轨道 r3、描边内沿 r3.25 同心；上下各留 1px 让底图边缘露出，
       // 冷蓝轮廓始终完整可见，不再被填充切断。最小宽度取一个填充高度，小进度不变形。
       const fillX = trackX + 1, fillY = trackY + 1;
       const fillMaxW = trackW - 2, fillH = trackH - 2;
       const barFillW = Math.max(fillH, fillMaxW * (ladderProgress.next ? ladderProgress.ratio : 1));
-      const barFillR = Math.min(3, barFillW / 2, fillH / 2);
+      const barFillR = Math.min(2, barFillW / 2, fillH / 2);
       ctx.save();
       this._roundRectPath(fillX, fillY, barFillW, fillH, barFillR);
       ctx.fillStyle = ladderTier.color;
