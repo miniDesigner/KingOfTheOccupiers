@@ -8,7 +8,7 @@
  */
 
 import { hexToPixel } from '../world/HexMath.js';
-import { MARCH_SPEED } from '../config.js';
+import { MARCH_SPEED, getCombatDuration } from '../config.js';
 
 /** 相邻格中心像素间距系数(正六边形网格中六个方向均为此值 × hexSize) */
 const TILE_GAP = Math.sqrt(3);
@@ -189,8 +189,9 @@ export class MarchSystem {
   static updateFightingBuilding(group, dt, combatSystem, players, hexMap) {
     group.combatTimer += dt;
 
-    // 战斗演出时长
-    const duration = 0.8;
+    // 战斗演出时长：从 config/combat.json 读取（vsBuilding），缺省 0.8
+    // 2026-11-26 节奏调整：原为硬编码 0.8，改为配置驱动，便于策划直接调表
+    const duration = getCombatDuration()?.vsBuilding ?? 0.8;
 
     if (group.combatTimer >= duration) {
       // 战斗结算
@@ -205,7 +206,8 @@ export class MarchSystem {
   static updateFightingWarrior(group, dt, combatSystem, players) {
     group.combatTimer += dt;
 
-    const duration = 1.0;
+    // 战斗演出时长：从 config/combat.json 读取（vsWarrior），缺省 1.0
+    const duration = getCombatDuration()?.vsWarrior ?? 1.0;
 
     if (group.combatTimer >= duration) {
       // 战斗结算(含击杀赏金发放)

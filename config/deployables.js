@@ -1489,25 +1489,25 @@ module.exports = {
       "levels": {
         "1": {
           "hp": 20,
-          "warriorRate": 1,
+          "warriorRate": 0.4,
           "cost": 30,
           "defense": 0
         },
         "2": {
           "hp": 35,
-          "warriorRate": 2,
+          "warriorRate": 0.8,
           "cost": 50,
           "defense": 2
         },
         "3": {
           "hp": 55,
-          "warriorRate": 4,
+          "warriorRate": 1.6,
           "cost": 80,
           "defense": 5
         },
         "4": {
           "hp": 80,
-          "warriorRate": 6,
+          "warriorRate": 2.4,
           "cost": 120,
           "defense": 8
         }
@@ -1563,17 +1563,17 @@ module.exports = {
       "levels": {
         "1": {
           "hp": 15,
-          "goldRate": 1,
+          "goldRate": 0.4,
           "cost": 15
         },
         "2": {
           "hp": 20,
-          "goldRate": 2,
+          "goldRate": 0.8,
           "cost": 20
         },
         "3": {
           "hp": 30,
-          "goldRate": 3,
+          "goldRate": 1.2,
           "cost": 30
         }
       },

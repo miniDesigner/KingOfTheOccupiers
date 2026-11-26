@@ -8,12 +8,12 @@ module.exports = {
   "_doc": "战斗参数配置 - 遭遇战演出时长和阶段控制",
   "_doc_phases": "approach=接敌接近阶段 resolve=结算阶段 vs_building=vs建筑总时长 vs_warrior=vs战士总时长",
   "duration": {
-    "vsBuilding": 1,
-    "vsWarrior": 1.2,
-    "approach": 0.3,
-    "resolve": 0.5
+    "vsBuilding": 2,
+    "vsWarrior": 2.5,
+    "approach": 0.7,
+    "resolve": 1.2
   },
-  "_doc_duration": "各阶段动画时长(秒)，影响战斗演出节奏",
+  "_doc_duration": "各阶段战斗演出时长(秒)。2026-11-26 节奏调慢：vsBuilding/vsWarrior 现由 src/system/MarchSystem.js 读取本配置（原硬编码 0.8/1.0）；调大即放慢战斗结算频率。approach/resolve 为预留演出参数。",
   "warriorVsBuilding": {
     "_doc": "战士vs建筑战斗规则",
     "warriorAttackBase": 1,

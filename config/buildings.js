@@ -25,7 +25,7 @@ module.exports = {
     "1": {
       "cost": 20,
       "hp": 20,
-      "warriorRate": 1,
+      "warriorRate": 0.4,
       "attackBonus": 0,
       "defense": 0,
       "maxQuality": 2,
@@ -35,7 +35,7 @@ module.exports = {
     "2": {
       "cost": 35,
       "hp": 35,
-      "warriorRate": 2,
+      "warriorRate": 0.8,
       "attackBonus": 0.1,
       "defense": 2,
       "maxQuality": 3,
@@ -45,7 +45,7 @@ module.exports = {
     "3": {
       "cost": 55,
       "hp": 55,
-      "warriorRate": 4,
+      "warriorRate": 1.6,
       "attackBonus": 0.25,
       "defense": 5,
       "maxQuality": 5,
@@ -55,7 +55,7 @@ module.exports = {
     "4": {
       "cost": 85,
       "hp": 80,
-      "warriorRate": 6,
+      "warriorRate": 2.4,
       "attackBonus": 0.5,
       "defense": 8,
       "maxQuality": 6,
@@ -84,7 +84,7 @@ module.exports = {
       "warriorRate": 0,
       "attackBonus": 0,
       "defense": 0,
-      "goldRate": 1,
+      "goldRate": 0.4,
       "color": "#fbbf24",
       "name": "金矿Lv1"
     },
@@ -94,7 +94,7 @@ module.exports = {
       "warriorRate": 0,
       "attackBonus": 0,
       "defense": 0,
-      "goldRate": 2,
+      "goldRate": 0.8,
       "color": "#fbbf24",
       "name": "金矿Lv2"
     }
@@ -104,7 +104,7 @@ module.exports = {
       "cost": 0,
       "hp": 100,
       "warriorRate": 0,
-      "goldRate": 1,
+      "goldRate": 0.4,
       "attackBonus": 0,
       "defense": 10,
       "range": 2,

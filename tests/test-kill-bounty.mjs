@@ -30,6 +30,12 @@ const { default: ConfigLoader, syncConfigToStatics, getKillGoldPerWarrior, getKi
 await ConfigLoader.init();
 syncConfigToStatics();
 
+// 预期赏金从配置动态读取，避免调数值时测试写死导致误报
+const KILL = getKillGoldPerWarrior();
+const STEP = getKillGoldLevelStep();
+// 与 CombatSystem._awardKillBounty 同口径：单价 = 基础 + 等级步长*(lv-1)，总额向上取整
+const bounty = (killed, level = 1) => Math.ceil(killed * (KILL + STEP * (level - 1)));
+
 const { CombatSystem } = await import('../src/system/CombatSystem.js');
 const { MarchSystem } = await import('../src/system/MarchSystem.js');
 const { MarchGroup } = await import('../src/entity/MarchGroup.js');
@@ -63,8 +69,8 @@ function makeGroup(owner, warriors, level = 1, opts = {}) {
 
 // ============ 0. 配置读取 ============
 console.log('=== 测试0: 配置读取 ===');
-assert(getKillGoldPerWarrior() === 2, 'killGoldPerWarrior = 2');
-assert(getKillGoldLevelStep() === 0.5, 'killGoldLevelStep = 0.5');
+assert(KILL > 0, `killGoldPerWarrior = ${KILL} (配置驱动)`);
+assert(STEP >= 0, `killGoldLevelStep = ${STEP} (配置驱动)`);
 
 // ============ 1. 完胜：击杀方获得全额赏金 ============
 console.log('=== 测试1: 完胜赏金 ===');
@@ -76,9 +82,9 @@ console.log('=== 测试1: 完胜赏金 ===');
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
   assert(gB.warriors === 0 && gB.state === 'destroyed', 'B全灭');
   assert(gA.isAlive(), 'A存活');
-  assert(pA.gold === goldA0 + 20, `A获得赏金20(10兵×2金), 实得${pA.gold - goldA0}`);
+  assert(pA.gold === goldA0 + 10 * KILL, `A获得赏金${10 * KILL}(10兵×${KILL}金), 实得${pA.gold - goldA0}`);
   assert(gA.warriors === 90, '完胜方也损失部分战士(100→90)');
-  assert(pB.gold === goldB0 + 20, `B击杀A损失的10兵也得20, 实得${pB.gold - goldB0}`);
+  assert(pB.gold === goldB0 + 10 * KILL, `B击杀A损失的10兵也得${10 * KILL}, 实得${pB.gold - goldB0}`);
 }
 
 // ============ 2. 等级加成 ============
@@ -87,9 +93,10 @@ console.log('=== 测试2: 敌方兵种等级加成 ===');
   const pA = makePlayer(1), pB = makePlayer(2);
   const goldA0 = pA.gold;
   const gA = makeGroup(1, 100);
-  const gB = makeGroup(2, 10, 3);  // Lv3 → 单价 2+0.5×2=3
+  const unitLv3 = KILL + STEP * 2;
+  const gB = makeGroup(2, 10, 3);  // Lv3 → 单价 = KILL + STEP*2
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
-  assert(pA.gold === goldA0 + 30, `Lv3单价3金, 10兵=30, 实得${pA.gold - goldA0}`);
+  assert(pA.gold === goldA0 + bounty(10, 3), `Lv3单价${unitLv3}金, 10兵=${bounty(10, 3)}, 实得${pA.gold - goldA0}`);
 }
 
 // ============ 3. 惨胜：双方互得赏金 ============
@@ -102,8 +109,8 @@ console.log('=== 测试3: 惨胜双向赏金 ===');
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
   assert(gB.warriors === 0, 'B全灭');
   assert(gA.warriors === 3 && gA.isAlive(), 'A剩30%(3兵)');
-  assert(pA.gold === goldA0 + 20, `A击杀10兵得20, 实得${pA.gold - goldA0}`);
-  assert(pB.gold === goldB0 + 18, `B击杀9兵得18, 实得${pB.gold - goldB0}`);
+  assert(pA.gold === goldA0 + 10 * KILL, `A击杀10兵得${10 * KILL}, 实得${pA.gold - goldA0}`);
+  assert(pB.gold === goldB0 + bounty(9), `B击杀9兵得${bounty(9)}, 实得${pB.gold - goldB0}`);
 }
 
 // ============ 4. 两败俱伤：双向全额 ============
@@ -115,7 +122,7 @@ console.log('=== 测试4: 两败俱伤双向赏金 ===');
   const gB = makeGroup(2, 10);
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
   assert(!gA.isAlive() && !gB.isAlive(), '双方全灭');
-  assert(pA.gold === goldA0 + 20 && pB.gold === goldB0 + 20, '双方各得击杀10兵赏金20');
+  assert(pA.gold === goldA0 + 10 * KILL && pB.gold === goldB0 + 10 * KILL, `双方各得击杀10兵赏金${10 * KILL}`);
 }
 
 // ============ 5. 战争掠夺局外加成 ============
@@ -127,7 +134,7 @@ console.log('=== 测试5: 战争掠夺加成 ===');
   const gA = makeGroup(1, 100);
   const gB = makeGroup(2, 10);
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
-  assert(pA.gold === goldA0 + 30, `掠夺+50%: 20×1.5=30, 实得${pA.gold - goldA0}`);
+  assert(pA.gold === goldA0 + 15 * KILL, `掠夺+50%: ${10 * KILL}×1.5=${15 * KILL}, 实得${pA.gold - goldA0}`);
 }
 
 // ============ 6. players 省略兼容（不崩溃） ============
@@ -153,11 +160,11 @@ console.log('=== 测试7: 远程vs近战 ===');
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
   // 2026-11 玩法改造：远程不再无损全歼——射程2先手削减40%（10→6兵）后落入五档结算；
   // 远程另有攻击系数加成（getPower=12.4 vs 6），ratio≈2.07 > 1.35 完胜档，A 剩 5 兵。
-  // 双向赏金规则不变：A 全歼 B 得 20；B 按 A 实际损失 5 兵得 10。
+  // 双向赏金规则不变：A 全歼 B 得 10*KILL；B 按 A 实际损失 5 兵得 5*KILL。
   assert(gB.state === 'destroyed', '远程先手压制后击溃近战');
   assert(gA.warriors < 10 && gA.warriors > 0, `远程不再无损（剩${gA.warriors}兵）`);
   assert(gA.warriors === 5, `先手40%+完胜余兵=5（实得${gA.warriors}）`);
-  assert(pA.gold === goldA0 + 20 && pB.gold === goldB0 + 10, `双向赏金：A得20/B得10（实得${pA.gold - goldA0}/${pB.gold - goldB0}）`);
+  assert(pA.gold === goldA0 + 10 * KILL && pB.gold === goldB0 + 5 * KILL, `双向赏金：A得${10 * KILL}/B得${5 * KILL}（实得${pA.gold - goldA0}/${pB.gold - goldB0}）`);
 }
 
 // ============ 8. 守方击杀赏金（攻城失败全灭） ============
@@ -165,6 +172,7 @@ console.log('=== 测试8: 守方击杀赏金 ===');
 {
   const pA = makePlayer(1), pB = makePlayer(2);
   const goldB0 = pB.gold;
+  const unitLv2 = KILL + STEP;  // Lv2 单价
   const gA = makeGroup(1, 10, 2);  // Lv2攻方
   const tile = {
     q: 0, r: 0, owner: 2,
@@ -177,7 +185,7 @@ console.log('=== 测试8: 守方击杀赏金 ===');
   const hexMapStub = { size: 30 };
   CombatSystem.resolveBuildingCombat(gA, tile, [pA, pB], hexMapStub);
   assert(gA.warriors === 0 && gA.state === 'destroyed', '近战攻城失败全灭');
-  assert(pB.gold === goldB0 + 25, `守方击杀10兵Lv2(单价2.5)得25, 实得${pB.gold - goldB0}`);
+  assert(pB.gold === goldB0 + 10 * unitLv2, `守方击杀10兵Lv2(单价${unitLv2})得${10 * unitLv2}, 实得${pB.gold - goldB0}`);
 }
 
 // ============ 9. MarchSystem 集成：fighting_warrior 透传 players ============
@@ -191,7 +199,7 @@ console.log('=== 测试9: MarchSystem 集成 ===');
   gB.state = 'fighting_warrior'; gB.fightTarget = gA; gB.combatTimer = 5;
   MarchSystem.update(10, [gA, gB], { size: 30 }, CombatSystem, [pA, pB]);
   assert(gB.state === 'destroyed', '战斗已结算');
-  assert(pA.gold === goldA0 + 20, `经MarchSystem获得赏金20, 实得${pA.gold - goldA0}`);
+  assert(pA.gold === goldA0 + 10 * KILL, `经MarchSystem获得赏金${10 * KILL}, 实得${pA.gold - goldA0}`);
 }
 
 // ============ 10. 同归扣除复活（复活战士不计击杀） ============
@@ -205,10 +213,10 @@ console.log('=== 测试10: 复活战士不计击杀 ===');
   gB.synergyBonuses = { reviveChance: 1.0, reviveCount: 2 };
   CombatSystem.resolveWarriorCombat(gA, gB, [pA, pB]);
   assert(gB.warriors === 2 && gB.isAlive(), 'B复活2人存活');
-  // A实际击杀 = 10 - 2 = 8 → 赏金16
-  assert(pA.gold === goldA0 + 16, `复活扣除后击杀8兵得16, 实得${pA.gold - goldA0}`);
-  // B击杀A 10人 → 20
-  assert(pB.gold === goldB0 + 20, 'B击杀A全额赏金');
+  // A实际击杀 = 10 - 2 = 8 → 赏金 8*KILL
+  assert(pA.gold === goldA0 + bounty(8), `复活扣除后击杀8兵得${bounty(8)}, 实得${pA.gold - goldA0}`);
+  // B击杀A 10人 → 10*KILL
+  assert(pB.gold === goldB0 + 10 * KILL, 'B击杀A全额赏金');
 }
 
 console.log(`\n========== 结果: ${passed} 通过, ${failed} 失败 ==========`);

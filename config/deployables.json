@@ -1360,12 +1360,24 @@
       "icon": "⚔",
       "style": "melee",
       "levels": {
-        "1": { "attackBonus": 0.05 },
-        "2": { "attackBonus": 0.10 },
-        "3": { "attackBonus": 0.15 },
-        "4": { "attackBonus": 0.20 },
-        "5": { "attackBonus": 0.25 },
-        "6": { "attackBonus": 0.30 }
+        "1": {
+          "attackBonus": 0.05
+        },
+        "2": {
+          "attackBonus": 0.1
+        },
+        "3": {
+          "attackBonus": 0.15
+        },
+        "4": {
+          "attackBonus": 0.2
+        },
+        "5": {
+          "attackBonus": 0.25
+        },
+        "6": {
+          "attackBonus": 0.3
+        }
       },
       "_doc": "近战风格羁绊：上阵1-6个melee兵种 → Lv.1-6 攻击力+5%~30%（线性 = 该风格上阵数）"
     },
@@ -1374,12 +1386,28 @@
       "icon": "🏹",
       "style": "ranged",
       "levels": {
-        "1": { "speedBonus": 0.05 },
-        "2": { "speedBonus": 0.10 },
-        "3": { "speedBonus": 0.15, "firstStrike": true },
-        "4": { "speedBonus": 0.20, "firstStrike": true },
-        "5": { "speedBonus": 0.25, "firstStrike": true },
-        "6": { "speedBonus": 0.30, "firstStrike": true }
+        "1": {
+          "speedBonus": 0.05
+        },
+        "2": {
+          "speedBonus": 0.1
+        },
+        "3": {
+          "speedBonus": 0.15,
+          "firstStrike": true
+        },
+        "4": {
+          "speedBonus": 0.2,
+          "firstStrike": true
+        },
+        "5": {
+          "speedBonus": 0.25,
+          "firstStrike": true
+        },
+        "6": {
+          "speedBonus": 0.3,
+          "firstStrike": true
+        }
       },
       "_doc": "远程风格羁绊：上阵1-6个ranged兵种 → Lv.1-2 速度+5%~10%；Lv.3-6 速度+15%~30% + 遭遇战先手"
     },
@@ -1388,12 +1416,30 @@
       "icon": "🛡",
       "style": "defense",
       "levels": {
-        "1": { "buildingHpBonus": 0.05, "damageReduction": 0.03 },
-        "2": { "buildingHpBonus": 0.10, "damageReduction": 0.06 },
-        "3": { "buildingHpBonus": 0.15, "damageReduction": 0.09 },
-        "4": { "buildingHpBonus": 0.20, "damageReduction": 0.12 },
-        "5": { "buildingHpBonus": 0.25, "damageReduction": 0.15 },
-        "6": { "buildingHpBonus": 0.30, "damageReduction": 0.18 }
+        "1": {
+          "buildingHpBonus": 0.05,
+          "damageReduction": 0.03
+        },
+        "2": {
+          "buildingHpBonus": 0.1,
+          "damageReduction": 0.06
+        },
+        "3": {
+          "buildingHpBonus": 0.15,
+          "damageReduction": 0.09
+        },
+        "4": {
+          "buildingHpBonus": 0.2,
+          "damageReduction": 0.12
+        },
+        "5": {
+          "buildingHpBonus": 0.25,
+          "damageReduction": 0.15
+        },
+        "6": {
+          "buildingHpBonus": 0.3,
+          "damageReduction": 0.18
+        }
       },
       "_doc": "防御风格羁绊：上阵1-6个defense兵种 → Lv.1-6 建筑血量+5%~30% + 减伤+3%~18%（建筑只接收这两类加成）"
     },
@@ -1402,12 +1448,30 @@
       "icon": "🔮",
       "style": "magic",
       "levels": {
-        "1": { "critBonus": 0.04, "damageBonus": 0.02 },
-        "2": { "critBonus": 0.08, "damageBonus": 0.04 },
-        "3": { "critBonus": 0.12, "damageBonus": 0.06 },
-        "4": { "critBonus": 0.16, "damageBonus": 0.08 },
-        "5": { "critBonus": 0.20, "damageBonus": 0.10 },
-        "6": { "critBonus": 0.24, "damageBonus": 0.12 }
+        "1": {
+          "critBonus": 0.04,
+          "damageBonus": 0.02
+        },
+        "2": {
+          "critBonus": 0.08,
+          "damageBonus": 0.04
+        },
+        "3": {
+          "critBonus": 0.12,
+          "damageBonus": 0.06
+        },
+        "4": {
+          "critBonus": 0.16,
+          "damageBonus": 0.08
+        },
+        "5": {
+          "critBonus": 0.2,
+          "damageBonus": 0.1
+        },
+        "6": {
+          "critBonus": 0.24,
+          "damageBonus": 0.12
+        }
       },
       "_doc": "法术风格羁绊：上阵1-6个magic兵种 → Lv.1-6 暴击率+4%~24% + 遭遇战伤害+2%~12%"
     }
@@ -1419,25 +1483,25 @@
       "levels": {
         "1": {
           "hp": 20,
-          "warriorRate": 1,
+          "warriorRate": 0.4,
           "cost": 30,
           "defense": 0
         },
         "2": {
           "hp": 35,
-          "warriorRate": 2,
+          "warriorRate": 0.8,
           "cost": 50,
           "defense": 2
         },
         "3": {
           "hp": 55,
-          "warriorRate": 4,
+          "warriorRate": 1.6,
           "cost": 80,
           "defense": 5
         },
         "4": {
           "hp": 80,
-          "warriorRate": 6,
+          "warriorRate": 2.4,
           "cost": 120,
           "defense": 8
         }
@@ -1493,17 +1557,17 @@
       "levels": {
         "1": {
           "hp": 15,
-          "goldRate": 1,
+          "goldRate": 0.4,
           "cost": 15
         },
         "2": {
           "hp": 20,
-          "goldRate": 2,
+          "goldRate": 0.8,
           "cost": 20
         },
         "3": {
           "hp": 30,
-          "goldRate": 3,
+          "goldRate": 1.2,
           "cost": 30
         }
       },
