@@ -22,6 +22,11 @@ import { battleRandom } from '../utils/rng.js';
 // 该轮压缩了产出与交战密度（baseGoldRate 2→1 / productionSpeed ×0.8 / groupThreshold 6→9），
 // 玩家侧脚本人翻格频率高于 AI，压缩后胜率整体下移约 9pp；用「AI 决策变慢」这一唯一
 // 非对称旋钮把四档胜率拉回基线（95/49/39/30 附近），同时进一步降低 AI 侧交战密度。
+// 2026-11-26 整体调慢 60%：baseGoldRate 1→0.4；出队间隔 13.4→33.3 秒；战斗结算 0.8/1.0→2.0/2.5 秒。
+// 本表 decisionInterval 保持 3.8/2.6/2.2/1.95 未同步放慢——历史证明「决策间隔」是最强非对称杠杆
+// （曾因手速差 4~6 倍导致 easy 全胜/nightmare 近乎全负），禁止凭直觉等比放大。
+// 静态推演（L2，非实测）显示：每次决策期间被动产金仅 0.78~1.52 金（翻格门槛 5 金），
+// 存在高频空转嫌疑。须先埋点「决策次数 vs 实际翻格次数」确认主瓶颈，再单变量释放验证，禁止直接加码。
 const AI_DIFFICULTY = {
   easy:      { interval: 3.8,   synergyPursuit: 0,  evaluatePreset: false, blockEnemy: false, randomFactor: 0.6,  warriorRateMult: 1.0 },
   normal:    { interval: 2.6,   synergyPursuit: 1,  evaluatePreset: true,  blockEnemy: false, randomFactor: 0.3,  warriorRateMult: 1.0 },

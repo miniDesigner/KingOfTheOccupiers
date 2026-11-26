@@ -1,6 +1,6 @@
 {
   "_doc": "战斗参数配置 - 遭遇战演出时长和阶段控制",
-  "_doc_phases": "approach=接敌接近阶段 resolve=结算阶段 vs_building=vs建筑总时长 vs_warrior=vs战士总时长",
+  "_doc_phases": "approach=接敌接近阶段 resolve=结算阶段 vs_building=vs建筑总时长 vs_warrior=vs战士总时长。注意：approach/resolve 为预留字段，src 全项目零引用，MarchSystem 只消费 vsBuilding/vsWarrior 两项；改这两项不生效。",
   "duration": {
     "vsBuilding": 2.0,
     "vsWarrior": 2.5,
@@ -9,11 +9,11 @@
   },
   "_doc_duration": "各阶段战斗演出时长(秒)。2026-11-26 节奏调慢：vsBuilding/vsWarrior 现由 src/system/MarchSystem.js 读取本配置（原硬编码 0.8/1.0）；调大即放慢战斗结算频率。approach/resolve 为预留演出参数。",
   "warriorVsBuilding": {
-    "_doc": "战士vs建筑战斗规则",
+    "_doc": "战士vs建筑战斗规则【本组字段当前全部未生效：src 全项目零引用；真实攻城伤害由 CombatSystem 队伍总力对决计算，改这里不生效】",
     "warriorAttackBase": 1.0,
-    "_doc_warriorAttackBase": "每个战士对建筑的基础攻击力",
+    "_doc_warriorAttackBase": "【未生效·预留】每个战士对建筑的基础攻击力",
     "buildingDefenseReduction": 1.0,
-    "_doc_buildingDefenseReduction": "建筑防御减伤系数(1.0=全额减伤)"
+    "_doc_buildingDefenseReduction": "【未生效·预留】建筑防御减伤系数(1.0=全额减伤)"
   },
   "warriorVsWarrior": {
     "_doc": "战士vs战士战斗规则 - 总力对决模式",
