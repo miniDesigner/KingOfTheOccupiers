@@ -3,7 +3,7 @@
 """展开兵营 V2「去房屋化 + 形态精确化」方案的完整 prompt。
 用法:
   python tools/expand-barracks-v2-prompts.py <输出json路径> [编号,编号,...]
-默认展开方案里全部 12 张需出图的（A/B/C 档，D 档 02/12/15/27 不出图）。
+默认展开方案里全部 16 张（A/B/C 档 + 2026-11-26 追加的 D 档 4 张补做）。
 风格锚点段从方案文档逐字抽取，避免手抄漂移。
 """
 import json
@@ -14,9 +14,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DOC = ROOT / "docs/art/ART-BARRACKS-V2-NONBUILDING-REDRAW.md"
 
-# 需出图的 12 座（D 档不动）
-SCENE_NUMS = ["11", "16", "19", "24", "37", "38", "39", "40"]  # 段1A
-BUILD_NUMS = ["09", "10", "23", "30"]                            # 段1
+# 需出图的 16 座（D 档 02/12/15/27 于 2026-11-26 追加补做）
+SCENE_NUMS = ["02", "11", "12", "15", "16", "19", "24", "27", "37", "38", "39", "40"]  # 段1A
+BUILD_NUMS = ["09", "10", "23", "30"]                                                        # 段1
 
 def block(doc, after):
     i = doc.index(after)
@@ -63,6 +63,10 @@ BUILD_FRAME = (
 # 槽位表
 DATA = {
     # --- 段1A 场景模板 ---
+    "02": dict(name="弓箭手-露天箭术靶场", SCENE="an open-air Western fantasy archery range with straw butt targets, arrow racks and a shooting mound, absolutely no stone tower and no roof", MAT="straw targets, timber arrow racks and rope", ACC="deep red", SIG="a giant recurve longbow planted upright at the center of the range", PROP="straw butt targets and quivers of arrows"),
+    "12": dict(name="战士-露天校场", SCENE="an open-air warriors training yard with a sand ground, weapon racks and rows of wooden practice dummies, absolutely no house and no roof", MAT="sand, timber practice dummies and iron weapons", ACC="brick red", SIG="a giant wooden training dummy holding a round shield and a short sword", PROP="weapon racks and stacked sandbags"),
+    "15": dict(name="卫兵-露天岗哨门", SCENE="an open-air Western fantasy guard checkpoint gate with a low stone base, timber gate posts, a broken portcullis and a small open sentry stand, absolutely no roof and no enclosed room", MAT="stone base, heavy timber and iron", ACC="limestone blue grey", SIG="a giant upright halberd planted beside a round guard shield at the gate", PROP="broken portcullis bars and spear racks"),
+    "27": dict(name="刽子手-露天刑台", SCENE="an open-air execution scaffold with a dark timber platform, crimson drapery, a chopping block and an axe rack, absolutely no house and no roof", MAT="dark timber, crimson cloth and iron", ACC="dark wine red", SIG="a gigantic broad executioner axe blade driven into the chopping block", PROP="iron chains and a second smaller axe rack"),
     "11": dict(name="骷髅兵-露天骨场", SCENE="open-air bone field on cracked earth with scattered crooked tombstones, bone piles and broken swords, absolutely no building", MAT="bleached bones, cracked earth and grey stone rubble", ACC="bone white", SIG="a gigantic skull with deeply sunken eye sockets rising from the bone pile", PROP="scattered bones and broken blades"),
     "16": dict(name="海盗-完整大帆船", SCENE="a complete large sailing ship beached on the ground with a full hull, a tall mast and a billowing square sail, a Western fantasy pirate vessel", MAT="old timber, rope and canvas sail", ACC="sea blue", SIG="a gigantic carved ship figurehead with a billowing main sail above it as the focal point", PROP="barrels and coiled rope"),
     "19": dict(name="长枪兵-驻扎营地", SCENE="a military encampment of canvas tents with a wooden palisade fence and a campfire, absolutely no stone tower", MAT="canvas tents, timber palisade and iron spear racks", ACC="warm bronze", SIG="a row of giant upright spears with level spearpoints planted at the camp center", PROP="a campfire and wooden crates"),
