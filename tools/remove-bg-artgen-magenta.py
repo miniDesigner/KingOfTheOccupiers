@@ -20,10 +20,21 @@ from collections import deque
 from PIL import Image, ImageFilter
 
 
-def is_magenta_bg(r, g, b, bg, tol):
-    """暗玫红背景：接近采样色，且满足红显著高于绿的色相约束。"""
+def is_magenta_bg(r, g, b, bg, tol, mode='magenta'):
+    """背景判定。
+
+    magenta: 暗玫红底 (约 142,54,73)，红显著高于绿。
+    purple:  深紫底 (约 65,32,75)，蓝略高于红、明显高于绿；
+             用于红黑建筑出图（ImageGen 会把纯品红提示出成深紫底）。
+             主体暗红墙 r>b、黑色屋顶三通道都低，都不会被误判。
+    """
     near = abs(r - bg[0]) < tol and abs(g - bg[1]) < tol and abs(b - bg[2]) < tol
-    magenta_hue = r > g + 45 and r > 100 and b > g
+    if mode == 'purple':
+        purple_hue = b > r + 6 and b > g + 24 and b > 45
+        return near and purple_hue
+    # r 下限相对采样背景：暗玫红可能深到 r≈100（如阴深墓地批次），
+    # 固定 r>100 会把这类背景卡住导致 flood fill 扩散失败。
+    magenta_hue = r > g + 45 and r > bg[0] - 40 and b > g
     return near and magenta_hue
 
 
@@ -38,7 +49,7 @@ def is_watermark(r, g, b, bg):
     return light or bright
 
 
-def remove_bg(src, dst, target=312, tol=24, closed=False):
+def remove_bg(src, dst, target=312, tol=24, closed=False, mode='magenta'):
     im = Image.open(src).convert('RGB')
     w, h = im.size
     px = im.load()
@@ -57,7 +68,10 @@ def remove_bg(src, dst, target=312, tol=24, closed=False):
             row = y*w
             for x in range(w):
                 r, g, b = px[x, y]
-                if r > 125 and r - g > 50 and b > g and b > 60:
+                if mode == 'purple':
+                    if b > r + 6 and b > g + 24 and b > 45:
+                        closed_mask[row+x] = 1
+                elif r > 125 and r - g > 50 and b > g and b > 60:
                     closed_mask[row+x] = 1
 
     # 2) 四边 flood fill 连通背景
@@ -66,13 +80,13 @@ def remove_bg(src, dst, target=312, tol=24, closed=False):
     for x in range(w):
         for y in (0, h-1):
             i = y*w+x
-            if not visited[i] and is_magenta_bg(*px[x, y], bg, tol):
+            if not visited[i] and is_magenta_bg(*px[x, y], bg, tol, mode):
                 visited[i] = 1
                 q.append((x, y))
     for y in range(h):
         for x in (0, w-1):
             i = y*w+x
-            if not visited[i] and is_magenta_bg(*px[x, y], bg, tol):
+            if not visited[i] and is_magenta_bg(*px[x, y], bg, tol, mode):
                 visited[i] = 1
                 q.append((x, y))
     while q:
@@ -80,7 +94,7 @@ def remove_bg(src, dst, target=312, tol=24, closed=False):
         for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
             if 0 <= nx < w and 0 <= ny < h:
                 i = ny*w+nx
-                if not visited[i] and is_magenta_bg(*px[nx, ny], bg, tol):
+                if not visited[i] and is_magenta_bg(*px[nx, ny], bg, tol, mode):
                     visited[i] = 1
                     q.append((nx, ny))
 
@@ -93,7 +107,7 @@ def remove_bg(src, dst, target=312, tol=24, closed=False):
         row = y*w
         for x in range(x0, w):
             r, g, b = px[x, y]
-            if not is_magenta_bg(r, g, b, bg, 30):
+            if not is_magenta_bg(r, g, b, bg, 30, mode):
                 wm_mask[row+x] = 1
 
     # 4) alpha
@@ -130,6 +144,8 @@ if __name__ == '__main__':
         sys.exit(1)
     t = int(sys.argv[3]) if len(sys.argv) > 3 else 312
     tol = int(sys.argv[4]) if len(sys.argv) > 4 else 24
-    closed = len(sys.argv) > 5 and sys.argv[5] == '--closed'
-    remove_bg(sys.argv[1], sys.argv[2], t, tol, closed)
-    print(f'{sys.argv[1]} -> {sys.argv[2]} (tol={tol}, closed={closed})')
+    opts = [a for a in sys.argv[5:] if a.startswith('--')]
+    closed = '--closed' in opts
+    mode = 'purple' if '--purple' in opts else 'magenta'
+    remove_bg(sys.argv[1], sys.argv[2], t, tol, closed, mode)
+    print(f'{sys.argv[1]} -> {sys.argv[2]} (tol={tol}, closed={closed}, mode={mode})')
