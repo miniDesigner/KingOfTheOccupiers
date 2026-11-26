@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>占地之王 · 数值配置可视化编辑器</title>
+<style>
+  :root{
+    --bg:#0e1726; --panel:#152238; --panel2:#1b2c48; --line:#2a4165;
+    --text:#e8f0fb; --muted:#8fa8c8; --accent:#5bb8e8; --accent2:#ffd23f;
+    --ok:#4ade80; --warn:#fb923c; --err:#f87171; --doc:#243b5e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Microsoft YaHei",system-ui,sans-serif}
+  button,input{font:inherit}
+  header{padding:14px 20px;border-bottom:1px solid var(--line);background:#111d30;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;color:var(--accent)}
+  header .sub{color:var(--muted);font-size:12px}
+  .spacer{flex:1}
+  button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:#205d86;border-color:#2f86bd;color:#fff}
+  button.danger:hover{border-color:var(--err);color:var(--err)}
+  .layout{display:flex;height:calc(100vh - 62px - 34px)}
+  aside{width:246px;min-width:246px;border-right:1px solid var(--line);background:#111d30;overflow:auto}
+  aside h2{font-size:12px;color:var(--muted);margin:14px 14px 8px;letter-spacing:.08em}
+  .file{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-left:3px solid transparent}
+  .file:hover{background:var(--panel)}
+  .file.active{background:var(--panel2);border-left-color:var(--accent)}
+  .file .nm{flex:1;font-family:Consolas,monospace;font-size:12px}
+  .file .cnt{color:var(--muted);font-size:11px}
+  .dot{width:7px;height:7px;border-radius:50%;background:#3d5a80}
+  .file.changed .dot{background:var(--accent2)}
+  main{flex:1;min-width:0;display:flex;flex-direction:column}
+  #toolbar{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#122039}
+  #toolbar .title{font-family:Consolas,monospace;color:var(--accent2);margin-right:6px}
+  #search{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:230px}
+  #results{border-bottom:1px solid var(--line);background:#101c2e;max-height:190px;overflow:auto;display:none}
+  #results .r{padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:1px solid #1b2c46}
+  #results .r:hover{background:var(--panel2)}
+  #results .r code{color:var(--accent)}
+  #tree{flex:1;overflow:auto;padding:14px 18px 40px}
+  .tip{color:var(--muted);font-size:12px;margin:0 0 12px}
+  details.node{border:1px solid var(--line);border-radius:6px;margin:6px 0;background:var(--panel)}
+  details.node>summary{cursor:pointer;padding:7px 10px;font-family:Consolas,monospace;color:var(--accent);user-select:none}
+  details.node>.children{padding:4px 10px 10px 18px;border-top:1px solid #203652}
+  .row{display:flex;align-items:center;gap:10px;padding:5px 4px;border-bottom:1px solid #1c304e;min-height:34px}
+  .row:hover{background:#182947}
+  .row .key{width:210px;min-width:120px;font-family:Consolas,monospace;font-size:12px;color:#cfe0f5;word-break:break-all}
+  .row .ctl{flex:1;min-width:0}
+  .row input[type=number],.row input[type=text]{width:100%;max-width:420px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:4px 8px;font-family:Consolas,monospace}
+  .row input.changed{border-color:var(--accent2);background:#2a2a1d}
+  .row input:focus{outline:1px solid var(--accent)}
+  .swatch{display:inline-block;width:16px;height:16px;border:1px solid #fff4;border-radius:3px;vertical-align:middle;margin-left:6px}
+  .badge{font-size:11px;color:var(--accent2);min-width:64px;text-align:right;cursor:help}
+  .toggle{display:inline-flex;align-items:center;gap:8px}
+  .toggle input{width:16px;height:16px;accent-color:var(--accent)}
+  .doc{background:var(--doc);border-left:3px solid #3f7db8;color:#b8d0ea;font-size:12px;padding:6px 10px;margin:5px 0;border-radius:0 4px 4px 0}
+  .doc b{color:var(--accent);font-family:Consolas,monospace;font-weight:600}
+  .muted{color:var(--muted)}
+  .arrbar{display:flex;gap:6px;margin:4px 0}
+  .arrbar button{padding:3px 8px;font-size:11px}
+  .hl{animation:flash 1.3s ease}
+  @keyframes flash{0%{background:#3b6ea8}100%{background:transparent}}
+  footer{height:34px;border-top:1px solid var(--line);background:#111d30;display:flex;align-items:center;padding:0 18px;color:var(--muted);font-size:12px;gap:18px}
+  #empty{color:var(--muted);font-size:14px;padding:40px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>占地之王 · 数值配置可视化编辑器</h1>
+  <span class="sub">编辑对象是 config/*.json（微信开发者工具读取的源配置）；_doc 说明只读保留</span>
+  <span class="spacer"></span>
+  <button class="primary" id="btnFolder">导入 config 目录</button>
+  <button id="btnFiles">导入 JSON 文件</button>
+  <button class="primary" id="btnExport">导出编辑包</button>
+  <button id="btnExportOne">导出当前文件</button>
+</header>
+<div class="layout">
+  <aside>
+    <h2>配置文件（<span id="cntFiles">0</span>）</h2>
+    <div id="sidebar"></div>
+  </aside>
+  <main>
+    <div id="toolbar">
+      <span class="title" id="curName">未选择文件</span>
+      <button id="btnResetOne" class="danger">重置当前</button>
+      <button id="btnResetAll" class="danger">重置全部</button>
+      <span class="spacer"></span>
+      <input id="search" type="text" placeholder="快速定位字段 / 数值…">
+    </div>
+    <div id="results"></div>
+    <div id="tree"><div id="empty">请先导入 config 目录（选择项目里的 config 文件夹），然后点左侧文件名开始编辑。</div></div>
+  </main>
+</div>
+<footer>
+  <span>已加载 <b id="stFiles">0</b> 个文件</span>
+  <span>已修改 <b id="stChanged" style="color:var(--accent2)">0</b> 个文件</span>
+  <span id="stMsg">就绪</span>
+</footer>
+<input type="file" id="folderInput" webkitdirectory directory multiple hidden>
+<input type="file" id="fileInput" multiple accept=".json" hidden>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const clone = o => JSON.parse(JSON.stringify(o));
+const state = { files: new Map(), current: null };
+let searchTimer = null;
+
+function isDoc(k){ return k === '_doc' || k.startsWith('_doc_'); }
+function leafCount(o){
+  if (Array.isArray(o)) return o.reduce((n,v)=>n+leafCount(v),0);
+  if (o && typeof o === 'object') return Object.values(o).reduce((n,v)=>n+leafCount(v),0);
+  return 1;
+}
+function setMsg(t){ $('#stMsg').textContent = t; }
+function pathKey(path){ return JSON.stringify(path); }
+
+async function loadFileList(list){
+  let n=0;
+  for (const f of list){
+    if (!f.name.toLowerCase().endsWith('.json')) continue;
+    try{
+      const data = JSON.parse(await f.text());
+      state.files.set(f.name, { name:f.name, original:clone(data), data:data, changes:new Map() });
+      n++;
+    }catch(e){ setMsg('解析失败: '+f.name+' - '+e.message); }
+  }
+  renderSidebar(); updateStats();
+  if (!state.current && state.files.size) selectFile(state.files.keys().next().value);
+  setMsg('导入 '+n+' 个配置文件');
+}
+
+function renderSidebar(){
+  const box=$('#sidebar'); box.innerHTML='';
+  $('#cntFiles').textContent=state.files.size;
+  for (const file of state.files.values()){
+    const div=document.createElement('div');
+    div.className='file'+(state.current===file.name?' active':'')+(file.changes.size?' changed':'');
+    div.innerHTML='<span class="dot"></span><span class="nm"></span><span class="cnt"></span>';
+    div.querySelector('.nm').textContent=file.name;
+    div.querySelector('.cnt').textContent=leafCount(file.data)+' 字段';
+    div.onclick=()=>selectFile(file.name);
+    box.appendChild(div);
+  }
+}
+function selectFile(name){
+  state.current=name; renderSidebar(); renderTree(); renderResults();
+  $('#curName').textContent=name;
+}
+function updateStats(){
+  $('#stFiles').textContent=state.files.size;
+  let c=0; for(const f of state.files.values()) if(f.changes.size)c++;
+  $('#stChanged').textContent=c;
+}
+
+function docNote(k,v){
+  const d=document.createElement('div'); d.className='doc';
+  const b=document.createElement('b'); b.textContent=k+'：';
+  d.appendChild(b); d.appendChild(document.createTextNode(String(v)));
+  return d;
+}
+function renderChildren(container, obj, path, depth){
+  for (const [k,v] of Object.entries(obj)){
+    if (isDoc(k)){ if(typeof v==='string'||typeof v==='number') container.appendChild(docNote(k,v)); continue; }
+    const p=path.concat(k);
+    if (v && typeof v === 'object'){
+      const det=document.createElement('details');
+      det.className='node'; det.dataset.path=pathKey(p); det.open = depth<1;
+      const sum=document.createElement('summary');
+      const kind=Array.isArray(v)?'[ 数组 ]':'{ 对象 }';
+      sum.textContent=k+'  '+kind+'  ('+leafCount(v)+')';
+      det.appendChild(sum);
+      const box=document.createElement('div'); box.className='children';
+      let built=false;
+      const build=()=>{ if(built)return; built=true; renderChildren(box,v,p,depth+1); };
+      det._build=build;
+      det.addEventListener('toggle',()=>{ if(det.open) build(); });
+      if(det.open) build();
+      det.appendChild(box); container.appendChild(det);
+      if (Array.isArray(v)) container.appendChild(arrayBar(v,p));
+    } else {
+      container.appendChild(renderLeaf(k,v,p));
+    }
+  }
+}
+function arrayBar(arr, path){
+  const bar=document.createElement('div'); bar.className='arrbar';
+  const add=document.createElement('button'); add.textContent='+ 追加数组项';
+  add.onclick=()=>{
+    const file=state.files.get(state.current); const a=resolve(file.data,path);
+    a.push(''); file.changes.set(pathKey(path)+'#array',{old:'长度 '+arr.length,new:'长度 '+a.length});
+    markChanged(file); renderTree(); setMsg('已追加数组项');
+  };
+  bar.appendChild(add); return bar;
+}
+function resolve(obj,path){ let o=obj; for(const k of path) o=o[k]; return o; }
+function markChanged(file){
+  renderSidebar(); updateStats();
+}
+
+function renderLeaf(k, value, path){
+  const file=state.files.get(state.current);
+  const row=document.createElement('div'); row.className='row'; row.dataset.path=pathKey(path);
+  const label=document.createElement('label'); label.className='key'; label.textContent=k;
+  const ctl=document.createElement('div'); ctl.className='ctl';
+  const badge=document.createElement('span'); badge.className='badge';
+  let input;
+  if (typeof value === 'boolean'){
+    const wrap=document.createElement('label'); wrap.className='toggle';
+    input=document.createElement('input'); input.type='checkbox'; input.checked=value;
+    wrap.appendChild(input); wrap.appendChild(document.createTextNode(value?'true':'false'));
+    input.onchange=()=>{ commit(path,input.checked); wrap.lastChild.textContent=String(input.checked); updateBadge(row,path,badge); };
+    ctl.appendChild(wrap);
+  } else if (typeof value === 'number'){
+    input=document.createElement('input'); input.type='number'; input.step='any'; input.value=String(value);
+    input.onchange=()=>{
+      const v=Number(input.value);
+      if(input.value.trim()===''||!Number.isFinite(v)){ setMsg('数值无效: '+k); input.value=String(resolve(file.data,path)); return; }
+      commit(path,v); updateBadge(row,path,badge);
+    };
+    ctl.appendChild(input);
+  } else if (typeof value === 'string'){
+    input=document.createElement('input'); input.type='text'; input.value=value;
+    input.onchange=()=>{ commit(path,input.value); updateSwatch(ctl,input.value); updateBadge(row,path,badge); };
+    ctl.appendChild(input); updateSwatch(ctl,value);
+  } else {
+    ctl.textContent=String(value)+'  (只读类型)';
+  }
+  row.appendChild(label); row.appendChild(ctl); row.appendChild(badge);
+  updateBadge(row,path,badge);
+  return row;
+}
+function updateSwatch(ctl,val){
+  const old=ctl.querySelector('.swatch'); if(old) old.remove();
+  if(/^#[0-9a-fA-F]{6}$/.test(val)){
+    const s=document.createElement('span'); s.className='swatch'; s.style.background=val; s.title=val;
+    ctl.appendChild(s);
+  }
+}
+function commit(path,val){
+  const file=state.files.get(state.current);
+  const parent=path.length>1?resolve(file.data,path.slice(0,-1)):file.data;
+  const key=path[path.length-1];
+  const old=parent[key];
+  if(old===val) return;
+  parent[key]=val;
+  const pk=pathKey(path);
+  const baseline=file.original && (path.length>1?resolveSafe(file.original,path.slice(0,-1)):file.original);
+  const originalVal=baseline && baseline[key];
+  if(val===originalVal) file.changes.delete(pk);
+  else file.changes.set(pk,{old:originalVal,new:val});
+  markChanged(file);
+}
+function resolveSafe(obj,path){ try{ return resolve(obj,path); }catch(e){ return null; } }
+function updateBadge(row,path,badge){
+  const file=state.files.get(state.current); const c=file.changes.get(pathKey(path));
+  if(c){ badge.textContent='已改'; badge.title='原值: '+JSON.stringify(c.old)+'  →  新值: '+JSON.stringify(c.new); }
+  else { badge.textContent=''; badge.title=''; }
+  const inp=row.querySelector('input'); if(inp) inp.classList.toggle('changed',!!c);
+}
+function renderTree(){
+  const tree=$('#tree'); tree.innerHTML='';
+  const file=state.files.get(state.current);
+  if(!file){ tree.innerHTML='<div id="empty">请先导入 config 目录。</div>'; return; }
+  const tip=document.createElement('p'); tip.className='tip';
+  tip.textContent='绿色标题为可折叠分组；蓝色说明块来自 _doc 字段，只读保留。数字支持直接输入，布尔用勾选框。';
+  tree.appendChild(tip);
+  renderChildren(tree,file.data,[],0);
+}
+
+function collectLeaves(obj,path,out){
+  for(const [k,v] of Object.entries(obj)){
+    if(isDoc(k)) continue;
+    const p=path.concat(k);
+    if(v&&typeof v==='object') collectLeaves(v,p,out);
+    else out.push({path:p,value:v});
+  }
+}
+function renderResults(){
+  const box=$('#results'); const q=$('#search').value.trim().toLowerCase();
+  if(!q){ box.style.display='none'; box.innerHTML=''; return; }
+  const hits=[];
+  for(const file of state.files.values()){
+    const leaves=[]; collectLeaves(file.data,[],leaves);
+    for(const it of leaves){
+      const p=it.path.join('.');
+      if(p.toLowerCase().includes(q)||String(it.value).toLowerCase().includes(q)) hits.push({file:file.name,...it});
+      if(hits.length>=120) break;
+    }
+    if(hits.length>=120) break;
+  }
+  box.style.display='block'; box.innerHTML='';
+  if(!hits.length){ box.innerHTML='<div class="r muted">没有匹配项</div>'; return; }
+  for(const h of hits){
+    const div=document.createElement('div'); div.className='r';
+    div.innerHTML='<code></code> <span class="muted"></span> = <span></span>';
+    div.querySelector('code').textContent=h.file+' › '+h.path.join('.');
+    div.querySelector('.muted').textContent='';
+    div.lastChild.textContent=JSON.stringify(h.value);
+    div.onclick=()=>locate(h.file,h.path);
+    box.appendChild(div);
+  }
+}
+function locate(name,path){
+  if(state.current!==name) selectFile(name);
+  for(let i=1;i<=path.length;i++){
+    const p=pathKey(path.slice(0,i));
+    const det=[...document.querySelectorAll('details.node')].find(e=>e.dataset.path===p);
+    if(det){ det.open=true; if(det._build) det._build(); }
+  }
+  const row=[...document.querySelectorAll('.row')].find(e=>e.dataset.path===pathKey(path));
+  if(row){ row.scrollIntoView({block:'center'}); row.classList.remove('hl'); void row.offsetWidth; row.classList.add('hl'); }
+}
+
+function download(name,text){
+  const blob=new Blob([text],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },500);
+}
+function exportPackage(){
+  const files={}; let n=0;
+  for(const file of state.files.values()){
+    if(!file.changes.size) continue;
+    files[file.name]=file.data; n++;
+  }
+  if(!n){ alert('还没有修改任何配置文件。'); return; }
+  const pkg={_meta:{generator:'占地之王数值配置可视化编辑器',generatedAt:new Date().toISOString(),note:'files 内为完整 JSON；用 tools/apply-config-edits.py 写回'},files:files};
+  download('config-edits.json',JSON.stringify(pkg,null,2));
+  setMsg('已导出编辑包：'+n+' 个文件');
+}
+function exportOne(){
+  const file=state.files.get(state.current);
+  if(!file){ alert('请先选择文件。'); return; }
+  download(file.name,JSON.stringify(file.data,null,2)+'\n');
+  setMsg('已导出 '+file.name);
+}
+function resetOne(){
+  const file=state.files.get(state.current); if(!file) return;
+  if(!confirm('确定重置 '+file.name+' 的全部修改？')) return;
+  file.data=clone(file.original); file.changes.clear();
+  renderTree(); renderSidebar(); updateStats(); setMsg('已重置 '+file.name);
+}
+function resetAll(){
+  if(!confirm('确定重置所有文件的修改？')) return;
+  for(const f of state.files.values()){ f.data=clone(f.original); f.changes.clear(); }
+  renderTree(); renderSidebar(); updateStats(); setMsg('已重置全部');
+}
+
+$('#btnFolder').onclick=()=>$('#folderInput').click();
+$('#btnFiles').onclick=()=>$('#fileInput').click();
+$('#folderInput').onchange=e=>loadFileList([...e.target.files]);
+$('#fileInput').onchange=e=>loadFileList([...e.target.files]);
+$('#btnExport').onclick=exportPackage;
+$('#btnExportOne').onclick=exportOne;
+$('#btnResetOne').onclick=resetOne;
+$('#btnResetAll').onclick=resetAll;
+$('#search').oninput=()=>{ clearTimeout(searchTimer); searchTimer=setTimeout(renderResults,220); };
+</script>
+</body>
+</html>
