@@ -41,17 +41,18 @@ module.exports = {
     {
       "id": "currency",
       "name": "星尘兑换",
+      "_doc": "2026-11-26 养成审查 M1-1/M0-2：钻石→星尘汇率统一为 0.5（原小档 0.4、周包 0.4），星尘兑换由永久限购改为每日刷新(dailyPurchaseLimit)，给付费玩家持续通道。注意 dailyPurchaseLimit 是付费商品专用字段，与免费商品 dailyLimit 区分。",
       "items": [
         {
           "id": "buy_stardust_s",
-          "name": "星尘×20",
+          "name": "星尘×25",
           "cost": {
             "diamond": 50
           },
           "reward": {
-            "stardust": 20
+            "stardust": 25
           },
-          "limit": 10,
+          "dailyPurchaseLimit": 3,
           "icon": "stardust"
         },
         {
@@ -63,7 +64,7 @@ module.exports = {
           "reward": {
             "stardust": 100
           },
-          "limit": 5,
+          "dailyPurchaseLimit": 2,
           "icon": "stardust"
         },
         {
@@ -100,7 +101,7 @@ module.exports = {
           "reward": {
             "stardust": 50
           },
-          "limit": 10,
+          "dailyPurchaseLimit": 5,
           "icon": "stardust"
         }
       ]
@@ -211,12 +212,12 @@ module.exports = {
         {
           "id": "weekly_pack",
           "name": "周特惠包",
-          "desc": "星尘×80 + 金币×3000",
+          "desc": "星尘×100 + 金币×3000",
           "cost": {
             "diamond": 200
           },
           "reward": {
-            "stardust": 80,
+            "stardust": 100,
             "gold": 3000
           },
           "limit": 1

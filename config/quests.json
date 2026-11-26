@@ -1,4 +1,5 @@
 {
+  "_doc_heroTickets": "英雄券(heroTickets)为预留货币·未生效：全项目 src/ 无任何消费点(无兑换/抽卡/扣除)，仅有发放与展示。2026-11-26 养成审查 M0-3：已对发放奖励隐藏该货币展示，待抽卡系统立项后启用。当前发放的券只作占位，不产生任何战力或资源。",
   "dailyRefreshHour": 5,
   "dailyQuestCount": 4,
   "dailyQuests": [

@@ -378,11 +378,15 @@ console.log('=== 测试14: 普通商品不受影响（星尘兑换购买链路�
   delete P().shopPurchases;
   ProfileManager.save();
 
+  // 2026-11-26：价格/到账改为动态读配置（M1-1 汇率统一后星尘×20→×25，不再写死）
+  const curCfg = ConfigLoader.get('shop').categories.find(c => c.id === 'currency');
+  const sdItem = curCfg.items.find(i => i.id === 'buy_stardust_s');
+  const price = sdItem.cost.diamond, gain = sdItem.reward.stardust;
   const L = RenderSystem.shopLayout(400, ShopSystem.getCategoryNames().length);
   const iy = RenderSystem.shopItemTop(0, 0, L);
   game.handleShopClick(L.cardX + L.itemW - L.btnW - 10 + L.btnW / 2, iy + 10 + L.btnH / 2);
-  assert(P().diamond === 950, `钻石扣除 ${P().diamond} = 950`);
-  assert(P().stardust === 20, `星尘到账 ${P().stardust} = 20`);
+  assert(P().diamond === 1000 - price, `钻石扣除 ${P().diamond} = ${1000 - price}`);
+  assert(P().stardust === gain, `星尘到账 ${P().stardust} = ${gain}`);
   const free = ShopSystem.getFreeItems();
   assert(free.every(i => i.isFree), '普通商品不误判为免费栏位');
 }

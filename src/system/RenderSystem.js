@@ -1614,6 +1614,11 @@ export class RenderSystem {
     const artName = { gold: 'coin', diamond: 'gem', stardust: 'stardust', heroTickets: 'ticket' };
     const symbol = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券', realMoney: '¥' };
 
+    // 2026-11-26 养成审查 M0-3：heroTickets 为预留死货币（src/ 无消费点），
+    // 统一在资源串渲染入口隐藏，避免玩家看到无法使用的奖励；抽卡系统立项后撤销此过滤。
+    const visible = entries.filter(e => String(e[0]) !== 'heroTickets');
+    if (visible.length === 0) return;
+
     const prevAlign = ctx.textAlign, prevBaseline = ctx.textBaseline;
     ctx.save();
     ctx.font = `${o.bold === false ? '' : 'bold '}${fontSize}px sans-serif`;
@@ -1627,9 +1632,9 @@ export class RenderSystem {
     if (prefix) {
       totalW += ctx.measureText(prefix).width;
     }
-    for (let i = 0; i < entries.length; i++) {
-      const key = String(entries[i][0]);
-      const val = entries[i][1];
+    for (let i = 0; i < visible.length; i++) {
+      const key = String(visible[i][0]);
+      const val = visible[i][1];
       const nm = artName[key];
       const sym = symbol[key] || key;
       const hasArt = nm && ART_INDEX[ART_PREFIXES.currency + nm];
@@ -1638,7 +1643,7 @@ export class RenderSystem {
       const fallbackW = hasArt ? ctx.measureText(sym).width + iconGap : 0;
       const w = (hasArt ? iconSize + iconGap : 0) + txtW;
       tokens.push({ nm, sym, hasArt, txt, txtW, fallbackW, w });
-      totalW += w + (i < entries.length - 1 ? tokenGap : 0);
+      totalW += w + (i < visible.length - 1 ? tokenGap : 0);
     }
 
     let curX = x;

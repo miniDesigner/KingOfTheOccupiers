@@ -38,6 +38,28 @@ function _isFreeItem(item) {
 }
 
 /**
+ * 2026-11-26 M0-2：付费商品「每日限购」判据（与免费商品 dailyLimit 隔离）。
+ * 配了 dailyPurchaseLimit 的付费商品走每日计数（claimShopDaily，跨天清零），
+ * 不再用永久累计的 shopPurchases。免费商品仍走 dailyLimit 分支且不会命中这里。
+ */
+function _isDailyPurchaseItem(item) {
+  return !!(item && !_isFreeItem(item) && item.dailyPurchaseLimit > 0);
+}
+
+/** 付费每日限购商品的当日状态 */
+function _dailyPurchaseState(profile, item) {
+  const limit = item.dailyPurchaseLimit || 0;
+  const claimed = profile.getShopDailyClaimed(item.id);
+  const remaining = Math.max(0, limit - claimed);
+  return {
+    dailyPurchaseLimit: limit,
+    dailyPurchased: claimed,
+    dailyRemaining: remaining,
+    exhausted: remaining <= 0,
+  };
+}
+
+/**
  * 计算免费商品的每日状态（P37）
  * @returns {{isFree, dailyLimit, dailyClaimed, dailyRemaining, needAd, adKey, exhausted}}
  *   - needAd: 已领过 ≥1 次且还有次数 → 本次需看完广告
@@ -99,6 +121,19 @@ function getShopItems() {
               purchased: 0,
               remaining: st.dailyRemaining,
               canAfford: !st.exhausted, // 次数用完 → 按钮不可点
+              ...st,
+            };
+          }
+
+          // 2026-11-26 M0-2：付费商品每日限购 —— 当日计数替代永久累计
+          if (_isDailyPurchaseItem(item)) {
+            const st = _dailyPurchaseState(profile, item);
+            return {
+              ...item,
+              purchased: 0,
+              remaining: st.dailyRemaining,
+              canAfford: !st.exhausted && _canAfford(profile, item.cost),
+              isFree: false,
               ...st,
             };
           }
@@ -184,7 +219,27 @@ function purchase(itemId, opts = {}) {
     };
   }
 
-  // 检查限购
+  // 2026-11-26 M0-2：付费商品每日限购 —— 用当日计数，跨天清零
+  if (_isDailyPurchaseItem(item)) {
+    const st = _dailyPurchaseState(profile, item);
+    if (st.exhausted) {
+      return { success: false, reason: '今日已达购买上限', exhausted: true };
+    }
+    if (!_canAfford(profile, item.cost)) {
+      return { success: false, reason: '货币不足' };
+    }
+    for (const [currency, amount] of Object.entries(item.cost)) {
+      if (currency === 'realMoney') continue;
+      profile.spendCurrency(currency, amount);
+    }
+    profile.claimShopDaily(itemId); // 记当日计数（内部跨天清零）
+    const rewardResult = _grantReward(profile, item.reward);
+    saveProfile();
+    const after = _dailyPurchaseState(profile, item);
+    return { success: true, reward: rewardResult, dailyRemaining: after.dailyRemaining };
+  }
+
+  // 检查限购（永久累计，非每日商品）
   const purchased = profile.shopPurchases[itemId] || 0;
   if (item.limit > 0 && purchased >= item.limit) {
     return { success: false, reason: '已达购买上限' };

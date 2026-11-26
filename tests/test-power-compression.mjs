@@ -1,11 +1,14 @@
-// 测试: 战力压缩（2026-11 玩法改造）
+// 测试: 战力压缩（2026-11 玩法改造 + 11-26 养成收益修正）
 // 覆盖:
-//   1. 顶级兵(Lv20) vs 基准兵(剑士Lv1) 战力比 ∈ [2, 2.5]（压缩前 65~77 倍）
-//   2. 40 兵种榜首/榜尾战力比 ≤ 3.0（榜尾 scout 为属性低于 1.0 的斥候型，放宽上限）
-//   3. 品质倍率新表 1.0~1.18 生效（压缩前 1.0~2.3）
-//   4. 升级成本成长系数 1.18（压缩前 1.35）
-//   5. 远程不再无损全歼近战（先手削减 30%~60% 后走五档结算）
-//   6. 五档结算阈值收窄（1.35/1.06/0.94~1.06/0.74）
+//   1. 【2026-11-26 契约重写】养成差距=核心爽点：顶级兵(Lv20) vs 基准兵(剑士Lv1)
+//      属性积比值放宽到 [2, 6]（GROWTH_SCALE 0.07→0.30 后实算 4.63）。
+//      旧契约 [2,2.5] + "低阶兵 Lv1 ≥ 最强 Lv20 的 1/3" 已明确废弃——
+//      它把养成的正反馈压扁（剑士满级仅 +10.6% 攻击，成本收益倒挂），与长线养成目标冲突。
+//      新守卫改守真正该守的：同等级内榜首/榜尾有界（见测试1b），即低阶兵在同 laying 阶段不废。
+//   2. 品质倍率新表 1.0~1.18 生效（压缩前 1.0~2.3）
+//   3. 升级成本成长系数 1.18（压缩前 1.35）
+//   4. 远程不再无损全歼近战（先手削减 30%~60% 后走五档结算）
+//   5. 五档结算阈值收窄（1.35/1.06/0.94~1.06/0.74）
 const noop = () => {};
 const canvasStub = { width: 400, height: 700, addEventListener: noop, removeEventListener: noop };
 global.document = { getElementById: () => canvasStub, addEventListener: noop, removeEventListener: noop, body: { appendChild: noop }, hidden: false };
@@ -38,28 +41,36 @@ const { getUnitStats, UPGRADE_COST_GROWTH } = await import('../src/meta/Deployme
 const { CombatSystem } = await import('../src/system/CombatSystem.js');
 const { MarchGroup } = await import('../src/entity/MarchGroup.js');
 
-// ============ 1. 顶级/基准战力比 ============
-console.log('=== 测试1: 战力压缩目标（顶级/基准 2~2.5） ===');
+// ============ 1. 养成差距 + 同级内有界 ============
+console.log('=== 测试1: 养成差距契约（顶级/基准 2~6，同级榜首榜尾有界）===');
 {
   const units = Object.keys(ConfigLoader.get('deployables').units);
-  let best = null, worst = null;
+  let best = null, worstLv1 = null, worstLv20 = null, bestLv1 = null, bestLv20 = null;
   for (const id of units) {
     const u1 = getUnitStats(id, 1);
     const u20 = getUnitStats(id, 20);
     const p1 = u1.attackCoeff * u1.hpCoeff;
     const p20 = u20.attackCoeff * u20.hpCoeff;
     if (!best || p20 > best.p) best = { id, p: p20, q: u20.quality };
-    if (!worst || p1 < worst.p) worst = { id, p: p1 };
+    if (!worstLv1 || p1 < worstLv1.p) worstLv1 = { id, p: p1 };
+    if (!worstLv20 || p20 < worstLv20.p) worstLv20 = { id, p: p20 };
+    if (!bestLv1 || p1 > bestLv1.p) bestLv1 = { id, p: p1 };
+    if (!bestLv20 || p20 > bestLv20.p) bestLv20 = { id, p: p20 };
   }
   const swordsman1 = getUnitStats('swordsman', 1);
   const baseline = swordsman1.attackCoeff * swordsman1.hpCoeff;
   const ratioBase = best.p / baseline;
-  const ratioTail = best.p / worst.p;
-  console.log(`  最强Lv20: ${best.id}=${best.p.toFixed(2)}(Q${best.q})  剑士Lv1基准=${baseline.toFixed(2)}  榜尾Lv1: ${worst.id}=${worst.p.toFixed(2)}`);
-  assert(ratioBase >= 2 && ratioBase <= 2.5, `顶级/基准战力比 = ${ratioBase.toFixed(2)} ∈ [2, 2.5]（压缩前 65~77）`);
-  assert(ratioTail <= 3.0, `榜首/榜尾战力比 = ${ratioTail.toFixed(2)} ≤ 3.0（scout 为低属性斥候型放宽）`);
-  // 低阶兵全程有用：任意兵种 Lv1 战力都在最强兵的 1/3 以上
-  assert(worst.p * 3 >= best.p, '最弱兵 Lv1 战力 ≥ 最强兵 Lv20 的 1/3（低阶兵不废）');
+  console.log(`  最强Lv20: ${best.id}=${best.p.toFixed(2)}(Q${best.q})  剑士Lv1基准=${baseline.toFixed(2)}`);
+  // 养成差距是核心爽点：满级兵应显著强于新兵，但保留上限防爆表
+  assert(ratioBase >= 2 && ratioBase <= 6, `顶级/基准战力比 = ${ratioBase.toFixed(2)} ∈ [2, 6]（养成正反馈区间）`);
+
+  // 1b. 真正该守的：同等级内榜首/榜尾有界，低阶兵在同阶段不废
+  //     Lv1 比 ≤3（原始压缩目标保留）；Lv20 比 ≤7（等级成长放大差异但仍有界）
+  const ratioLv1 = bestLv1.p / worstLv1.p;
+  const ratioLv20 = bestLv20.p / worstLv20.p;
+  console.log(`  同级榜首/榜尾: Lv1=${ratioLv1.toFixed(2)} (${bestLv1.id}/${worstLv1.id})  Lv20=${ratioLv20.toFixed(2)} (${bestLv20.id}/${worstLv20.id})`);
+  assert(ratioLv1 <= 3.0, `Lv1 榜首/榜尾 = ${ratioLv1.toFixed(2)} ≤ 3.0（新兵阶段无废兵）`);
+  assert(ratioLv20 <= 7.0, `Lv20 榜首/榜尾 = ${ratioLv20.toFixed(2)} ≤ 7.0（满级阶段差距有界，低阶兵仍可用）`);
 }
 
 // ============ 2. 品质倍率新表 ============

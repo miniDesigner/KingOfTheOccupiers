@@ -2155,7 +2155,9 @@ export class Game {
       this.audioManager.playSynergy();
       this.animManager.flashScreen('#ffd700', 0.2);
       const icons = { gold: '◆', diamond: '✧', stardust: '✦', heroTickets: '券' };
+      // 2026-11-26 M0-3：英雄券为预留死货币，领取提示中隐藏，避免玩家看到不可用的奖励
       const rw = Object.entries((result.reward && result.reward.currencies) || {})
+        .filter(([k]) => k !== 'heroTickets')
         .map(([k, v]) => `${icons[k] || k}+${v}`).join(' ');
       this.showToast(`领取成功 ${rw}（今日 ${result.dailyClaimed}/${item.dailyLimit}）`, 1.5);
     } else {
