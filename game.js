@@ -17,6 +17,7 @@ import { Game, BOOT_LOADING_BG } from './src/game/Game.js';
 import { ArtSystem } from './src/system/ArtSystem.js';
 import ShareSystem from './src/meta/ShareSystem.js';
 import { normalizeSafeAreaUnit } from './src/system/SafeArea.js';
+import tracker from './src/net/PlatformTracker.js';
 
 // ============ 1. Canvas + 屏幕信息 ============
 const canvas = wx.createCanvas();
@@ -118,6 +119,12 @@ function drawBootProgress(p) {
 
 // ============ 3. 启动游戏 ============
 function bootstrap() {
+  // ---- 运营数据埋点（默认关闭；启用步骤见 src/net/PlatformConfig.js） ----
+  // DAU = game_start 去重 player_id，新增 = register 去重 player_id。
+  // 此处玩家 ID 尚未就绪，事件先入队；Game.start 里账号初始化后绑定 uid 并统一 flush。
+  tracker.track('game_start', { scene: 'boot' });
+  tracker.registerOnce();
+
   const game = new Game(canvas, ctx, screenWidth, screenHeight, safeArea);
 
   // 调试钩子：真机 vConsole / 自动化测试可通过 globalThis.__game 访问实例
@@ -146,11 +153,15 @@ function bootstrap() {
   }
   // 转发给好友：文案由 ShareSystem 按当前存档生成
   if (typeof wx.onShareAppMessage === 'function') {
-    wx.onShareAppMessage(() => ShareSystem.getShareConfig({ scene: 'lobby' }));
+    wx.onShareAppMessage(() => {
+      tracker.track('share', { scene: 'menu_share' });
+      return ShareSystem.getShareConfig({ scene: 'lobby' });
+    });
   }
   // 分享到朋友圈（需要单独注册，否则菜单项无效）
   if (typeof wx.onShareTimeline === 'function') {
     wx.onShareTimeline(() => {
+      tracker.track('share', { scene: 'timeline' });
       const cfg = ShareSystem.getShareConfig({ scene: 'lobby' });
       return { title: cfg.title, query: '' };
     });

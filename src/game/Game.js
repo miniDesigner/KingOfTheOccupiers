@@ -12,6 +12,7 @@ import { Building } from '../entity/Building.js';
 import { MarchGroup } from '../entity/MarchGroup.js';
 
 import { SessionManager } from '../net/SessionManager.js';
+import tracker from '../net/PlatformTracker.js';
 
 import { EconomySystem } from '../system/EconomySystem.js';
 import { BuildSystem } from '../system/BuildSystem.js';
@@ -2833,6 +2834,11 @@ export class Game {
     //    必须先于 ProfileManager.load（其存储 key 依赖当前账号 id）和 SessionManager.init（uid 来自账号元数据）。
     AccountManager.init();
 
+    // 4.0 运营埋点：绑定稳定 uid 作为 player_id，并把入口暂存的 game_start/register 一次性发出。
+    //     云端登录后 uid 会被替换为 accountId（acc_+openid），此处取到的是当时的最新值。
+    //     埋点模块在 Node 测试/浏览器预览下自动 noop，不影响任何测试契约。
+    tracker.setPlayerId(AccountManager.getUID());
+
     // 4.1 加载当前账号的玩家存档（key 已按当前账号命名空间）
     ProfileManager.load();
     this.syncProfile();
@@ -3059,6 +3065,13 @@ export class Game {
 
     const mode = this.battleMode === 'realtime' ? 'realtime' : 'ai';
     const difficulty = this._getEnemyDifficulty();
+
+    // 运营埋点：对局胜负（看板沿用 level_pass / level_fail 口径）。
+    // 只带模式与难度，不带对手昵称 / 玩家昵称等个人信息。
+    tracker.track(isWin ? 'level_pass' : 'level_fail', {
+      scene: mode,
+      extra: { mode, difficulty: String(difficulty || '') },
+    });
 
     // 云端权威结算：只上报「胜负+模式+对手」，服务端重算奖励（防作弊），
     // 返回权威结果覆盖本地；失败降级为本地结算（离线兜底）。

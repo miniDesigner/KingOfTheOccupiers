@@ -12,6 +12,7 @@
  */
 
 import { get as getProfile, save as saveProfile } from './ProfileManager.js';
+import tracker from '../net/PlatformTracker.js';
 
 /** 每日分享奖励（每天首次分享可领取） */
 const DAILY_SHARE_REWARD = { gold: 200, stardust: 5 };
@@ -61,6 +62,9 @@ function getShareConfig(opts = {}) {
  */
 function share(opts = {}) {
   const config = getShareConfig(opts);
+
+  // 运营埋点：主动分享次数（右上角菜单的被动分享在 game.js 里单独上报）
+  tracker.track('share', { scene: opts.scene || 'lobby' });
 
   if (typeof wx !== 'undefined' && typeof wx.shareAppMessage === 'function') {
     wx.shareAppMessage(config);
