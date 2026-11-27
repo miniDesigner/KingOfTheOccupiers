@@ -9,12 +9,10 @@
  *   - 平台云函数已兼容旧口径，本模块同步升级到 v2.1 标准事件（app_launch/login）
  *   - appSecret 绝不写入客户端：仅服务端鉴权场景（公告管理/GM）使用，上报只需 appKey
  *
- * ⚠️ 真机上线前仍需在微信公众平台完成一件事（代码侧无法代劳）：
- *   开发管理 → 开发设置 → 服务器域名 → request 合法域名，添加：
- *   https://mini-management-d0flwzdnf201202a-1463521202.ap-shanghai.app.tcloudbase.com
- *   （每月仅可修改 5 次，一次配准；开发者工具可勾「不校验合法域名」先自测）
- *
- * 合规：隐私政策须补充「运营数据统计」条款（草案见接入交付报告），法务确认后发布。
+ * 外部依赖状态（2026-11-27 收尾确认）：
+ *   - 微信后台 request 合法域名已完成配置：
+ *     https://mini-management-d0flwzdnf201202a-1463521202.ap-shanghai.app.tcloudbase.com
+ *   - 隐私政策法务项：本 SDK 为开发组内部埋点，经确认可忽略，无需改法律文本。
  * player_id 取匿名 uid（acc_+ 账号标识），不构成可直接识别自然人的个人信息。
  */
 export default {
