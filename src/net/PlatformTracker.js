@@ -1,18 +1,20 @@
 /**
- * PlatformTracker — 小程序数据管理平台埋点 SDK（按平台文档协议实现）
+ * PlatformTracker — 小程序数据管理平台埋点 SDK
  *
- * 协议要点（见项目资产《小程序接入数据平台说明》v1.0）：
- *   - POST {reportUrl}，body = { appKey, events: [...] }
- *   - 满 batchSize 条或每 flushIntervalMs 毫秒批量上报，切后台立即 flush
- *   - 事件名正则 ^[a-z_][a-z0-9_]{0,63}$，非法事件丢弃
- *   - 看板口径：DAU = game_start 去重 player_id；新增 = register 去重 player_id
+ * 协议依据：项目资产《小程序接入数据平台说明》v2.1 + 官方 client/tracker.js v3.1。
+ * 本模块 = 官方 SDK 全能力 + 工程健壮性增强（不直接照搬官方 CommonJS 文件）：
+ *   - 官方能力：app_launch/login 新口径、heartbeat 心跳、trackAd、trackEconomy、
+ *     顶层 amount/currency/reason/session_id/channel/server_id 透传、getAnnouncements
+ *   - 增强点：enabled 开关、非真微信环境 noop、稳定 player_id 绑定后再发、
+ *     extra 敏感键过滤（PIPL）、事件名校验、队列上限、切后台 flush
  *
- * 设计约束：
- *   1. 埋点失败绝不影响游戏：所有网络/存储异常静默吞掉
- *   2. 浏览器预览（wx.__tkBrowser）与 Node 测试环境自动 noop，不发真实请求
- *   3. player_id 由业务在账号就绪后绑定（Game.start → AccountManager.init 之后），
- *      入口阶段事件先入队，绑定完成再 flush，避免游客账号切换导致 DAU 重复计数
- *   4. extra 白名单化，过滤 password/phone/openid 等敏感键，满足 PIPL 合规要求
+ * 为什么不用官方 tracker.js 原文件：
+ *   1. 官方文件是 CommonJS，本项目全 ES module；
+ *   2. 官方文件用 'anonymous_'+Date.now() 当 player_id —— 平台自己在修复报告里
+ *      警告这会导致 DAU 虚高；本项目用 AccountManager.getUID() 稳定 uid；
+ *   3. 官方文件没有 enabled 开关 / 环境降级 / 敏感字段过滤 / 入口事件回填。
+ *
+ * 设计铁律：埋点失败绝不影响游戏 —— 所有网络/存储异常静默吞掉。
  */
 
 import PLATFORM_CONFIG from './PlatformConfig.js';
@@ -23,10 +25,14 @@ const SENSITIVE_KEY_RE = /pass(word)?|phone|mobile|idcard|id_card|token|secret|o
 const REGISTER_FLAG_KEY = 'tk_platform_registered';
 const MAX_QUEUE = 200;
 
+// v3.1 新增的顶层字段白名单（官方 SDK 从 params 透传，平台入库按顶层字段统计）
+const PASSTHROUGH_KEYS = ['session_id', 'channel', 'server_id', 'amount', 'currency', 'reason'];
+
 let _cfg = { ...PLATFORM_CONFIG };
 let _queue = [];
 let _playerId = null;
 let _timer = null;
+let _heartbeatTimer = null;
 let _flushing = false;
 let _hideHookBound = false;
 
@@ -96,8 +102,9 @@ function setPlayerId(id) {
 
 /**
  * 上报一个事件。玩家 ID 未就绪时事件留在队列，等 setPlayerId 后统一发送。
- * @param {string} event 事件名（小写下划线）
- * @param {object} [params] { level, scene, client_version, extra }
+ * @param {string} event 事件名（小写下划线，见 v2.1 事件字典）
+ * @param {object} [params] { level, scene, client_version, extra, session_id, channel,
+ *                            server_id, amount, currency, reason }
  * @returns {boolean} 是否已入队
  */
 function track(event, params = {}) {
@@ -115,6 +122,21 @@ function track(event, params = {}) {
   if (typeof params.scene === 'string' && params.scene) item.scene = params.scene.slice(0, 64);
   const extra = _sanitizeExtra(params.extra);
   if (extra) item.extra = extra;
+  // v3.1 顶层字段透传（金额单位分；amount 必须是整数）
+  for (const key of PASSTHROUGH_KEYS) {
+    let value = params[key];
+    if (value === undefined || value === null) continue;
+    if (key === 'amount') {
+      value = Number(value);
+      if (!Number.isFinite(value)) continue;
+      value = Math.trunc(value);
+    } else if (typeof value === 'string') {
+      value = value.slice(0, 64);
+    } else if (typeof value !== 'number' && typeof value !== 'boolean') {
+      continue;
+    }
+    item[key] = value;
+  }
   if (_playerId) item.player_id = _playerId;
 
   if (_queue.length >= MAX_QUEUE) _queue.shift(); // 极端情况下丢弃最老事件，防内存膨胀
@@ -131,6 +153,61 @@ function registerOnce() {
   if (_storageGet(REGISTER_FLAG_KEY)) return false;
   _storageSet(REGISTER_FLAG_KEY, 1);
   return track('register', { scene: 'boot' });
+}
+
+/** 广告事件快捷方法（对应看板「广告变现」）；action: impression / click / reward */
+function trackAd(action, params = {}) {
+  const map = { impression: 'ad_impression', click: 'ad_click', reward: 'ad_reward' };
+  return track(map[action] || ('ad_' + action), params);
+}
+
+/** 经济流水快捷方法（货币/道具变动，用于经济对账）；kind: currency / item */
+function trackEconomy(kind, amount, reason, params = {}) {
+  const event = kind === 'item' ? 'item_change' : 'currency_change';
+  return track(event, { ...params, amount, reason });
+}
+
+/**
+ * 启动心跳：每 heartbeatIntervalMs 上报一次在线，驱动看板「实时在线/峰值/分服在线」。
+ * 只在真微信 + 启用时启动，避免 Node 测试挂定时器。
+ */
+function startHeartbeat(params = {}) {
+  if (!_cfg.enabled || !_isRealWx() || _heartbeatTimer) return false;
+  const beat = () => track('heartbeat', params);
+  beat();
+  _heartbeatTimer = setInterval(beat, Math.max(60 * 1000, _cfg.heartbeatIntervalMs || 5 * 60 * 1000));
+  return true;
+}
+
+/** 停止心跳 */
+function stopHeartbeat() {
+  if (_heartbeatTimer) {
+    clearInterval(_heartbeatTimer);
+    _heartbeatTimer = null;
+    return true;
+  }
+  return false;
+}
+
+/** 拉取平台公告（已发布 + 全体），返回 Promise<公告数组>；失败返回空数组 */
+function getAnnouncements(limit = 50) {
+  if (!_cfg.enabled || !_isRealWx()) return Promise.resolve([]);
+  return new Promise((resolve) => {
+    try {
+      wx.request({
+        url: _cfg.announcementUrl,
+        method: 'POST',
+        header: { 'Content-Type': 'application/json' },
+        data: JSON.stringify({ appKey: _cfg.appKey, limit }),
+        success(res) {
+          if (res && res.statusCode === 200 && res.data && res.data.ok) {
+            resolve(Array.isArray(res.data.announcements) ? res.data.announcements : []);
+          } else resolve([]);
+        },
+        fail() { resolve([]); },
+      });
+    } catch (e) { resolve([]); }
+  });
 }
 
 /** 立即发送队列中的事件，返回本批条数；失败静默丢弃（埋点允许丢，不允许卡游戏） */
@@ -169,7 +246,7 @@ function flush() {
   return batch.length;
 }
 
-/** 运行时覆盖配置（如从服务端注入正式 appKey，避免写死在仓库） */
+/** 运行时覆盖配置（如从服务端注入 appKey，避免写死在仓库） */
 function configure(patch = {}) {
   if (!patch || typeof patch !== 'object') return { ..._cfg };
   _cfg = { ..._cfg, ...patch };
@@ -193,11 +270,19 @@ function getState() {
     playerId: _playerId,
     queueLength: _queue.length,
     flushing: _flushing,
+    heartbeatActive: !!_heartbeatTimer,
   };
 }
 
 _ensureTimer();
 _bindHideHook();
 
-export { track, registerOnce, setPlayerId, configure, flush, getState };
-export default { track, registerOnce, setPlayerId, configure, flush, getState };
+const api = {
+  track, registerOnce, setPlayerId, configure, flush, getState,
+  trackAd, trackEconomy, startHeartbeat, stopHeartbeat, getAnnouncements,
+};
+export {
+  track, registerOnce, setPlayerId, configure, flush, getState,
+  trackAd, trackEconomy, startHeartbeat, stopHeartbeat, getAnnouncements,
+};
+export default api;

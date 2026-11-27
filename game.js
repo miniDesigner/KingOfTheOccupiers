@@ -119,10 +119,12 @@ function drawBootProgress(p) {
 
 // ============ 3. 启动游戏 ============
 function bootstrap() {
-  // ---- 运营数据埋点（默认关闭；启用步骤见 src/net/PlatformConfig.js） ----
-  // DAU = game_start 去重 player_id，新增 = register 去重 player_id。
+  // ---- 运营数据埋点（v2.1 标准口径；配置见 src/net/PlatformConfig.js） ----
+  // 看板口径：DAU/活跃 = login + app_launch 去重 player_id；新增 = register 去重。
+  // 平台已把旧 game_start 兼容进 DAU，但新接入一律用标准事件名。
   // 此处玩家 ID 尚未就绪，事件先入队；Game.start 里账号初始化后绑定 uid 并统一 flush。
-  tracker.track('game_start', { scene: 'boot' });
+  tracker.track('app_launch', { scene: 'boot' });
+  tracker.track('login', { scene: 'boot' });
   tracker.registerOnce();
 
   const game = new Game(canvas, ctx, screenWidth, screenHeight, safeArea);

@@ -2834,10 +2834,12 @@ export class Game {
     //    必须先于 ProfileManager.load（其存储 key 依赖当前账号 id）和 SessionManager.init（uid 来自账号元数据）。
     AccountManager.init();
 
-    // 4.0 运营埋点：绑定稳定 uid 作为 player_id，并把入口暂存的 game_start/register 一次性发出。
+    // 4.0 运营埋点：绑定稳定 uid 作为 player_id，并把入口暂存的 app_launch/login/register 一次性发出。
     //     云端登录后 uid 会被替换为 accountId（acc_+openid），此处取到的是当时的最新值。
+    //     随后启动心跳（每 5 分钟）驱动看板「实时在线/峰值」；仅在真微信+启用时生效。
     //     埋点模块在 Node 测试/浏览器预览下自动 noop，不影响任何测试契约。
     tracker.setPlayerId(AccountManager.getUID());
+    tracker.startHeartbeat();
 
     // 4.1 加载当前账号的玩家存档（key 已按当前账号命名空间）
     ProfileManager.load();
